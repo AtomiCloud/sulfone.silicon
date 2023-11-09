@@ -30,15 +30,17 @@ Install the latest version of CyanPrint CLI.
     ```
   </TabItem>
   <TabItem value="scoop" label="Scoop">
-    ```bash scoop bucket add atomi
-    https://github.com/AtomiCloud/scoop-bucket.git scoop install atomi/cyanprint
+    ```bash
+    scoop bucket add atomi https://github.com/AtomiCloud/scoop-bucket.git
+    scoop install atomi/cyanprint
     ```
   </TabItem>
   <TabItem value="apt" label="APT (Debian)">
-    ```
-    bash sudo apt install software-properties-common -y sudo
-    apt-add-repository "deb [trusted=yes] https://apt.fury.io/AtomiCloud/ /" -y
-    sudo apt update -y sudo apt install cyanprint
+    ```bash
+    sudo apt install software-properties-common -y
+    sudo apt-add-repository "deb [trusted=yes] https://apt.fury.io/AtomiCloud/ /" -y
+    sudo apt update -y
+    sudo apt install cyanprint
     ```
   </TabItem>
 </Tabs>

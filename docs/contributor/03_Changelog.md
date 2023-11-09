@@ -1,3 +1,10 @@
+## [1.0.3](https://github.com/AtomiCloud/sulfone.silicon/compare/v1.0.2...v1.0.3) (2023-11-09)
+
+
+### Bug Fixes
+
+* incorrect newlines ([af4e0e8](https://github.com/AtomiCloud/sulfone.silicon/commit/af4e0e83e3c61c92a21591c8a984f6be89fafb11))
+
 ## [1.0.2](https://github.com/AtomiCloud/sulfone.silicon/compare/v1.0.1...v1.0.2) (2023-11-09)
 
 

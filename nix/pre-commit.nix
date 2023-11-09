@@ -9,6 +9,7 @@ pre-commit-lib.run {
       enable = true;
       excludes = [
         ".*(Changelog|README).+(MD|md)"
+        ".*mdx"
       ];
     };
 

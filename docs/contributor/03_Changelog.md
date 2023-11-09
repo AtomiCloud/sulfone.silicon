@@ -1,3 +1,10 @@
+## [1.0.1](https://github.com/AtomiCloud/sulfone.silicon/compare/v1.0.0...v1.0.1) (2023-11-09)
+
+
+### Bug Fixes
+
+* migrate back to npm ([1459a38](https://github.com/AtomiCloud/sulfone.silicon/commit/1459a3878f85e545c50e5932a691300bebfbed0a))
+
 ## 1.0.0 (2023-11-09)
 
 

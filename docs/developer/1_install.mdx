@@ -1,0 +1,75 @@
+
+import Tabs from '@theme/Tabs';
+import TabItem from '@theme/TabItem';
+
+# Installation
+
+
+### Latest Version
+Install the latest version of CyanPrint CLI.
+<Tabs queryString="installer">
+  <TabItem value="nix-shell" label="Nix Shell">
+    ```bash
+    nix shell github:AtomiCloud/sulfone.iridium
+    ```
+  </TabItem>
+  <TabItem value="nix-profile" label="Nix Profile">
+      ```bash
+      nix profile install github:AtomiCloud/sulfone.iridium
+      ```
+  </TabItem>
+  <TabItem value="brew" label="Brew">
+    ```bash
+    brew install AtomiCloud/tap/cyanprint
+    ```
+  </TabItem>
+  <TabItem value="scoop" label="Scoop">
+      ```bash
+      scoop bucket add atomi https://github.com/AtomiCloud/scoop-bucket.git
+      scoop install atomi/cyanprint
+      ```
+  </TabItem>
+  <TabItem value="apt" label="APT (Debian)">
+    ```bash
+    sudo apt install software-properties-common -y
+    sudo apt-add-repository "deb [trusted=yes] https://apt.fury.io/AtomiCloud/ /" -y
+    sudo apt update -y
+    sudo apt install cyanprint
+    ```
+    </TabItem>
+</Tabs>
+
+### Specific Version
+
+Install a specific version of CyanPrint CLI.
+<Tabs queryString="installer">
+  <TabItem value="nix-shell" label="Nix Shell">
+    ```bash
+    nix shell github:AtomiCloud/sulfone.iridium/v<version>
+    ```
+  </TabItem>
+  <TabItem value="nix-profile" label="Nix Profile">
+      ```bash
+      nix profile install github:AtomiCloud/sulfone.iridium/v<version>
+      ```
+  </TabItem>
+  <TabItem value="brew" label="Brew">
+    ```bash
+    brew install AtomiCloud/tap/cyanprint@<version>
+    ```
+  </TabItem>
+  <TabItem value="scoop" label="Scoop">
+      ```bash
+      scoop bucket add atomi https://github.com/AtomiCloud/scoop-bucket.git
+      scoop install atomi/cyanprint@<version>
+      ```
+  </TabItem>
+  <TabItem value="apt" label="APT (Debian)">
+    ```bash
+    sudo apt install software-properties-common -y
+    sudo apt-add-repository "deb [trusted=yes] https://apt.fury.io/AtomiCloud/ /" -y
+    sudo apt update -y
+    sudo apt install cyanprint@<version>
+    ```
+    </TabItem>
+</Tabs>

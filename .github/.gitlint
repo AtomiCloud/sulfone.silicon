@@ -1,6 +1,0 @@
-[general]
-contrib=CT1
-ignore=B6
-
-[contrib-title-conventional-commits]
-types = amend,build,ci,config,docs,feat,fix,perf,refactor,style,test

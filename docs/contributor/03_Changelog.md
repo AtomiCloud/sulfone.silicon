@@ -1,3 +1,10 @@
+## [1.0.2](https://github.com/AtomiCloud/sulfone.silicon/compare/v1.0.1...v1.0.2) (2023-11-09)
+
+
+### Bug Fixes
+
+* ignore prettier for mdx ([8d393ec](https://github.com/AtomiCloud/sulfone.silicon/commit/8d393ec085eea3255b583eb21584b5f82d9cfa19))
+
 ## [1.0.1](https://github.com/AtomiCloud/sulfone.silicon/compare/v1.0.0...v1.0.1) (2023-11-09)
 
 

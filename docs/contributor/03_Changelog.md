@@ -1,3 +1,10 @@
+## [1.1.0](https://github.com/AtomiCloud/sulfone.silicon/compare/v1.0.3...v1.1.0) (2023-11-14)
+
+
+### New Features
+
+* update documentation ([b07ff26](https://github.com/AtomiCloud/sulfone.silicon/commit/b07ff26d5f3f314f3ba1e9a4426dd7b65d0aa54d))
+
 ## [1.0.3](https://github.com/AtomiCloud/sulfone.silicon/compare/v1.0.2...v1.0.3) (2023-11-09)
 
 

@@ -1,0 +1,74 @@
+---
+slug: /
+---
+
+import Tabs from "@theme/Tabs";
+import TabItem from "@theme/TabItem";
+
+# Introduction
+
+CyanPrint is a CLI tool that helps you create projects from templates.
+
+# Quick Start
+
+Quickly get started to run a template locally.
+
+# Installation
+
+Install the latest version of CyanPrint CLI.
+
+<Tabs groupId="qs">
+  <TabItem value="nix-shell" label="Nix Shell">
+    ```bash
+    nix shell github:AtomiCloud/sulfone.iridium
+    ```
+  </TabItem>
+  <TabItem value="nix-profile" label="Nix Profile">
+    ```bash
+    nix profile install github:AtomiCloud/sulfone.iridium
+    ```
+  </TabItem>
+  <TabItem value="brew" label="Brew">
+    ```bash
+    brew install AtomiCloud/tap/cyanprint
+    ```
+  </TabItem>
+  <TabItem value="scoop" label="Scoop">
+    ```bash
+    scoop bucket add atomi https://github.com/AtomiCloud/scoop-bucket.git
+    scoop install atomi/cyanprint
+    ```
+  </TabItem>
+  <TabItem value="apt" label="APT (Debian)">
+    ```bash
+    sudo apt install software-properties-common -y
+    sudo apt-add-repository "deb [trusted=yes] https://apt.fury.io/AtomiCloud/ /" -y
+    sudo apt update -y
+    sudo apt install cyanprint
+    ```
+  </TabItem>
+</Tabs>
+
+# Create a template
+
+You can search for templates on [cyanprint.dev](https://cyanprint.dev) registry.
+
+```bash
+cyanprint create <template> <folder>
+```
+
+For example:
+
+```bash
+cyanprint create cyan/new sample-project
+```
+
+The template `cyan/new` allows users to create new CyanPrint templates.
+
+Follow and answer all the prompts.
+
+After which your project should be ready!
+
+
+
+

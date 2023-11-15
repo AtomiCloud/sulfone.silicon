@@ -47,6 +47,16 @@ Install the latest version of CyanPrint CLI.
     sudo apt install cyanprint
     ```
   </TabItem>
+  <TabItem value="yum" label="YUM (Redhat)">
+    ```bash
+    sudo echo "[fury]
+    name=AtomiCloud Repo
+    baseurl=https://yum.fury.io/atomicloud/
+    enabled=1
+    gpgcheck=0" > /etc/yum.repos.d/fury.repo
+    yum install cyanprint-<version>
+    ```
+  </TabItem>
 </Tabs>
 
 # Create a template
@@ -68,7 +78,3 @@ The template `cyan/new` allows users to create new CyanPrint templates.
 Follow and answer all the prompts.
 
 After which your project should be ready!
-
-
-
-

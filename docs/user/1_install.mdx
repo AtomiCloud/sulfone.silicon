@@ -85,5 +85,15 @@ Install a specific version of CyanPrint CLI.
     sudo apt update -y
     sudo apt install cyanprint@<version>
     ```
-    </TabItem>
+  </TabItem>
+  <TabItem value="yum" label="YUM (Redhat)">
+    ```bash
+    sudo echo "[fury]
+    name=AtomiCloud Repo
+    baseurl=https://yum.fury.io/atomicloud/
+    enabled=1
+    gpgcheck=0" > /etc/yum.repos.d/fury.repo
+    yum install cyanprint-<version>
+    ```
+  </TabItem>
 </Tabs>

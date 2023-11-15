@@ -1,3 +1,10 @@
+## [1.1.2](https://github.com/AtomiCloud/sulfone.silicon/compare/v1.1.1...v1.1.2) (2023-11-15)
+
+
+### Bug Fixes
+
+* fedora instructions ([cfa1998](https://github.com/AtomiCloud/sulfone.silicon/commit/cfa1998177cba7e4b4422196517c0a6162459455))
+
 ## [1.1.1](https://github.com/AtomiCloud/sulfone.silicon/compare/v1.1.0...v1.1.1) (2023-11-15)
 
 

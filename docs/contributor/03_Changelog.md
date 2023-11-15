@@ -1,3 +1,10 @@
+## [1.1.1](https://github.com/AtomiCloud/sulfone.silicon/compare/v1.1.0...v1.1.1) (2023-11-15)
+
+
+### Bug Fixes
+
+* missing YUM installation ([5acf3bc](https://github.com/AtomiCloud/sulfone.silicon/commit/5acf3bcc0cf9a2d068fb3490bc9253fd3763b132))
+
 ## [1.1.0](https://github.com/AtomiCloud/sulfone.silicon/compare/v1.0.3...v1.1.0) (2023-11-14)
 
 

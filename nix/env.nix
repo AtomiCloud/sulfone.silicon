@@ -2,12 +2,7 @@
 with packages;
 {
   system = [
-    coreutils
-    findutils
-    gnugrep
-    gnused
-    yq-go
-    jq
+    atomiutils
   ];
 
   dev = [
@@ -20,8 +15,8 @@ with packages;
 
   main = [
     bun
-    nodejs
     infisical
+    nodejs
   ];
 
   lint = [
@@ -33,8 +28,6 @@ with packages;
   ];
 
   releaser = [
-    nodejs
     sg
-    npm
   ];
 }

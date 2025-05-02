@@ -1,6 +1,14 @@
 import { themes as prismThemes } from 'prism-react-renderer';
 import type { Config } from '@docusaurus/types';
 import type * as Preset from '@docusaurus/preset-classic';
+import { remarkCodeHike, recmaCodeHike } from 'codehike/mdx';
+
+const chConfig = {
+  components: { code: 'MyCode' },
+  syntaxHighlighting: {
+    theme: 'github-dark',
+  },
+};
 
 const config: Config = {
   title: 'CyanPrint',
@@ -29,6 +37,8 @@ const config: Config = {
       'classic',
       {
         docs: {
+          beforeDefaultRemarkPlugins: [[remarkCodeHike, chConfig]],
+          recmaPlugins: [[recmaCodeHike, chConfig]],
           routeBasePath: '/',
           sidebarPath: './sidebars.ts',
           editUrl:
@@ -84,7 +94,7 @@ const config: Config = {
     footer: {
       style: 'dark',
       links: [],
-      copyright: `Copyright © ${new Date().getFullYear()} CyanPrint, AtomiCloud. Built with Docusaurus.`,
+      copyright: `Copyright © ${new Date().getFullYear()} CyanPrint, AtomiCloud`,
     },
     prism: {
       theme: prismThemes.github,

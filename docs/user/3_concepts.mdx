@@ -1,0 +1,148 @@
+---
+sidebar_position: 4
+---
+
+import Tabs from "@theme/Tabs";
+import TabItem from "@theme/TabItem";
+
+# Key Concepts
+
+This document explains the core concepts and terminology used in CyanPrint.
+
+## Templates
+
+Templates are the foundation of CyanPrint. A template is a collection of files, directories, and configuration that defines how a project should be generated. Templates can include:
+
+- Skeleton files and directories
+- Variables for customization
+- Plugins for post-generation tasks
+- Processors for advanced templating
+
+### Template Structure
+
+A typical template has the following structure:
+
+```
+my-template/
+├── cyan.yaml           # Template configuration
+├── template/           # Template files
+│   ├── src/
+│   ├── scripts/
+│   └── ...
+├── plugins/            # Optional plugins
+└── processors/         # Optional processors
+```
+
+The `cyan.yaml` file defines the template's metadata, variables, and configuration:
+
+```yaml
+name: my-template
+version: 1.0.0
+description: A template for creating a new project
+author: Your Name
+variables:
+  - name: projectName
+    type: string
+    prompt: What is your project name?
+  - name: includeTests
+    type: boolean
+    prompt: Include tests?
+```
+
+## Processors
+
+Processors are components that transform template files before they are written to the output directory. They enable advanced templating features like:
+
+- Variable substitution
+- Conditional inclusion of files
+- Looping and other control flow
+- Template inheritance
+
+CyanPrint supports various processor types, including:
+
+- Handlebars
+- EJS
+- Jinja
+- Go Templates
+- Custom processors
+
+## Plugins
+
+Plugins extend CyanPrint's functionality by performing additional actions after a template is generated. Common plugin use cases include:
+
+- Installing dependencies
+- Initializing a git repository
+- Running build scripts
+- Setting up CI/CD
+- Creating databases or other resources
+
+Plugins can be bundled with templates or installed separately.
+
+## Registry
+
+The CyanPrint Registry is a central repository for discovering and sharing templates. Key features include:
+
+- Template hosting and versioning
+- Search and discovery
+- User accounts and organizations
+- Access control
+- Usage statistics
+
+## Coordinator
+
+The Coordinator is responsible for executing templates and orchestrating the generation process. It:
+
+1. Resolves template dependencies
+2. Collects variable values from the user
+3. Applies processors to template files
+4. Runs plugins
+5. Handles error recovery and reporting
+
+## Variables and Prompts
+
+Templates can define variables that are collected from the user during the generation process. Variables can be:
+
+- Simple types (string, number, boolean)
+- Complex types (objects, arrays)
+- Derived from other variables
+- Validated with rules
+
+Variables can be collected through:
+
+- Interactive prompts
+- Command-line arguments
+- Configuration files
+- Environment variables
+
+## Non-Interactive Mode
+
+CyanPrint supports both interactive and non-interactive modes:
+
+- **Interactive Mode**: Prompts the user for input
+- **Non-Interactive Mode**: Uses predefined values without user interaction
+
+Non-interactive mode is useful for automation and CI/CD pipelines.
+
+## Template Development
+
+CyanPrint provides SDKs for developing templates in various languages:
+
+- .NET
+- TypeScript/JavaScript
+- Python
+
+These SDKs include:
+
+- API clients for the Registry and Coordinator
+- Helper functions for creating and testing templates
+- Types and interfaces for working with CyanPrint
+
+## Local Templates
+
+Besides using templates from the Registry, you can also use local templates directly from your filesystem:
+
+```bash
+cyanprint run ./my-template --output ./my-project
+```
+
+This is useful during template development or for private templates that are not published to the Registry. 

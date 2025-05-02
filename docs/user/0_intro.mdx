@@ -1,5 +1,6 @@
 ---
 slug: /
+sidebar_position: 1
 ---
 
 import Tabs from "@theme/Tabs";
@@ -7,15 +8,17 @@ import TabItem from "@theme/TabItem";
 
 # Introduction
 
-CyanPrint is a CLI tool that helps you create projects from templates.
+CyanPrint is a next-generation language-agnostic templating platform that helps you create projects from templates. It provides a powerful alternative to traditional project scaffolding tools with features like customizable templates, plugin support, and a central registry.
 
-# Quick Start
+For a comprehensive understanding of CyanPrint's architecture and components, see the [Architecture Overview](/architecture).
 
-Quickly get started to run a template locally.
+## Quick Start
 
-# Installation
+Quickly get started with CyanPrint by following these steps:
 
-Install the latest version of CyanPrint CLI.
+### Installation
+
+Install the latest version of CyanPrint CLI using your preferred package manager:
 
 <Tabs groupId="qs">
   <TabItem value="nix-shell" label="Nix Shell">
@@ -59,9 +62,9 @@ Install the latest version of CyanPrint CLI.
   </TabItem>
 </Tabs>
 
-# Create a template
+### Create a project from a template
 
-You can search for templates on [cyanprint.dev](https://cyanprint.dev) registry.
+You can search for templates on the [cyanprint.dev](https://cyanprint.dev) registry.
 
 ```bash
 cyanprint create <template> <folder>
@@ -75,6 +78,4 @@ cyanprint create cyan/new sample-project
 
 The template `cyan/new` allows users to create new CyanPrint templates.
 
-Follow and answer all the prompts.
-
-After which your project should be ready!
+Follow and answer all the prompts, and your project will be ready to use!

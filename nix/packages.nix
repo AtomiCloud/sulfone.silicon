@@ -14,7 +14,7 @@ let
     nix-2411 = (
       with pkgs-2411;
       {
-        nodejs = nodejs-slim_22;
+        nodejs = nodejs_22;
         inherit
           git
           infisical
@@ -22,6 +22,7 @@ let
           treefmt
           gitlint
           shellcheck
+          biome
           ;
       }
     );

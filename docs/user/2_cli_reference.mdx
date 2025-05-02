@@ -1,0 +1,187 @@
+---
+sidebar_position: 3
+---
+
+import Tabs from "@theme/Tabs";
+import TabItem from "@theme/TabItem";
+
+# CLI Reference
+
+This is a comprehensive reference guide for the CyanPrint CLI (Iridium). The CLI provides various commands to help you work with templates, manage your account, and create projects.
+
+## Global Options
+
+These options can be used with any command:
+
+| Option | Description |
+|--------|-------------|
+| `--help`, `-h` | Show help information |
+| `--version`, `-v` | Show version information |
+| `--json` | Output in JSON format |
+| `--coord-url` | Specify a custom coordinator URL |
+| `--registry-url` | Specify a custom registry URL |
+
+## Account Commands
+
+Commands for managing your CyanPrint account:
+
+### Login
+
+```bash
+cyanprint login
+```
+
+Login to your CyanPrint account.
+
+### Logout
+
+```bash
+cyanprint logout
+```
+
+Logout from your CyanPrint account.
+
+### Account Info
+
+```bash
+cyanprint account
+```
+
+Display information about your CyanPrint account.
+
+## Template Commands
+
+Commands for working with templates:
+
+### Create
+
+```bash
+cyanprint create <template> <directory>
+```
+
+Create a new project from a template.
+
+**Arguments:**
+- `<template>`: The name of the template to use
+- `<directory>`: The directory where the project will be created
+
+**Options:**
+- `--interactive`, `-i`: Run in interactive mode (default)
+- `--non-interactive`: Run in non-interactive mode
+- `--file`, `-f`: Specify a YAML file with template parameters
+
+### Search
+
+```bash
+cyanprint search <query>
+```
+
+Search for templates in the registry.
+
+**Arguments:**
+- `<query>`: The search query
+
+**Options:**
+- `--limit`, `-l`: Limit the number of results (default: 10)
+- `--sort`, `-s`: Sort by name, downloads, or last_updated
+
+### Info
+
+```bash
+cyanprint info <template>
+```
+
+Display information about a template.
+
+**Arguments:**
+- `<template>`: The name of the template
+
+## Local Templates
+
+Commands for working with local templates:
+
+### Run
+
+```bash
+cyanprint run <directory>
+```
+
+Run a local template.
+
+**Arguments:**
+- `<directory>`: The directory containing the template
+
+**Options:**
+- `--output`, `-o`: The output directory
+- `--interactive`, `-i`: Run in interactive mode (default)
+- `--file`, `-f`: Specify a YAML file with template parameters
+
+### Publish
+
+```bash
+cyanprint publish <directory>
+```
+
+Publish a local template to the registry.
+
+**Arguments:**
+- `<directory>`: The directory containing the template
+
+## Configuration
+
+Commands for managing your CyanPrint configuration:
+
+### Config Set
+
+```bash
+cyanprint config set <key> <value>
+```
+
+Set a configuration value.
+
+**Arguments:**
+- `<key>`: The configuration key
+- `<value>`: The configuration value
+
+### Config Get
+
+```bash
+cyanprint config get <key>
+```
+
+Get a configuration value.
+
+**Arguments:**
+- `<key>`: The configuration key
+
+### Config List
+
+```bash
+cyanprint config list
+```
+
+List all configuration values.
+
+## Examples
+
+Here are some common usage examples:
+
+### Creating a project from a template
+
+```bash
+# Create a project using interactive prompts
+cyanprint create cyan/nodejs myproject
+
+# Create a project using a configuration file
+cyanprint create cyan/nodejs myproject --file params.yaml
+```
+
+### Working with local templates
+
+```bash
+# Run a local template
+cyanprint run ./my-template --output ./output
+
+# Publish a local template
+cyanprint publish ./my-template
+``` 

@@ -32,6 +32,20 @@ const config: Config = {
     locales: ['en'],
   },
 
+  plugins: [
+    [
+      require.resolve('@easyops-cn/docusaurus-search-local'),
+      {
+        // Options for the search plugin
+        hashed: true, // Generate a stable document hash for indexes
+        language: ['en'], // Match the site language
+        indexDocs: true, // Index document pages
+        indexPages: false, // Don't index other pages
+        docsRouteBasePath: '/', // Use / as the base path for docs (matches routeBasePath in docs preset)
+      },
+    ],
+  ],
+
   presets: [
     [
       'classic',

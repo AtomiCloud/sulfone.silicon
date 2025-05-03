@@ -1,0 +1,97 @@
+---
+title: Installation
+description: Installation of CyanPrint
+---
+
+import { Tab, Tabs } from 'fumadocs-ui/components/tabs';
+
+# Installation
+
+For more complex installations, you can view this documentation.
+
+
+### Latest Version
+
+Install the latest version of CyanPrint CLI.
+
+<Tabs items={["Nix Shell", "Nix Profile", "Brew", "APT (Debian)", "YUM (Redhat)"]}>
+  <Tab id="nix-shell" value="Nix Shell">
+    ```bash
+    nix shell github:AtomiCloud/sulfone.iridium
+    ```
+  </Tab>
+  <Tab id="nix-profile" value="Nix Profile">
+    ```bash
+    nix profile install github:AtomiCloud/sulfone.iridium
+    ```
+  </Tab>
+  <Tab id="brew" value="Brew">
+    ```bash
+    bash brew install AtomiCloud/tap/cyanprint
+    ```
+  </Tab>
+  <Tab id="apt" value="APT (Debian)">
+    ```bash
+    sudo apt install software-properties-common -y sudo
+    apt-add-repository "deb [trusted=yes] https://apt.fury.io/AtomiCloud/ /" -y
+    sudo apt update -y
+    sudo apt install cyanprint
+    ```
+  </Tab>
+  <Tab id="yum" value="YUM (Redhat)">
+    ```bash
+    sudo sh -c 'echo "[fury]
+    name=AtomiCloud Repo
+    baseurl=https://yum.fury.io/atomicloud/
+    enabled=1
+    gpgcheck=0" > /etc/yum.repos.d/fury.repo'
+    yum install cyanprint
+    ```
+  </Tab>
+</Tabs>
+
+### Specific Version
+
+Install a specific version of CyanPrint CLI.
+
+<Tabs items={["Nix Shell", "Nix Profile", "Brew", "APT (Debian)", "YUM (Redhat)"]}>
+  <Tab id="nix-shell" value="Nix Shell">
+    ```bash
+    nix shell github:AtomiCloud/sulfone.iridium/v<version>
+    ```
+  </Tab>
+  <Tab id="nix-profile" value="Nix Profile">
+      ```bash
+      nix profile install github:AtomiCloud/sulfone.iridium/v<version>
+      ```
+  </Tab>
+  <Tab id="brew" value="Brew">
+    ```bash
+    brew install AtomiCloud/tap/cyanprint@<version>
+    ```
+  </Tab>
+  <Tab id="scoop" value="Scoop">
+      ```bash
+      scoop bucket add atomi https://github.com/AtomiCloud/scoop-bucket.git
+      scoop install atomi/cyanprint@<version>
+      ```
+  </Tab>
+  <Tab id="apt" value="APT (Debian)">
+    ```bash
+    sudo apt install software-properties-common -y
+    sudo apt-add-repository "deb [trusted=yes] https://apt.fury.io/AtomiCloud/ /" -y
+    sudo apt update -y
+    sudo apt install cyanprint@<version>
+    ```
+  </Tab>
+  <Tab id="yum" value="YUM (Redhat)">
+    ```bash
+    sudo sh -c 'echo "[fury]
+    name=AtomiCloud Repo
+    baseurl=https://yum.fury.io/atomicloud/
+    enabled=1
+    gpgcheck=0" > /etc/yum.repos.d/fury.repo'
+    yum install cyanprint-<version>
+    ```
+  </Tab>
+</Tabs>

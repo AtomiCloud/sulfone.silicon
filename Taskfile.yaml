@@ -1,14 +1,5 @@
 version: '3'
 
-vars:
-  API: http://127.0.0.1:9001
-
-dotenv:
-  - .env
-
-env:
-  PUBLIC_LANDSCAPE: lapras
-
 tasks:
   setup:
     desc: Setups
@@ -18,7 +9,7 @@ tasks:
   dev:
     desc: Start development
     cmds:
-      - bun run start
+      - bun run dev
 
   build:
     desc: Build project

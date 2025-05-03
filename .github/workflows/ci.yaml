@@ -1,26 +1,13 @@
-name: CI-CD
+name: CI
 
 on:
   push:
 
 jobs:
   precommit:
-    name: Pre-commit Check
-    runs-on: ubuntu-22.04
-    steps:
-      - uses: actions/checkout@v4
-      - uses: DeterminateSystems/nix-installer-action@main
-      - uses: DeterminateSystems/magic-nix-cache-action@main
-      - name: Run pre-commit
-        run: nix develop .#ci -c ./scripts/ci/pre-commit.sh
-  release:
-    name: Release
-    runs-on: ubuntu-22.04
-    steps:
-      - uses: actions/checkout@v4
-      - uses: DeterminateSystems/nix-installer-action@main
-      - uses: DeterminateSystems/magic-nix-cache-action@main
-      - name: Run release
-        env:
-          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
-        run: nix develop .#ci -c ./scripts/ci/release.sh
+    name: Pre-Commit
+    uses: ./.github/workflows/⚡reusable-precommit.yaml
+    secrets: inherit
+    with:
+      atomi_platform: sulfone
+      atomi_service: silicon

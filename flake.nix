@@ -6,7 +6,7 @@
     pre-commit-hooks.url = "github:cachix/pre-commit-hooks.nix";
 
     # registry
-    nixpkgs.url = "nixpkgs/78058d810644f5ed276804ce7ea9e82d92bee293";
+    nixpkgs.url = "nixpkgs/nixos-unstable";
     nixpkgs-2411.url = "nixpkgs/nixos-24.11";
     atomipkgs.url = "github:AtomiCloud/nix-registry/v2";
 

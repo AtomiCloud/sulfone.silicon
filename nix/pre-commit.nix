@@ -7,6 +7,7 @@ pre-commit-lib.run {
     # formatter
     treefmt = {
       enable = true;
+      package = formatter;
       excludes = [
         ".*(Changelog|README).+(MD|md)"
         ".*mdx"
@@ -14,8 +15,15 @@ pre-commit-lib.run {
     };
 
     # linters From https://github.com/cachix/pre-commit-hooks.nix
-    shellcheck = {
-      enable = false;
+    shellcheck.enable = false;
+
+    a-biome = {
+      enable = true;
+      name = "Biome Lint";
+      entry = "${packages.biome}/bin/biome lint --write";
+      files = ".*[tj]s$";
+      language = "system";
+      pass_filenames = true;
     };
 
     a-infisical = {
@@ -76,9 +84,4 @@ pre-commit-lib.run {
 
   };
 
-  settings = {
-    treefmt = {
-      package = formatter;
-    };
-  };
 }

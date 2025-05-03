@@ -25,6 +25,7 @@ with packages;
     gitlint
     shellcheck
     sg
+    biome
   ];
 
   releaser = [

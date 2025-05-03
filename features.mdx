@@ -1,0 +1,319 @@
+---
+# this the title of the page, on the side-bar
+title: Title Example
+# this is the description of the page, shown as the subtitle of the page
+description: This is an example page.
+---
+
+
+# Header 1 Example
+
+This is an example page content.
+
+## Header 2 Example
+
+This is an example page content.
+
+Standard GFM (github flavored markdown) is supported.
+
+## Render Mermaid diagrams
+
+<Mermaid
+  chart="
+graph TD;
+subgraph AA [Consumers]
+A[Mobile app];
+B[Web app];
+C[Node.js client];
+end
+subgraph BB [Services]
+E[REST API];
+F[GraphQL API];
+G[SOAP API];
+end
+Z[GraphQL API];
+A --> Z;
+B --> Z;
+C --> Z;
+Z --> E;
+Z --> F;
+Z --> G;"
+/>
+
+
+
+## we can use callouts
+
+<Callout type="info">
+  This is an info callout.
+</Callout>
+
+<Callout type="warn">
+  This is an warning callout.
+</Callout>
+
+<Callout type="error">
+  This is an error callout.
+</Callout>
+
+# Code
+
+## LaTeX equations
+
+
+```math
+E = mc^2
+```
+
+## we can use code blocks
+
+```ts
+const a = 1;
+```
+
+<Callout type="info">
+  We can use some of CodeHike's features, which is listed here
+</Callout>
+
+## Code callouts
+
+Allows you to add callouts inside the codeblocks
+
+```js
+const lorem = ipsum(dolor, sit)
+// !callout[/amet/] This is a callout
+const [amet, consectetur] = [0, 0]
+lorem.adipiscing((sed, elit) => {
+  if (sed) {
+    amet += elit
+  }
+})
+```
+
+## Code ClassName
+
+Allows you to add class names to the codeblocks or words
+
+```js
+function lorem(ipsum, dolor = 1) {
+  // !className line-through
+  const sit = ipsum == null ? 0 : ipsum.sit
+  dolor = sit - amet(dolor)
+  // !className[/sit/] bg-red-700 rounded-lg px-1
+  return sit ? consectetur(ipsum) : []
+}
+```
+## Enable Copy Button
+
+We can enable the copy button with the -c flag
+
+```js -c
+const a = 1;
+```
+
+## Enable Line Numbers
+
+We can enable the line numbers with the -n flag
+
+```js -n
+const a = 1;
+```
+
+## Enable borders
+
+We can enable the borders with the -b flag
+
+```js -b
+const a = 1;
+```
+
+## Enable Multiple Flags
+
+We can enable multiple flags at once
+
+```js -cnb
+const a = 1;
+```
+
+## Add file name
+
+Note that the suffix (`.js`) will determine the logo of the the code block.
+
+Blocks with titles always have borders.
+
+```js example.js -cnb 
+const a = 1;
+```
+
+## Diff 
+
+We can use the diff flag to add a diff to the codeblock
+
+```js
+function lorem(ipsum, dolor = 1) {
+  const sit = ipsum == null ? 0 : ipsum.sit
+  // !diff -
+  dolor = ipsum - sit
+  // !diff +
+  dolor = sit - amet(dolor)
+  return sit ? consectetur(ipsum) : []
+}
+```
+
+## Add links
+
+Add links to code snippets.
+
+```js
+function lorem(ipsum, dolor = 1) {
+  const sit = ipsum == null ? 0 : ipsum.sit
+  dolor = sit - amet(dolor)
+  // !link[/ipsum/] https://example.com
+  return sit ? consectetur(ipsum) : []
+}
+```
+
+## We can mark lines
+
+Highlight lines with different configurations
+
+```js
+function lorem(ipsum, dolor = 1) {
+  // !mark
+  return dolor
+}
+
+function ipsum(lorem, dolor = 1) {
+  // !mark(1:2) gold
+  const sit = lorem == null ? 0 : lorem.sit
+  dolor = sit - amet(dolor)
+  // !mark[/sit/] pink
+  return sit ? consectetur(lorem) : []
+}
+```
+
+# Cards
+Useful for adding links, it is included by default
+
+We can add cards like below:
+
+<Cards>
+  <Card
+    href="https://nextjs.org/docs/app/building-your-application/data-fetching/fetching-caching-and-revalidating"
+    title="Fetching, Caching, and Revalidating"
+  >
+    Learn more about caching in Next.js
+  </Card>
+  <Card title="href is optional">Learn more about `fetch` in Next.js.</Card>
+</Cards>
+
+
+or even add icons to them: 
+
+import { HomeIcon } from 'lucide-react';
+ 
+<Cards>
+  <Card icon={<HomeIcon />} href="/" title="Home">
+    Go back to home
+  </Card>
+</Cards>
+
+
+TOC Settings
+The table of contents (TOC) will be generated based on headings, you can also customise the effects of headings:
+
+
+# Heading [!toc]
+ 
+This heading will be hidden from TOC.
+ 
+# Another Heading [toc]
+ 
+This heading will **only** be visible in TOC, you can use it to add additional TOC items.
+Like headings rendered in a React component:
+ 
+# Custom Anchor
+You can add [#slug] to customise heading anchors.
+
+
+## heading3 [#my-heading-id]
+You can also chain it with TOC settings like:
+
+## heading2 [toc] [#my-heading-id-2]
+
+# you can add tabs too
+
+import { Tab, Tabs } from 'fumadocs-ui/components/tabs';
+ 
+<Tabs items={['Javascript', 'Rust']}>
+  <Tab value="Javascript">Javascript is weird</Tab>
+  <Tab value="Rust">Rust is fast</Tab>
+</Tabs>
+
+## without value label
+ 
+<Tabs items={['Javascript', 'Rust']}>
+  <Tab>Javascript is weird</Tab>
+  <Tab>Rust is fast</Tab>
+</Tabs>
+
+## group ID 
+
+<Tabs groupId="language" items={['Javascript', 'Rust']}>
+  <Tab value="Javascript">Javascript is weird</Tab>
+  <Tab value="Rust">Rust is fast</Tab>
+</Tabs>
+
+## persist
+
+<Tabs groupId="language" items={['Javascript', 'Rust']} persist>
+  <Tab value="Javascript">Javascript is weird</Tab>
+  <Tab value="Rust">Rust is fast</Tab>
+</Tabs>
+
+# We can add steps/instructions
+
+import { Step, Steps } from 'fumadocs-ui/components/steps';
+ 
+<Steps>
+<Step>
+ 
+### Hello World 1
+ 
+</Step>
+ 
+<Step>
+ 
+### Hello World 2
+ 
+</Step>
+</Steps>
+
+
+# We can add github info
+
+import { GithubInfo } from 'fumadocs-ui/components/github-info';
+ 
+<GithubInfo
+  owner="fuma-nama"
+  repo="fumadocs"
+  token={process.env.GITHUB_TOKEN}
+/>;
+
+# We can display file structure
+
+import { File, Folder, Files } from 'fumadocs-ui/components/files';
+ 
+<Files>
+  <Folder name="app" defaultOpen>
+    <File name="layout.tsx" />
+    <File name="page.tsx" />
+    <File name="global.css" />
+  </Folder>
+  <Folder name="components">
+    <File name="button.tsx" />
+    <File name="tabs.tsx" />
+    <File name="dialog.tsx" />
+  </Folder>
+  <File name="package.json" />
+</Files>

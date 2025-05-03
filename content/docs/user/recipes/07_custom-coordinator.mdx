@@ -1,0 +1,168 @@
+---
+title: Use Custom Coordinator
+description: Learn how to configure CyanPrint to use a custom coordinator
+---
+
+# Use Custom Coordinator
+
+This recipe shows you how to configure CyanPrint to use a custom coordinator instead of the default public one.
+
+## Why Use a Custom Coordinator?
+
+You might want to use a custom coordinator when:
+
+- Working in an enterprise environment with specific security requirements
+- Using a private registry for templates
+- Operating in an air-gapped network
+- Needing custom resource allocations for template processing
+- Developing or testing CyanPrint components
+
+## Prerequisites
+
+Before you begin, make sure you have:
+
+- [CyanPrint CLI](/docs/user/tutorial/00_installation) installed
+- Access to a custom coordinator (URL and any required credentials)
+
+## Configuring a Custom Coordinator
+
+<Steps>
+  <Step>
+    **View Current Coordinator Configuration**
+    
+    ```bash
+    cyan config get coordinator
+    ```
+    
+    This will display the currently configured coordinator URL, which is `https://coordinator.cyanprint.dev` by default.
+  </Step>
+  
+  <Step>
+    **Set the Custom Coordinator**
+    
+    ```bash
+    cyan config set coordinator https://your-custom-coordinator.example.com
+    ```
+    
+    Replace `https://your-custom-coordinator.example.com` with the URL of your custom coordinator.
+  </Step>
+  
+  <Step>
+    **Verify the Configuration**
+    
+    ```bash
+    cyan config get coordinator
+    ```
+    
+    This should now display your custom coordinator URL.
+  </Step>
+</Steps>
+
+## Using Authentication
+
+If your custom coordinator requires authentication:
+
+<Tabs items={['API Key', 'OAuth', 'Basic Auth']}>
+  <Tab value="API Key">
+    ```bash
+    # Set the API key
+    cyan config set coordinator.api_key your-api-key
+    
+    # Verify the configuration
+    cyan config get coordinator.api_key
+    ```
+    
+    The API key will be included in requests to the coordinator.
+  </Tab>
+  
+  <Tab value="OAuth">
+    ```bash
+    # Set the OAuth token
+    cyan config set coordinator.oauth_token your-oauth-token
+    
+    # Verify the configuration
+    cyan config get coordinator.oauth_token
+    ```
+    
+    The OAuth token will be included in requests to the coordinator.
+  </Tab>
+  
+  <Tab value="Basic Auth">
+    ```bash
+    # Set the username and password
+    cyan config set coordinator.username your-username
+    cyan config set coordinator.password your-password
+    
+    # Verify the configuration
+    cyan config get coordinator.username
+    ```
+    
+    The username and password will be used for basic authentication with the coordinator.
+  </Tab>
+</Tabs>
+
+<Callout type="warning">
+  Storing credentials in the CyanPrint configuration is convenient but may pose security risks. Consider using environment variables or a credential manager for sensitive information in production environments.
+</Callout>
+
+## Testing the Custom Coordinator
+
+After configuring the custom coordinator, test it by running a simple CyanPrint command:
+
+```bash
+cyan search
+```
+
+This should query your custom coordinator for available templates.
+
+<Callout type="info">
+  If the command fails, check that your custom coordinator is running and accessible, and that any required authentication is correctly configured.
+</Callout>
+
+## Advanced Configuration
+
+### Timeout Settings
+
+You can configure the timeout for coordinator requests:
+
+```bash
+# Set the timeout in seconds
+cyan config set coordinator.timeout 30
+```
+
+### Custom Headers
+
+If your coordinator requires custom headers:
+
+```bash
+# Set a custom header
+cyan config set coordinator.headers.X-Custom-Header "custom-value"
+```
+
+### Proxy Configuration
+
+If you need to use a proxy to access the coordinator:
+
+```bash
+# Set the proxy URL
+cyan config set coordinator.proxy "http://proxy.example.com:8080"
+```
+
+## Reverting to the Default Coordinator
+
+To revert to using the default public coordinator:
+
+```bash
+cyan config reset coordinator
+```
+
+This will remove all custom coordinator settings and restore the default configuration.
+
+## Related Recipes
+
+- [Setup Custom Coordinator (Local)](/docs/user/recipes/06_local-coordinator)
+- [Install Specific CyanPrint Version](/docs/user/recipes/03_specific-version)
+
+## Related Concepts
+
+- [Coordinator](/docs/user/concepts/02_coordinator) - Learn about the role of the coordinator in CyanPrint

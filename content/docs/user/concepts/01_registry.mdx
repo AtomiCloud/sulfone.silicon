@@ -1,0 +1,117 @@
+---
+title: CyanPrint Registry
+description: Understanding the CyanPrint registry and how it works
+---
+
+# CyanPrint Registry
+
+The CyanPrint Registry is a central repository where templates, processors, and plugins are stored and distributed. It serves as the backbone of the CyanPrint ecosystem, enabling users to discover and use components created by the community.
+
+## What is the Registry?
+
+The CyanPrint Registry is:
+
+- A centralized storage system for CyanPrint components
+- A discovery platform for finding templates, processors, and plugins
+- A versioning system that tracks component updates
+- A distribution mechanism that delivers components to users
+
+## Registry Architecture
+
+The Registry consists of two main components:
+
+1. **Frontend (Argon)**: The web interface that allows users to browse, search, and discover components
+2. **Backend (Zinc)**: The API and storage system that manages component metadata and files
+
+<Callout type="info">
+  The Registry is hosted at [registry.cyanprint.dev](https://registry.cyanprint.dev), but CyanPrint CLI interacts with it automatically when you run commands like `cyan new` or `cyan search`.
+</Callout>
+
+## How the Registry Works
+
+When you interact with the Registry through the CyanPrint CLI:
+
+1. **Discovery**: The CLI queries the Registry API to find available components
+2. **Download**: When you select a component, the CLI downloads it from the Registry
+3. **Caching**: Components are cached locally to improve performance and enable offline use
+4. **Updates**: The CLI checks for updates when you request a component
+
+<Tabs items={['Template Discovery', 'Component Download', 'Version Management']}>
+  <Tab value="Template Discovery">
+    When you run `cyan search`, the CLI sends a request to the Registry API, which returns a list of available templates matching your search criteria. The results include metadata such as:
+    
+    - Template name and description
+    - Author information
+    - Version history
+    - Tags and categories
+    - Popularity metrics
+  </Tab>
+  
+  <Tab value="Component Download">
+    When you run `cyan new template-name`, the CLI:
+    
+    1. Queries the Registry for the latest version of the template
+    2. Downloads the template files to a local cache
+    3. Prepares the template for execution
+    
+    The download process is optimized to minimize bandwidth usage and improve performance.
+  </Tab>
+  
+  <Tab value="Version Management">
+    The Registry tracks versions of each component using semantic versioning (SemVer). This allows:
+    
+    - Users to request specific versions of a component
+    - Automatic updates to the latest compatible version
+    - Backward compatibility between versions
+    
+    You can specify a version when using a template:
+    
+    ```bash
+    cyan new template-name@1.2.3
+    ```
+  </Tab>
+</Tabs>
+
+## Registry Security
+
+The Registry implements several security measures:
+
+- **Authentication**: Component publishers must authenticate to publish components
+- **Verification**: Components are verified for quality and security
+- **Signing**: Components are cryptographically signed to ensure integrity
+- **Permissions**: Access controls determine who can publish and update components
+
+<Callout type="warning">
+  While the Registry implements security measures, always review the source of templates before using them for sensitive projects.
+</Callout>
+
+## Custom Registries
+
+CyanPrint supports connecting to custom registries, which is useful for:
+
+- Private organizational templates
+- Development and testing
+- Air-gapped environments
+- Specialized component collections
+
+To use a custom registry, see the [Use Custom Coordinator](/docs/user/recipes/custom-coordinator) recipe.
+
+## Registry Web Interface
+
+The Registry web interface at [registry.cyanprint.dev](https://registry.cyanprint.dev) provides additional features:
+
+- Detailed component documentation
+- User ratings and reviews
+- Example projects
+- Author profiles
+- Advanced search filters
+
+<Callout type="tip">
+  The web interface is particularly useful for discovering new components and learning about their features before using them.
+</Callout>
+
+## Related Concepts
+
+- [Phases](/docs/user/concepts/00_phases) - How CyanPrint processes templates
+- [Coordinator](/docs/user/concepts/02_coordinator) - How CyanPrint orchestrates template execution
+- [Template Upgrades](/docs/user/concepts/03_template-upgrades) - How templates are versioned and upgraded

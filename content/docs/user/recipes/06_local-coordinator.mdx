@@ -1,0 +1,179 @@
+---
+title: Setup Custom Coordinator (Local)
+description: Learn how to set up a local coordinator for CyanPrint development
+---
+
+# Setup Custom Coordinator (Local)
+
+This recipe shows you how to set up a local coordinator for CyanPrint development or offline use.
+
+## Why Set Up a Local Coordinator?
+
+You might want to set up a local coordinator when:
+
+- Developing templates, processors, or plugins
+- Working in an environment without internet access
+- Testing CyanPrint in a controlled environment
+- Customizing the coordinator behavior
+
+## Prerequisites
+
+Before you begin, make sure you have:
+
+- [Docker](https://www.docker.com/) installed on your system
+- [CyanPrint CLI](/docs/user/tutorial/00_installation) installed
+
+## Setting Up a Local Coordinator
+
+<Steps>
+  <Step>
+    **Pull the Coordinator Image**
+    
+    ```bash
+    docker pull atomicloud/sulfone.boron:latest
+    ```
+  </Step>
+  
+  <Step>
+    **Create a Configuration Directory**
+    
+    ```bash
+    mkdir -p ~/.cyan/coordinator
+    ```
+  </Step>
+  
+  <Step>
+    **Create a Configuration File**
+    
+    Create a file at `~/.cyan/coordinator/config.yaml` with the following content:
+    
+    ```yaml
+    port: 3000
+    registry:
+      url: https://registry.cyanprint.dev
+    storage:
+      type: local
+      path: /data/cache
+    ```
+    
+    <Callout type="info">
+      This configuration uses the public registry but runs the coordinator locally. You can also set up a local registry if needed.
+    </Callout>
+  </Step>
+  
+  <Step>
+    **Run the Coordinator Container**
+    
+    ```bash
+    docker run -d \
+      --name cyan-coordinator \
+      -p 3000:3000 \
+      -v ~/.cyan/coordinator:/config \
+      -v ~/.cyan/cache:/data/cache \
+      atomicloud/sulfone.boron:latest \
+      --config /config/config.yaml
+    ```
+  </Step>
+  
+  <Step>
+    **Configure CyanPrint to Use the Local Coordinator**
+    
+    ```bash
+    cyan config set coordinator http://localhost:3000
+    ```
+  </Step>
+</Steps>
+
+## Verifying the Setup
+
+To verify that your local coordinator is working correctly:
+
+```bash
+# Check the coordinator status
+curl http://localhost:3000/health
+
+# Verify that CyanPrint is using the local coordinator
+cyan config get coordinator
+```
+
+You should see `http://localhost:3000` as the configured coordinator.
+
+## Using the Local Coordinator
+
+Once your local coordinator is set up, you can use CyanPrint as normal:
+
+```bash
+cyan new template-name
+```
+
+All template operations will now be processed by your local coordinator.
+
+<Callout type="tip">
+  You can view the coordinator logs for debugging purposes:
+  
+  ```bash
+  docker logs -f cyan-coordinator
+  ```
+</Callout>
+
+## Advanced Configuration
+
+### Custom Registry
+
+To use a custom registry with your local coordinator, update the `config.yaml` file:
+
+```yaml
+port: 3000
+registry:
+  url: https://your-custom-registry.example.com
+storage:
+  type: local
+  path: /data/cache
+```
+
+### Resource Limits
+
+You can limit the resources used by the coordinator:
+
+```bash
+docker run -d \
+  --name cyan-coordinator \
+  -p 3000:3000 \
+  -v ~/.cyan/coordinator:/config \
+  -v ~/.cyan/cache:/data/cache \
+  --memory=1g \
+  --cpus=2 \
+  atomicloud/sulfone.boron:latest \
+  --config /config/config.yaml
+```
+
+## Stopping the Local Coordinator
+
+To stop the local coordinator:
+
+```bash
+docker stop cyan-coordinator
+```
+
+To remove the container:
+
+```bash
+docker rm cyan-coordinator
+```
+
+## Reverting to the Default Coordinator
+
+To revert to using the default public coordinator:
+
+```bash
+cyan config reset coordinator
+```
+
+## Related Recipes
+
+- [Use Custom Coordinator](/docs/user/recipes/07_custom-coordinator)
+- [Install Specific CyanPrint Version](/docs/user/recipes/03_specific-version)
+
+## Related Concepts
+
+- [Coordinator](/docs/user/concepts/02_coordinator) - Learn about the role of the coordinator in CyanPrint

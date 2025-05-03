@@ -1,0 +1,81 @@
+---
+title: Installation
+description: How to install CyanPrint CLI on different platforms
+---
+
+# Installing CyanPrint
+
+CyanPrint can be installed on various platforms using different package managers.
+
+<Tabs items={['Linux', 'macOS', 'Windows']}>
+  <Tab value="Linux">
+    ## Linux Installation
+
+    ### Using Homebrew
+
+    If you have Homebrew installed:
+
+    ```bash
+    brew install atomicloud/tap/cyan
+    ```
+
+    ### Using Direct Download
+
+    1. Download the latest release from [GitHub Releases](https://github.com/AtomiCloud/sulfone.iridium/releases)
+    2. Extract the archive
+    3. Move the binary to a location in your PATH
+
+    ```bash
+    chmod +x ./cyan
+    sudo mv ./cyan /usr/local/bin/
+    ```
+  </Tab>
+
+  <Tab value="macOS">
+    ## macOS Installation
+
+    ### Using Homebrew
+
+    ```bash
+    brew install atomicloud/tap/cyan
+    ```
+
+    ### Using Direct Download
+
+    1. Download the latest release from [GitHub Releases](https://github.com/AtomiCloud/sulfone.iridium/releases)
+    2. Extract the archive
+    3. Move the binary to a location in your PATH
+
+    ```bash
+    chmod +x ./cyan
+    sudo mv ./cyan /usr/local/bin/
+    ```
+  </Tab>
+
+  <Tab value="Windows">
+    ## Windows Installation
+
+    ### Using Direct Download
+
+    1. Download the latest release from [GitHub Releases](https://github.com/AtomiCloud/sulfone.iridium/releases)
+    2. Extract the archive
+    3. Add the location to your PATH environment variable
+  </Tab>
+</Tabs>
+
+## Verifying Installation
+
+After installation, verify that CyanPrint is correctly installed by running:
+
+```bash
+cyan --version
+```
+
+You should see the version number of CyanPrint displayed.
+
+## Next Steps
+
+Now that you have CyanPrint installed, you can:
+
+- [Use a Template](/docs/user/tutorial/01_use-template) to create your first project
+- [Search the Registry](/docs/user/tutorial/02_search-registry) to find available templates

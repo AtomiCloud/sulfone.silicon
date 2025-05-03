@@ -1,0 +1,112 @@
+---
+title: Go to Previous Question
+description: Learn how to navigate back to a previous question during template execution
+---
+
+# Go to Previous Question
+
+When using CyanPrint templates, you might need to go back to a previous question to change your answer. This recipe shows you how to navigate back during the interactive prompting phase.
+
+## Using Keyboard Navigation
+
+During template execution, you can navigate to previous questions using keyboard shortcuts:
+
+1. Press the **Up Arrow** key to move to the previous question
+2. Press the **Down Arrow** key to move back to where you were
+
+<Callout type="info">
+  You can navigate through multiple questions by pressing the Up Arrow key multiple times.
+</Callout>
+
+## Using the "back" Command
+
+You can also type `back` at any prompt to return to the previous question:
+
+```
+? Select a package manager: back
+```
+
+This will take you back to the previous question in the sequence.
+
+## Example Workflow
+
+Here's an example of navigating back during template execution:
+
+<Steps>
+  <Step>
+    **Project Name Question**
+    
+    ```
+    ? Project name: my-project
+    ```
+    
+    You enter "my-project" and press Enter.
+  </Step>
+  
+  <Step>
+    **Package Manager Question**
+    
+    ```
+    ? Package manager: npm
+    ```
+    
+    You select "npm" and press Enter.
+  </Step>
+  
+  <Step>
+    **TypeScript Question**
+    
+    ```
+    ? Use TypeScript? Yes
+    ```
+    
+    You select "Yes" and press Enter.
+  </Step>
+  
+  <Step>
+    **Going Back**
+    
+    At the next question, you realize you want to change your package manager choice.
+    
+    ```
+    ? Include testing framework? back
+    ```
+    
+    You type "back" and press Enter.
+  </Step>
+  
+  <Step>
+    **Changing Your Answer**
+    
+    ```
+    ? Use TypeScript? back
+    ```
+    
+    You type "back" again to go back to the package manager question.
+  </Step>
+  
+  <Step>
+    **Updating Your Choice**
+    
+    ```
+    ? Package manager: yarn
+    ```
+    
+    You select "yarn" instead of "npm" and continue with the template.
+  </Step>
+</Steps>
+
+## Limitations
+
+- You can only navigate back through questions that have already been asked
+- Some templates may have dependencies between questions, so changing an earlier answer might reset subsequent questions
+- You cannot skip ahead to questions that haven't been asked yet
+
+## Related Recipes
+
+- [Install Template and Create Folder](/docs/user/recipes/01_install-create-folder)
+- [Install Template in Current Folder](/docs/user/recipes/02_install-current-folder)
+
+## Related Concepts
+
+- [Phases](/docs/user/concepts/00_phases) - Learn about the different phases of CyanPrint, including the question phase

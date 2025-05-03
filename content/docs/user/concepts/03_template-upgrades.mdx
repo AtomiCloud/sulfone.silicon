@@ -1,0 +1,182 @@
+---
+title: Template Upgrades
+description: Understanding template versioning and upgrades in CyanPrint
+---
+
+# Template Upgrades
+
+CyanPrint templates evolve over time as developers add features, fix bugs, and improve functionality. This document explains how template versioning works and how you can upgrade your projects to use newer template versions.
+
+<Callout type="info">
+  Template upgrades are a planned future feature of CyanPrint. This document outlines the expected functionality, but some details may change when the feature is fully implemented.
+</Callout>
+
+## Template Versioning
+
+CyanPrint templates follow semantic versioning (SemVer), which uses a three-part version number: `MAJOR.MINOR.PATCH`.
+
+- **MAJOR**: Incremented for incompatible changes that may require manual migration
+- **MINOR**: Incremented for new features that are backward compatible
+- **PATCH**: Incremented for backward compatible bug fixes
+
+When you use a template, CyanPrint records the exact version used to generate your project. This information is stored in a `.cyanprint.json` file in your project root.
+
+```json
+{
+  "template": "react-app",
+  "version": "1.2.3",
+  "timestamp": "2025-04-15T12:34:56Z",
+  "answers": {
+    // Your answers to the template questions
+  }
+}
+```
+
+## Checking for Updates
+
+To check if updates are available for a template used in your project:
+
+```bash
+cyan check-updates
+```
+
+This command:
+1. Reads the `.cyanprint.json` file in your project
+2. Queries the registry for the latest version of the template
+3. Compares the versions and reports if updates are available
+
+Example output:
+
+```
+Template: react-app
+Current version: 1.2.3
+Latest version: 1.3.0
+Update available: Yes (Minor update)
+
+Changes:
+- Added support for CSS modules
+- Improved build performance
+- Fixed HMR issues
+```
+
+## Upgrading Templates
+
+<Callout type="warning">
+  Template upgrades are a future feature. The commands and functionality described below represent the planned implementation.
+</Callout>
+
+To upgrade a project to use a newer template version:
+
+```bash
+cyan upgrade
+```
+
+This command:
+1. Checks for available updates
+2. Analyzes the changes between versions
+3. Applies the updates to your project
+4. Updates the `.cyanprint.json` file with the new version
+
+<Tabs items={['Simple Upgrades', 'Interactive Upgrades', 'Selective Upgrades']}>
+  <Tab value="Simple Upgrades">
+    For simple upgrades (typically patch versions), CyanPrint can automatically apply changes without user intervention:
+    
+    ```bash
+    cyan upgrade --auto
+    ```
+    
+    This is suitable for bug fixes and minor improvements that don't affect your customizations.
+  </Tab>
+  
+  <Tab value="Interactive Upgrades">
+    For more complex upgrades, CyanPrint provides an interactive mode:
+    
+    ```bash
+    cyan upgrade --interactive
+    ```
+    
+    This walks you through each change, allowing you to:
+    - Accept or reject specific changes
+    - Resolve conflicts between template changes and your customizations
+    - Preview the impact of each change
+  </Tab>
+  
+  <Tab value="Selective Upgrades">
+    You can also upgrade to a specific version:
+    
+    ```bash
+    cyan upgrade --version 1.3.0
+    ```
+    
+    Or upgrade only certain aspects of the template:
+    
+    ```bash
+    cyan upgrade --components build-system,linting
+    ```
+    
+    This allows for more granular control over the upgrade process.
+  </Tab>
+</Tabs>
+
+## Upgrade Strategies
+
+When upgrading templates, consider these strategies:
+
+### 1. Incremental Upgrades
+
+For projects based on templates with multiple version jumps, upgrade incrementally:
+
+```bash
+# First upgrade to 1.1.0
+cyan upgrade --version 1.1.0
+
+# Then to 1.2.0
+cyan upgrade --version 1.2.0
+
+# Finally to 2.0.0
+cyan upgrade --version 2.0.0
+```
+
+This approach makes it easier to resolve conflicts and understand changes.
+
+### 2. Dry Run
+
+Before applying changes, perform a dry run to see what would change:
+
+```bash
+cyan upgrade --dry-run
+```
+
+This generates a report of all changes without modifying your project.
+
+### 3. Backup First
+
+Always create a backup or commit your changes before upgrading:
+
+```bash
+git commit -am "Pre-template upgrade commit"
+```
+
+This allows you to revert if the upgrade doesn't meet your expectations.
+
+## Handling Conflicts
+
+When template changes conflict with your customizations, CyanPrint provides several resolution strategies:
+
+- **Keep yours**: Preserve your customizations
+- **Use template**: Apply the template changes
+- **Merge**: Attempt to combine both changes
+- **Edit**: Manually edit the conflicting files
+
+The interactive upgrade mode guides you through these conflicts with a user-friendly interface.
+
+## Related Concepts
+
+- [Phases](/docs/user/concepts/00_phases) - How CyanPrint processes templates
+- [Registry](/docs/user/concepts/01_registry) - How CyanPrint stores and retrieves templates
+- [Coordinator](/docs/user/concepts/02_coordinator) - How CyanPrint orchestrates template execution
+
+## Related Recipes
+
+- [Run Specific Template Version](/docs/user/recipes/template-version)
+- [Multiple Templates](/docs/user/recipes/multiple-templates)

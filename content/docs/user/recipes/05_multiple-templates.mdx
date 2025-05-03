@@ -1,0 +1,109 @@
+---
+title: Multiple Templates
+description: Learn how to combine multiple templates in a single project
+---
+
+# Using Multiple Templates
+
+This recipe shows you how to combine multiple CyanPrint templates in a single project.
+
+## Why Use Multiple Templates?
+
+You might want to use multiple templates when:
+
+- Building a complex project with different components
+- Adding specific functionality to an existing project
+- Combining frontend and backend templates
+- Extending a project with additional features
+
+## Sequential Template Application
+
+The most common way to use multiple templates is to apply them sequentially:
+
+<Steps>
+  <Step>
+    **Create the base project with the first template**
+    
+    ```bash
+    cyan new base-template my-project
+    ```
+    
+    This creates your initial project structure.
+  </Step>
+  
+  <Step>
+    **Navigate to the project directory**
+    
+    ```bash
+    cd my-project
+    ```
+  </Step>
+  
+  <Step>
+    **Apply additional templates**
+    
+    ```bash
+    cyan new additional-template --here
+    ```
+    
+    The `--here` flag tells CyanPrint to apply the template to the current directory.
+  </Step>
+</Steps>
+
+<Callout type="warning">
+  When applying multiple templates, be careful about potential conflicts. Templates might try to create or modify the same files.
+</Callout>
+
+## Example: Creating a Full-Stack Application
+
+Let's create a full-stack application by combining a backend API template with a frontend React template:
+
+```bash
+# Create the base project with the backend template
+cyan new node-express-api my-fullstack-app
+
+# Navigate to the project directory
+cd my-fullstack-app
+
+# Apply the frontend template
+cyan new react-app --here --target frontend
+
+# The --target option (if supported by the template) specifies
+# where to generate the frontend files
+```
+
+## Using Template Composition
+
+Some templates are designed to work together through composition. These templates are aware of each other and can integrate seamlessly:
+
+```bash
+# Create a project with composed templates
+cyan new fullstack-app --with auth-module,database-module
+```
+
+<Callout type="info">
+  Template composition is a more advanced feature and depends on templates being designed to work together. Not all templates support composition.
+</Callout>
+
+## Best Practices
+
+When working with multiple templates:
+
+1. **Apply templates in the right order**: Start with the most fundamental template and add more specific ones later.
+
+2. **Use version control**: Commit your changes after applying each template to track changes and revert if needed.
+
+3. **Resolve conflicts carefully**: When templates conflict, carefully review the changes to ensure the correct functionality is preserved.
+
+4. **Use template options**: Many templates provide options to customize their behavior, which can help avoid conflicts.
+
+5. **Consider custom directories**: Apply templates to subdirectories when appropriate to keep components separate.
+
+## Related Recipes
+
+- [Install Template in Current Folder](/docs/user/recipes/02_install-current-folder)
+- [Run Specific Template Version](/docs/user/recipes/04_template-version)
+
+## Related Concepts
+
+- [Template Upgrades](/docs/user/concepts/03_template-upgrades)

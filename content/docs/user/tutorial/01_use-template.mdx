@@ -1,0 +1,128 @@
+---
+title: Using a Template
+description: Learn how to create a new project using a CyanPrint template
+---
+
+# Using a CyanPrint Template
+
+This tutorial will guide you through the process of creating a new project using a CyanPrint template.
+
+## Prerequisites
+
+Before you begin, make sure you have:
+
+- [Installed CyanPrint](/docs/user/tutorial/00_installation) on your system
+- Internet connection to access the CyanPrint registry
+
+## Creating a New Project
+
+### Basic Usage
+
+To create a new project using a template, use the `cyan new` command followed by the template name:
+
+```bash
+cyan new template-name
+```
+
+This will:
+1. Download the specified template from the registry
+2. Run the template's interactive prompts
+3. Generate your project based on your answers
+
+### Example: Creating a React Application
+
+Let's create a simple React application using the `react-app` template:
+
+```bash
+cyan new react-app my-react-app
+```
+
+<Callout type="info">
+  The second argument (`my-react-app`) is optional and specifies the directory name for your new project. If omitted, CyanPrint will ask you for a project name during the interactive prompts.
+</Callout>
+
+### Interactive Prompts
+
+After running the command, CyanPrint will guide you through a series of questions to customize your project:
+
+<Steps>
+  <Step>
+    **Project Name**
+    
+    If you didn't specify a project name in the command, you'll be asked to provide one.
+    
+    ```
+    ? Project name: my-react-app
+    ```
+  </Step>
+  
+  <Step>
+    **Template-specific Questions**
+    
+    Each template has its own set of questions. For a React application, you might be asked about:
+    
+    ```
+    ? Package manager (Use arrow keys)
+      ❯ npm
+        yarn
+        pnpm
+    
+    ? Include TypeScript? (y/N)
+    
+    ? Include testing framework? (y/N)
+    ```
+  </Step>
+  
+  <Step>
+    **Confirmation**
+    
+    Review your choices and confirm to proceed with project generation.
+    
+    ```
+    ? Generate project with these settings? (Y/n)
+    ```
+  </Step>
+</Steps>
+
+### Project Generation
+
+Once you've answered all the questions, CyanPrint will:
+
+1. Process the template with your answers
+2. Generate the project files
+3. Run any post-generation plugins (if applicable)
+
+You'll see output similar to:
+
+```
+✓ Downloading template: react-app
+✓ Processing template
+✓ Generating files
+✓ Running plugins
+✓ Project created successfully!
+
+Your new project is ready at: /path/to/my-react-app
+```
+
+## Next Steps
+
+After creating your project:
+
+1. Navigate to your project directory:
+   ```bash
+   cd my-react-app
+   ```
+
+2. Follow any post-generation instructions provided by the template
+
+3. Start developing your application!
+
+## Related Recipes
+
+- [Install Template in Current Folder](/docs/user/recipes/install-current-folder)
+- [Run Specific Template Version](/docs/user/recipes/template-version)
+- [Multiple Templates](/docs/user/recipes/multiple-templates)
+
+## Next Tutorial
+
+Continue to [Search the Registry](/docs/user/tutorial/02_search-registry) to learn how to find available templates.

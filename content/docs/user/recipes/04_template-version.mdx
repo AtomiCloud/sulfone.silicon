@@ -1,0 +1,91 @@
+---
+title: Run Specific Template Version
+description: Learn how to use a specific version of a template
+---
+
+# Run Specific Template Version
+
+This recipe shows you how to use a specific version of a CyanPrint template instead of the latest version.
+
+## Why Use a Specific Version?
+
+You might want to use a specific template version for:
+
+- Consistency across a team or project
+- Compatibility with existing projects
+- Avoiding potential issues with newer versions
+- Following specific documentation or tutorials
+
+## Specifying a Version
+
+To use a specific version of a template, append the version number to the template name with an `@` symbol:
+
+```bash
+cyan new template-name@1.2.3
+```
+
+This command:
+1. Checks if the specified version exists in the registry
+2. Downloads that specific version
+3. Runs the template as normal
+
+<Callout type="info">
+  Replace `1.2.3` with the actual version number you want to use.
+</Callout>
+
+## Example
+
+Let's create a new React application using version 2.1.0 of the react-app template:
+
+```bash
+cyan new react-app@2.1.0 my-react-app
+```
+
+## Viewing Available Versions
+
+To see what versions are available for a template:
+
+```bash
+cyan info react-app --versions
+```
+
+This will display a list of all available versions for the template, along with their release dates and change notes.
+
+## Using Version Ranges
+
+CyanPrint also supports semantic versioning ranges:
+
+```bash
+# Use the latest 1.x.x version
+cyan new react-app@^1.0.0
+
+# Use the latest 2.3.x version
+cyan new react-app@~2.3.0
+```
+
+<Callout type="tip">
+  Using version ranges can be helpful when you want to get bug fixes but avoid major changes.
+</Callout>
+
+## Combining with Other Options
+
+You can combine version specification with other options:
+
+```bash
+# Use a specific version in the current directory
+cyan new react-app@1.2.3 --here
+
+# Use a specific version and create a new folder
+cyan new react-app@1.2.3 my-project
+```
+
+## Related Recipes
+
+- [Install Specific CyanPrint Version](/docs/user/recipes/03_specific-version)
+- [Install Template and Create Folder](/docs/user/recipes/01_install-create-folder)
+- [Install Template in Current Folder](/docs/user/recipes/02_install-current-folder)
+
+## Related Concepts
+
+- [Template Upgrades](/docs/user/concepts/03_template-upgrades)
+- [Registry](/docs/user/concepts/01_registry)

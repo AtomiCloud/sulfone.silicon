@@ -1,0 +1,112 @@
+---
+title: Install Specific CyanPrint Version
+description: Learn how to install a specific version of CyanPrint
+---
+
+# Install Specific CyanPrint Version
+
+This recipe shows you how to install a specific version of the CyanPrint CLI instead of the latest version.
+
+## Why Install a Specific Version?
+
+You might want to install a specific version of CyanPrint for:
+
+- Compatibility with certain templates
+- Consistency across a team or project
+- Testing or debugging purposes
+- Avoiding potential issues with newer versions
+
+## Using Package Managers
+
+### Homebrew
+
+To install a specific version using Homebrew:
+
+```bash
+# List available versions
+brew tap atomicloud/tap
+brew info atomicloud/tap/cyan
+
+# Install a specific version
+brew install atomicloud/tap/cyan@1.2.3
+```
+
+<Callout type="info">
+  Replace `1.2.3` with the actual version number you want to install.
+</Callout>
+
+## Direct Download
+
+You can download a specific version directly from GitHub:
+
+<Steps>
+  <Step>
+    **Go to the Releases Page**
+    
+    Visit the [CyanPrint Releases](https://github.com/AtomiCloud/sulfone.iridium/releases) page on GitHub.
+  </Step>
+  
+  <Step>
+    **Find the Desired Version**
+    
+    Browse the list of releases and find the version you want to install.
+  </Step>
+  
+  <Step>
+    **Download the Appropriate Package**
+    
+    Download the package for your operating system (e.g., `cyan-1.2.3-linux-amd64.tar.gz`).
+  </Step>
+  
+  <Step>
+    **Extract and Install**
+    
+    Extract the package and move the binary to a location in your PATH:
+    
+    ```bash
+    tar -xzf cyan-1.2.3-linux-amd64.tar.gz
+    chmod +x ./cyan
+    sudo mv ./cyan /usr/local/bin/
+    ```
+  </Step>
+</Steps>
+
+## Verifying the Installation
+
+After installation, verify that the correct version is installed:
+
+```bash
+cyan --version
+```
+
+You should see the version number you installed displayed.
+
+## Switching Between Versions
+
+If you need to switch between different versions of CyanPrint:
+
+### Using Homebrew
+
+```bash
+# Switch to a different version
+brew unlink cyan
+brew link cyan@1.2.3
+```
+
+### Using Direct Download
+
+1. Download and extract the desired version
+2. Replace the existing binary in your PATH
+
+<Callout type="tip">
+  Consider using a version manager like `asdf` or creating aliases in your shell for different CyanPrint versions if you frequently need to switch between them.
+</Callout>
+
+## Related Recipes
+
+- [Run Specific Template Version](/docs/user/recipes/04_template-version)
+- [Install Template and Create Folder](/docs/user/recipes/01_install-create-folder)
+
+## Related Tutorials
+
+- [Installation](/docs/user/tutorial/00_installation)

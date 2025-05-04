@@ -1,0 +1,303 @@
+---
+title: CLI Reference
+description: Comprehensive reference for the CyanPrint command-line interface
+---
+
+# CyanPrint CLI Reference
+
+This reference documents all commands, options, and configurations available in the CyanPrint command-line interface (CLI).
+
+## Command Overview
+
+CyanPrint provides the following main commands:
+
+| Command | Description |
+| ------- | ----------- |
+| `cyan new` | Create a new project from a template |
+| `cyan search` | Search for templates in the registry |
+| `cyan info` | Display information about a template |
+| `cyan config` | View and modify CyanPrint configuration |
+| `cyan check-updates` | Check for template updates |
+| `cyan upgrade` | Upgrade a project to a newer template version |
+| `cyan help` | Display help information |
+| `cyan version` | Display CyanPrint version information |
+
+## Command Details
+
+### `cyan new`
+
+Create a new project from a template.
+
+```bash
+cyan new [template-name] [project-name] [options]
+```
+
+#### Arguments
+
+| Argument | Description |
+| -------- | ----------- |
+| `template-name` | Name of the template to use (required) |
+| `project-name` | Name of the project directory to create (optional) |
+
+#### Options
+
+| Option | Description |
+| ------ | ----------- |
+| `--here` | Generate the project in the current directory |
+| `--yes`, `-y` | Skip confirmation prompts |
+| `--verbose`, `-v` | Enable verbose output |
+| `--quiet`, `-q` | Suppress output except for errors |
+| `--version`, `-V` | Specify a template version (e.g., `@1.2.3`) |
+| `--with` | Include additional templates or modules |
+| `--target` | Specify a target directory for generation |
+| `--no-plugins` | Skip running plugins |
+| `--offline` | Use only cached templates (no network) |
+
+#### Examples
+
+```bash
+# Create a new project with interactive prompts
+cyan new react-app my-project
+
+# Create a project in the current directory
+cyan new express-api --here
+
+# Use a specific template version
+cyan new react-app@1.2.3 my-project
+
+# Skip confirmation prompts
+cyan new react-app my-project --yes
+
+# Include additional modules
+cyan new fullstack-app --with auth-module,database-module
+```
+
+### `cyan search`
+
+Search for templates in the registry.
+
+```bash
+cyan search [query] [options]
+```
+
+#### Arguments
+
+| Argument | Description |
+| -------- | ----------- |
+| `query` | Search term (optional) |
+
+#### Options
+
+| Option | Description |
+| ------ | ----------- |
+| `--tag`, `-t` | Filter by tag |
+| `--author`, `-a` | Filter by author |
+| `--sort` | Sort results (`popularity`, `name`, `date`) |
+| `--limit`, `-l` | Limit number of results |
+| `--json` | Output results as JSON |
+| `--verbose`, `-v` | Enable verbose output |
+
+#### Examples
+
+```bash
+# Search for all templates
+cyan search
+
+# Search for React templates
+cyan search react
+
+# Search for templates with a specific tag
+cyan search --tag frontend
+
+# Search for templates by a specific author
+cyan search --author cyanprint-team
+
+# Limit search results
+cyan search react --limit 5
+```
+
+### `cyan info`
+
+Display information about a template.
+
+```bash
+cyan info [template-name] [options]
+```
+
+#### Arguments
+
+| Argument | Description |
+| -------- | ----------- |
+| `template-name` | Name of the template (required) |
+
+#### Options
+
+| Option | Description |
+| ------ | ----------- |
+| `--version`, `-V` | Specify a template version |
+| `--versions` | Show all available versions |
+| `--json` | Output results as JSON |
+| `--verbose`, `-v` | Enable verbose output |
+
+#### Examples
+
+```bash
+# Display information about a template
+cyan info react-app
+
+# Display information about a specific version
+cyan info react-app --version 1.2.3
+
+# Show all available versions
+cyan info react-app --versions
+```
+
+### `cyan config`
+
+View and modify CyanPrint configuration.
+
+```bash
+cyan config [command] [key] [value] [options]
+```
+
+#### Commands
+
+| Command | Description |
+| ------- | ----------- |
+| `get` | Get a configuration value |
+| `set` | Set a configuration value |
+| `reset` | Reset a configuration value to default |
+| `list` | List all configuration values |
+
+#### Examples
+
+```bash
+# List all configuration values
+cyan config list
+
+# Get a specific configuration value
+cyan config get coordinator
+
+# Set a configuration value
+cyan config set coordinator https://custom-coordinator.example.com
+
+# Reset a configuration value to default
+cyan config reset coordinator
+```
+
+### `cyan check-updates`
+
+Check for template updates for the current project.
+
+```bash
+cyan check-updates [options]
+```
+
+#### Options
+
+| Option | Description |
+| ------ | ----------- |
+| `--json` | Output results as JSON |
+| `--verbose`, `-v` | Enable verbose output |
+
+#### Examples
+
+```bash
+# Check for updates
+cyan check-updates
+```
+
+### `cyan upgrade`
+
+Upgrade a project to a newer template version.
+
+```bash
+cyan upgrade [options]
+```
+
+#### Options
+
+| Option | Description |
+| ------ | ----------- |
+| `--version`, `-V` | Specify a target version |
+| `--auto` | Automatically apply changes without prompts |
+| `--interactive`, `-i` | Interactive mode for resolving conflicts |
+| `--dry-run` | Show changes without applying them |
+| `--components` | Upgrade specific components only |
+| `--verbose`, `-v` | Enable verbose output |
+
+#### Examples
+
+```bash
+# Upgrade to the latest version
+cyan upgrade
+
+# Upgrade to a specific version
+cyan upgrade --version 1.2.3
+
+# Perform a dry run
+cyan upgrade --dry-run
+
+# Upgrade in interactive mode
+cyan upgrade --interactive
+```
+
+## Global Options
+
+These options are available for all CyanPrint commands:
+
+| Option | Description |
+| ------ | ----------- |
+| `--help`, `-h` | Display help information |
+| `--version`, `-V` | Display version information |
+| `--verbose`, `-v` | Enable verbose output |
+| `--quiet`, `-q` | Suppress output except for errors |
+| `--no-color` | Disable colored output |
+| `--config` | Specify a custom config file |
+
+## Configuration
+
+CyanPrint stores its configuration in `~/.cyan/config.json`. The following configuration options are available:
+
+| Key | Description | Default |
+| --- | ----------- | ------- |
+| `registry` | URL of the template registry | `https://registry.cyanprint.dev` |
+| `coordinator` | URL of the coordinator | `https://coordinator.cyanprint.dev` |
+| `cache_dir` | Directory for caching templates | `~/.cyan/cache` |
+| `timeout` | Request timeout in seconds | `30` |
+| `telemetry` | Enable/disable telemetry | `true` |
+| `update_check` | Enable/disable update checks | `true` |
+| `default_template` | Default template to use | `null` |
+
+## Environment Variables
+
+CyanPrint respects the following environment variables:
+
+| Variable | Description |
+| -------- | ----------- |
+| `CYAN_REGISTRY` | Override the registry URL |
+| `CYAN_COORDINATOR` | Override the coordinator URL |
+| `CYAN_CACHE_DIR` | Override the cache directory |
+| `CYAN_NO_COLOR` | Disable colored output |
+| `CYAN_VERBOSE` | Enable verbose output |
+| `CYAN_QUIET` | Suppress output except for errors |
+| `CYAN_CONFIG` | Path to a custom config file |
+| `CYAN_NO_TELEMETRY` | Disable telemetry |
+| `CYAN_OFFLINE` | Run in offline mode |
+
+## Exit Codes
+
+CyanPrint uses the following exit codes:
+
+| Code | Description |
+| ---- | ----------- |
+| `0` | Success |
+| `1` | General error |
+| `2` | Command-line parsing error |
+| `3` | Network error |
+| `4` | Template not found |
+| `5` | Template execution error |
+| `6` | File system error |
+| `7` | Configuration error |
+| `8` | Plugin execution error |
+| `9` | User abort |

@@ -1,0 +1,117 @@
+---
+title: Glossary
+description: Definitions of key terms used in CyanPrint
+---
+
+# CyanPrint Glossary
+
+This glossary provides definitions for key terms used throughout the CyanPrint documentation.
+
+## A
+
+### Answer
+The user's response to a question asked by a template during the question phase.
+
+### Argon
+The frontend component of the CyanPrint registry, providing a web interface for browsing and discovering templates.
+
+## B
+
+### Blob
+A simple file or collection of files without processing capabilities, as opposed to a template which has interactive and processing capabilities.
+
+### Boron
+The coordinator component of CyanPrint that orchestrates the execution of templates, processors, and plugins.
+
+## C
+
+### CLI (Command-Line Interface)
+The primary way users interact with CyanPrint through terminal commands.
+
+### Coordinator
+The service that manages the execution environment for templates, processors, and plugins, ensuring security and reliability.
+
+### CyanPrint
+A next-generation language-agnostic templating platform that enables users to create new projects from predefined templates with customizable options.
+
+## D
+
+### Determinism
+The property of a template to produce the same output given the same inputs, regardless of when or where it is run.
+
+## G
+
+### Generation Phase
+The phase in which CyanPrint creates the project directory structure and writes all processed files to disk.
+
+## H
+
+### Helium
+The SDK for developing templates, processors, and plugins for CyanPrint, supporting multiple programming languages.
+
+## I
+
+### IInquier
+The interface used by templates to define and present questions to users during the question phase.
+
+### Iridium
+The Rust-based CLI tool for CyanPrint that users interact with to create projects from templates.
+
+## P
+
+### Phase
+A distinct stage in the CyanPrint workflow, including template discovery, question phase, processing phase, generation phase, and plugin phase.
+
+### Plugin
+A component that extends CyanPrint functionality by performing post-generation actions such as installing dependencies or initializing version control.
+
+### Plugin Phase
+The final phase in the CyanPrint workflow where plugins run to perform post-generation actions.
+
+### Processor
+A component that defines rules for transforming template files based on user inputs, such as modifying file contents or renaming files.
+
+### Processing Phase
+The phase in which CyanPrint applies user answers to the template and executes processors to transform template files.
+
+## Q
+
+### Question Phase
+The phase in which CyanPrint presents interactive prompts to the user and collects their answers.
+
+## R
+
+### Registry
+The central repository where templates, processors, and plugins are stored and distributed.
+
+## S
+
+### Silicon
+The documentation component of CyanPrint, providing comprehensive guides for users, developers, and contributors.
+
+## T
+
+### Template
+A blueprint for creating new projects in CyanPrint, consisting of files, questions, and processing logic.
+
+### Template Discovery
+The initial phase in the CyanPrint workflow where the requested template is found and downloaded.
+
+### Template Upgrades
+The process of updating a project to use a newer version of the template it was created from.
+
+## Z
+
+### Zinc
+The backend component of the CyanPrint registry, managing component metadata and files.
+
+## Related References
+
+- [CLI Reference](/docs/user/reference/00_cli) - Detailed information about all CyanPrint commands
+- [User Flow](/docs/user/reference/01_user-flow) - Understanding the typical user flow when working with CyanPrint
+
+## Related Concepts
+
+- [Phases](/docs/user/concepts/00_phases) - Understanding the different phases of CyanPrint
+- [Registry](/docs/user/concepts/01_registry) - How CyanPrint stores and retrieves templates
+- [Coordinator](/docs/user/concepts/02_coordinator) - How CyanPrint orchestrates template execution

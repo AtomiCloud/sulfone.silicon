@@ -1,0 +1,109 @@
+---
+title: Searching the Registry
+description: Learn how to find templates in the CyanPrint registry
+---
+
+# Searching the Registry
+
+This tutorial will guide you through the process of searching for templates in the CyanPrint registry.
+
+## Prerequisites
+
+Before you begin, make sure you have:
+
+- [Installed CyanPrint](/docs/user/tutorial/00_installation) on your system
+- Internet connection to access the CyanPrint registry
+
+## Basic Search
+
+To search for templates in the registry, use the `cyan search` command:
+
+```bash
+cyan search
+```
+
+This will list all available templates in the registry.
+
+## Filtering Search Results
+
+You can filter search results by providing a search term:
+
+```bash
+cyan search react
+```
+
+This will return all templates that have "react" in their name or description.
+
+## Viewing Template Details
+
+To view detailed information about a specific template, use the `cyan info` command followed by the template name:
+
+```bash
+cyan info react-app
+```
+
+This will display:
+
+- Template name and version
+- Author information
+- Description
+- Tags
+- Dependencies
+- Usage instructions
+
+<Callout type="info">
+  The `cyan info` command is useful for learning more about a template before using it to create a project.
+</Callout>
+
+## Example: Finding a Node.js Template
+
+Let's say you want to find a template for creating a Node.js application:
+
+```bash
+cyan search node
+```
+
+This might return results like:
+
+```
+Found 3 templates:
+
+1. node-express-api
+   A template for creating Express.js API applications
+   Author: cyanprint-team
+   Tags: node, express, api
+
+2. node-cli
+   A template for creating Node.js command-line applications
+   Author: cyanprint-team
+   Tags: node, cli
+
+3. node-typescript
+   A template for creating Node.js applications with TypeScript
+   Author: community-user
+   Tags: node, typescript
+```
+
+You can then view more details about a specific template:
+
+```bash
+cyan info node-express-api
+```
+
+## Browsing the Web Registry
+
+You can also browse the CyanPrint registry through the web interface at [registry.cyanprint.dev](https://registry.cyanprint.dev).
+
+The web interface provides:
+- Advanced search filters
+- User ratings and reviews
+- Detailed documentation
+- Example projects
+
+## Next Steps
+
+Now that you know how to search for templates, you can:
+
+- [Use a Template](/docs/user/tutorial/01_use-template) to create a project
+- Learn about [CyanPrint Concepts](/docs/user/concepts) to understand how templates work
+- Explore [Recipes](/docs/user/recipes) for common tasks

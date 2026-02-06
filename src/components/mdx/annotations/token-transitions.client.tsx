@@ -1,8 +1,8 @@
 "use client"
 
-import { CustomPreProps, InnerPre, getPreRef } from "codehike/code"
+import { type CustomPreProps, InnerPre, getPreRef } from "codehike/code"
 import {
-  TokenTransitionsSnapshot,
+  type TokenTransitionsSnapshot,
   calculateTransitions,
   getStartingSnapshot,
 } from "codehike/utils/token-transitions"
@@ -22,29 +22,33 @@ export class SmoothPre extends React.Component<CustomPreProps> {
   }
 
   getSnapshotBeforeUpdate() {
-    return getStartingSnapshot(this.ref.current!)
+    const currentRef = this.ref.current;
+    if (!currentRef) return null;
+    return getStartingSnapshot(currentRef);
   }
 
   componentDidUpdate(
     prevProps: never,
     prevState: never,
-    snapshot: TokenTransitionsSnapshot
+    snapshot: TokenTransitionsSnapshot | null
   ) {
-    const transitions = calculateTransitions(this.ref.current!, snapshot)
-    transitions.forEach(({ element, keyframes, options }) => {
-      const { translateX, translateY, ...kf } = keyframes
+    const currentRef = this.ref.current;
+    if (!currentRef || !snapshot) return;
+    const transitions = calculateTransitions(currentRef, snapshot);
+    for (const { element, keyframes, options } of transitions) {
+      const { translateX, translateY, ...kf } = keyframes;
       if (translateX && translateY) {
         (kf as {translate: string[]}).translate = [
           `${translateX[0]}px ${translateY[0]}px`,
           `${translateX[1]}px ${translateY[1]}px`,
-        ]
+        ];
       }
       element.animate(kf, {
         duration: options.duration * MAX_TRANSITION_DURATION,
         delay: options.delay * MAX_TRANSITION_DURATION,
         easing: options.easing,
         fill: "both",
-      })
-    })
+      });
+    }
   }
 }

@@ -1,9 +1,9 @@
 import {
-  AnnotationHandler,
-  HighlightedCode,
+  type AnnotationHandler,
+  type HighlightedCode,
   Inline,
   Pre,
-  RawCode,
+  type RawCode,
   highlight,
 } from "codehike/code"
 import { CopyButton } from "@/components/mdx/copy-button"
@@ -17,7 +17,7 @@ import { tokenTransitions } from "./annotations/token-transitions"
 import { diff } from "./annotations/diff"
 import { className as classNameHandler } from "./annotations/classname"
 import { cn } from "@/lib/utils"
-import { CSSProperties } from "react"
+import type { CSSProperties } from "react"
 
 
 
@@ -116,9 +116,9 @@ export function HighCode({
         {pre}
       </div>
     )
-  } else {
-    return (
-      <div
+  }
+  return (
+    <div
         className={cn(
           flags.includes("b") ? "border my-2" : "",
           "rounded overflow-hidden relative",
@@ -138,7 +138,6 @@ export function HighCode({
         {pre}
       </div>
     )
-  }
 }
 
 export function extractFlags(codeblock: RawCode) {
@@ -147,6 +146,6 @@ export function extractFlags(codeblock: RawCode) {
   const title =
     codeblock.meta === flags
       ? ""
-      : codeblock.meta.replace(" " + flags, "").trim()
+      : codeblock.meta.replace(` ${flags}`, "").trim()
   return { title, flags: flags.slice(1).split("") }
 }

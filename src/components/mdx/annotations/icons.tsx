@@ -17,6 +17,7 @@ export function CodeIcon({ title }: { title: string }) {
   )
   return (
     <span
+      // biome-ignore lint/security/noDangerouslySetInnerHtml: SVG from trusted seti-icons library
       dangerouslySetInnerHTML={{ __html }}
       style={{ display: "contents", margin: -10 }}
     />

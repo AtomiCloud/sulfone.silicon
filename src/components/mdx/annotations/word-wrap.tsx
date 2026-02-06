@@ -1,5 +1,5 @@
 import {
-  AnnotationHandler,
+  type AnnotationHandler,
   InnerLine,
   InnerPre,
   InnerToken,

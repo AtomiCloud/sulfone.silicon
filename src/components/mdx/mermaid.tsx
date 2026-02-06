@@ -7,7 +7,7 @@ import { useTheme } from 'next-themes';
 export function Mermaid({ chart }: { chart: string }) {
   const id = useId();
   const [svg, setSvg] = useState('');
-  const containerRef = useRef<HTMLDivElement>(null!);
+  const containerRef = useRef<HTMLDivElement>(null);
   const { resolvedTheme } = useTheme();
  
   useEffect(() => {
@@ -30,7 +30,7 @@ export function Mermaid({ chart }: { chart: string }) {
           // strip invalid characters for `id` attribute
           id.replaceAll(':', ''),
           chart.replaceAll('\\n', '\n'),
-          containerRef.current,
+          containerRef.current ?? undefined,
         );
         setSvg(svg);
       } catch (error) {
@@ -39,5 +39,11 @@ export function Mermaid({ chart }: { chart: string }) {
     }
   }, [chart, id, resolvedTheme]);
  
-  return <div ref={containerRef} dangerouslySetInnerHTML={{ __html: svg }} />;
+  return (
+    <div
+      ref={containerRef}
+      // biome-ignore lint/security/noDangerouslySetInnerHtml: SVG from trusted mermaid library
+      dangerouslySetInnerHTML={{ __html: svg ?? '' }}
+    />
+  );
 }

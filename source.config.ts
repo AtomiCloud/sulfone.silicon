@@ -4,6 +4,7 @@ import rehypeKatex from 'rehype-katex';
 import remarkMath from 'remark-math';
 import { remarkCodeHike, recmaCodeHike, type CodeHikeConfig } from 'codehike/mdx';
 import type { RawCode } from 'codehike/code';
+import type { PluggableList } from 'unified';
 
 export const docs = defineDocs({
   dir: 'content/docs',
@@ -20,6 +21,6 @@ export default defineConfig({
   mdxOptions: {
     remarkPlugins: [remarkMath, remarkAdmonition, [remarkCodeHike, chConfig]],
     rehypePlugins: v => [rehypeKatex, ...v],
-    recmaPlugins: [[recmaCodeHike, chConfig]],
+    recmaPlugins: [[recmaCodeHike, chConfig], ...[]] as PluggableList,
   },
 });

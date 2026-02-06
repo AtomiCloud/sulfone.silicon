@@ -1,4 +1,4 @@
-import { AnnotationHandler, InnerToken } from "codehike/code"
+import { type AnnotationHandler, InnerToken } from "codehike/code"
 import { SmoothPre } from "./token-transitions.client"
 
 export const tokenTransitions: AnnotationHandler = {

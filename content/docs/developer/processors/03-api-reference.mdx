@@ -63,7 +63,7 @@ Input passed to the processor's `process` method.
 | `extension` | `string` | File extension including dot (e.g., '.ts') |
 | `config` | `object` | Processor configuration from template |
 | `answers` | `Answers` | Template user answers |
-| `files` | `CyanFileHelper` | File operations helper |
+| `files` | `FileHelper` | File operations helper |
 | `determinism` | `Determinism` | Deterministic random generation |
 | `logger` | `Logger` | Logging utilities |
 
@@ -80,7 +80,7 @@ interface CyanProcessorInput {
   extension: string;
   config: Record<string, any>;
   answers: Answers;
-  files: CyanFileHelper;
+  files: FileHelper;
   determinism: Determinism;
   logger: Logger;
 }
@@ -98,7 +98,7 @@ public class CyanProcessorInput
     public string Extension { get; set; }
     public Dictionary<string, object> Config { get; set; }
     public Answers Answers { get; set; }
-    public CyanFileHelper Files { get; set; }
+    public FileHelper Files { get; set; }
     public Determinism Determinism { get; set; }
     public Logger Logger { get; set; }
 }
@@ -115,7 +115,7 @@ class CyanProcessorInput:
     extension: str
     config: dict
     answers: Answers
-    files: CyanFileHelper
+    files: FileHelper
     determinism: Determinism
     logger: Logger
 ```
@@ -207,7 +207,7 @@ class AdditionalFile:
 
 ---
 
-## CyanFileHelper
+## FileHelper
 
 File operations available within processors.
 
@@ -217,7 +217,7 @@ File operations available within processors.
   <Tab value="TypeScript">
 
 ```ts
-interface CyanFileHelper {
+interface FileHelper {
   // Read file content
   read(path: string, encoding?: string): Promise<string>;
 
@@ -268,7 +268,7 @@ interface FileStats {
   <Tab value=".NET">
 
 ```csharp
-public class CyanFileHelper
+public class FileHelper
 {
     // Read file content
     public Task<string> ReadAsync(string path, string encoding = "utf-8");
@@ -321,7 +321,7 @@ public class FileStats
   <Tab value="Python">
 
 ```python
-class CyanFileHelper:
+class FileHelper:
     # Read file content
     async def read(self, path: str, encoding: str = "utf-8") -> str: ...
 

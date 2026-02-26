@@ -100,8 +100,9 @@ dotnet new classlib
 # Add Helium SDK
 dotnet add package AtomiCloud.Helium
 
-# Rename default file
-ren Class1.cs Processor.cs
+# Rename default file (Windows: ren, Unix: mv)
+# ren Class1.cs Processor.cs    # Windows CMD
+# mv Class1.cs Processor.cs     # macOS/Linux
 ```
 
   </Tab>

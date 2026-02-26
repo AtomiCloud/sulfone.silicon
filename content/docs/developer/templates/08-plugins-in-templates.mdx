@@ -380,7 +380,7 @@ const validator = cyan.plugins.get('validator-plugin');
 // Validate project name
 const projectName = await cyan.inquirer.text({
   message: 'Project name:',
-  validate: (value) => {
+  validate: async (value) => {
     if (!validator.isPackageName(value)) {
       return 'Must be a valid package name (lowercase, alphanumeric, dashes)';
     }

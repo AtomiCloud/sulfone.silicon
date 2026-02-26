@@ -72,7 +72,7 @@ Use Divio documentation system for Users and Developers. Use Fumadocs MDX with C
 
 ### Platform Architecture
 
-```
+```text
 ┌─────────────────────────────────────────────────────────────────┐
 │                     CYANPRINT PLATFORM                          │
 ├─────────────────────────────────────────────────────────────────┤

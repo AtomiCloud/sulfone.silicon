@@ -195,7 +195,7 @@ Or using PowerShell:
 
 ```powershell
 # Create a directory for the CLI
-mkdir -p $env:USERPROFILE\bin
+mkdir $env:USERPROFILE\bin -Force
 
 # Download the executable
 Invoke-WebRequest -Uri "https://github.com/AtomiCloud/cyanprint.iridium/releases/latest/download/cyanprint-windows-amd64.exe" -OutFile "$env:USERPROFILE\bin\cyanprint.exe"

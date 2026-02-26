@@ -334,7 +334,7 @@ public async Task AppliesTemplatingCorrectly()
 ```python
 import json
 
-async def test_generates_correct_package_json(self, tester):
+async def test_generates_correct_package_json(tester):
     result = await tester.run({
         "answers": {
             "projectName": "my-app",
@@ -350,7 +350,7 @@ async def test_generates_correct_package_json(self, tester):
     assert parsed["version"] == "2.0.0"
     assert parsed["author"] == "Test Author"
 
-async def test_applies_templating_correctly(self, tester):
+async def test_applies_templating_correctly(tester):
     result = await tester.run({
         "answers": {
             "projectName": "my-project"

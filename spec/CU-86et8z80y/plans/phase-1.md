@@ -9,9 +9,16 @@
 
 Before writing ANY documentation:
 
-1. Read actual repo READMEs from `../` directories
+1. Read actual repo files from ALL directories (not just docs):
+   - `../sulfone/`
+   - `../zinc/`
+   - `../argon/`
+   - `../iridium/`
+   - `../boron/`
+   - `../helium/`
 2. Check actual tech stacks from package.json, Cargo.toml, .csproj files
 3. Verify all links work before including them
+4. Ensure Mermaid diagrams are configured and work
 
 ## Objective
 
@@ -22,7 +29,7 @@ Create contributor documentation with architecture overview and repository index
 | Action | File                                                    | Type        | Description                                                             |
 | ------ | ------------------------------------------------------- | ----------- | ----------------------------------------------------------------------- |
 | CREATE | `content/docs/contributor/00-architecture.mdx`          | Explanation | Platform architecture with Mermaid diagram, data flow, key technologies |
-| CREATE | `content/docs/contributor/01-repositories.mdx`          | Reference   | Index of all 5 repos with summaries, tech stacks, links to docs         |
+| CREATE | `content/docs/contributor/01-repositories.mdx`          | Reference   | Index of all repos with summaries, tech stacks, links to docs           |
 | RENAME | `02_CommitConventions.md` → `02-commit-conventions.mdx` | Reference   | (existing file, just rename)                                            |
 | RENAME | `03_Changelog.md` → `03-changelog.mdx`                  | Reference   | (existing file, just rename)                                            |
 
@@ -31,7 +38,7 @@ Create contributor documentation with architecture overview and repository index
 Create a comprehensive architecture page with:
 
 1. **Platform Overview** - What CyanPrint is and why it exists
-2. **Architecture Diagram** using Mermaid:
+2. **Architecture Diagram** using Mermaid (VERIFY CONFIGURATION):
 
 ```mermaid
 graph TD
@@ -67,10 +74,11 @@ graph TD
 
 ## 01-repositories.mdx Content
 
-Create an index page with entries for each repo. READ ACTUAL READMEs from `../`:
+Create an index page with entries for each repo. READ ACTUAL FILES from `../` (ALL files, not just docs):
 
 | Repo        | Language       | Purpose                               | Documentation              |
 | ----------- | -------------- | ------------------------------------- | -------------------------- |
+| **sulfone** | ?              | Platform?                             | Link to ../sulfone/        |
 | **zinc**    | .NET 8         | Registry API                          | Link to ../zinc/README.md  |
 | **argon**   | SvelteKit      | Registry Web UI (cyanprint.dev)       | Link to ../argon/README.md |
 | **iridium** | Rust           | CLI (cyanprint command)               | Link to ../iridium/docs/   |
@@ -79,7 +87,7 @@ Create an index page with entries for each repo. READ ACTUAL READMEs from `../`:
 
 Include:
 
-- Brief description of each repo (from actual READMEs)
+- Brief description of each repo (from actual READMEs and source files)
 - Tech stack details (from actual package.json, Cargo.toml, etc.)
 - How they interact with each other
 - Links to existing documentation (verify links work!)
@@ -98,11 +106,13 @@ After completion:
 1. Run `direnv exec . pls build` to verify build succeeds
 2. Check that Mermaid diagrams render correctly
 3. **VERIFY ALL LINKS WORK** - no broken links
+4. Run `pre-commit run --all` to verify all checks pass
 
 ## Definition of Done
 
-- [ ] Architecture page created with Mermaid diagram
+- [ ] Architecture page created with Mermaid diagram (verified working)
 - [ ] Repository index page created with links (all verified)
 - [ ] Existing files renamed with consistent numbering
 - [ ] Build succeeds
 - [ ] All content verified against actual repo files
+- [ ] pre-commit run --all passes

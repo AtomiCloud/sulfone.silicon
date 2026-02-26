@@ -22,7 +22,23 @@ Use Divio documentation system for Users and Developers. Use Fumadocs MDX with C
 
 **ALL documentation MUST be cross-verified against actual code and CLI.**
 
-Before writing ANY documentation:
+### Directories to Verify Against (verify ALL files, not just docs)
+
+When writing documentation, cross-reference against these repos:
+
+| Directory                   | Purpose                         |
+| --------------------------- | ------------------------------- |
+| `../sulfone/`               | Sulfone platform (this project) |
+| `../zinc/`                  | Registry API                    |
+| `../argon/`                 | Registry Web UI                 |
+| `../iridium/`               | CLI source                      |
+| `../boron/`                 | Executor                        |
+| `../helium/`                | SDKs                            |
+| `../helium/sdks/node/`      | TypeScript SDK                  |
+| `../helium/sulfone-helium/` | .NET SDK                        |
+| `../helium/cyanprintsdk/`   | Python SDK                      |
+
+### Before writing ANY documentation:
 
 1. **Run actual CLI commands** to verify syntax:
 
@@ -32,12 +48,7 @@ Before writing ANY documentation:
    - `cyanprint push --help` - push options
    - `cyanprint daemon --help` - daemon options
 
-2. **Read actual source code** from `../` repos:
-
-   - `../iridium/` - CLI source and docs
-   - `../helium/sdks/node/src/` - TypeScript SDK
-   - `../helium/sulfone-helium/` - .NET SDK
-   - `../helium/cyanprintsdk/` - Python SDK
+2. **Read actual source code** from the directories above
 
 3. **Check actual GitHub releases** for installation artifacts:
 
@@ -70,6 +81,73 @@ Commands:
 - NO `show` command
 - NO `pin` / `unpin` commands
 - NO `abort` / `continue` commands
+
+### Installation Methods (with actual commands)
+
+From https://github.com/AtomiCloud/hydrogen.iridium/releases:
+
+#### Homebrew (macOS/Linux)
+
+```bash
+brew tap atomicloud/tap
+brew install cyanprint
+```
+
+#### Scoop (Windows)
+
+```bash
+scoop bucket add atomicloud https://github.com/AtomiCloud/scoop-bucket
+scoop install cyanprint
+```
+
+#### Nix (macOS/Linux)
+
+```bash
+nix profile install github:AtomiCloud/hydrogen.iridium
+```
+
+#### Fury (Debian/Ubuntu - APT)
+
+```bash
+curl -fsSL https://repo.fury.io/atomi/gpg.key | sudo apt-key add -
+echo "deb https://repo.fury.io/atomi/ /" | sudo tee /etc/apt/sources.list.d/fury.list
+sudo apt update
+sudo apt install cyanprint
+```
+
+#### Fury (RHEL/Fedora - YUM/DNF)
+
+```bash
+sudo yum localinstall https://repo.fury.io/atomi/packages/cyanprint.rpm
+# Or with dnf:
+sudo dnf localinstall https://repo.fury.io/atomi/packages/cyanprint.rpm
+```
+
+#### Fury (Alpine - APK)
+
+```bash
+# Add Fury as an APK repository
+echo "https://repo.fury.io/atomi/packages" | sudo tee -a /etc/apk/repositories
+sudo apk update
+sudo apk add cyanprint
+```
+
+#### Direct Download
+
+| Platform    | Artifact                          |
+| ----------- | --------------------------------- |
+| Linux (x64) | `.tar.gz`, `.deb`, `.rpm`, `.apk` |
+| Linux (arm) | `.tar.gz`, `.deb`, `.rpm`, `.apk` |
+| macOS (x64) | `.tar.gz`                         |
+| macOS (arm) | `.tar.gz`                         |
+| Windows     | `.tar.gz`                         |
+| Arch Linux  | `.pkg.tar.zst`                    |
+
+#### Cargo (from source)
+
+```bash
+cargo install cyanprint
+```
 
 ### Template Reference Format (verified via `cyanprint create --help`)
 
@@ -117,20 +195,6 @@ Contains:
 - Users do NOT need Docker for normal usage
 - `daemon` command only needed for local development/testing
 
-### Installation Methods (from GitHub releases)
-
-From https://github.com/AtomiCloud/hydrogen.iridium/releases:
-
-| Platform    | Artifact                          |
-| ----------- | --------------------------------- |
-| Linux (x64) | `.tar.gz`, `.deb`, `.rpm`, `.apk` |
-| Linux (arm) | `.tar.gz`, `.deb`, `.rpm`, `.apk` |
-| macOS (x64) | `.tar.gz`                         |
-| macOS (arm) | `.tar.gz`                         |
-| Windows     | `.tar.gz`                         |
-| Arch Linux  | `.pkg.tar.zst`                    |
-| From source | `cargo install` from crates.io    |
-
 ### SDK Exports (verified from `../helium/sdks/node/src/main.ts`)
 
 **Entry Points:**
@@ -165,23 +229,29 @@ From https://github.com/AtomiCloud/hydrogen.iridium/releases:
 ### Phase 1: Contributor Documentation
 
 - [ ] Architecture overview page with Mermaid diagram showing platform components
-- [ ] Repository index page with summaries for all 5 repos (zinc, argon, iridium, boron, helium)
+- [ ] Repository index page with summaries for all repos
 - [ ] Existing files renamed with consistent numbering
 
 ### Phase 2: User Documentation
 
 - [ ] Getting started tutorial (install CLI, find template on cyanprint.dev, run `create`)
-- [ ] First template walkthrough tutorial
-- [ ] How-to guides for CLI installation (all platforms from releases)
+- [ ] First template walkthrough (can include multiple templates)
+- [ ] How-to guides for CLI installation (brew, scoop, nix, fury, cargo)
 - [ ] Update guide (3-way merge, interactive mode)
 - [ ] Registry usage guide (cyanprint.dev web UI)
 - [ ] Template lifecycle explanation
 
-### Phase 3: Developer Documentation
+### Phase 3: Developer Documentation - Templates
 
 - [ ] Core concepts page (Cyan object, globs, inquirer, determinism)
 - [ ] Templates section with multi-language tabs
+
+### Phase 4: Developer Documentation - Processors
+
 - [ ] Processors section with multi-language tabs
+
+### Phase 5: Developer Documentation - Plugins
+
 - [ ] Plugins section with multi-language tabs
 - [ ] SDK reference pages for TypeScript, .NET, and Python
 
@@ -193,12 +263,13 @@ From https://github.com/AtomiCloud/hydrogen.iridium/releases:
 - [ ] **ALL documentation cross-verified against actual CLI and source code**
 - [ ] **ALL links verified to exist and be correct**
 - [ ] Build succeeds: `direnv exec . pls build`
-- [ ] Dev server works: `direnv exec . pls dev`
+- [ ] Dev server works: `direnv exec . pls dev` (verify by starting)
+- [ ] Pre-commit passes: `pre-commit run --all`
 - [ ] Tab functionality works (language tabs persist across pages)
-- [ ] Mermaid diagrams render correctly
+- [ ] Mermaid diagrams configured and render correctly
 - [ ] CodeHike annotations work in code blocks
 - [ ] Ticket ID included in commit messages
-- [ ] PR created with all 3 phases
+- [ ] PR created with all 5 phases
 
 ---
 
@@ -209,7 +280,7 @@ From https://github.com/AtomiCloud/hydrogen.iridium/releases:
 | File                                                            | Type        | Description                                                             |
 | --------------------------------------------------------------- | ----------- | ----------------------------------------------------------------------- |
 | `content/docs/contributor/00-architecture.mdx`                  | Explanation | Platform architecture with Mermaid diagram, data flow, key technologies |
-| `content/docs/contributor/01-repositories.mdx`                  | Reference   | Index of all 5 repos with summaries, tech stacks, links to docs         |
+| `content/docs/contributor/01-repositories.mdx`                  | Reference   | Index of all repos with summaries, tech stacks, links to docs           |
 | Rename: `02_CommitConventions.md` → `02-commit-conventions.mdx` | Reference   | (existing file, rename)                                                 |
 | Rename: `03_Changelog.md` → `03-changelog.mdx`                  | Reference   | (existing file, rename)                                                 |
 
@@ -217,21 +288,19 @@ From https://github.com/AtomiCloud/hydrogen.iridium/releases:
 
 Use `meta.json` for ordering with proper page structure.
 
-| File                                          | Type        | Description                                                                           |
-| --------------------------------------------- | ----------- | ------------------------------------------------------------------------------------- |
-| `content/docs/user/index.mdx`                 | Overview    | Update from placeholder - overview of user docs                                       |
-| `content/docs/user/00-getting-started.mdx`    | Tutorial    | Step-by-step: install CLI, browse cyanprint.dev, run `cyanprint create`               |
-| `content/docs/user/01-cli-installation.mdx`   | How-to      | Platform-specific CLI installation (tar.gz, deb, rpm, apk, pkg.tar.zst from releases) |
-| `content/docs/user/02-creating-projects.mdx`  | How-to      | Using `cyanprint create` with template references (`user/template:version`)           |
-| `content/docs/user/03-search-templates.mdx`   | How-to      | Browsing and searching templates on cyanprint.dev (NOT a CLI command!)                |
-| `content/docs/user/04-updating-projects.mdx`  | How-to      | Using `cyanprint update`, 3-way merge, `--interactive` mode                           |
-| `content/docs/user/05-state-file.mdx`         | Reference   | `.cyan_state.yaml` format and purpose                                                 |
-| `content/docs/user/06-registry-web.mdx`       | Reference   | Using the cyanprint.dev web registry                                                  |
-| `content/docs/user/07-template-lifecycle.mdx` | Explanation | How templates are downloaded, executed in containers, files delivered                 |
+| File                                          | Type        | Description                                                              |
+| --------------------------------------------- | ----------- | ------------------------------------------------------------------------ |
+| `content/docs/user/index.mdx`                 | Overview    | Update from placeholder - overview of user docs                          |
+| `content/docs/user/00-getting-started.mdx`    | Tutorial    | Step-by-step: install CLI, browse cyanprint.dev, run `cyanprint create`  |
+| `content/docs/user/01-cli-installation.mdx`   | How-to      | CLI installation (brew, scoop, nix, fury, cargo with actual commands)    |
+| `content/docs/user/02-creating-projects.mdx`  | How-to      | Using `cyanprint create` with template refs (can use multiple templates) |
+| `content/docs/user/03-search-templates.mdx`   | How-to      | Browsing and searching templates on cyanprint.dev (NOT a CLI command!)   |
+| `content/docs/user/04-updating-projects.mdx`  | How-to      | Using `cyanprint update`, 3-way merge, `--interactive` mode              |
+| `content/docs/user/05-state-file.mdx`         | Reference   | `.cyan_state.yaml` format and purpose                                    |
+| `content/docs/user/06-registry-web.mdx`       | Reference   | Using the cyanprint.dev web registry                                     |
+| `content/docs/user/07-template-lifecycle.mdx` | Explanation | How templates are downloaded, executed in containers, files delivered    |
 
-### Phase 3: Developer Documentation
-
-Use `meta.json` for ordering in each subdirectory.
+### Phase 3: Developer Documentation - Templates
 
 #### Developer Overview
 
@@ -259,6 +328,8 @@ Use `meta.json` for ordering in each subdirectory.
 | `11-lifecycle.mdx`            | Explanation | How templates are executed in containers                                    |
 | `12-best-practices.mdx`       | Explanation | Template design patterns                                                    |
 
+### Phase 4: Developer Documentation - Processors
+
 #### Processors Section (`content/docs/developer/processors/`)
 
 | File                     | Type      | Description                                               |
@@ -267,6 +338,8 @@ Use `meta.json` for ordering in each subdirectory.
 | `00-first-processor.mdx` | Tutorial  | Create a simple file processor - tabs                     |
 | `01-file-operations.mdx` | How-to    | Reading, writing, transforming files - tabs               |
 | `02-api-reference.mdx`   | Reference | ICyanProcessor, CyanFileHelper, CyanProcessorInput - tabs |
+
+### Phase 5: Developer Documentation - Plugins
 
 #### Plugins Section (`content/docs/developer/plugins/`)
 
@@ -293,7 +366,7 @@ Use `meta.json` for ordering in each subdirectory.
 - **Content location**: `content/docs/` with MDX files
 - **File ordering**: Use `meta.json` files with `pages` array, files named with `00-`, `01-` prefixes
 - **Code examples**: Use `<Tabs groupId="sdk-language" persist>` for all multi-language examples
-- **Diagrams**: Use Mermaid for architecture diagrams
+- **Diagrams**: Use Mermaid for architecture diagrams - ENSURE THEY ARE CONFIGURED AND WORK
 - **Code highlighting**: CodeHike with annotations
 - **Languages**: TypeScript, .NET, Python SDK examples in all developer tutorials
 
@@ -317,7 +390,6 @@ StartTemplateWithLambda(async (inquirer, determinism) => {
   return { processors: [{ name: 'main', files: [], config: { name } }] };
 });
 ```
-````
 
   </Tab>
   <Tab value=".NET">
@@ -335,9 +407,9 @@ StartTemplateWithLambda(async (inquirer, determinism) => {
 
   </Tab>
 </Tabs>
-```
+````
 
-### Mermaid Architecture Diagrams
+### Mermaid Architecture Diagrams (VERIFY CONFIGURATION)
 
 ```mdx
 <Mermaid
@@ -357,11 +429,13 @@ graph TD
 
 **READ THESE BEFORE WRITING:**
 
-- `../iridium/docs/developer/` - CLI documentation
+- `../iridium/` - CLI source (ALL files, not just docs)
 - `../iridium/docs/developer/surfaces/cli/` - CLI command docs
+- `../helium/` - SDKs (ALL files)
 - `../helium/sdks/node/src/` - TypeScript SDK source
 - `../helium/sdks/node/src/main.ts` - SDK exports
 - `../helium/sdks/node/src/domain/core/inquirer.ts` - IInquirer interface
-- `../zinc/README.md` - Registry API
-- `../argon/README.md` - Registry frontend
-- `../boron/README.md` - Executor
+- `../zinc/` - Registry API (ALL files)
+- `../argon/` - Registry frontend (ALL files)
+- `../boron/` - Executor (ALL files)
+- `../sulfone/` - Sulfone platform (ALL files)

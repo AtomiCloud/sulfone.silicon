@@ -39,17 +39,17 @@ Create user documentation using Divio methodology for users who install and use 
 
 ## Files to Create/Modify
 
-| Action | File                                          | Type        | Description                                                             |
-| ------ | --------------------------------------------- | ----------- | ----------------------------------------------------------------------- |
-| UPDATE | `content/docs/user/index.mdx`                 | Overview    | Update from placeholder - overview of user docs                         |
-| CREATE | `content/docs/user/00-getting-started.mdx`    | Tutorial    | Step-by-step: install CLI, browse cyanprint.dev, run `cyanprint create` |
-| CREATE | `content/docs/user/01-cli-installation.mdx`   | How-to      | Install from GitHub releases (tar.gz, deb, rpm, apk, pkg.tar.zst)       |
-| CREATE | `content/docs/user/02-creating-projects.mdx`  | How-to      | Using `cyanprint create` with template refs (`user/template:version`)   |
-| CREATE | `content/docs/user/03-search-templates.mdx`   | How-to      | Browse cyanprint.dev (NOT a CLI command!)                               |
-| CREATE | `content/docs/user/04-updating-projects.mdx`  | How-to      | Using `cyanprint update`, 3-way merge, `--interactive` mode             |
-| CREATE | `content/docs/user/05-state-file.mdx`         | Reference   | `.cyan_state.yaml` format and purpose                                   |
-| CREATE | `content/docs/user/06-registry-web.mdx`       | Reference   | Using the cyanprint.dev web registry                                    |
-| CREATE | `content/docs/user/07-template-lifecycle.mdx` | Explanation | How templates are downloaded, executed in containers, files delivered   |
+| Action | File                                          | Type        | Description                                                              |
+| ------ | --------------------------------------------- | ----------- | ------------------------------------------------------------------------ |
+| UPDATE | `content/docs/user/index.mdx`                 | Overview    | Update from placeholder - overview of user docs                          |
+| CREATE | `content/docs/user/00-getting-started.mdx`    | Tutorial    | Step-by-step: install CLI, browse cyanprint.dev, run `cyanprint create`  |
+| CREATE | `content/docs/user/01-cli-installation.mdx`   | How-to      | Install via brew, scoop, nix, fury, cargo with ACTUAL COMMANDS           |
+| CREATE | `content/docs/user/02-creating-projects.mdx`  | How-to      | Using `cyanprint create` with template refs (CAN USE MULTIPLE TEMPLATES) |
+| CREATE | `content/docs/user/03-search-templates.mdx`   | How-to      | Browse cyanprint.dev (NOT a CLI command!)                                |
+| CREATE | `content/docs/user/04-updating-projects.mdx`  | How-to      | Using `cyanprint update`, 3-way merge, `--interactive` mode              |
+| CREATE | `content/docs/user/05-state-file.mdx`         | Reference   | `.cyan_state.yaml` format and purpose                                    |
+| CREATE | `content/docs/user/06-registry-web.mdx`       | Reference   | Using the cyanprint.dev web registry                                     |
+| CREATE | `content/docs/user/07-template-lifecycle.mdx` | Explanation | How templates are downloaded, executed in containers, files delivered    |
 
 ## Content Guidelines
 
@@ -58,7 +58,7 @@ Create user documentation using Divio methodology for users who install and use 
 - **Learning-oriented** - follow step by step
 - Steps:
   1. Prerequisites (system requirements)
-  2. Install the CLI (from GitHub releases)
+  2. Install the CLI (show one method, link to full installation guide)
   3. Browse cyanprint.dev for a template
   4. Run `cyanprint create user/template:version my-project`
   5. See the generated output
@@ -68,12 +68,60 @@ Create user documentation using Divio methodology for users who install and use 
 ### 01-cli-installation.mdx (How-to Guide)
 
 - **Problem-oriented** - practical installation steps
-- All installation methods from GitHub releases:
-  - tar.gz (all platforms)
-  - .deb (Debian/Ubuntu)
-  - .rpm (RHEL/Fedora)
-  - .apk (Alpine)
-  - .pkg.tar.zst (Arch Linux)
+- Include ACTUAL COMMANDS for each method:
+
+#### Homebrew (macOS/Linux)
+
+```bash
+brew tap atomicloud/tap
+brew install cyanprint
+```
+
+#### Scoop (Windows)
+
+```bash
+scoop bucket add atomicloud https://github.com/AtomiCloud/scoop-bucket
+scoop install cyanprint
+```
+
+#### Nix (macOS/Linux)
+
+```bash
+nix profile install github:AtomiCloud/hydrogen.iridium
+```
+
+#### Fury (Debian/Ubuntu - APT)
+
+```bash
+curl -fsSL https://repo.fury.io/atomi/gpg.key | sudo apt-key add -
+echo "deb https://repo.fury.io/atomi/ /" | sudo tee /etc/apt/sources.list.d/fury.list
+sudo apt update
+sudo apt install cyanprint
+```
+
+#### Fury (RHEL/Fedora - YUM/DNF)
+
+```bash
+sudo yum localinstall https://repo.fury.io/atomi/packages/cyanprint.rpm
+# Or with dnf:
+sudo dnf localinstall https://repo.fury.io/atomi/packages/cyanprint.rpm
+```
+
+#### Fury (Alpine - APK)
+
+```bash
+# Add Fury as an APK repository
+echo "https://repo.fury.io/atomi/packages" | sudo tee -a /etc/apk/repositories
+sudo apk update
+sudo apk add cyanprint
+```
+
+#### Cargo (from source)
+
+```bash
+cargo install cyanprint
+```
+
 - Include verification: `cyanprint --version`
 
 ### 02-creating-projects.mdx (How-to Guide)
@@ -81,6 +129,7 @@ Create user documentation using Divio methodology for users who install and use 
 - **Problem-oriented** - creating projects
 - Template reference format: `<username>/<template_name>:<version>`
 - Example: `cyanprint create atomicloud/nextjs-dashboard:1.0.0 my-project`
+- **CAN USE MULTIPLE TEMPLATES** - show how to combine templates
 - Options from `cyanprint create --help`:
   - `-c, --coordinator-endpoint` (default: http://coord.cyanprint.dev:9000)
 - No Docker needed for users - hosted coordinator is used
@@ -144,20 +193,23 @@ After completion:
 
 1. Run `direnv exec . pls build` to verify build succeeds
 2. **Check ALL links work** - especially cyanprint.dev
-3. Verify tutorials are followable
-4. Confirm NO hallucinated CLI commands
+3. Run `direnv exec . pls dev` and verify dev server starts
+4. Run `pre-commit run --all` to verify all checks pass
+5. Confirm NO hallucinated CLI commands
 
 ## Definition of Done
 
 - [ ] User index page updated
 - [ ] Getting started tutorial created (correct CLI: `create`)
-- [ ] CLI installation guide created (all platforms from releases)
-- [ ] Creating projects guide created (template ref format)
+- [ ] CLI installation guide created (brew, scoop, nix, fury, cargo with actual commands)
+- [ ] Creating projects guide created (template ref format, multiple templates OK)
 - [ ] Search templates guide created (web UI only, NO CLI search)
 - [ ] Update projects guide created (3-way merge, `--interactive`)
 - [ ] State file reference created
 - [ ] Registry web reference created
 - [ ] Template lifecycle explanation created
 - [ ] Build succeeds
+- [ ] Dev server starts successfully
 - [ ] All links verified
 - [ ] All CLI commands verified against actual `--help` output
+- [ ] pre-commit run --all passes

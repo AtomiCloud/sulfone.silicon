@@ -1,9 +1,9 @@
-# Phase 3: Developer Documentation
+# Phase 3: Developer Documentation - Templates
 
 ## Source
 
 - Ticket: CU-86et8z80y
-- Commit: `docs: add developer documentation`
+- Commit: `docs: add developer documentation - templates`
 
 ## CRITICAL: Verify Against Actual SDK Source Code
 
@@ -13,6 +13,7 @@ Before writing ANY documentation:
 2. Read `../helium/sdks/node/src/domain/core/inquirer.ts` for IInquirer interface
 3. Read `../iridium/docs/developer/` for CLI documentation
 4. NEVER invent APIs - only document what actually exists
+5. Verify against ALL files in `../helium/`, `../iridium/`, not just docs
 
 ## Verified SDK Exports (from ../helium/sdks/node/src/main.ts)
 
@@ -96,32 +97,6 @@ StartTemplateWithLambda(async (inquirer, determinism) => {
 | CREATE | `content/docs/developer/templates/11-lifecycle.mdx`            | Explanation | How templates are executed in containers                                    |
 | CREATE | `content/docs/developer/templates/12-best-practices.mdx`       | Explanation | Template design patterns                                                    |
 
-### Processors Section
-
-| Action | File                                                       | Type      | Description                                               |
-| ------ | ---------------------------------------------------------- | --------- | --------------------------------------------------------- |
-| CREATE | `content/docs/developer/processors/meta.json`              | Config    | Navigation metadata                                       |
-| CREATE | `content/docs/developer/processors/00-first-processor.mdx` | Tutorial  | Create a simple file processor - tabs                     |
-| CREATE | `content/docs/developer/processors/01-file-operations.mdx` | How-to    | Reading, writing, transforming files - tabs               |
-| CREATE | `content/docs/developer/processors/02-api-reference.mdx`   | Reference | ICyanProcessor, CyanFileHelper, CyanProcessorInput - tabs |
-
-### Plugins Section
-
-| Action | File                                                  | Type      | Description                                       |
-| ------ | ----------------------------------------------------- | --------- | ------------------------------------------------- |
-| CREATE | `content/docs/developer/plugins/meta.json`            | Config    | Navigation metadata                               |
-| CREATE | `content/docs/developer/plugins/00-first-plugin.mdx`  | Tutorial  | Create a simple plugin - tabs                     |
-| CREATE | `content/docs/developer/plugins/01-api-reference.mdx` | Reference | ICyanPlugin, CyanPluginInput, PluginOutput - tabs |
-
-### SDK Reference
-
-| Action | File                                           | Type      | Description                                             |
-| ------ | ---------------------------------------------- | --------- | ------------------------------------------------------- |
-| CREATE | `content/docs/developer/sdk/meta.json`         | Config    | Navigation metadata                                     |
-| CREATE | `content/docs/developer/sdk/00-typescript.mdx` | Reference | TypeScript SDK full API - read ../helium/sdks/node/src/ |
-| CREATE | `content/docs/developer/sdk/01-dotnet.mdx`     | Reference | .NET SDK full API - read ../helium/sulfone-helium/      |
-| CREATE | `content/docs/developer/sdk/02-python.mdx`     | Reference | Python SDK full API - read ../helium/cyanprintsdk/      |
-
 ## Content Details
 
 ### IInquirer Methods (verified from ../helium/sdks/node/src/domain/core/inquirer.ts)
@@ -171,8 +146,8 @@ StartTemplateWithLambda(async (inquirer, determinism) => {
 
 ```json
 {
-  "title": "Section Title",
-  "pages": ["00-page", "01-page", "02-page"]
+  "title": "Templates",
+  "pages": ["00-glob-and-copy", "01-default-processor", "02-adding-interaction"]
 }
 ```
 
@@ -187,17 +162,16 @@ After completion:
 3. Verify CodeHike annotations work
 4. Check all internal links
 5. **Verify all API examples match actual SDK source code**
+6. Run `pre-commit run --all`
 
 ## Definition of Done
 
 - [ ] Developer index page updated
 - [ ] Core concepts page created with tabs
 - [ ] Templates section created (13 pages + meta.json)
-- [ ] Processors section created (3 pages + meta.json)
-- [ ] Plugins section created (2 pages + meta.json)
-- [ ] SDK reference created (3 pages + meta.json)
 - [ ] All code examples use tabs for multi-language
 - [ ] All APIs verified against actual SDK source
 - [ ] Build succeeds
 - [ ] Tab functionality works
 - [ ] All links verified
+- [ ] pre-commit run --all passes

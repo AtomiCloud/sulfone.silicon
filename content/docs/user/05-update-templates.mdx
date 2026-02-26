@@ -1,0 +1,324 @@
+---
+title: Update Projects
+description: Keep your projects synchronized with template updates
+---
+
+# Update Projects
+
+Templates evolve over time with bug fixes, new features, and best practice updates. This guide explains how to update your projects when the underlying template changes.
+
+## Understanding Template Updates
+
+When you create a project from a template, you're snapshotting that template at a specific version. Later, the template author might:
+
+- Fix bugs in the generated code
+- Add new optional features
+- Update dependencies
+- Improve security configurations
+
+CyanPrint provides tools to help you incorporate these changes into your existing projects.
+
+## Check for Updates
+
+### View Current Template Version
+
+Check what template and version your project was created from:
+
+```bash
+cd my-project
+cyanprint status
+```
+
+Output:
+
+```
+Project: my-project
+Template: nextjs-dashboard
+Version: 2.0.0
+Created: 2024-01-15
+Last Sync: 2024-01-15
+
+Updates Available: Yes
+  Latest Version: 2.1.0
+  Changes: 5 commits ahead
+```
+
+### Check for Available Updates
+
+To see what updates are available:
+
+```bash
+cyanprint check-updates
+```
+
+Output:
+
+```
+Template: nextjs-dashboard
+Current: 2.0.0
+Latest: 2.1.0
+
+Changelog:
+  - feat: add Tailwind CSS v4 support
+  - fix: correct ESLint configuration
+  - feat: add optional Storybook setup
+  - chore: update Next.js to 14.2
+  - docs: improve README documentation
+```
+
+## When to Update
+
+Consider updating when:
+
+| Situation                    | Recommendation                              |
+| ---------------------------- | ------------------------------------------- |
+| Security vulnerability fixed | **Update immediately**                      |
+| Bug fix affecting you        | **Update soon**                             |
+| New optional feature added   | Update if you need the feature              |
+| Major version bump           | Review breaking changes before updating     |
+| Minor project, early stage   | Consider recreating from latest template    |
+| Production system            | Test updates in staging first               |
+
+<Callout type="warn">
+Always review the changelog before updating. Major version bumps may contain breaking changes that require manual intervention.
+</Callout>
+
+## Update Strategies
+
+CyanPrint supports several approaches to incorporating template updates:
+
+### Strategy 1: Re-run Template (Recommended)
+
+Re-run the template in a different directory and compare:
+
+```bash
+# Create a fresh copy with the latest version
+cyanprint init my-project-updated --template nextjs-dashboard
+
+# Compare the two projects
+diff -r my-project my-project-updated
+```
+
+This approach is safest because:
+
+- Your existing project is untouched
+- You can selectively copy changes
+- Easy to test before committing
+
+### Strategy 2: In-Place Update
+
+Update the existing project in place:
+
+```bash
+cd my-project
+cyanprint update
+```
+
+The CLI will:
+
+1. **Backup** your current files
+2. **Download** the latest template version
+3. **Prompt** for any new configuration options
+4. **Merge** changes with your modifications
+
+<Callout type="info">
+In-place updates work best when you haven't heavily modified the template's core files. If you've customized extensively, consider Strategy 1 or 3.
+</Callout>
+
+### Strategy 3: Selective Update
+
+Apply updates to specific files only:
+
+```bash
+# List files that have updates
+cyanprint update --list
+
+# Update specific files
+cyanprint update --files tsconfig.json,.eslintrc.json
+```
+
+This is useful when:
+
+- You've heavily modified some files
+- You only want specific bug fixes
+- You want to control which changes to apply
+
+## Handling Merge Conflicts
+
+When updating, conflicts can occur between template changes and your customizations.
+
+### Automatic Merging
+
+CyanPrint attempts to merge changes automatically:
+
+- **Your changes preserved** - Local modifications are kept
+- **Template additions added** - New files and sections are added
+- **Template fixes applied** - Bug fixes from the template are merged
+
+### Manual Resolution
+
+When automatic merge fails:
+
+```bash
+cyanprint update
+```
+
+Output:
+
+```
+✓ Downloaded template v2.1.0
+✓ Merged 12 files
+⚠ 3 files have conflicts:
+  - src/app/layout.tsx
+  - package.json
+  - tailwind.config.ts
+
+Resolve conflicts in these files, then run:
+  cyanprint update --continue
+```
+
+The conflicted files contain markers:
+
+```tsx
+<<<<<<< YOUR CHANGES
+import { customTheme } from './theme';
+=======
+import { defaultTheme } from './theme';
+>>>>>>> TEMPLATE CHANGES
+```
+
+Resolve the conflicts:
+
+1. **Edit** each conflicted file
+2. **Remove** the conflict markers
+3. **Keep** your desired content
+4. **Continue** the update: `cyanprint update --continue`
+
+### Abort and Retry
+
+If the update goes wrong:
+
+```bash
+# Abort the update and restore from backup
+cyanprint update --abort
+```
+
+## Version Pinning
+
+Lock your project to a specific template version:
+
+### Why Pin?
+
+- Ensure reproducible builds
+- Avoid unexpected changes
+- Control when you update
+
+### How to Pin
+
+```bash
+# Pin to current version
+cyanprint pin
+
+# Pin to specific version
+cyanprint pin --version 2.0.0
+```
+
+### View Pin Status
+
+```bash
+cyanprint status
+```
+
+Output:
+
+```
+Project: my-project
+Template: nextjs-dashboard@2.0.0 (pinned)
+...
+```
+
+### Unpin to Receive Updates
+
+```bash
+cyanprint unpin
+```
+
+## Best Practices
+
+### Before Updating
+
+1. **Commit your changes** - Ensure working directory is clean
+2. **Review the changelog** - Understand what's changing
+3. **Create a branch** - Isolate update changes
+4. **Have tests passing** - Verify current state is good
+
+### During Update
+
+1. **Read prompts carefully** - New options may be added
+2. **Resolve conflicts thoughtfully** - Don't blindly accept either side
+3. **Keep notes** - Document any manual changes needed
+
+### After Updating
+
+1. **Run tests** - Verify nothing broke
+2. **Test manually** - Check critical functionality
+3. **Review diffs** - Ensure expected changes only
+4. **Commit update** - Make the update a clear commit
+
+## Update Workflow Example
+
+A complete update workflow:
+
+```bash
+# 1. Check current status
+cyanprint status
+
+# 2. Review available updates
+cyanprint check-updates
+
+# 3. Ensure clean working directory
+git status
+
+# 4. Create update branch
+git checkout -b template-update-2.1.0
+
+# 5. Run update
+cyanprint update
+
+# 6. Resolve any conflicts
+# ... edit files ...
+
+# 7. Continue if conflicts occurred
+cyanprint update --continue
+
+# 8. Run tests
+npm test
+
+# 9. Review changes
+git diff
+
+# 10. Commit and push
+git add .
+git commit -m "chore: update template to v2.1.0"
+git push origin template-update-2.1.0
+```
+
+## Command Reference
+
+| Command                          | Description                              |
+| -------------------------------- | ---------------------------------------- |
+| `cyanprint status`               | Show project and template info            |
+| `cyanprint check-updates`        | Check for available template updates      |
+| `cyanprint update`               | Update project to latest template         |
+| `cyanprint update --list`        | List files with available updates         |
+| `cyanprint update --files <...>` | Update specific files only                |
+| `cyanprint update --continue`    | Continue after resolving conflicts        |
+| `cyanprint update --abort`       | Abort and restore from backup             |
+| `cyanprint pin`                  | Pin to current template version           |
+| `cyanprint pin --version <v>`    | Pin to specific version                   |
+| `cyanprint unpin`                | Remove version pin                        |
+
+## Next Steps
+
+- [Template Lifecycle](./08-template-lifecycle) - Understand how templates work
+- [CLI Commands](./06-cli-commands) - Complete command reference

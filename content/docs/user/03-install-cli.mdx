@@ -1,0 +1,361 @@
+---
+title: Install the CLI
+description: Platform-specific installation instructions for the CyanPrint CLI
+---
+
+# Install the CLI
+
+This guide covers installing the CyanPrint CLI (Iridium) on all major platforms. Choose your operating system below for detailed instructions.
+
+## System Requirements
+
+Before installing, ensure your system meets these requirements:
+
+| Requirement   | Details                                  |
+| ------------- | ---------------------------------------- |
+| **Operating System** | macOS 10.15+, Linux (glibc 2.31+), Windows 10+ |
+| **Docker**    | Docker Engine 20.10 or later             |
+| **Memory**    | 4GB RAM minimum (8GB recommended)        |
+| **Disk Space** | 500MB for CLI, additional for containers |
+
+<Callout type="warn">
+Docker is **required** for CyanPrint to function. Templates execute in isolated Docker containers for security and reproducibility. Make sure Docker is running before using CyanPrint.
+</Callout>
+
+## Installation
+
+<Tabs items={["macOS", "Linux", "Windows"]}>
+  <Tab value="macOS">
+
+### Homebrew (Recommended)
+
+The easiest way to install on macOS is using Homebrew:
+
+```bash
+# Add the atomiCloud tap
+brew tap atomicloud/tap
+
+# Install cyanprint
+brew install cyanprint
+```
+
+### Manual Installation
+
+If you prefer manual installation:
+
+```bash
+# Download the latest release
+curl -LO https://github.com/AtomiCloud/cyanprint.iridium/releases/latest/download/cyanprint-darwin-arm64
+
+# For Intel Macs, use:
+# curl -LO https://github.com/AtomiCloud/cyanprint.iridium/releases/latest/download/cyanprint-darwin-amd64
+
+# Make it executable
+chmod +x cyanprint-darwin-arm64
+
+# Move to PATH
+sudo mv cyanprint-darwin-arm64 /usr/local/bin/cyanprint
+```
+
+### Verify Installation
+
+```bash
+cyanprint --version
+```
+
+  </Tab>
+  <Tab value="Linux">
+
+### Install Script (Recommended)
+
+The quickest way to install on Linux:
+
+```bash
+curl -fsSL https://get.cyanprint.dev | sh
+```
+
+This script detects your distribution and architecture automatically.
+
+### Debian/Ubuntu (APT)
+
+For Debian-based systems:
+
+```bash
+# Add the repository
+curl -fsSL https://apt.cyanprint.dev/gpg | sudo gpg --dearmor -o /usr/share/keyrings/cyanprint.gpg
+
+echo "deb [signed-by=/usr/share/keyrings/cyanprint.gpg] https://apt.cyanprint.dev stable main" | sudo tee /etc/apt/sources.list.d/cyanprint.list
+
+# Install
+sudo apt update
+sudo apt install cyanprint
+```
+
+### RHEL/Fedora (YUM/DNF)
+
+For Red Hat-based systems:
+
+```bash
+# Add the repository
+sudo dnf config-manager --add-repo https://yum.cyanprint.dev/cyanprint.repo
+
+# Install
+sudo dnf install cyanprint
+```
+
+### Arch Linux (AUR)
+
+For Arch users:
+
+```bash
+# Using yay
+yay -S cyanprint-bin
+
+# Or using paru
+paru -S cyanprint-bin
+```
+
+### Snap
+
+If you prefer Snap:
+
+```bash
+sudo snap install cyanprint
+```
+
+<Callout type="info">
+Snap installs are confined by default. Some features may require `--classic` confinement: `sudo snap install cyanprint --classic`
+</Callout>
+
+### Manual Installation
+
+For other distributions or custom setups:
+
+```bash
+# Download for x86_64
+curl -LO https://github.com/AtomiCloud/cyanprint.iridium/releases/latest/download/cyanprint-linux-amd64
+
+# For ARM64, use:
+# curl -LO https://github.com/AtomiCloud/cyanprint.iridium/releases/latest/download/cyanprint-linux-arm64
+
+# Make it executable
+chmod +x cyanprint-linux-amd64
+
+# Move to PATH
+sudo mv cyanprint-linux-amd64 /usr/local/bin/cyanprint
+```
+
+### Verify Installation
+
+```bash
+cyanprint --version
+```
+
+  </Tab>
+  <Tab value="Windows">
+
+### Scoop (Recommended)
+
+Using Scoop package manager:
+
+```powershell
+# Add the atomiCloud bucket
+scoop bucket add atomi https://github.com/atomiCloud/scoop-bucket
+
+# Install cyanprint
+scoop install cyanprint
+```
+
+### Chocolatey
+
+Using Chocolatey:
+
+```powershell
+choco install cyanprint
+```
+
+### Winget
+
+Using Windows Package Manager:
+
+```powershell
+winget install atomiCloud.CyanPrint
+```
+
+### Manual Installation
+
+Download the latest release manually:
+
+1. Visit the [releases page](https://github.com/AtomiCloud/cyanprint.iridium/releases/latest)
+2. Download `cyanprint-windows-amd64.exe`
+3. Rename to `cyanprint.exe`
+4. Add to your PATH
+
+Or using PowerShell:
+
+```powershell
+# Create a directory for the CLI
+mkdir -p $env:USERPROFILE\bin
+
+# Download the executable
+Invoke-WebRequest -Uri "https://github.com/AtomiCloud/cyanprint.iridium/releases/latest/download/cyanprint-windows-amd64.exe" -OutFile "$env:USERPROFILE\bin\cyanprint.exe"
+
+# Add to PATH (current session)
+$env:PATH += ";$env:USERPROFILE\bin"
+
+# Add to PATH permanently
+[Environment]::SetEnvironmentVariable("PATH", $env:PATH + ";$env:USERPROFILE\bin", "User")
+```
+
+### Verify Installation
+
+```powershell
+cyanprint --version
+```
+
+<Callout type="warn">
+On Windows, ensure Docker Desktop is running with WSL 2 backend for best performance. The legacy Hyper-V backend may have compatibility issues.
+</Callout>
+
+  </Tab>
+</Tabs>
+
+## Docker Setup
+
+CyanPrint requires Docker to execute templates. Make sure Docker is properly installed and running:
+
+<Tabs items={["macOS", "Linux", "Windows"]}>
+  <Tab value="macOS">
+
+Install [Docker Desktop for Mac](https://docs.docker.com/desktop/install/mac-install/).
+
+```bash
+# Verify Docker is running
+docker info
+```
+
+  </Tab>
+  <Tab value="Linux">
+
+Install Docker Engine following the [official instructions](https://docs.docker.com/engine/install/).
+
+```bash
+# Add your user to the docker group (optional, for non-root access)
+sudo usermod -aG docker $USER
+
+# Apply changes (or log out and back in)
+newgrp docker
+
+# Verify Docker is running
+docker info
+```
+
+  </Tab>
+  <Tab value="Windows">
+
+Install [Docker Desktop for Windows](https://docs.docker.com/desktop/install/windows-install/) with WSL 2 backend.
+
+```powershell
+# Verify Docker is running
+docker info
+```
+
+  </Tab>
+</Tabs>
+
+## Configuration
+
+After installation, you may want to configure CyanPrint:
+
+### Set the Registry URL
+
+By default, CyanPrint connects to the public registry. For enterprise installations:
+
+```bash
+cyanprint config set registry https://registry.yourcompany.com
+```
+
+### Authentication
+
+Some templates require authentication. Log in with:
+
+```bash
+cyanprint login
+```
+
+This will open your browser to authenticate with the registry.
+
+### View Current Configuration
+
+```bash
+cyanprint config list
+```
+
+## Upgrading
+
+### Homebrew
+
+```bash
+brew upgrade cyanprint
+```
+
+### APT
+
+```bash
+sudo apt update && sudo apt upgrade cyanprint
+```
+
+### Chocolatey
+
+```powershell
+choco upgrade cyanprint
+```
+
+### Scoop
+
+```powershell
+scoop update cyanprint
+```
+
+### Self-Update
+
+CyanPrint can update itself:
+
+```bash
+cyanprint update
+```
+
+## Troubleshooting
+
+### Command Not Found
+
+If you get `command not found: cyanprint`:
+
+1. Verify the binary is in your PATH
+2. Restart your terminal/shell
+3. Check installation completed successfully
+
+### Docker Connection Errors
+
+If you see Docker connection errors:
+
+1. Ensure Docker is running: `docker info`
+2. On Linux, check your user is in the docker group
+3. On macOS/Windows, ensure Docker Desktop is running
+
+### Permission Denied
+
+On Linux/macOS, if you get permission errors:
+
+```bash
+# Check binary permissions
+ls -la $(which cyanprint)
+
+# Fix if needed
+sudo chmod +x $(which cyanprint)
+```
+
+## Next Steps
+
+- [Getting Started](./01-getting-started) - Run your first template
+- [CLI Commands](./06-cli-commands) - Learn all available commands

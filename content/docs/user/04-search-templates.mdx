@@ -1,0 +1,296 @@
+---
+title: Search for Templates
+description: Learn how to find and evaluate templates using the CLI and web registry
+---
+
+# Search for Templates
+
+Finding the right template is the first step to scaffolding your project. This guide covers all the ways to discover templates using the CyanPrint CLI and web registry.
+
+## Why Search Matters
+
+With hundreds of templates available, effective search helps you:
+
+- Find templates that match your technology stack
+- Discover templates from your organization
+- Evaluate template quality before using them
+- Stay updated with the latest templates
+
+## Using the CLI
+
+The `cyanprint search` command is your fastest way to find templates.
+
+### Basic Search
+
+Search by template name or keywords:
+
+```bash
+# Search for React templates
+cyanprint search react
+
+# Search for API templates
+cyanprint search api
+
+# Search for specific project types
+cyanprint search microservice
+```
+
+### Filter by Language
+
+Limit results to a specific programming language:
+
+```bash
+cyanprint search --language typescript
+cyanprint search --language python
+cyanprint search -l rust
+```
+
+### Filter by Tags
+
+Search by template tags:
+
+```bash
+# Single tag
+cyanprint search --tag backend
+
+# Multiple tags (AND logic)
+cyanprint search --tag backend --tag docker
+
+# Popular tag examples
+cyanprint search --tag nextjs
+cyanprint search --tag express
+cyanprint search --tag graphql
+```
+
+### Filter by Organization
+
+Find templates from a specific organization:
+
+```bash
+# Your company's templates
+cyanprint search --org mycompany
+
+# Official templates
+cyanprint search --org official
+```
+
+### Combine Filters
+
+Chain multiple filters for precise results:
+
+```bash
+# TypeScript backend templates from your org
+cyanprint search --language typescript --tag backend --org mycompany
+
+# React templates with TypeScript
+cyanprint search react -l typescript
+```
+
+### Search Output
+
+Results are displayed in a formatted table:
+
+```
+┌─────────────────────────┬──────────────────┬─────────────┬───────────┐
+│ Name                    │ Description      │ Language    │ Downloads │
+├─────────────────────────┼──────────────────┼─────────────┼───────────┤
+│ nextjs-dashboard        │ Dashboard app... │ TypeScript  │ 15,420    │
+│ express-api             │ REST API...      │ TypeScript  │ 12,300    │
+│ react-component-lib     │ Component...     │ TypeScript  │ 8,200     │
+└─────────────────────────┴──────────────────┴─────────────┴───────────┘
+```
+
+### View Template Details
+
+Get more information about a specific template:
+
+```bash
+cyanprint show nextjs-dashboard
+```
+
+Output:
+
+```
+Template: nextjs-dashboard
+Version: 2.1.0
+Author: atomiCloud
+Organization: official
+Downloads: 15,420
+Stars: 234
+
+Description:
+  A production-ready Next.js dashboard template with authentication,
+  database integration, and modern UI components.
+
+Tags:
+  - nextjs
+  - react
+  - typescript
+  - dashboard
+  - tailwind
+
+Requirements:
+  - Docker 20.10+
+  - Node.js 18+
+
+README: https://registry.cyanprint.dev/templates/nextjs-dashboard
+```
+
+## Using the Web Registry
+
+The web registry (Argon) provides a visual interface for discovering templates. It's useful when you want to:
+
+- Browse templates with screenshots
+- Read detailed documentation
+- Check version history
+- See community ratings and reviews
+
+### Accessing the Registry
+
+Visit the registry at: `https://registry.cyanprint.dev`
+
+For enterprise installations, use your company's registry URL.
+
+### Browse Features
+
+#### Categories
+
+Templates are organized into categories:
+
+- **Web Applications** - Full-stack apps, dashboards, admin panels
+- **APIs** - REST APIs, GraphQL servers, microservices
+- **Libraries** - npm packages, SDKs, shared libraries
+- **Infrastructure** - Docker configs, Kubernetes manifests, Terraform
+- **Mobile** - React Native, Flutter applications
+
+#### Filters
+
+Use sidebar filters to narrow results:
+
+| Filter      | Description                              | Example Values                |
+| ----------- | ---------------------------------------- | ----------------------------- |
+| Language    | Programming language                     | TypeScript, Python, Rust      |
+| Framework   | Web or application framework             | Next.js, Express, FastAPI     |
+| Tags        | Template tags                            | auth, database, docker        |
+| Organization| Template publisher                       | official, mycompany           |
+| License     | Template license                         | MIT, Apache-2.0               |
+
+#### Sorting
+
+Sort results by:
+
+- **Relevance** - Best match for your search
+- **Downloads** - Most popular first
+- **Recently Updated** - Latest updates first
+- **Stars** - Most starred by the community
+
+### Template Details Page
+
+Click any template to view its details page, which includes:
+
+- **Screenshots** - Visual preview of the generated output
+- **Documentation** - How to use the template
+- **Configuration Options** - Available prompts and their defaults
+- **Version History** - Changelog and previous versions
+- **Dependencies** - What the template includes
+- **Reviews** - Community feedback
+
+## Tips for Evaluating Templates
+
+Before using a template, consider these factors:
+
+### Check the Author
+
+- Is it from a trusted organization or individual?
+- How many other templates have they published?
+- Is the template actively maintained?
+
+### Review Downloads and Stars
+
+- High downloads indicate community trust
+- Stars show appreciation from users
+- Check if activity is recent (not abandoned)
+
+### Read the Documentation
+
+- Are setup instructions clear?
+- Are configuration options documented?
+- Is there a README with examples?
+
+### Check Version History
+
+- Recent updates indicate active maintenance
+- Review changelog for breaking changes
+- Look for semantic versioning
+
+### Preview the Output
+
+If available:
+
+- Review screenshots of generated projects
+- Check the file structure diagram
+- Look at sample configuration files
+
+<Callout type="tip">
+Always check the template's requirements before running. Some templates require specific versions of Docker, Node.js, or other tools.
+</Callout>
+
+## Saving Favorite Templates
+
+Mark templates as favorites for quick access:
+
+### Via CLI
+
+```bash
+# Add to favorites
+cyanprint favorite add nextjs-dashboard
+
+# List favorites
+cyanprint favorite list
+
+# Remove from favorites
+cyanprint favorite remove nextjs-dashboard
+```
+
+### Via Web
+
+Click the star icon on any template page.
+
+## Private Templates
+
+If your organization has private templates:
+
+1. **Log in** to access them:
+   ```bash
+   cyanprint login
+   ```
+
+2. **Search** private templates:
+   ```bash
+   cyanprint search --private
+   cyanprint search --org mycompany
+   ```
+
+3. **List** all accessible templates:
+   ```bash
+   cyanprint list --available
+   ```
+
+## Command Reference
+
+| Command                              | Description                              |
+| ------------------------------------ | ---------------------------------------- |
+| `cyanprint search <query>`           | Search by name/keyword                   |
+| `cyanprint search -l <language>`     | Filter by language                       |
+| `cyanprint search --tag <tag>`       | Filter by tag                            |
+| `cyanprint search --org <org>`       | Filter by organization                   |
+| `cyanprint show <template>`          | View template details                    |
+| `cyanprint favorite add <template>`  | Add to favorites                         |
+| `cyanprint favorite list`            | List favorite templates                  |
+| `cyanprint favorite remove <template>` | Remove from favorites                  |
+
+## Next Steps
+
+- [Your First Template](./02-first-template) - Run a template you found
+- [CLI Commands](./06-cli-commands) - Complete CLI reference
+- [Web Registry](./07-registry) - Explore the web interface

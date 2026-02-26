@@ -1,0 +1,171 @@
+---
+title: Getting Started
+description: Install CyanPrint and run your first template in 5-10 minutes
+---
+
+# Getting Started
+
+This tutorial will guide you through installing CyanPrint and running your first template. By the end, you'll have a working project generated from a template.
+
+**Time estimate**: 5-10 minutes
+
+## Prerequisites
+
+Before you begin, ensure you have:
+
+- **Operating System**: macOS, Linux, or Windows
+- **Docker**: Required for template execution (templates run in isolated containers)
+- **Terminal**: A command-line interface
+
+<Callout type="info">
+Docker is required because CyanPrint executes templates in isolated containers for security and reproducibility. If you don't have Docker installed, visit [docker.com](https://www.docker.com/get-started) to get started.
+</Callout>
+
+## Step 1: Install the CyanPrint CLI
+
+The CyanPrint CLI (Iridium) is your primary interface for discovering and running templates.
+
+<Tabs items={["macOS", "Linux", "Windows"]}>
+  <Tab value="macOS">
+
+```bash
+# Using Homebrew (recommended)
+brew tap atomicloud/tap
+brew install cyanprint
+
+# Or download directly
+curl -fsSL https://get.cyanprint.dev | sh
+```
+
+  </Tab>
+  <Tab value="Linux">
+
+```bash
+# Using the install script
+curl -fsSL https://get.cyanprint.dev | sh
+
+# Or with snap
+snap install cyanprint
+```
+
+  </Tab>
+  <Tab value="Windows">
+
+```powershell
+# Using Scoop
+scoop bucket add atomi https://github.com/atomiCloud/scoop-bucket
+scoop install cyanprint
+
+# Or with Chocolatey
+choco install cyanprint
+```
+
+  </Tab>
+</Tabs>
+
+For detailed installation instructions, see [Install the CLI](./03-install-cli).
+
+## Step 2: Verify Installation
+
+Confirm the CLI is installed correctly:
+
+```bash
+cyanprint --version
+```
+
+You should see output similar to:
+
+```
+cyanprint 1.0.0
+```
+
+## Step 3: Search for a Template
+
+Now let's find a template to use. You can search for templates directly from the CLI:
+
+```bash
+cyanprint search --language typescript
+```
+
+This will display available TypeScript templates. You can also search by:
+
+- **Name**: `cyanprint search react`
+- **Tags**: `cyanprint search --tag backend`
+- **Organization**: `cyanprint search --org mycompany`
+
+<Callout type="tip">
+You can also browse templates visually at the [web registry](./07-registry). This is helpful for discovering templates with screenshots and detailed documentation.
+</Callout>
+
+## Step 4: Run a Template
+
+Let's create a project using a template. We'll use a simple example template:
+
+```bash
+cyanprint init my-project --template typescript-starter
+```
+
+The CLI will:
+
+1. Download the template from the registry
+2. Start an isolated container
+3. Execute the template logic
+4. Prompt you for any required inputs
+
+You'll see interactive prompts asking for configuration values:
+
+```
+? Project name: (my-project)
+? Description: A new TypeScript project
+? Add ESLint? (Y/n)
+? Choose a package manager: (npm/yarn/pnpm)
+```
+
+Answer the prompts according to your preferences.
+
+## Step 5: Explore the Generated Output
+
+After the template completes, you'll have a new directory with your project:
+
+```bash
+cd my-project
+ls -la
+```
+
+Typical output:
+
+```
+drwxr-xr-x   9 user  staff   288 Feb 26 10:00 .
+drwxr-xr-x   3 user  staff    96 Feb 26 10:00 ..
+-rw-r--r--   1 user  staff   123 Feb 26 10:00 .gitignore
+-rw-r--r--   1 user  staff  1073 Feb 26 10:00 LICENSE
+-rw-r--r--   1 user  staff    45 Feb 26 10:00 README.md
+drwxr-xr-x   4 user  staff   128 Feb 26 10:00 src
+-rw-r--r--   1 user  staff   842 Feb 26 10:00 package.json
+-rw-r--r--   1 user  fabric   145 Feb 26 10:00 tsconfig.json
+```
+
+Your project is now ready to use! You can:
+
+```bash
+# Install dependencies
+npm install
+
+# Start development
+npm run dev
+```
+
+## Summary
+
+Congratulations! You've successfully:
+
+- Installed the CyanPrint CLI
+- Searched for a template
+- Generated a new project from a template
+- Explored the generated files
+
+## Next Steps
+
+- **[Your First Template](./02-first-template)** - Walk through a more detailed example
+- **[CLI Commands](./06-cli-commands)** - Learn all available commands
+- **[Search Templates](./04-search-templates)** - Discover more ways to find templates

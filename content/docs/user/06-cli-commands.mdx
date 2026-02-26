@@ -1,0 +1,563 @@
+---
+title: CLI Commands
+description: Complete reference for all CyanPrint CLI commands
+---
+
+# CLI Commands
+
+This page provides a comprehensive reference for all CyanPrint CLI (Iridium) commands.
+
+## Global Options
+
+These options are available for all commands:
+
+| Option              | Description                              |
+| ------------------- | ---------------------------------------- |
+| `-h, --help`        | Show help for any command                |
+| `-V, --version`     | Show CLI version                         |
+| `-v, --verbose`     | Enable verbose output                    |
+| `-q, --quiet`       | Suppress non-essential output            |
+| `--no-color`        | Disable colored output                   |
+| `--config <path>`   | Use custom config file                   |
+
+## Core Commands
+
+### cyanprint init
+
+Initialize a new project from a template.
+
+```bash
+cyanprint init [name] [options]
+```
+
+#### Arguments
+
+| Argument | Description                              | Default     |
+| -------- | ---------------------------------------- | ----------- |
+| `name`   | Project directory name                   | Current dir |
+
+#### Options
+
+| Option                    | Description                              |
+| ------------------------- | ---------------------------------------- |
+| `-t, --template <name>`   | Template to use                          |
+| `-v, --template-version <version>` | Specific template version      |
+| `-d, --directory <path>`  | Output directory                         |
+| `-o, --overwrite`         | Overwrite existing files                 |
+| `--dry-run`               | Preview without creating files           |
+| `--no-cache`              | Disable template caching                 |
+| `--offline`               | Use cached templates only                |
+
+#### Examples
+
+```bash
+# Interactive template selection
+cyanprint init my-project
+
+# Specify template
+cyanprint init my-project --template nextjs-dashboard
+
+# Use specific version
+cyanprint init my-project -t nextjs-dashboard -v 2.0.0
+
+# Preview without creating files
+cyanprint init my-project -t react-starter --dry-run
+
+# Create in current directory
+cyanprint init . -t express-api
+```
+
+---
+
+### cyanprint search
+
+Search for templates in the registry.
+
+```bash
+cyanprint search [query] [options]
+```
+
+#### Arguments
+
+| Argument | Description                              |
+| -------- | ---------------------------------------- |
+| `query`  | Search query (name, keywords, etc.)      |
+
+#### Options
+
+| Option                  | Description                              |
+| ----------------------- | ---------------------------------------- |
+| `-l, --language <lang>` | Filter by programming language           |
+| `--tag <tag>`           | Filter by tag (can be used multiple times)|
+| `--org <org>`           | Filter by organization                   |
+| `--private`             | Include private templates                |
+| `--limit <n>`           | Limit number of results                  |
+| `--json`                | Output as JSON                           |
+
+#### Examples
+
+```bash
+# Search by name/keyword
+cyanprint search react
+
+# Filter by language
+cyanprint search --language typescript
+
+# Filter by tags
+cyanprint search --tag backend --tag api
+
+# Organization templates
+cyanprint search --org mycompany
+
+# JSON output
+cyanprint search react --json
+```
+
+---
+
+### cyanprint show
+
+Display detailed information about a template.
+
+```bash
+cyanprint show <template> [options]
+```
+
+#### Arguments
+
+| Argument    | Description                              |
+| ----------- | ---------------------------------------- |
+| `template`  | Template name to show details for        |
+
+#### Options
+
+| Option              | Description                              |
+| ------------------- | ---------------------------------------- |
+| `-v, --version <v>` | Show specific version                    |
+| `--readme`          | Display the template's README            |
+| `--json`            | Output as JSON                           |
+
+#### Examples
+
+```bash
+# Show template details
+cyanprint show nextjs-dashboard
+
+# Show specific version
+cyanprint show nextjs-dashboard -v 2.0.0
+
+# Include README
+cyanprint show nextjs-dashboard --readme
+```
+
+---
+
+### cyanprint list
+
+List templates available to you.
+
+```bash
+cyanprint list [options]
+```
+
+#### Options
+
+| Option              | Description                              |
+| ------------------- | ---------------------------------------- |
+| `--available`       | List all accessible templates            |
+| `--installed`       | List installed templates                 |
+| `--favorites`       | List favorite templates                  |
+| `--recent`          | List recently used templates             |
+| `--json`            | Output as JSON                           |
+
+#### Examples
+
+```bash
+# All accessible templates
+cyanprint list --available
+
+# Recently used
+cyanprint list --recent
+```
+
+---
+
+## Update Commands
+
+### cyanprint update
+
+Update the CLI or project template.
+
+```bash
+cyanprint update [options]
+```
+
+#### Options
+
+| Option              | Description                              |
+| ------------------- | ---------------------------------------- |
+| `--self`            | Update the CLI itself                    |
+| `--template`        | Update project's template                |
+| `--list`            | List files with available updates        |
+| `--files <...>`     | Update specific files only               |
+| `--continue`        | Continue after resolving conflicts       |
+| `--abort`           | Abort update and restore backup          |
+
+#### Examples
+
+```bash
+# Update CLI to latest version
+cyanprint update --self
+
+# Update project template
+cyanprint update --template
+
+# List available updates
+cyanprint update --list
+
+# Update specific files
+cyanprint update --files tsconfig.json package.json
+
+# Continue after conflicts
+cyanprint update --continue
+```
+
+---
+
+### cyanprint status
+
+Show project status and template information.
+
+```bash
+cyanprint status [options]
+```
+
+#### Options
+
+| Option              | Description                              |
+| ------------------- | ---------------------------------------- |
+| `--json`            | Output as JSON                           |
+
+#### Examples
+
+```bash
+cyanprint status
+```
+
+---
+
+### cyanprint pin
+
+Pin or unpin project to a specific template version.
+
+```bash
+cyanprint pin [options]
+cyanprint unpin
+```
+
+#### Options
+
+| Option                  | Description                              |
+| ----------------------- | ---------------------------------------- |
+| `--version <version>`   | Pin to specific version                  |
+
+#### Examples
+
+```bash
+# Pin to current version
+cyanprint pin
+
+# Pin to specific version
+cyanprint pin --version 2.0.0
+
+# Remove pin
+cyanprint unpin
+```
+
+---
+
+### cyanprint check-updates
+
+Check for available template updates.
+
+```bash
+cyanprint check-updates [options]
+```
+
+#### Options
+
+| Option              | Description                              |
+| ------------------- | ---------------------------------------- |
+| `--all`             | Check all projects in subdirectories     |
+
+#### Examples
+
+```bash
+cyanprint check-updates
+```
+
+---
+
+## Authentication Commands
+
+### cyanprint login
+
+Authenticate with the registry.
+
+```bash
+cyanprint login [options]
+```
+
+#### Options
+
+| Option              | Description                              |
+| ------------------- | ---------------------------------------- |
+| `--registry <url>`  | Login to specific registry               |
+| `--token <token>`   | Use token instead of browser flow        |
+
+#### Examples
+
+```bash
+# Interactive login (opens browser)
+cyanprint login
+
+# Login with token
+cyanprint login --token your-api-token
+
+# Login to enterprise registry
+cyanprint login --registry https://registry.company.com
+```
+
+---
+
+### cyanprint logout
+
+Log out from the registry.
+
+```bash
+cyanprint logout [options]
+```
+
+#### Options
+
+| Option              | Description                              |
+| ------------------- | ---------------------------------------- |
+| `--registry <url>`  | Logout from specific registry            |
+| `--all`             | Logout from all registries               |
+
+#### Examples
+
+```bash
+cyanprint logout
+```
+
+---
+
+### cyanprint whoami
+
+Display current authentication status.
+
+```bash
+cyanprint whoami
+```
+
+---
+
+## Configuration Commands
+
+### cyanprint config
+
+Manage CLI configuration.
+
+```bash
+cyanprint config <command> [options]
+```
+
+#### Subcommands
+
+| Subcommand            | Description                              |
+| --------------------- | ---------------------------------------- |
+| `list`                | List all configuration values            |
+| `get <key>`           | Get a specific configuration value       |
+| `set <key> <value>`   | Set a configuration value                |
+| `unset <key>`         | Remove a configuration value             |
+
+#### Common Configuration Keys
+
+| Key                   | Description                              | Default                  |
+| --------------------- | ---------------------------------------- | ------------------------ |
+| `registry`            | Default registry URL                     | https://registry.cyanprint.dev |
+| `cache.dir`           | Template cache directory                 | `~/.cyanprint/cache`     |
+| `cache.ttl`           | Cache time-to-live (hours)               | 24                       |
+| `docker.timeout`      | Container execution timeout (seconds)    | 300                      |
+| `output.color`        | Enable colored output                    | true                     |
+
+#### Examples
+
+```bash
+# List configuration
+cyanprint config list
+
+# Set registry
+cyanprint config set registry https://registry.company.com
+
+# Get a value
+cyanprint config get registry
+
+# Unset a value
+cyanprint config unset registry
+```
+
+---
+
+## Favorites Commands
+
+### cyanprint favorite
+
+Manage favorite templates.
+
+```bash
+cyanprint favorite <command> [options]
+```
+
+#### Subcommands
+
+| Subcommand            | Description                              |
+| --------------------- | ---------------------------------------- |
+| `add <template>`      | Add template to favorites                |
+| `remove <template>`   | Remove template from favorites           |
+| `list`                | List all favorites                       |
+
+#### Examples
+
+```bash
+# Add to favorites
+cyanprint favorite add nextjs-dashboard
+
+# List favorites
+cyanprint favorite list
+
+# Remove from favorites
+cyanprint favorite remove nextjs-dashboard
+```
+
+---
+
+## Cache Commands
+
+### cyanprint cache
+
+Manage the template cache.
+
+```bash
+cyanprint cache <command> [options]
+```
+
+#### Subcommands
+
+| Subcommand            | Description                              |
+| --------------------- | ---------------------------------------- |
+| `list`                | List cached templates                    |
+| `clear`               | Clear all cached templates               |
+| `prune`               | Remove old cache entries                 |
+
+#### Examples
+
+```bash
+# List cached templates
+cyanprint cache list
+
+# Clear cache
+cyanprint cache clear
+
+# Remove old entries
+cyanprint cache prune
+```
+
+---
+
+## Utility Commands
+
+### cyanprint help
+
+Display help for any command.
+
+```bash
+cyanprint help [command]
+```
+
+#### Examples
+
+```bash
+# General help
+cyanprint help
+
+# Command-specific help
+cyanprint help init
+cyanprint help search
+```
+
+---
+
+### cyanprint version
+
+Display CLI version.
+
+```bash
+cyanprint version
+cyanprint --version
+cyanprint -V
+```
+
+---
+
+## Environment Variables
+
+Configure CyanPrint behavior with environment variables:
+
+| Variable                   | Description                              |
+| -------------------------- | ---------------------------------------- |
+| `CYANPRINT_REGISTRY`       | Override default registry URL            |
+| `CYANPRINT_CONFIG`         | Path to config file                      |
+| `CYANPRINT_CACHE_DIR`      | Override cache directory                 |
+| `CYANPRINT_NO_COLOR`       | Disable colored output (set to `1`)      |
+| `CYANPRINT_DEBUG`          | Enable debug logging (set to `1`)        |
+| `CYANPRINT_OFFLINE`        | Force offline mode (set to `1`)          |
+
+#### Examples
+
+```bash
+# Use enterprise registry
+CYANPRINT_REGISTRY=https://registry.company.com cyanprint search
+
+# Debug mode
+CYANPRINT_DEBUG=1 cyanprint init my-project
+
+# Offline mode
+CYANPRINT_OFFLINE=1 cyanprint init my-project -t cached-template
+```
+
+---
+
+## Exit Codes
+
+The CLI returns these exit codes:
+
+| Code | Meaning                                  |
+| ---- | ---------------------------------------- |
+| 0    | Success                                  |
+| 1    | General error                            |
+| 2    | Invalid arguments                        |
+| 3    | Authentication error                     |
+| 4    | Network error                            |
+| 5    | Template not found                       |
+| 6    | Docker error                             |
+| 7    | Configuration error                      |
+
+---
+
+## Next Steps
+
+- [Getting Started](./01-getting-started) - Quick start tutorial
+- [Search Templates](./04-search-templates) - Find templates to use
+- [Web Registry](./07-registry) - Use the web interface

@@ -1,0 +1,285 @@
+---
+title: Your First Template
+description: A complete walkthrough of creating a project from a CyanPrint template
+---
+
+# Your First Template
+
+This tutorial walks you through the complete process of creating a project from a CyanPrint template. We'll use a realistic example to demonstrate all the steps involved.
+
+**Time estimate**: 10-15 minutes
+
+## What You'll Build
+
+In this tutorial, you'll create a full-stack web application using a template from the CyanPrint registry. By the end, you'll understand:
+
+- How to browse and evaluate templates
+- How to run a template with various options
+- How to respond to template prompts
+- What the generated project structure looks like
+
+## Prerequisites
+
+Make sure you've completed [Getting Started](./01-getting-started) or have:
+
+- CyanPrint CLI installed and working
+- Docker running on your system
+- Basic familiarity with command-line operations
+
+## Step 1: Browse the Registry
+
+Before running a template, it's helpful to explore what's available. You have two options:
+
+### Option A: Web Registry
+
+Visit the CyanPrint web registry (Argon) to browse templates visually. This is useful for:
+
+- Seeing template screenshots and previews
+- Reading detailed documentation
+- Checking version history and update notes
+- Viewing usage statistics and ratings
+
+### Option B: CLI Search
+
+Use the CLI for quick searches:
+
+```bash
+# Search for web templates
+cyanprint search web
+
+# Filter by framework
+cyanprint search --tag nextjs
+cyanprint search --tag express
+
+# Filter by language
+cyanprint search --language typescript
+```
+
+<Callout type="tip">
+Combine the web registry for discovery with the CLI for execution. The web interface is great for exploring, while the CLI provides a streamlined workflow for running templates.
+</Callout>
+
+## Step 2: Choose a Template
+
+For this tutorial, let's use the `nextjs-dashboard` template, which creates a modern dashboard application with:
+
+- Next.js 14 with App Router
+- TypeScript configuration
+- Tailwind CSS for styling
+- Authentication scaffolding
+- Database setup with Prisma
+
+```bash
+# View template details
+cyanprint show nextjs-dashboard
+```
+
+Output:
+
+```
+Template: nextjs-dashboard
+Version: 2.1.0
+Author: atomiCloud
+Downloads: 15,420
+
+Description:
+  A production-ready Next.js dashboard template with authentication,
+  database integration, and modern UI components.
+
+Tags: nextjs, react, typescript, dashboard, tailwind
+```
+
+## Step 3: Initialize the Project
+
+Now let's create a project using this template:
+
+```bash
+cyanprint init my-dashboard --template nextjs-dashboard
+```
+
+<Callout type="info">
+If you don't specify a template, the CLI will prompt you to select one interactively. You can also use `-t` as shorthand for `--template`.
+</Callout>
+
+The CLI will:
+
+1. **Download** the template package from the registry
+2. **Validate** the template signature and checksum
+3. **Prepare** an isolated Docker container
+4. **Execute** the template logic
+
+## Step 4: Answer the Prompts
+
+The template will ask for configuration values. Here's what you'll see:
+
+### Project Information
+
+```
+? Project name: (my-dashboard)
+? Project description: A dashboard application
+? Author name: Your Name
+? Author email: your@email.com
+```
+
+### Technology Choices
+
+```
+? Package manager: (Use arrow keys)
+  ❯ npm
+    yarn
+    pnpm
+    bun
+
+? Database: (Use arrow keys)
+  ❯ PostgreSQL
+    MySQL
+    SQLite
+    MongoDB
+
+? Authentication provider: (Use arrow keys)
+  ❯ NextAuth.js
+    Clerk
+    Auth0
+    None
+```
+
+### Optional Features
+
+```
+? Include ESLint? (Y/n)
+? Include Prettier? (Y/n)
+? Include Husky for git hooks? (y/N)
+? Include testing setup? (Y/n)
+? Include Storybook? (y/N)
+```
+
+<Callout type="warn">
+Take your time with these choices! Some options (like the database) are harder to change later. When in doubt, accept the defaults which represent recommended best practices.
+</Callout>
+
+## Step 5: Watch the Generation
+
+After answering all prompts, the template generates your project:
+
+```
+✓ Pulling template container...
+✓ Executing template...
+✓ Processing files...
+
+  Creating: package.json
+  Creating: tsconfig.json
+  Creating: tailwind.config.ts
+  Creating: next.config.js
+  Creating: src/app/layout.tsx
+  Creating: src/app/page.tsx
+  Creating: src/app/dashboard/page.tsx
+  Creating: src/lib/auth.ts
+  Creating: prisma/schema.prisma
+  Creating: .env.example
+  Creating: README.md
+
+✓ Generated 24 files
+✓ Cleaning up container...
+
+Project created successfully at ./my-dashboard
+```
+
+## Step 6: Explore the Generated Project
+
+Let's look at what was created:
+
+```bash
+cd my-dashboard
+tree -L 2 -a
+```
+
+Output:
+
+```
+my-dashboard/
+├── .env.example
+├── .eslintrc.json
+├── .gitignore
+├── .prettierrc
+├── LICENSE
+├── README.md
+├── next.config.js
+├── package.json
+├── postcss.config.js
+├── tailwind.config.ts
+├── tsconfig.json
+├── prisma/
+│   └── schema.prisma
+├── public/
+│   └── favicon.ico
+└── src/
+    ├── app/
+    │   ├── dashboard/
+    │   │   └── page.tsx
+    │   ├── api/
+    │   │   └── auth/
+    │   ├── globals.css
+    │   ├── layout.tsx
+    │   └── page.tsx
+    ├── components/
+    │   ├── ui/
+    │   └── layout/
+    └── lib/
+        ├── auth.ts
+        └── db.ts
+```
+
+### Key Files to Review
+
+1. **`package.json`** - Dependencies and scripts configured based on your choices
+2. **`README.md`** - Template-specific instructions for getting started
+3. **`.env.example`** - Environment variables you need to configure
+4. **`prisma/schema.prisma`** - Database schema tailored to your database choice
+
+## Step 7: Get Started
+
+Follow the generated README to start developing:
+
+```bash
+# Install dependencies
+npm install
+
+# Copy environment file
+cp .env.example .env
+
+# Set up the database
+npx prisma db push
+
+# Start development server
+npm run dev
+```
+
+Visit `http://localhost:3000` to see your new application!
+
+## What's Happening Behind the Scenes
+
+When you run `cyanprint init`, several things happen:
+
+1. **Template Resolution**: The CLI fetches template metadata from the registry
+2. **Container Creation**: A Docker container is spun up with the template's runtime
+3. **Input Processing**: Your answers are passed to the template engine
+4. **File Generation**: The template logic creates and configures files
+5. **Output Transfer**: Generated files are copied to your local directory
+
+For a deeper dive, see [Template Lifecycle](./08-template-lifecycle).
+
+## Summary
+
+You've successfully:
+
+- Browsed and selected a template from the registry
+- Initialized a project using `cyanprint init`
+- Configured the project through interactive prompts
+- Explored the generated project structure
+- Started the development server
+
+## Common Next Steps
+
+- **[CLI Commands](./06-cli-commands)** - Learn all available commands
+- **[Search Templates](./04-search-templates)** - Find more templates for different use cases
+- **[Update Projects](./05-update-templates)** - Keep your project synchronized with template updates

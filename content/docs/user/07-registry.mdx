@@ -1,0 +1,288 @@
+---
+title: Web Registry
+description: Using the CyanPrint web registry (Argon) to discover and manage templates
+---
+
+# Web Registry
+
+The CyanPrint web registry (Argon) provides a visual interface for discovering, evaluating, and managing templates. This guide covers all the features available in the web interface.
+
+## Accessing the Registry
+
+The public registry is available at:
+
+**https://registry.cyanprint.dev**
+
+For enterprise installations, your organization's registry will be at a custom URL (e.g., `https://registry.yourcompany.com`).
+
+<Callout type="info">
+Some features (like starring templates, posting reviews, and accessing private templates) require authentication. Click "Sign In" to log in via your organization's identity provider.
+</Callout>
+
+## Homepage
+
+The homepage provides quick access to:
+
+| Section        | Description                              |
+| -------------- | ---------------------------------------- |
+| **Featured**   | Curated templates highlighted by the team |
+| **Trending**   | Templates gaining popularity recently    |
+| **Recent**     | Newly published or updated templates     |
+| **Categories** | Browse by project type                   |
+
+## Browsing Templates
+
+### Search
+
+Use the search bar to find templates by:
+
+- Template name
+- Description keywords
+- Author or organization
+- Tags
+
+Search supports advanced syntax:
+
+| Query                  | Finds                                    |
+| ---------------------- | ---------------------------------------- |
+| `react`                | Templates matching "react"               |
+| `react typescript`     | Templates matching both terms            |
+| `org:mycompany`        | Templates from specific organization     |
+| `author:johndoe`       | Templates by specific author             |
+| `tag:backend`          | Templates with specific tag              |
+
+### Filters
+
+Apply filters from the sidebar:
+
+| Filter        | Description                              |
+| ------------- | ---------------------------------------- |
+| **Language**  | Programming language                     |
+| **Framework** | Web framework or runtime                 |
+| **License**   | Template license type                    |
+| **Source**    | Public, private, or verified templates   |
+
+Combine multiple filters to narrow results. Active filters appear as chips that can be removed individually.
+
+### Sorting
+
+Sort results by:
+
+- **Relevance** - Best match for your query
+- **Downloads** - Most downloaded first
+- **Recently Updated** - Latest updates first
+- **Newest** - Recently published first
+- **Stars** - Most starred first
+
+## Template Details Page
+
+Click any template card to view its details page.
+
+### Overview Tab
+
+The main view shows:
+
+| Section        | Content                                  |
+| -------------- | ---------------------------------------- |
+| **Description** | Full template description               |
+| **Screenshots** | Visual previews of generated projects   |
+| **Quick Start** | Command to run the template             |
+| **Stats**      | Downloads, stars, version info          |
+
+### Documentation Tab
+
+Template-specific documentation including:
+
+- **Requirements** - Prerequisites needed
+- **Configuration** - Available prompts and options
+- **Output** - What files are generated
+- **Examples** - Sample projects created with the template
+
+### Versions Tab
+
+View the template's version history:
+
+- All published versions
+- Changelog for each version
+- Release dates
+- Ability to view documentation for older versions
+
+<Callout type="tip">
+When running a template, you can specify a version with `cyanprint init -t template-name@1.2.3`. This is useful if you need consistency across multiple projects.
+</Callout>
+
+### Reviews Tab
+
+Community feedback including:
+
+- User ratings (1-5 stars)
+- Written reviews
+- Usage notes and tips
+
+### Dependencies Tab
+
+Shows what the template includes:
+
+- Package dependencies
+- Required tools
+- Optional integrations
+
+## User Features
+
+### Signing In
+
+Click "Sign In" to authenticate. Depending on your organization:
+
+- **Public users** - Sign in with GitHub, GitLab, or email
+- **Enterprise users** - SSO via your identity provider
+
+### Starring Templates
+
+Star templates to:
+
+- Save them to your favorites
+- Show appreciation to the author
+- Help others discover quality templates
+
+Click the star icon on any template page. View your starred templates in your profile.
+
+### Writing Reviews
+
+Share your experience with a template:
+
+1. Navigate to the template's **Reviews** tab
+2. Click "Write a Review"
+3. Rate the template (1-5 stars)
+4. Write your review
+5. Submit
+
+<Callout type="warn">
+Be constructive in your reviews. Focus on the template's quality, documentation, and whether it met your needs. Reviews are moderated for spam and inappropriate content.
+</Callout>
+
+### Reporting Issues
+
+If you find a problem with a template:
+
+1. Click "Report Issue" on the template page
+2. Select the issue type (bug, security, content)
+3. Provide details
+4. Submit
+
+The template author and registry moderators will be notified.
+
+## Organization Features
+
+### Organization Pages
+
+Organizations have dedicated pages showing:
+
+- All templates published by the organization
+- Organization description and links
+- Team members (if public)
+
+### Private Templates
+
+Organizations can publish private templates visible only to members:
+
+- Access requires authentication
+- Private templates don't appear in public search
+- Members can search within the organization
+
+### Teams and Permissions
+
+Organizations can manage template access:
+
+| Role        | Permissions                              |
+| ----------- | ---------------------------------------- |
+| **Owner**   | Full control, manage members, delete org |
+| **Admin**   | Publish/edit templates, manage members   |
+| **Member**  | View and use private templates           |
+
+## Admin Features
+
+If you have admin access to an organization:
+
+### Publishing Templates
+
+1. Navigate to your organization page
+2. Click "New Template"
+3. Follow the publishing wizard:
+   - Upload template package
+   - Add metadata (name, description, tags)
+   - Set visibility (public/private)
+   - Configure documentation
+
+### Managing Templates
+
+From the template management page:
+
+- **Edit metadata** - Update description, tags, screenshots
+- **Manage versions** - Publish, deprecate, or yank versions
+- **View analytics** - Download stats, geographic distribution
+- **Manage access** - For private templates
+
+### Analytics
+
+View usage metrics:
+
+- Total downloads over time
+- Downloads by version
+- Geographic distribution
+- Referral sources
+
+## API Access
+
+The registry provides a REST API for programmatic access.
+
+### Authentication
+
+API requests use Bearer token authentication:
+
+```bash
+curl -H "Authorization: Bearer YOUR_TOKEN" https://registry.cyanprint.dev/api/templates
+```
+
+### Endpoints
+
+Common endpoints:
+
+| Endpoint                        | Description                              |
+| ------------------------------- | ---------------------------------------- |
+| `GET /api/templates`            | List templates                           |
+| `GET /api/templates/:name`      | Get template details                     |
+| `GET /api/templates/:name/versions` | List versions                        |
+| `GET /api/search?q=query`       | Search templates                         |
+
+Full API documentation is available at `/api/docs` on your registry instance.
+
+## Browser Compatibility
+
+The web registry supports:
+
+- Chrome 90+
+- Firefox 88+
+- Safari 14+
+- Edge 90+
+
+<Callout type="info">
+JavaScript must be enabled for the registry to function. The interface is responsive and works on mobile devices, though some advanced features are optimized for desktop.
+</Callout>
+
+## Keyboard Shortcuts
+
+Navigate efficiently with keyboard shortcuts:
+
+| Shortcut     | Action                                   |
+| ------------ | ---------------------------------------- |
+| `/`          | Focus search bar                         |
+| `Esc`        | Clear search / close modal               |
+| `?`          | Show keyboard shortcuts                  |
+| `Enter`      | Select first result (in search)          |
+| `↑` / `↓`    | Navigate search results                  |
+
+## Next Steps
+
+- [Search Templates](./04-search-templates) - CLI search guide
+- [CLI Commands](./06-cli-commands) - Command reference
+- [Template Lifecycle](./08-template-lifecycle) - How templates work

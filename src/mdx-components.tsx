@@ -1,5 +1,6 @@
 import { Code } from '@/components/mdx/code';
 import { Mermaid } from '@/components/mdx/mermaid';
+import { Tabs, Tab } from 'fumadocs-ui/components/tabs';
 import defaultMdxComponents from 'fumadocs-ui/mdx';
 import type { MDXComponents } from 'mdx/types';
 import type { ReactNode, ReactElement } from 'react';
@@ -56,6 +57,8 @@ export function getMDXComponents(components?: MDXComponents): MDXComponents {
     h6: createHeading(6),
     Mermaid,
     Code: Code as unknown,
+    Tabs,
+    Tab,
     ...components,
   } as MDXComponents;
 }

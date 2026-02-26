@@ -5,6 +5,14 @@
 - Ticket: CU-86et8z80y
 - Commit: `docs: add contributor architecture and repository index`
 
+## CRITICAL: Verify Against Actual Code
+
+Before writing ANY documentation:
+
+1. Read actual repo READMEs from `../` directories
+2. Check actual tech stacks from package.json, Cargo.toml, .csproj files
+3. Verify all links work before including them
+
 ## Objective
 
 Create contributor documentation with architecture overview and repository index.
@@ -13,12 +21,12 @@ Create contributor documentation with architecture overview and repository index
 
 | Action | File                                                    | Type        | Description                                                             |
 | ------ | ------------------------------------------------------- | ----------- | ----------------------------------------------------------------------- |
-| CREATE | `content/docs/contributor/01-architecture.mdx`          | Explanation | Platform architecture with Mermaid diagram, data flow, key technologies |
-| CREATE | `content/docs/contributor/02-repositories.mdx`          | Reference   | Index of all 5 repos with summaries, tech stacks, links to docs         |
-| RENAME | `02_CommitConventions.md` → `03-commit-conventions.mdx` | Reference   | (existing file, just rename)                                            |
-| RENAME | `03_Changelog.md` → `04-changelog.mdx`                  | Reference   | (existing file, just rename)                                            |
+| CREATE | `content/docs/contributor/00-architecture.mdx`          | Explanation | Platform architecture with Mermaid diagram, data flow, key technologies |
+| CREATE | `content/docs/contributor/01-repositories.mdx`          | Reference   | Index of all 5 repos with summaries, tech stacks, links to docs         |
+| RENAME | `02_CommitConventions.md` → `02-commit-conventions.mdx` | Reference   | (existing file, just rename)                                            |
+| RENAME | `03_Changelog.md` → `03-changelog.mdx`                  | Reference   | (existing file, just rename)                                            |
 
-## 01-architecture.mdx Content
+## 00-architecture.mdx Content
 
 Create a comprehensive architecture page with:
 
@@ -27,8 +35,8 @@ Create a comprehensive architecture page with:
 
 ```mermaid
 graph TD
-    A[User] --> B[Iridium CLI]
-    B --> C[Zinc Registry]
+    A[User] --> B[cyanprint CLI]
+    B --> C[cyanprint.dev Registry]
     C --> D[PostgreSQL]
     C --> E[Redis]
     C --> F[MinIO]
@@ -41,47 +49,47 @@ graph TD
 
 3. **Data Flow** - How a template is executed:
 
-   - User runs CLI command
-   - CLI fetches template from registry
-   - Coordinator creates execution plan
+   - User runs `cyanprint create` command
+   - CLI fetches template from cyanprint.dev registry
+   - Coordinator (coord.cyanprint.dev:9000) creates execution plan
    - Boron runs template in isolated Docker container
    - Files are generated and copied to output
 
-4. **Key Technologies**:
+4. **Key Technologies** (VERIFY THESE from actual repos):
 
-   - .NET 8 (Zinc)
-   - SvelteKit (Argon)
-   - Rust (Iridium)
-   - Docker (Boron)
-   - TypeScript/.NET/Python (Helium SDKs)
+   - .NET 8 (Zinc - verify from ../zinc/)
+   - SvelteKit (Argon - verify from ../argon/)
+   - Rust (Iridium - verify from ../iridium/)
+   - Docker (Boron - verify from ../boron/)
+   - TypeScript/.NET/Python (Helium SDKs - verify from ../helium/)
 
 5. **Repository Links** - Quick links to each repo
 
-## 02-repositories.mdx Content
+## 01-repositories.mdx Content
 
-Create an index page with:
+Create an index page with entries for each repo. READ ACTUAL READMEs from `../`:
 
-| Repo        | Language       | Purpose                                             | Documentation              |
-| ----------- | -------------- | --------------------------------------------------- | -------------------------- |
-| **zinc**    | .NET 8         | Registry API (PostgreSQL, Redis, MinIO)             | Link to ../zinc/README.md  |
-| **argon**   | SvelteKit      | Registry Web UI                                     | Link to ../argon/README.md |
-| **iridium** | Rust           | Main CLI (cyanprint, coordinator, prompt, registry) | Link to ../iridium/docs/   |
-| **boron**   | Docker         | Isolated template execution                         | Link to ../boron/README.md |
-| **helium**  | TS/.NET/Python | SDKs for templates, processors, plugins             | Link to ../helium/         |
+| Repo        | Language       | Purpose                               | Documentation              |
+| ----------- | -------------- | ------------------------------------- | -------------------------- |
+| **zinc**    | .NET 8         | Registry API                          | Link to ../zinc/README.md  |
+| **argon**   | SvelteKit      | Registry Web UI (cyanprint.dev)       | Link to ../argon/README.md |
+| **iridium** | Rust           | CLI (cyanprint command)               | Link to ../iridium/docs/   |
+| **boron**   | Docker         | Isolated template execution           | Link to ../boron/README.md |
+| **helium**  | TS/.NET/Python | SDKs for templates/processors/plugins | Link to ../helium/         |
 
 Include:
 
-- Brief description of each repo
-- Tech stack details
+- Brief description of each repo (from actual READMEs)
+- Tech stack details (from actual package.json, Cargo.toml, etc.)
 - How they interact with each other
-- Links to existing documentation
+- Links to existing documentation (verify links work!)
 
 ## File Renames
 
 Rename existing files for consistent numbering:
 
-- `content/docs/contributor/02_CommitConventions.md` → `content/docs/contributor/03-commit-conventions.mdx`
-- `content/docs/contributor/03_Changelog.md` → `content/docs/contributor/04-changelog.mdx`
+- `content/docs/contributor/02_CommitConventions.md` → `content/docs/contributor/02-commit-conventions.mdx`
+- `content/docs/contributor/03_Changelog.md` → `content/docs/contributor/03-changelog.mdx`
 
 ## Verification
 
@@ -89,11 +97,12 @@ After completion:
 
 1. Run `direnv exec . pls build` to verify build succeeds
 2. Check that Mermaid diagrams render correctly
-3. Verify all links to external repos work
+3. **VERIFY ALL LINKS WORK** - no broken links
 
 ## Definition of Done
 
 - [ ] Architecture page created with Mermaid diagram
-- [ ] Repository index page created with links
+- [ ] Repository index page created with links (all verified)
 - [ ] Existing files renamed with consistent numbering
 - [ ] Build succeeds
+- [ ] All content verified against actual repo files

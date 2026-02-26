@@ -5,87 +5,121 @@
 - Ticket: CU-86et8z80y
 - Commit: `docs: add user documentation`
 
+## CRITICAL: Verify Against Actual CLI
+
+Before writing ANY documentation:
+
+1. Run `cyanprint --help` to verify commands
+2. Run `cyanprint create --help` for create options
+3. Run `cyanprint update --help` for update options
+4. Check GitHub releases for actual installation methods
+
+## Verified CLI Commands (DO NOT INVENT NEW ONES)
+
+```
+Commands:
+  push    Publish a CyanPrint artifact
+  create  Create a project from a CyanPrint template
+  update  Update all templates in a project to their latest versions
+  daemon  Starts the CyanPrint Coordinator locally daemon
+```
+
+**DO NOT document these (they don't exist):**
+
+- NO `init` command - use `create` instead
+- NO `search` command - use cyanprint.dev web UI
+- NO `login` command
+- NO `config` command
+- NO `show` command
+- NO `pin/unpin` commands
+
 ## Objective
 
 Create user documentation using Divio methodology for users who install and use templates.
 
 ## Files to Create/Modify
 
-| Action | File                                          | Type        | Description                                                |
-| ------ | --------------------------------------------- | ----------- | ---------------------------------------------------------- |
-| UPDATE | `content/docs/user/index.mdx`                 | Overview    | Update from placeholder - overview of user docs            |
-| CREATE | `content/docs/user/01-getting-started.mdx`    | Tutorial    | Step-by-step: install CLI, find template, run it           |
-| CREATE | `content/docs/user/02-first-template.mdx`     | Tutorial    | Walk through creating a project from a template            |
-| CREATE | `content/docs/user/03-install-cli.mdx`        | How-to      | Platform-specific CLI installation (macOS, Linux, Windows) |
-| CREATE | `content/docs/user/04-search-templates.mdx`   | How-to      | Using registry search, filtering, browsing                 |
-| CREATE | `content/docs/user/05-update-templates.mdx`   | How-to      | Updating projects when templates change                    |
-| CREATE | `content/docs/user/06-cli-commands.mdx`       | Reference   | Summarized CLI command reference (from iridium docs)       |
-| CREATE | `content/docs/user/07-registry.mdx`           | Reference   | Using the web registry (Argon)                             |
-| CREATE | `content/docs/user/08-template-lifecycle.mdx` | Explanation | How templates work (high-level)                            |
+| Action | File                                          | Type        | Description                                                             |
+| ------ | --------------------------------------------- | ----------- | ----------------------------------------------------------------------- |
+| UPDATE | `content/docs/user/index.mdx`                 | Overview    | Update from placeholder - overview of user docs                         |
+| CREATE | `content/docs/user/00-getting-started.mdx`    | Tutorial    | Step-by-step: install CLI, browse cyanprint.dev, run `cyanprint create` |
+| CREATE | `content/docs/user/01-cli-installation.mdx`   | How-to      | Install from GitHub releases (tar.gz, deb, rpm, apk, pkg.tar.zst)       |
+| CREATE | `content/docs/user/02-creating-projects.mdx`  | How-to      | Using `cyanprint create` with template refs (`user/template:version`)   |
+| CREATE | `content/docs/user/03-search-templates.mdx`   | How-to      | Browse cyanprint.dev (NOT a CLI command!)                               |
+| CREATE | `content/docs/user/04-updating-projects.mdx`  | How-to      | Using `cyanprint update`, 3-way merge, `--interactive` mode             |
+| CREATE | `content/docs/user/05-state-file.mdx`         | Reference   | `.cyan_state.yaml` format and purpose                                   |
+| CREATE | `content/docs/user/06-registry-web.mdx`       | Reference   | Using the cyanprint.dev web registry                                    |
+| CREATE | `content/docs/user/07-template-lifecycle.mdx` | Explanation | How templates are downloaded, executed in containers, files delivered   |
 
 ## Content Guidelines
 
-### 01-getting-started.mdx (Tutorial)
+### 00-getting-started.mdx (Tutorial)
 
 - **Learning-oriented** - follow step by step
 - Steps:
   1. Prerequisites (system requirements)
-  2. Install the CLI
-  3. Search for a template
-  4. Run a template
+  2. Install the CLI (from GitHub releases)
+  3. Browse cyanprint.dev for a template
+  4. Run `cyanprint create user/template:version my-project`
   5. See the generated output
 - Time estimate: 5-10 minutes
+- **Registry URL**: https://cyanprint.dev
 
-### 02-first-template.mdx (Tutorial)
+### 01-cli-installation.mdx (How-to Guide)
 
-- **Learning-oriented** - practical walkthrough
-- Use a real example template from the registry
-- Show the full workflow:
-  1. Browse registry for template
-  2. Run `cyanprint init` with template
-  3. Answer prompts
-  4. Explore generated files
-- Include screenshots if possible (placeholder)
+- **Problem-oriented** - practical installation steps
+- All installation methods from GitHub releases:
+  - tar.gz (all platforms)
+  - .deb (Debian/Ubuntu)
+  - .rpm (RHEL/Fedora)
+  - .apk (Alpine)
+  - .pkg.tar.zst (Arch Linux)
+- Include verification: `cyanprint --version`
 
-### 03-install-cli.mdx (How-to Guide)
+### 02-creating-projects.mdx (How-to Guide)
 
-- **Problem-oriented** - practical steps
-- Platform-specific sections with tabs:
-  - macOS (Homebrew, manual)
-  - Linux (apt, yum, manual)
-  - Windows (scoop, chocolatey, manual)
-- Include verification steps
+- **Problem-oriented** - creating projects
+- Template reference format: `<username>/<template_name>:<version>`
+- Example: `cyanprint create atomicloud/nextjs-dashboard:1.0.0 my-project`
+- Options from `cyanprint create --help`:
+  - `-c, --coordinator-endpoint` (default: http://coord.cyanprint.dev:9000)
+- No Docker needed for users - hosted coordinator is used
 
-### 04-search-templates.mdx (How-to Guide)
+### 03-search-templates.mdx (How-to Guide)
 
 - **Problem-oriented** - finding templates
+- **IMPORTANT**: NO CLI search command exists!
 - Methods:
-  - CLI search: `cyanprint search`
-  - Web registry browsing
-  - Filtering by language, tags
-- Tips for evaluating templates
+  - Browse https://cyanprint.dev web UI
+  - Filter by tags, language, author
+  - View template details and versions
+- Tips for evaluating templates (stars, downloads, author)
 
-### 05-update-templates.mdx (How-to Guide)
+### 04-updating-projects.mdx (How-to Guide)
 
 - **Problem-oriented** - keeping projects updated
-- When to update
-- How to re-run a template
-- Handling merge conflicts
+- Command: `cyanprint update [PATH]`
+- Options from `cyanprint update --help`:
+  - `-c, --coordinator-endpoint`
+  - `-i, --interactive` - Enable interactive mode to select specific versions
+- How 3-way merge works:
+  - Compares: template v1, template v2, current project
+  - Merges changes intelligently
+- State file (`.cyan_state.yaml`) stores original answers
 
-### 06-cli-commands.mdx (Reference)
+### 05-state-file.mdx (Reference)
 
-- **Information-oriented** - complete listing
-- Summarize commands from iridium docs:
-  - `cyanprint init` - Initialize from template
-  - `cyanprint search` - Search templates
-  - `cyanprint login` - Authenticate
-  - `cyanprint config` - Configuration
-  - `cyanprint update` - Update CLI
-- Include flags and options
+- **Information-oriented** - state file format
+- Location: `.cyan_state.yaml` in project root
+- Contains:
+  - Template references and versions used
+  - Answers provided during template creation
+  - Used for 3-way merge during updates
 
-### 07-registry.mdx (Reference)
+### 06-registry-web.mdx (Reference)
 
 - **Information-oriented** - web UI usage
+- URL: https://cyanprint.dev (NOT registry.cyanprint.dev)
 - Features:
   - Browsing templates
   - Filtering and search
@@ -93,14 +127,15 @@ Create user documentation using Divio methodology for users who install and use 
   - Version history
 - Screenshots (placeholders)
 
-### 08-template-lifecycle.mdx (Explanation)
+### 07-template-lifecycle.mdx (Explanation)
 
 - **Understanding-oriented** - how it works
 - Topics:
-  - What happens when you run a template
-  - Template versioning
-  - Registry storage
-  - Execution sandboxing
+  - What happens when you run `cyanprint create`
+  - Template is downloaded from registry
+  - Coordinator plans execution
+  - Boron runs template in Docker container
+  - Files are delivered to output directory
 - High-level, no code
 
 ## Verification
@@ -108,18 +143,21 @@ Create user documentation using Divio methodology for users who install and use 
 After completion:
 
 1. Run `direnv exec . pls build` to verify build succeeds
-2. Check all internal links work
+2. **Check ALL links work** - especially cyanprint.dev
 3. Verify tutorials are followable
+4. Confirm NO hallucinated CLI commands
 
 ## Definition of Done
 
 - [ ] User index page updated
-- [ ] Getting started tutorial created
-- [ ] First template tutorial created
-- [ ] CLI installation guide created
-- [ ] Search templates guide created
-- [ ] Update templates guide created
-- [ ] CLI commands reference created
-- [ ] Registry reference created
+- [ ] Getting started tutorial created (correct CLI: `create`)
+- [ ] CLI installation guide created (all platforms from releases)
+- [ ] Creating projects guide created (template ref format)
+- [ ] Search templates guide created (web UI only, NO CLI search)
+- [ ] Update projects guide created (3-way merge, `--interactive`)
+- [ ] State file reference created
+- [ ] Registry web reference created
 - [ ] Template lifecycle explanation created
 - [ ] Build succeeds
+- [ ] All links verified
+- [ ] All CLI commands verified against actual `--help` output

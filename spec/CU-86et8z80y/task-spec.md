@@ -83,55 +83,65 @@ Commands:
 - NO `pin` / `unpin` commands
 - NO `abort` / `continue` commands
 
-### Installation Methods (with actual commands)
+### Installation Methods (verified from existing docs)
 
-From https://github.com/AtomiCloud/hydrogen.iridium/releases:
+From https://github.com/AtomiCloud/sulfone.iridium:
+
+#### Nix Shell
+
+```bash
+nix shell github:AtomiCloud/sulfone.iridium
+```
+
+#### Nix Profile
+
+```bash
+nix profile install github:AtomiCloud/sulfone.iridium
+```
 
 #### Homebrew (macOS/Linux)
 
 ```bash
-brew tap atomicloud/tap
-brew install cyanprint
+brew install AtomiCloud/tap/cyanprint
 ```
 
 #### Scoop (Windows)
 
 ```bash
-scoop bucket add atomicloud https://github.com/AtomiCloud/scoop-bucket
-scoop install cyanprint
+scoop bucket add atomi https://github.com/AtomiCloud/scoop-bucket.git
+scoop install atomi/cyanprint
 ```
 
-#### Nix (macOS/Linux)
+#### APT (Debian/Ubuntu)
 
 ```bash
-nix profile install github:AtomiCloud/hydrogen.iridium
-```
-
-#### Fury (Debian/Ubuntu - APT)
-
-```bash
-curl -fsSL https://repo.fury.io/atomi/gpg.key | sudo apt-key add -
-echo "deb https://repo.fury.io/atomi/ /" | sudo tee /etc/apt/sources.list.d/fury.list
-sudo apt update
+sudo apt install software-properties-common -y
+sudo apt-add-repository "deb [trusted=yes] https://apt.fury.io/AtomiCloud/ /" -y
+sudo apt update -y
 sudo apt install cyanprint
 ```
 
-#### Fury (RHEL/Fedora - YUM/DNF)
+#### YUM (RHEL/Fedora)
 
 ```bash
-sudo yum localinstall https://repo.fury.io/atomi/packages/cyanprint.rpm
-# Or with dnf:
-sudo dnf localinstall https://repo.fury.io/atomi/packages/cyanprint.rpm
+sudo sh -c 'echo "[fury]
+name=AtomiCloud Repo
+baseurl=https://yum.fury.io/atomicloud/
+enabled=1
+gpgcheck=0" > /etc/yum.repos.d/fury.repo'
+yum install cyanprint
 ```
 
-#### Fury (Alpine - APK)
+#### Specific Version Installation
 
-```bash
-# Add Fury as an APK repository
-echo "https://repo.fury.io/atomi/packages" | sudo tee -a /etc/apk/repositories
-sudo apk update
-sudo apk add cyanprint
-```
+| Method      | Command                                                            |
+| ----------- | ------------------------------------------------------------------ |
+| Nix Shell   | `nix shell github:AtomiCloud/sulfone.iridium/v<version>`           |
+| Nix Profile | `nix profile install github:AtomiCloud/sulfone.iridium/v<version>` |
+| Brew        | `brew install AtomiCloud/tap/cyanprint@<version>`                  |
+| Scoop       | `scoop install atomi/cyanprint@<version>`                          |
+| APT         | `sudo apt install cyanprint=<version>`                             |
+| YUM         | `yum install cyanprint-<version>`                                  |
 
 #### Direct Download
 
@@ -143,12 +153,6 @@ sudo apk add cyanprint
 | macOS (arm) | `.tar.gz`                         |
 | Windows     | `.tar.gz`                         |
 | Arch Linux  | `.pkg.tar.zst`                    |
-
-#### Cargo (from source)
-
-```bash
-cargo install cyanprint
-```
 
 ### Template Reference Format (verified via `cyanprint create --help`)
 

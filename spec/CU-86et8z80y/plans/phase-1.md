@@ -10,12 +10,12 @@
 Before writing ANY documentation:
 
 1. Read actual repo files from ALL directories (not just docs):
-   - `../sulfone/`
    - `../zinc/`
    - `../argon/`
    - `../iridium/`
    - `../boron/`
    - `../helium/`
+   - `../silicon/`
 2. Check actual tech stacks from package.json, Cargo.toml, .csproj files
 3. Verify all links work before including them
 4. Ensure Mermaid diagrams are configured and work
@@ -78,12 +78,12 @@ Create an index page with entries for each repo. READ ACTUAL FILES from `../` (A
 
 | Repo        | Language       | Purpose                               | Documentation              |
 | ----------- | -------------- | ------------------------------------- | -------------------------- |
-| **sulfone** | ?              | Platform?                             | Link to ../sulfone/        |
 | **zinc**    | .NET 8         | Registry API                          | Link to ../zinc/README.md  |
 | **argon**   | SvelteKit      | Registry Web UI (cyanprint.dev)       | Link to ../argon/README.md |
 | **iridium** | Rust           | CLI (cyanprint command)               | Link to ../iridium/docs/   |
 | **boron**   | Docker         | Isolated template execution           | Link to ../boron/README.md |
 | **helium**  | TS/.NET/Python | SDKs for templates/processors/plugins | Link to ../helium/         |
+| **silicon** | ?              | Silicon platform                      | Link to ../silicon/        |
 
 Include:
 

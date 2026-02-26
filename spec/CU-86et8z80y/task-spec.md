@@ -26,17 +26,18 @@ Use Divio documentation system for Users and Developers. Use Fumadocs MDX with C
 
 When writing documentation, cross-reference against these repos:
 
-| Directory                   | Purpose                         |
-| --------------------------- | ------------------------------- |
-| `../sulfone/`               | Sulfone platform (this project) |
-| `../zinc/`                  | Registry API                    |
-| `../argon/`                 | Registry Web UI                 |
-| `../iridium/`               | CLI source                      |
-| `../boron/`                 | Executor                        |
-| `../helium/`                | SDKs                            |
-| `../helium/sdks/node/`      | TypeScript SDK                  |
-| `../helium/sulfone-helium/` | .NET SDK                        |
-| `../helium/cyanprintsdk/`   | Python SDK                      |
+| Directory                   | Purpose                 |
+| --------------------------- | ----------------------- |
+| `../zinc/`                  | Registry API            |
+| `../argon/`                 | Registry Web UI         |
+| `../iridium/`               | CLI source              |
+| `../boron/`                 | Executor                |
+| `../helium/`                | SDKs                    |
+| `../helium/sdks/node/`      | TypeScript SDK          |
+| `../helium/sulfone-helium/` | .NET SDK                |
+| `../helium/cyanprintsdk/`   | Python SDK              |
+| `../silicon/`               | Silicon platform        |
+| `../doc-framework/`         | Documentation framework |
 
 ### Before writing ANY documentation:
 

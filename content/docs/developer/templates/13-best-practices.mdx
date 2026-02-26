@@ -222,7 +222,7 @@ async function collectFrameworkOptions(cyan: Cyan) {
 
   const features = await cyan.inquirer.checkbox({
     message: 'Features:',
-    options: this.getFeaturesForFramework(framework)
+    options: getFeaturesForFramework(framework)
   });
 
   return { framework, features };

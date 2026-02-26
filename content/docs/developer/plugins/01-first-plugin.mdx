@@ -323,7 +323,7 @@ public class LicensePlugin : ICyanPlugin
     // Validate license type
     public bool IsValidLicense(string type)
     {
-        return GetSupportedLicenses().Contains(type.ToUpper());
+        return GetSupportedLicenses().Contains(type, StringComparer.OrdinalIgnoreCase);
     }
 
     private string GenerateMIT(int year, string holder)

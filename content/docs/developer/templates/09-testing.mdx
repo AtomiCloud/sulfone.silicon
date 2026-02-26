@@ -399,6 +399,11 @@ describe('Snapshot tests', () => {
 [UsesVerify]
 public class SnapshotTests
 {
+    private readonly TemplateTester _tester = new TemplateTester(new TemplateTesterOptions
+    {
+        TemplatePath = Path.GetFullPath("..")
+    });
+
     [Fact]
     public async Task MatchesSnapshotForDefaultOptions()
     {

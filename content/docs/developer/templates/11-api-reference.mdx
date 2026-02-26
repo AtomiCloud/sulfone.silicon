@@ -1,0 +1,736 @@
+---
+title: Template API Reference
+description: Complete API reference for template development
+---
+
+# Template API Reference
+
+This reference documents the complete API for developing CyanPrint templates.
+
+## ICyanTemplate Interface
+
+All templates must implement the `ICyanTemplate` interface:
+
+import { Tab, Tabs } from 'fumadocs-ui/components/tabs';
+
+<Tabs groupId="sdk-language" items={['TypeScript', '.NET', 'Python']} persist>
+  <Tab value="TypeScript">
+
+```ts
+interface ICyanTemplate {
+  execute(cyan: Cyan): Promise<void>;
+}
+```
+
+  </Tab>
+  <Tab value=".NET">
+
+```csharp
+public interface ICyanTemplate
+{
+    Task ExecuteAsync(Cyan cyan);
+}
+```
+
+  </Tab>
+  <Tab value="Python">
+
+```python
+from abc import ABC, abstractmethod
+
+class ICyanTemplate(ABC):
+    @abstractmethod
+    async def execute(self, cyan: Cyan) -> None:
+        pass
+```
+
+  </Tab>
+</Tabs>
+
+---
+
+## Cyan Object
+
+The main object passed to templates, providing access to all SDK functionality.
+
+### Properties
+
+| Property | Type | Description |
+| -------- | ---- | ----------- |
+| `answers` | `Answers` | User-provided answers |
+| `config` | `Config` | Template configuration |
+| `inquirer` | `Inquirer` | User interaction methods |
+| `determinism` | `Determinism` | Deterministic random generation |
+| `files` | `FileHelper` | File operations |
+| `processors` | `ProcessorRunner` | Processor execution |
+| `plugins` | `PluginManager` | Plugin access |
+| `children` | `ChildRunner` | Child template execution |
+| `logger` | `Logger` | Logging utilities |
+
+---
+
+## Answers
+
+Access to user answers from inquirer questions.
+
+### Methods
+
+<Tabs groupId="sdk-language" items={['TypeScript', '.NET', 'Python']} persist>
+  <Tab value="TypeScript">
+
+```ts
+interface Answers {
+  // Direct property access
+  [key: string]: any;
+
+  // Get answer or undefined
+  get<T>(key: string): T | undefined;
+
+  // Get answer or default
+  getOrDefault<T>(key: string, defaultValue: T): T;
+
+  // Check if answer exists
+  has(key: string): boolean;
+
+  // Get or prompt for answer
+  getOrPrompt(key: string, options: TextOptions): Promise<string>;
+  getOrPromptSelect(key: string, options: SelectOptions): Promise<string>;
+  getOrPromptCheckbox(key: string, options: CheckboxOptions): Promise<string[]>;
+
+  // Set answer
+  set(key: string, value: any): void;
+}
+```
+
+  </Tab>
+  <Tab value=".NET">
+
+```csharp
+public class Answers
+{
+    // Indexer access
+    public object this[string key] { get; set; }
+
+    // Get typed value
+    public T Get<T>(string key);
+
+    // Get or default
+    public T GetOrDefault<T>(string key, T defaultValue);
+
+    // Check existence
+    public bool Has(string key);
+
+    // Get or prompt
+    public Task<string> GetOrPromptAsync(string key, TextOptions options);
+    public Task<string> GetOrPromptSelectAsync(string key, SelectOptions options);
+    public Task<string[]> GetOrPromptCheckboxAsync(string key, CheckboxOptions options);
+
+    // Set value
+    public void Set(string key, object value);
+}
+```
+
+  </Tab>
+  <Tab value="Python">
+
+```python
+class Answers:
+    # Dictionary-like access
+    def __getitem__(self, key: str) -> Any: ...
+    def __setitem__(self, key: str, value: Any) -> None: ...
+
+    # Get with optional default
+    def get(self, key: str, default: Any = None) -> Any: ...
+
+    # Check existence
+    def has(self, key: str) -> bool: ...
+
+    # Get or prompt
+    async def get_or_prompt(self, key: str, options: dict) -> str: ...
+    async def get_or_prompt_select(self, key: str, options: dict) -> str: ...
+    async def get_or_prompt_checkbox(self, key: str, options: dict) -> List[str]: ...
+```
+
+  </Tab>
+</Tabs>
+
+---
+
+## Inquirer
+
+User interaction methods. See [Inquirer Methods](./04-inquirer-methods) for detailed options.
+
+### Methods
+
+| Method | Return Type | Description |
+| ------ | ----------- | ----------- |
+| `text(options)` | `Promise<string>` | Text input |
+| `select(options)` | `Promise<string>` | Single selection |
+| `checkbox(options)` | `Promise<string[]>` | Multiple selections |
+| `confirm(options)` | `Promise<boolean>` | Yes/No confirmation |
+| `password(options)` | `Promise<string>` | Masked input |
+| `date(options)` | `Promise<Date>` | Date picker |
+| `number(options)` | `Promise<number>` | Numeric input |
+| `expand(options)` | `Promise<any>` | Expandable selection |
+
+---
+
+## Determinism
+
+Deterministic random generation for reproducible outputs.
+
+### Methods
+
+<Tabs groupId="sdk-language" items={['TypeScript', '.NET', 'Python']} persist>
+  <Tab value="TypeScript">
+
+```ts
+interface Determinism {
+  // Generate UUID
+  uuid(): string;
+
+  // Random float 0-1
+  random(): number;
+
+  // Random integer in range (inclusive)
+  randomInt(min: number, max: number): number;
+
+  // Random string of specified length
+  randomString(length: number): string;
+
+  // Shuffle array deterministically
+  shuffle<T>(array: T[]): T[];
+
+  // Pick random element
+  pick<T>(array: T[]): T;
+
+  // Boolean with probability
+  chance(probability: number): boolean;
+}
+```
+
+  </Tab>
+  <Tab value=".NET">
+
+```csharp
+public class Determinism
+{
+    // Generate UUID
+    public string Uuid();
+
+    // Random double 0-1
+    public double Random();
+
+    // Random integer in range (inclusive)
+    public int RandomInt(int min, int max);
+
+    // Random string of specified length
+    public string RandomString(int length);
+
+    // Shuffle array deterministically
+    public T[] Shuffle<T>(T[] array);
+
+    // Pick random element
+    public T Pick<T>(T[] array);
+
+    // Boolean with probability
+    public bool Chance(double probability);
+}
+```
+
+  </Tab>
+  <Tab value="Python">
+
+```python
+class Determinism:
+    # Generate UUID
+    def uuid(self) -> str: ...
+
+    # Random float 0-1
+    def random(self) -> float: ...
+
+    # Random integer in range (inclusive)
+    def random_int(self, min: int, max: int) -> int: ...
+
+    # Random string of specified length
+    def random_string(self, length: int) -> str: ...
+
+    # Shuffle list deterministically
+    def shuffle(self, array: List[T]) -> List[T]: ...
+
+    # Pick random element
+    def pick(self, array: List[T]) -> T: ...
+
+    # Boolean with probability
+    def chance(self, probability: float) -> bool: ...
+```
+
+  </Tab>
+</Tabs>
+
+---
+
+## FileHelper
+
+File system operations.
+
+### Methods
+
+<Tabs groupId="sdk-language" items={['TypeScript', '.NET', 'Python']} persist>
+  <Tab value="TypeScript">
+
+```ts
+interface FileHelper {
+  // Read file content
+  read(path: string): Promise<string>;
+
+  // Read and parse JSON
+  readJson<T>(path: string): Promise<T>;
+
+  // Write file content
+  write(path: string, content: string): Promise<void>;
+
+  // Write object as JSON
+  writeJson(path: string, data: any): Promise<void>;
+
+  // Check if file exists
+  exists(path: string): Promise<boolean>;
+
+  // Copy file
+  copy(source: string, destination: string): Promise<void>;
+
+  // Copy directory
+  copyDir(source: string, destination: string): Promise<void>;
+
+  // Delete file
+  delete(path: string): Promise<void>;
+
+  // Create directory
+  mkdir(path: string): Promise<void>;
+
+  // List directory contents
+  readdir(path: string): Promise<string[]>;
+
+  // Get file stats
+  stat(path: string): Promise<FileStats>;
+}
+```
+
+  </Tab>
+  <Tab value=".NET">
+
+```csharp
+public class FileHelper
+{
+    // Read file content
+    public Task<string> ReadAsync(string path);
+
+    // Read and parse JSON
+    public Task<T> ReadJsonAsync<T>(string path);
+
+    // Write file content
+    public Task WriteAsync(string path, string content);
+
+    // Write object as JSON
+    public Task WriteJsonAsync(string path, object data);
+
+    // Check if file exists
+    public Task<bool> ExistsAsync(string path);
+
+    // Copy file
+    public Task CopyAsync(string source, string destination);
+
+    // Copy directory
+    public Task CopyDirAsync(string source, string destination);
+
+    // Delete file
+    public Task DeleteAsync(string path);
+
+    // Create directory
+    public Task MkdirAsync(string path);
+
+    // List directory contents
+    public Task<string[]> ReaddirAsync(string path);
+
+    // Get file stats
+    public Task<FileStats> StatAsync(string path);
+}
+```
+
+  </Tab>
+  <Tab value="Python">
+
+```python
+class FileHelper:
+    # Read file content
+    async def read(self, path: str) -> str: ...
+
+    # Read and parse JSON
+    async def read_json(self, path: str) -> Any: ...
+
+    # Write file content
+    async def write(self, path: str, content: str) -> None: ...
+
+    # Write object as JSON
+    async def write_json(self, path: str, data: Any) -> None: ...
+
+    # Check if file exists
+    async def exists(self, path: str) -> bool: ...
+
+    # Copy file
+    async def copy(self, source: str, destination: str) -> None: ...
+
+    # Copy directory
+    async def copy_dir(self, source: str, destination: str) -> None: ...
+
+    # Delete file
+    async def delete(self, path: str) -> None: ...
+
+    # Create directory
+    async def mkdir(self, path: str) -> None: ...
+
+    # List directory contents
+    async def readdir(self, path: str) -> List[str]: ...
+```
+
+  </Tab>
+</Tabs>
+
+---
+
+## Glob
+
+File pattern matching.
+
+### Methods
+
+<Tabs groupId="sdk-language" items={['TypeScript', '.NET', 'Python']} persist>
+  <Tab value="TypeScript">
+
+```ts
+interface Cyan {
+  // Single pattern
+  glob(pattern: string): string[];
+
+  // Multiple patterns (includes and excludes)
+  glob(patterns: string[]): string[];
+
+  // With options
+  glob(pattern: string, options: GlobOptions): string[];
+}
+
+interface GlobOptions {
+  cwd?: string;           // Base directory
+  dot?: boolean;          // Include dot files
+  absolute?: boolean;     // Return absolute paths
+  onlyFiles?: boolean;    // Only files, not directories
+  onlyDirectories?: boolean; // Only directories
+}
+```
+
+  </Tab>
+  <Tab value=".NET">
+
+```csharp
+public class Cyan
+{
+    // Single pattern
+    public string[] Glob(string pattern);
+
+    // Multiple patterns
+    public string[] Glob(string[] patterns);
+
+    // With options
+    public string[] Glob(string pattern, GlobOptions options);
+}
+
+public class GlobOptions
+{
+    public string Cwd { get; set; }           // Base directory
+    public bool Dot { get; set; }             // Include dot files
+    public bool Absolute { get; set; }        // Return absolute paths
+    public bool OnlyFiles { get; set; }       // Only files
+    public bool OnlyDirectories { get; set; } // Only directories
+}
+```
+
+  </Tab>
+  <Tab value="Python">
+
+```python
+class Cyan:
+    # Single pattern
+    def glob(self, pattern: str) -> List[str]: ...
+
+    # Multiple patterns
+    def glob(self, patterns: List[str]) -> List[str]: ...
+
+    # With options
+    def glob(self, pattern: str, options: dict) -> List[str]: ...
+
+# Glob options
+{
+    "cwd": str,           # Base directory
+    "dot": bool,          # Include dot files
+    "absolute": bool,     # Return absolute paths
+    "only_files": bool,   # Only files
+    "only_directories": bool  # Only directories
+}
+```
+
+  </Tab>
+</Tabs>
+
+---
+
+## ProcessorRunner
+
+Execute processors on files.
+
+### Methods
+
+<Tabs groupId="sdk-language" items={['TypeScript', '.NET', 'Python']} persist>
+  <Tab value="TypeScript">
+
+```ts
+interface ProcessorRunner {
+  // Run processor
+  run(name: string, options: ProcessorOptions): Promise<void>;
+
+  // Run with config
+  run(name: string, options: ProcessorOptions, config: any): Promise<void>;
+
+  // Check if processor exists
+  has(name: string): boolean;
+}
+
+interface ProcessorOptions {
+  input: string;      // Input file path
+  output: string;     // Output file path
+  encoding?: string;  // File encoding (default: utf-8)
+}
+```
+
+  </Tab>
+  <Tab value=".NET">
+
+```csharp
+public class ProcessorRunner
+{
+    // Run processor
+    public Task RunAsync(string name, ProcessorOptions options);
+
+    // Run with config
+    public Task RunAsync(string name, ProcessorOptions options, object config);
+
+    // Check if processor exists
+    public bool Has(string name);
+}
+
+public class ProcessorOptions
+{
+    public string Input { get; set; }      // Input file path
+    public string Output { get; set; }     // Output file path
+    public string Encoding { get; set; }   // File encoding
+}
+```
+
+  </Tab>
+  <Tab value="Python">
+
+```python
+class ProcessorRunner:
+    # Run processor
+    async def run(self, name: str, options: dict) -> None: ...
+
+    # Run with config
+    async def run(self, name: str, options: dict, config: Any) -> None: ...
+
+    # Check if processor exists
+    def has(self, name: str) -> bool: ...
+
+# Processor options
+{
+    "input": str,       # Input file path
+    "output": str,      # Output file path
+    "encoding": str     # File encoding (default: utf-8)
+}
+```
+
+  </Tab>
+</Tabs>
+
+---
+
+## PluginManager
+
+Access and use plugins.
+
+### Methods
+
+<Tabs groupId="sdk-language" items={['TypeScript', '.NET', 'Python']} persist>
+  <Tab value="TypeScript">
+
+```ts
+interface PluginManager {
+  // Get plugin by name
+  get<T = any>(name: string): T;
+
+  // Check if plugin exists
+  has(name: string): boolean;
+
+  // List all plugins
+  list(): string[];
+}
+```
+
+  </Tab>
+  <Tab value=".NET">
+
+```csharp
+public class PluginManager
+{
+    // Get plugin by name
+    public T Get<T>(string name);
+
+    // Check if plugin exists
+    public bool Has(string name);
+
+    // List all plugins
+    public string[] List();
+}
+```
+
+  </Tab>
+  <Tab value="Python">
+
+```python
+class PluginManager:
+    # Get plugin by name
+    def get(self, name: str) -> Any: ...
+
+    # Check if plugin exists
+    def has(self, name: str) -> bool: ...
+
+    # List all plugins
+    def list(self) -> List[str]: ...
+```
+
+  </Tab>
+</Tabs>
+
+---
+
+## ChildRunner
+
+Execute child templates.
+
+### Methods
+
+<Tabs groupId="sdk-language" items={['TypeScript', '.NET', 'Python']} persist>
+  <Tab value="TypeScript">
+
+```ts
+interface ChildRunner {
+  // Run child template
+  run(name: string, options?: ChildOptions): Promise<void>;
+}
+
+interface ChildOptions {
+  path?: string;      // Output subdirectory
+  config?: any;       // Configuration to pass
+}
+```
+
+  </Tab>
+  <Tab value=".NET">
+
+```csharp
+public class ChildRunner
+{
+    // Run child template
+    public Task RunAsync(string name, ChildOptions options = null);
+}
+
+public class ChildOptions
+{
+    public string Path { get; set; }      // Output subdirectory
+    public object Config { get; set; }    // Configuration to pass
+}
+```
+
+  </Tab>
+  <Tab value="Python">
+
+```python
+class ChildRunner:
+    # Run child template
+    async def run(self, name: str, options: dict = None) -> None: ...
+
+# Child options
+{
+    "path": str,       # Output subdirectory
+    "config": Any      # Configuration to pass
+}
+```
+
+  </Tab>
+</Tabs>
+
+---
+
+## Logger
+
+Logging utilities.
+
+### Methods
+
+<Tabs groupId="sdk-language" items={['TypeScript', '.NET', 'Python']} persist>
+  <Tab value="TypeScript">
+
+```ts
+interface Logger {
+  info(message: string): void;
+  warn(message: string): void;
+  error(message: string): void;
+  debug(message: string): void;
+  success(message: string): void;
+}
+```
+
+  </Tab>
+  <Tab value=".NET">
+
+```csharp
+public class Logger
+{
+    public void Info(string message);
+    public void Warn(string message);
+    public void Error(string message);
+    public void Debug(string message);
+    public void Success(string message);
+}
+```
+
+  </Tab>
+  <Tab value="Python">
+
+```python
+class Logger:
+    def info(self, message: str) -> None: ...
+    def warn(self, message: str) -> None: ...
+    def error(self, message: str) -> None: ...
+    def debug(self, message: str) -> None: ...
+    def success(self, message: str) -> None: ...
+```
+
+  </Tab>
+</Tabs>
+
+---
+
+## See Also
+
+- [Core Concepts](../01-concepts) - Understanding the SDK
+- [Inquirer Methods](./04-inquirer-methods) - Detailed inquirer options
+- [SDK Reference](../sdk/typescript) - Full SDK documentation

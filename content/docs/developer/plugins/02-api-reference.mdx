@@ -1,0 +1,705 @@
+---
+title: Plugin API Reference
+description: Complete API reference for plugin development
+---
+
+# Plugin API Reference
+
+This reference documents the complete API for developing CyanPrint plugins.
+
+## ICyanPlugin Interface
+
+All plugins must implement this interface:
+
+import { Tab, Tabs } from 'fumadocs-ui/components/tabs';
+
+<Tabs groupId="sdk-language" items={['TypeScript', '.NET', 'Python']} persist>
+  <Tab value="TypeScript">
+
+```ts
+interface ICyanPlugin {
+  // Required properties
+  name: string;
+  version: string;
+
+  // Required methods
+  initialize(context: PluginContext): Promise<void>;
+
+  // Optional methods
+  dispose?(): Promise<void>;
+}
+```
+
+  </Tab>
+  <Tab value=".NET">
+
+```csharp
+public interface ICyanPlugin
+{
+    // Required properties
+    string Name { get; }
+    string Version { get; }
+
+    // Required methods
+    Task InitializeAsync(PluginContext context);
+
+    // Optional methods
+    Task DisposeAsync();
+}
+```
+
+  </Tab>
+  <Tab value="Python">
+
+```python
+from abc import ABC, abstractmethod
+
+class ICyanPlugin(ABC):
+    # Required properties
+    @property
+    @abstractmethod
+    def name(self) -> str:
+        pass
+
+    @property
+    @abstractmethod
+    def version(self) -> str:
+        pass
+
+    # Required methods
+    @abstractmethod
+    async def initialize(self, context: PluginContext) -> None:
+        pass
+
+    # Optional methods
+    async def dispose(self) -> None:
+        pass
+```
+
+  </Tab>
+</Tabs>
+
+---
+
+## PluginContext
+
+Context provided during plugin initialization.
+
+### Properties
+
+| Property | Type | Description |
+| -------- | ---- | ----------- |
+| `config` | `object` | Plugin configuration from cyanprint.json |
+| `logger` | `Logger` | Logging utilities |
+| `hooks` | `HookRegistry` | Lifecycle hook registration |
+| `plugins` | `PluginManager` | Access to other plugins |
+| `files` | `FileHelper` | Read-only file operations |
+
+### TypeScript Interface
+
+<Tabs groupId="sdk-language" items={['TypeScript', '.NET', 'Python']} persist>
+  <Tab value="TypeScript">
+
+```ts
+interface PluginContext {
+  config: Record<string, any>;
+  logger: Logger;
+  hooks: HookRegistry;
+  plugins: PluginManager;
+  files: FileHelper;
+}
+```
+
+  </Tab>
+  <Tab value=".NET">
+
+```csharp
+public class PluginContext
+{
+    public Dictionary<string, object> Config { get; set; }
+    public Logger Logger { get; set; }
+    public HookRegistry Hooks { get; set; }
+    public PluginManager Plugins { get; set; }
+    public FileHelper Files { get; set; }
+}
+```
+
+  </Tab>
+  <Tab value="Python">
+
+```python
+class PluginContext:
+    config: dict
+    logger: Logger
+    hooks: HookRegistry
+    plugins: PluginManager
+    files: FileHelper
+```
+
+  </Tab>
+</Tabs>
+
+---
+
+## HookRegistry
+
+Register lifecycle hooks to respond to template events.
+
+### Methods
+
+<Tabs groupId="sdk-language" items={['TypeScript', '.NET', 'Python']} persist>
+  <Tab value="TypeScript">
+
+```ts
+interface HookRegistry {
+  // Register hooks
+  beforeExecute(callback: (event: BeforeExecuteEvent) => Promise<void>): void;
+  afterInquirer(callback: (event: AfterInquirerEvent) => Promise<void>): void;
+  beforeProcess(callback: (event: BeforeProcessEvent) => Promise<void>): void;
+  afterProcess(callback: (event: AfterProcessEvent) => Promise<void>): void;
+  afterExecute(callback: (event: AfterExecuteEvent) => Promise<void>): void;
+  onError(callback: (event: ErrorEvent) => Promise<void>): void;
+}
+```
+
+  </Tab>
+  <Tab value=".NET">
+
+```csharp
+public class HookRegistry
+{
+    public void BeforeExecute(Func<BeforeExecuteEvent, Task> callback);
+    public void AfterInquirer(Func<AfterInquirerEvent, Task> callback);
+    public void BeforeProcess(Func<BeforeProcessEvent, Task> callback);
+    public void AfterProcess(Func<AfterProcessEvent, Task> callback);
+    public void AfterExecute(Func<AfterExecuteEvent, Task> callback);
+    public void OnError(Func<ErrorEvent, Task> callback);
+}
+```
+
+  </Tab>
+  <Tab value="Python">
+
+```python
+class HookRegistry:
+    def before_execute(self, callback: Callable[[BeforeExecuteEvent], Awaitable[None]]) -> None: ...
+    def after_inquirer(self, callback: Callable[[AfterInquirerEvent], Awaitable[None]]) -> None: ...
+    def before_process(self, callback: Callable[[BeforeProcessEvent], Awaitable[None]]) -> None: ...
+    def after_process(self, callback: Callable[[AfterProcessEvent], Awaitable[None]]) -> None: ...
+    def after_execute(self, callback: Callable[[AfterExecuteEvent], Awaitable[None]]) -> None: ...
+    def on_error(self, callback: Callable[[ErrorEvent], Awaitable[None]]) -> None: ...
+```
+
+  </Tab>
+</Tabs>
+
+---
+
+## Hook Events
+
+### BeforeExecuteEvent
+
+<Tabs groupId="sdk-language" items={['TypeScript', '.NET', 'Python']} persist>
+  <Tab value="TypeScript">
+
+```ts
+interface BeforeExecuteEvent {
+  templateName: string;
+  templateVersion: string;
+  answers: Record<string, any>;
+  timestamp: Date;
+}
+```
+
+  </Tab>
+  <Tab value=".NET">
+
+```csharp
+public class BeforeExecuteEvent
+{
+    public string TemplateName { get; set; }
+    public string TemplateVersion { get; set; }
+    public Dictionary<string, object> Answers { get; set; }
+    public DateTime Timestamp { get; set; }
+}
+```
+
+  </Tab>
+  <Tab value="Python">
+
+```python
+class BeforeExecuteEvent:
+    template_name: str
+    template_version: str
+    answers: dict
+    timestamp: datetime
+```
+
+  </Tab>
+</Tabs>
+
+### AfterInquirerEvent
+
+<Tabs groupId="sdk-language" items={['TypeScript', '.NET', 'Python']} persist>
+  <Tab value="TypeScript">
+
+```ts
+interface AfterInquirerEvent {
+  templateName: string;
+  answers: Record<string, any>;
+  questionCount: number;
+}
+```
+
+  </Tab>
+  <Tab value=".NET">
+
+```csharp
+public class AfterInquirerEvent
+{
+    public string TemplateName { get; set; }
+    public Dictionary<string, object> Answers { get; set; }
+    public int QuestionCount { get; set; }
+}
+```
+
+  </Tab>
+  <Tab value="Python">
+
+```python
+class AfterInquirerEvent:
+    template_name: str
+    answers: dict
+    question_count: int
+```
+
+  </Tab>
+</Tabs>
+
+### BeforeProcessEvent
+
+<Tabs groupId="sdk-language" items={['TypeScript', '.NET', 'Python']} persist>
+  <Tab value="TypeScript">
+
+```ts
+interface BeforeProcessEvent {
+  templateName: string;
+  inputFileCount: number;
+  inputFiles: string[];
+}
+```
+
+  </Tab>
+  <Tab value=".NET">
+
+```csharp
+public class BeforeProcessEvent
+{
+    public string TemplateName { get; set; }
+    public int InputFileCount { get; set; }
+    public string[] InputFiles { get; set; }
+}
+```
+
+  </Tab>
+  <Tab value="Python">
+
+```python
+class BeforeProcessEvent:
+    template_name: str
+    input_file_count: int
+    input_files: List[str]
+```
+
+  </Tab>
+</Tabs>
+
+### AfterProcessEvent
+
+<Tabs groupId="sdk-language" items={['TypeScript', '.NET', 'Python']} persist>
+  <Tab value="TypeScript">
+
+```ts
+interface AfterProcessEvent {
+  templateName: string;
+  outputFileCount: number;
+  outputFiles: string[];
+  processDuration: number;
+}
+```
+
+  </Tab>
+  <Tab value=".NET">
+
+```csharp
+public class AfterProcessEvent
+{
+    public string TemplateName { get; set; }
+    public int OutputFileCount { get; set; }
+    public string[] OutputFiles { get; set; }
+    public long ProcessDuration { get; set; }
+}
+```
+
+  </Tab>
+  <Tab value="Python">
+
+```python
+class AfterProcessEvent:
+    template_name: str
+    output_file_count: int
+    output_files: List[str]
+    process_duration: int
+```
+
+  </Tab>
+</Tabs>
+
+### AfterExecuteEvent
+
+<Tabs groupId="sdk-language" items={['TypeScript', '.NET', 'Python']} persist>
+  <Tab value="TypeScript">
+
+```ts
+interface AfterExecuteEvent {
+  templateName: string;
+  success: boolean;
+  duration: number;
+  fileCount: number;
+  errors: string[];
+}
+```
+
+  </Tab>
+  <Tab value=".NET">
+
+```csharp
+public class AfterExecuteEvent
+{
+    public string TemplateName { get; set; }
+    public bool Success { get; set; }
+    public long Duration { get; set; }
+    public int FileCount { get; set; }
+    public string[] Errors { get; set; }
+}
+```
+
+  </Tab>
+  <Tab value="Python">
+
+```python
+class AfterExecuteEvent:
+    template_name: str
+    success: bool
+    duration: int
+    file_count: int
+    errors: List[str]
+```
+
+  </Tab>
+</Tabs>
+
+### ErrorEvent
+
+<Tabs groupId="sdk-language" items={['TypeScript', '.NET', 'Python']} persist>
+  <Tab value="TypeScript">
+
+```ts
+interface ErrorEvent {
+  templateName: string;
+  error: Error;
+  phase: 'inquirer' | 'process' | 'output' | 'unknown';
+  recoverable: boolean;
+}
+```
+
+  </Tab>
+  <Tab value=".NET">
+
+```csharp
+public class ErrorEvent
+{
+    public string TemplateName { get; set; }
+    public Exception Error { get; set; }
+    public string Phase { get; set; } // "inquirer", "process", "output", "unknown"
+    public bool Recoverable { get; set; }
+}
+```
+
+  </Tab>
+  <Tab value="Python">
+
+```python
+class ErrorEvent:
+    template_name: str
+    error: Exception
+    phase: str  # "inquirer", "process", "output", "unknown"
+    recoverable: bool
+```
+
+  </Tab>
+</Tabs>
+
+---
+
+## PluginManager
+
+Access other loaded plugins (for plugin dependencies).
+
+### Methods
+
+<Tabs groupId="sdk-language" items={['TypeScript', '.NET', 'Python']} persist>
+  <Tab value="TypeScript">
+
+```ts
+interface PluginManager {
+  // Get plugin by name
+  get<T = any>(name: string): T;
+
+  // Check if plugin exists
+  has(name: string): boolean;
+
+  // List all loaded plugins
+  list(): PluginInfo[];
+}
+
+interface PluginInfo {
+  name: string;
+  version: string;
+  provides: string[];
+}
+```
+
+  </Tab>
+  <Tab value=".NET">
+
+```csharp
+public class PluginManager
+{
+    // Get plugin by name
+    public T Get<T>(string name);
+
+    // Check if plugin exists
+    public bool Has(string name);
+
+    // List all loaded plugins
+    public PluginInfo[] List();
+}
+
+public class PluginInfo
+{
+    public string Name { get; set; }
+    public string Version { get; set; }
+    public string[] Provides { get; set; }
+}
+```
+
+  </Tab>
+  <Tab value="Python">
+
+```python
+class PluginManager:
+    # Get plugin by name
+    def get(self, name: str) -> Any: ...
+
+    # Check if plugin exists
+    def has(self, name: str) -> bool: ...
+
+    # List all loaded plugins
+    def list(self) -> List[PluginInfo]: ...
+
+class PluginInfo:
+    name: str
+    version: str
+    provides: List[str]
+```
+
+  </Tab>
+</Tabs>
+
+---
+
+## Logger
+
+Logging utilities for plugins.
+
+### Methods
+
+<Tabs groupId="sdk-language" items={['TypeScript', '.NET', 'Python']} persist>
+  <Tab value="TypeScript">
+
+```ts
+interface Logger {
+  info(message: string): void;
+  warn(message: string): void;
+  error(message: string): void;
+  debug(message: string): void;
+  success(message: string): void;
+}
+```
+
+  </Tab>
+  <Tab value=".NET">
+
+```csharp
+public class Logger
+{
+    public void Info(string message);
+    public void Warn(string message);
+    public void Error(string message);
+    public void Debug(string message);
+    public void Success(string message);
+}
+```
+
+  </Tab>
+  <Tab value="Python">
+
+```python
+class Logger:
+    def info(self, message: str) -> None: ...
+    def warn(self, message: str) -> None: ...
+    def error(self, message: str) -> None: ...
+    def debug(self, message: str) -> None: ...
+    def success(self, message: str) -> None: ...
+```
+
+  </Tab>
+</Tabs>
+
+---
+
+## FileHelper (Read-Only)
+
+File operations for plugins (read-only access).
+
+### Methods
+
+<Tabs groupId="sdk-language" items={['TypeScript', '.NET', 'Python']} persist>
+  <Tab value="TypeScript">
+
+```ts
+interface FileHelper {
+  // Read file content
+  read(path: string): Promise<string>;
+
+  // Read and parse JSON
+  readJson<T>(path: string): Promise<T>;
+
+  // Check if file exists
+  exists(path: string): Promise<boolean>;
+
+  // List directory contents
+  readdir(path: string): Promise<string[]>;
+
+  // Get file stats
+  stat(path: string): Promise<FileStats>;
+}
+```
+
+  </Tab>
+  <Tab value=".NET">
+
+```csharp
+public class FileHelper
+{
+    // Read file content
+    public Task<string> ReadAsync(string path);
+
+    // Read and parse JSON
+    public Task<T> ReadJsonAsync<T>(string path);
+
+    // Check if file exists
+    public Task<bool> ExistsAsync(string path);
+
+    // List directory contents
+    public Task<string[]> ReaddirAsync(string path);
+
+    // Get file stats
+    public Task<FileStats> StatAsync(string path);
+}
+```
+
+  </Tab>
+  <Tab value="Python">
+
+```python
+class FileHelper:
+    # Read file content
+    async def read(self, path: str) -> str: ...
+
+    # Read and parse JSON
+    async def read_json(self, path: str) -> Any: ...
+
+    # Check if file exists
+    async def exists(self, path: str) -> bool: ...
+
+    # List directory contents
+    async def readdir(self, path: str) -> List[str]: ...
+
+    # Get file stats
+    async def stat(self, path: str) -> FileStats: ...
+```
+
+  </Tab>
+</Tabs>
+
+---
+
+## Plugin Configuration
+
+### cyanprint.json (Plugin)
+
+```json
+{
+  "name": "@org/my-plugin",
+  "version": "1.0.0",
+  "type": "plugin",
+  "entryPoint": "dist/index.js",
+  "provides": ["feature1", "feature2"],
+  "hooks": {
+    "beforeExecute": true,
+    "afterExecute": true
+  },
+  "config": {
+    "defaultOption": "value"
+  }
+}
+```
+
+### cyanprint.json (Template using plugin)
+
+```json
+{
+  "name": "my-template",
+  "plugins": [
+    {
+      "name": "@org/my-plugin",
+      "version": "^1.0.0",
+      "config": {
+        "customOption": "custom-value"
+      }
+    }
+  ]
+}
+```
+
+### Configuration Fields
+
+| Field | Type | Required | Description |
+| ----- | ---- | -------- | ----------- |
+| `name` | string | Yes | Plugin package name |
+| `version` | string | Yes | Semantic version |
+| `type` | string | Yes | Must be `"plugin"` |
+| `entryPoint` | string | Yes | Path to compiled plugin |
+| `provides` | string[] | No | List of provided capabilities |
+| `hooks` | object | No | Which hooks to subscribe |
+| `config` | object | No | Default configuration |
+
+---
+
+## See Also
+
+- [First Plugin](./01-first-plugin) - Getting started guide
+- [Plugins in Templates](../templates/08-plugins-in-templates) - Using plugins
+- [Template API](../templates/11-api-reference) - Template API

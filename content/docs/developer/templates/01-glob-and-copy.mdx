@@ -1,0 +1,371 @@
+---
+title: Glob and Copy
+description: Create your first template using glob patterns and basic file operations
+---
+
+# Glob and Copy
+
+This tutorial teaches you the fundamentals of template creation using glob patterns and file copying. You'll build a simple template that copies files without any content transformation.
+
+**Time estimate**: 10-15 minutes
+
+## What is a Template?
+
+A CyanPrint template is a blueprint for generating project files. At its simplest, a template:
+
+1. **Selects files** using glob patterns
+2. **Copies files** to the output directory
+3. **Optionally transforms** file content using processors
+
+In this tutorial, we'll focus on the first two steps.
+
+## Prerequisites
+
+Before starting, ensure you have:
+
+- CyanPrint CLI installed
+- Basic familiarity with your chosen SDK language
+- A code editor
+
+## Project Setup
+
+### Create the Template Directory
+
+```bash
+mkdir my-first-template
+cd my-first-template
+```
+
+### Initialize the Project
+
+import { Tab, Tabs } from 'fumadocs-ui/components/tabs';
+
+<Tabs groupId="sdk-language" items={['TypeScript', '.NET', 'Python']} persist>
+  <Tab value="TypeScript">
+
+```bash
+# Initialize npm project
+npm init -y
+
+# Install Helium SDK
+npm install @atomicloud/helium-sdk
+
+# Create directory structure
+mkdir -p template/files
+```
+
+  </Tab>
+  <Tab value=".NET">
+
+```bash
+# Create new project
+dotnet new classlib -n MyFirstTemplate
+
+# Add Helium SDK
+dotnet add package AtomiCloud.Helium
+
+# Create directory structure
+mkdir -p template/files
+```
+
+  </Tab>
+  <Tab value="Python">
+
+```bash
+# Create virtual environment
+python -m venv .venv
+source .venv/bin/activate
+
+# Install Helium SDK
+pip install cyanprint-helium
+
+# Create directory structure
+mkdir -p template/files
+```
+
+  </Tab>
+</Tabs>
+
+## Create Template Files
+
+### Add Sample Files
+
+Create some sample files to copy. In `template/files/`, create:
+
+**template/files/README.md**
+
+```markdown
+# My Project
+
+A sample project generated from a template.
+```
+
+**template/files/src/index.ts**
+
+```typescript
+console.log('Hello, World!');
+```
+
+**template/files/package.json**
+
+```json
+{
+  "name": "my-project",
+  "version": "1.0.0",
+  "main": "src/index.ts"
+}
+```
+
+## Create the Template Entry Point
+
+### Implement ICyanTemplate
+
+<Tabs groupId="sdk-language" items={['TypeScript', '.NET', 'Python']} persist>
+  <Tab value="TypeScript">
+
+Create `template/index.ts`:
+
+```ts
+import { Cyan, ICyanTemplate } from '@atomicloud/helium-sdk';
+
+export default class SimpleTemplate implements ICyanTemplate {
+  async execute(cyan: Cyan): Promise<void> {
+    // Define files to copy using glob patterns
+    const files = cyan.glob('template/files/**/*');
+
+    // Copy all matched files to output
+    for (const file of files) {
+      await cyan.files.copy(
+        file,
+        file.replace('template/files/', '')
+      );
+    }
+  }
+}
+```
+
+  </Tab>
+  <Tab value=".NET">
+
+Create `Template.cs`:
+
+```csharp
+using AtomiCloud.Helium;
+
+public class SimpleTemplate : ICyanTemplate
+{
+    public async Task ExecuteAsync(Cyan cyan)
+    {
+        // Define files to copy using glob patterns
+        var files = cyan.Glob("template/files/**/*");
+
+        // Copy all matched files to output
+        foreach (var file in files)
+        {
+            var outputPath = file.Replace("template/files/", "");
+            await cyan.Files.CopyAsync(file, outputPath);
+        }
+    }
+}
+```
+
+  </Tab>
+  <Tab value="Python">
+
+Create `template/__init__.py`:
+
+```python
+from helium_sdk import Cyan, ICyanTemplate
+
+class SimpleTemplate(ICyanTemplate):
+    async def execute(self, cyan: Cyan):
+        # Define files to copy using glob patterns
+        files = cyan.glob("template/files/**/*")
+
+        # Copy all matched files to output
+        for file in files:
+            output_path = file.replace("template/files/", "")
+            await cyan.files.copy(file, output_path)
+```
+
+  </Tab>
+</Tabs>
+
+## Understanding Glob Patterns
+
+Glob patterns define which files to select. Here are the most common patterns:
+
+| Pattern | What it matches |
+| ------- | --------------- |
+| `*` | Any single file in current directory |
+| `**` | Any directory depth |
+| `**/*` | All files recursively |
+| `**/*.ts` | All TypeScript files |
+| `src/**/*` | All files under `src/` |
+| `!node_modules/**` | Exclude `node_modules` |
+
+### Common Glob Examples
+
+```bash
+# Match all TypeScript files
+**/*.ts
+
+# Match all files in src, excluding tests
+src/**/*
+!src/**/*.test.ts
+
+# Match specific file types
+**/*.{ts,tsx,js,jsx}
+
+# Exclude common directories
+**/*
+!node_modules/**
+!.git/**
+!dist/**
+```
+
+### Multiple Patterns
+
+<Tabs groupId="sdk-language" items={['TypeScript', '.NET', 'Python']} persist>
+  <Tab value="TypeScript">
+
+```ts
+// Include all TypeScript files, exclude tests
+const files = cyan.glob([
+  '**/*.ts',
+  '!**/*.test.ts'
+]);
+
+// Include multiple file types
+const allCode = cyan.glob([
+  '**/*.ts',
+  '**/*.tsx',
+  '**/*.js',
+  '**/*.jsx'
+]);
+```
+
+  </Tab>
+  <Tab value=".NET">
+
+```csharp
+// Include all C# files, exclude tests
+var files = cyan.Glob(new[] {
+    "**/*.cs",
+    "!**/*.Test.cs"
+});
+
+// Include multiple file types
+var allCode = cyan.Glob(new[] {
+    "**/*.cs",
+    "**/*.cshtml",
+    "**/*.js"
+});
+```
+
+  </Tab>
+  <Tab value="Python">
+
+```python
+# Include all Python files, exclude tests
+files = cyan.glob([
+    "**/*.py",
+    "!**/*_test.py"
+])
+
+# Include multiple file types
+all_code = cyan.glob([
+    "**/*.py",
+    "**/*.yaml",
+    "**/*.json"
+])
+```
+
+  </Tab>
+</Tabs>
+
+## Configure the Template
+
+Create `cyanprint.json` in the root directory:
+
+```json
+{
+  "name": "my-first-template",
+  "version": "1.0.0",
+  "description": "A simple template demonstrating glob and copy",
+  "author": "Your Name",
+  "license": "MIT",
+  "processors": [],
+  "plugins": []
+}
+```
+
+<Callout type="info">
+Since we're only copying files without transformation, we don't need any processors yet. In the next tutorial, you'll add the default processor for templating.
+</Callout>
+
+## Project Structure
+
+Your project should now look like this:
+
+```
+my-first-template/
+├── cyanprint.json
+├── package.json          # or .csproj / requirements.txt
+├── template/
+│   ├── index.ts          # Entry point
+│   └── files/            # Files to copy
+│       ├── README.md
+│       ├── package.json
+│       └── src/
+│           └── index.ts
+└── node_modules/         # or equivalent
+```
+
+## Test the Template
+
+### Local Testing
+
+Test your template locally before publishing:
+
+```bash
+# Create a test output directory
+mkdir test-output
+
+# Run the template
+cyanprint init test-output --local .
+```
+
+The CLI will:
+1. Load your local template
+2. Execute the template code
+3. Copy files to `test-output/`
+
+### Verify Output
+
+Check the generated files:
+
+```bash
+ls test-output/
+# Should show: README.md  package.json  src/
+
+ls test-output/src/
+# Should show: index.ts
+```
+
+## Summary
+
+You've created your first CyanPrint template! Here's what you learned:
+
+- **Glob patterns** select files using wildcard syntax
+- **File copying** moves selected files to output
+- **Template structure** includes configuration, entry point, and files
+- **Local testing** verifies templates before publishing
+
+## Next Steps
+
+Now that you can copy files, learn to transform them:
+
+- [Default Processor](./02-default-processor) - Add templating with variable substitution
+- [Adding Interaction](./03-adding-interaction) - Collect user input with questions
+- [Inquirer Methods](./04-inquirer-methods) - Reference for all question types

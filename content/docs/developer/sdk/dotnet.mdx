@@ -1,0 +1,517 @@
+---
+title: .NET SDK
+description: Complete API reference for the .NET Helium SDK
+---
+
+# .NET SDK Reference
+
+Complete API reference for the `AtomiCloud.Helium` package.
+
+## Installation
+
+```bash
+dotnet add package AtomiCloud.Helium
+```
+
+## Namespaces
+
+```csharp
+using AtomiCloud.Helium;
+using AtomiCloud.Helium.Processors;
+using AtomiCloud.Helium.Plugins;
+using AtomiCloud.Helium.Inquirer;
+```
+
+---
+
+## Core Interfaces
+
+### ICyanTemplate
+
+All templates implement this interface:
+
+```csharp
+public interface ICyanTemplate
+{
+    Task ExecuteAsync(Cyan cyan);
+}
+```
+
+### ICyanProcessor
+
+All processors implement this interface:
+
+```csharp
+public interface ICyanProcessor
+{
+    Task<ProcessorOutput> ProcessAsync(CyanProcessorInput input);
+}
+```
+
+### ICyanPlugin
+
+All plugins implement this interface:
+
+```csharp
+public interface ICyanPlugin
+{
+    string Name { get; }
+    string Version { get; }
+    Task InitializeAsync(PluginContext context);
+    Task DisposeAsync();
+}
+```
+
+---
+
+## Cyan Object
+
+The main object passed to templates.
+
+```csharp
+public class Cyan
+{
+    // Properties
+    public Answers Answers { get; }
+    public Dictionary<string, object> Config { get; }
+    public Inquirer Inquirer { get; }
+    public Determinism Determinism { get; }
+    public FileHelper Files { get; }
+    public ProcessorRunner Processors { get; }
+    public PluginManager Plugins { get; }
+    public ChildRunner Children { get; }
+    public Logger Logger { get; }
+
+    // Methods
+    public string[] Glob(string pattern);
+    public string[] Glob(string[] patterns);
+    public string[] Glob(string pattern, GlobOptions options);
+}
+
+public class GlobOptions
+{
+    public string Cwd { get; set; }
+    public bool Dot { get; set; }
+    public bool Absolute { get; set; }
+    public bool OnlyFiles { get; set; }
+    public bool OnlyDirectories { get; set; }
+}
+```
+
+---
+
+## Answers
+
+Access to user answers.
+
+```csharp
+public class Answers
+{
+    // Indexer
+    public object this[string key] { get; set; }
+
+    // Methods
+    public T Get<T>(string key);
+    public T GetOrDefault<T>(string key, T defaultValue);
+    public bool Has(string key);
+    public void Set(string key, object value);
+    public bool TryGetValue<T>(string key, out T value);
+
+    // Conditional prompting
+    public Task<string> GetOrPromptAsync(string key, TextOptions options);
+    public Task<string> GetOrPromptSelectAsync(string key, SelectOptions options);
+    public Task<string[]> GetOrPromptCheckboxAsync(string key, CheckboxOptions options);
+}
+```
+
+---
+
+## Inquirer
+
+User interaction methods.
+
+```csharp
+public class Inquirer
+{
+    // Text input
+    public Task<string> TextAsync(TextOptions options);
+
+    // Single selection
+    public Task<string> SelectAsync(SelectOptions options);
+
+    // Multiple selections
+    public Task<string[]> CheckboxAsync(CheckboxOptions options);
+
+    // Yes/No confirmation
+    public Task<bool> ConfirmAsync(ConfirmOptions options);
+
+    // Masked input
+    public Task<string> PasswordAsync(PasswordOptions options);
+
+    // Date picker
+    public Task<DateTime> DateAsync(DateOptions options);
+
+    // Number input
+    public Task<int> NumberAsync(NumberOptions options);
+
+    // Expandable selection
+    public Task<object> ExpandAsync(ExpandOptions options);
+}
+
+// Option classes
+public class TextOptions
+{
+    public string Message { get; set; }
+    public string Default { get; set; }
+    public string Placeholder { get; set; }
+    public Func<string, string> Validate { get; set; }
+    public Func<string, string> Transformer { get; set; }
+    public bool Required { get; set; }
+}
+
+public class SelectOption
+{
+    public string Value { get; set; }
+    public string Label { get; set; }
+    public string Description { get; set; }
+    public bool Disabled { get; set; }
+}
+
+public class SelectOptions
+{
+    public string Message { get; set; }
+    public object[] Options { get; set; }
+    public string Default { get; set; }
+    public int PageSize { get; set; }
+}
+
+public class CheckboxOption
+{
+    public string Value { get; set; }
+    public string Label { get; set; }
+    public bool Checked { get; set; }
+    public bool Disabled { get; set; }
+}
+
+public class CheckboxOptions
+{
+    public string Message { get; set; }
+    public object[] Options { get; set; }
+    public bool Required { get; set; }
+    public int Min { get; set; }
+    public int Max { get; set; }
+    public int PageSize { get; set; }
+}
+
+public class ConfirmOptions
+{
+    public string Message { get; set; }
+    public bool Default { get; set; }
+}
+
+public class PasswordOptions
+{
+    public string Message { get; set; }
+    public string Mask { get; set; }
+    public Func<string, string> Validate { get; set; }
+}
+
+public class DateOptions
+{
+    public string Message { get; set; }
+    public DateTime? Default { get; set; }
+    public DateTime? Min { get; set; }
+    public DateTime? Max { get; set; }
+    public string Format { get; set; }
+}
+
+public class NumberOptions
+{
+    public string Message { get; set; }
+    public int? Default { get; set; }
+    public int? Min { get; set; }
+    public int? Max { get; set; }
+    public int? Step { get; set; }
+    public Func<int, string> Validate { get; set; }
+}
+
+public class ExpandOption
+{
+    public string Key { get; set; }
+    public string Name { get; set; }
+    public object Value { get; set; }
+}
+
+public class ExpandOptions
+{
+    public string Message { get; set; }
+    public ExpandOption[] Options { get; set; }
+    public string Default { get; set; }
+}
+```
+
+---
+
+## Determinism
+
+Deterministic random generation.
+
+```csharp
+public class Determinism
+{
+    public string Uuid();
+    public double Random();
+    public int RandomInt(int min, int max);
+    public string RandomString(int length);
+    public T[] Shuffle<T>(T[] array);
+    public T Pick<T>(T[] array);
+    public bool Chance(double probability);
+}
+```
+
+---
+
+## FileHelper
+
+File operations.
+
+```csharp
+public class FileHelper
+{
+    public Task<string> ReadAsync(string path, string encoding = "utf-8");
+    public Task<T> ReadJsonAsync<T>(string path);
+    public Task WriteAsync(string path, string content, string encoding = "utf-8");
+    public Task WriteJsonAsync(string path, object data, int indent = 2);
+    public Task<bool> ExistsAsync(string path);
+    public Task CopyAsync(string source, string destination);
+    public Task CopyDirAsync(string source, string destination);
+    public Task DeleteAsync(string path);
+    public Task MkdirAsync(string path, bool recursive = true);
+    public Task<string[]> ReaddirAsync(string path);
+    public Task<FileStats> StatAsync(string path);
+    public Task<bool> IsDirectoryAsync(string path);
+    public Task<bool> IsFileAsync(string path);
+}
+
+public class FileStats
+{
+    public long Size { get; set; }
+    public DateTime Created { get; set; }
+    public DateTime Modified { get; set; }
+    public bool IsDirectory { get; set; }
+    public bool IsFile { get; set; }
+}
+```
+
+---
+
+## ProcessorRunner
+
+Execute processors.
+
+```csharp
+public class ProcessorRunner
+{
+    public Task RunAsync(string name, ProcessorOptions options);
+    public Task RunAsync(string name, ProcessorOptions options, object config);
+    public bool Has(string name);
+}
+
+public class ProcessorOptions
+{
+    public string Input { get; set; }
+    public string Output { get; set; }
+    public string Encoding { get; set; }
+    public object Config { get; set; }
+}
+```
+
+---
+
+## PluginManager
+
+Access plugins.
+
+```csharp
+public class PluginManager
+{
+    public T Get<T>(string name);
+    public bool Has(string name);
+    public PluginInfo[] List();
+}
+
+public class PluginInfo
+{
+    public string Name { get; set; }
+    public string Version { get; set; }
+    public string[] Provides { get; set; }
+}
+```
+
+---
+
+## ChildRunner
+
+Execute child templates.
+
+```csharp
+public class ChildRunner
+{
+    public Task RunAsync(string name, ChildOptions options = null);
+}
+
+public class ChildOptions
+{
+    public string Path { get; set; }
+    public object Config { get; set; }
+}
+```
+
+---
+
+## Logger
+
+Logging utilities.
+
+```csharp
+public class Logger
+{
+    public void Info(string message);
+    public void Warn(string message);
+    public void Error(string message);
+    public void Debug(string message);
+    public void Success(string message);
+}
+```
+
+---
+
+## Processor Types
+
+### CyanProcessorInput
+
+```csharp
+public class CyanProcessorInput
+{
+    public string Content { get; set; }
+    public string FilePath { get; set; }
+    public string Encoding { get; set; }
+    public string Extension { get; set; }
+    public Dictionary<string, object> Config { get; set; }
+    public Answers Answers { get; set; }
+    public FileHelper Files { get; set; }
+    public Determinism Determinism { get; set; }
+    public Logger Logger { get; set; }
+}
+```
+
+### ProcessorOutput
+
+```csharp
+public class ProcessorOutput
+{
+    public string Content { get; set; }
+    public string Encoding { get; set; }
+    public bool Skipped { get; set; }
+    public string SkipReason { get; set; }
+    public string Error { get; set; }
+    public List<AdditionalFile> AdditionalFiles { get; set; }
+}
+
+public class AdditionalFile
+{
+    public string Path { get; set; }
+    public string Content { get; set; }
+    public string Encoding { get; set; }
+}
+```
+
+---
+
+## Plugin Types
+
+### PluginContext
+
+```csharp
+public class PluginContext
+{
+    public Dictionary<string, object> Config { get; set; }
+    public Logger Logger { get; set; }
+    public HookRegistry Hooks { get; set; }
+    public PluginManager Plugins { get; set; }
+    public FileHelper Files { get; set; }
+}
+```
+
+### HookRegistry
+
+```csharp
+public class HookRegistry
+{
+    public void BeforeExecute(Func<BeforeExecuteEvent, Task> callback);
+    public void AfterInquirer(Func<AfterInquirerEvent, Task> callback);
+    public void BeforeProcess(Func<BeforeProcessEvent, Task> callback);
+    public void AfterProcess(Func<AfterProcessEvent, Task> callback);
+    public void AfterExecute(Func<AfterExecuteEvent, Task> callback);
+    public void OnError(Func<ErrorEvent, Task> callback);
+}
+```
+
+### Hook Event Types
+
+```csharp
+public class BeforeExecuteEvent
+{
+    public string TemplateName { get; set; }
+    public string TemplateVersion { get; set; }
+    public Dictionary<string, object> Answers { get; set; }
+    public DateTime Timestamp { get; set; }
+}
+
+public class AfterInquirerEvent
+{
+    public string TemplateName { get; set; }
+    public Dictionary<string, object> Answers { get; set; }
+    public int QuestionCount { get; set; }
+}
+
+public class BeforeProcessEvent
+{
+    public string TemplateName { get; set; }
+    public int InputFileCount { get; set; }
+    public string[] InputFiles { get; set; }
+}
+
+public class AfterProcessEvent
+{
+    public string TemplateName { get; set; }
+    public int OutputFileCount { get; set; }
+    public string[] OutputFiles { get; set; }
+    public long ProcessDuration { get; set; }
+}
+
+public class AfterExecuteEvent
+{
+    public string TemplateName { get; set; }
+    public bool Success { get; set; }
+    public long Duration { get; set; }
+    public int FileCount { get; set; }
+    public string[] Errors { get; set; }
+}
+
+public class ErrorEvent
+{
+    public string TemplateName { get; set; }
+    public Exception Error { get; set; }
+    public string Phase { get; set; }
+    public bool Recoverable { get; set; }
+}
+```
+
+---
+
+## See Also
+
+- [Template API Reference](../templates/11-api-reference) - Template development
+- [Processor API Reference](../processors/03-api-reference) - Processor development
+- [Plugin API Reference](../plugins/02-api-reference) - Plugin development

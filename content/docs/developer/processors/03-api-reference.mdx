@@ -1,0 +1,677 @@
+---
+title: Processor API Reference
+description: Complete API reference for processor development
+---
+
+# Processor API Reference
+
+This reference documents the complete API for developing CyanPrint processors.
+
+## ICyanProcessor Interface
+
+All processors must implement this interface:
+
+import { Tab, Tabs } from 'fumadocs-ui/components/tabs';
+
+<Tabs groupId="sdk-language" items={['TypeScript', '.NET', 'Python']} persist>
+  <Tab value="TypeScript">
+
+```ts
+interface ICyanProcessor {
+  process(input: CyanProcessorInput): Promise<ProcessorOutput>;
+}
+```
+
+  </Tab>
+  <Tab value=".NET">
+
+```csharp
+public interface ICyanProcessor
+{
+    Task<ProcessorOutput> ProcessAsync(CyanProcessorInput input);
+}
+```
+
+  </Tab>
+  <Tab value="Python">
+
+```python
+from abc import ABC, abstractmethod
+
+class ICyanProcessor(ABC):
+    @abstractmethod
+    async def process(self, input: CyanProcessorInput) -> ProcessorOutput:
+        pass
+```
+
+  </Tab>
+</Tabs>
+
+---
+
+## CyanProcessorInput
+
+Input passed to the processor's `process` method.
+
+### Properties
+
+| Property | Type | Description |
+| -------- | ---- | ----------- |
+| `content` | `string` | File content as string |
+| `filePath` | `string` | Relative path to the file |
+| `encoding` | `string` | File encoding (e.g., 'utf-8') |
+| `extension` | `string` | File extension including dot (e.g., '.ts') |
+| `config` | `object` | Processor configuration from template |
+| `answers` | `Answers` | Template user answers |
+| `files` | `CyanFileHelper` | File operations helper |
+| `determinism` | `Determinism` | Deterministic random generation |
+| `logger` | `Logger` | Logging utilities |
+
+### TypeScript Interface
+
+<Tabs groupId="sdk-language" items={['TypeScript', '.NET', 'Python']} persist>
+  <Tab value="TypeScript">
+
+```ts
+interface CyanProcessorInput {
+  content: string;
+  filePath: string;
+  encoding: string;
+  extension: string;
+  config: Record<string, any>;
+  answers: Answers;
+  files: CyanFileHelper;
+  determinism: Determinism;
+  logger: Logger;
+}
+```
+
+  </Tab>
+  <Tab value=".NET">
+
+```csharp
+public class CyanProcessorInput
+{
+    public string Content { get; set; }
+    public string FilePath { get; set; }
+    public string Encoding { get; set; }
+    public string Extension { get; set; }
+    public Dictionary<string, object> Config { get; set; }
+    public Answers Answers { get; set; }
+    public CyanFileHelper Files { get; set; }
+    public Determinism Determinism { get; set; }
+    public Logger Logger { get; set; }
+}
+```
+
+  </Tab>
+  <Tab value="Python">
+
+```python
+class CyanProcessorInput:
+    content: str
+    file_path: str
+    encoding: str
+    extension: str
+    config: dict
+    answers: Answers
+    files: CyanFileHelper
+    determinism: Determinism
+    logger: Logger
+```
+
+  </Tab>
+</Tabs>
+
+---
+
+## ProcessorOutput
+
+Output returned from the processor's `process` method.
+
+### Properties
+
+| Property | Type | Required | Description |
+| -------- | ---- | -------- | ----------- |
+| `content` | `string` | Yes | Transformed file content |
+| `encoding` | `string` | Yes | Output encoding |
+| `skipped` | `boolean` | No | Whether file was skipped |
+| `skipReason` | `string` | No | Reason for skipping |
+| `error` | `string` | No | Error message if processing failed |
+| `additionalFiles` | `AdditionalFile[]` | No | Additional files to create |
+
+### TypeScript Interface
+
+<Tabs groupId="sdk-language" items={['TypeScript', '.NET', 'Python']} persist>
+  <Tab value="TypeScript">
+
+```ts
+interface ProcessorOutput {
+  content: string;
+  encoding: string;
+  skipped?: boolean;
+  skipReason?: string;
+  error?: string;
+  additionalFiles?: AdditionalFile[];
+}
+
+interface AdditionalFile {
+  path: string;
+  content: string;
+  encoding?: string;
+}
+```
+
+  </Tab>
+  <Tab value=".NET">
+
+```csharp
+public class ProcessorOutput
+{
+    public string Content { get; set; }
+    public string Encoding { get; set; }
+    public bool Skipped { get; set; }
+    public string SkipReason { get; set; }
+    public string Error { get; set; }
+    public List<AdditionalFile> AdditionalFiles { get; set; }
+}
+
+public class AdditionalFile
+{
+    public string Path { get; set; }
+    public string Content { get; set; }
+    public string Encoding { get; set; }
+}
+```
+
+  </Tab>
+  <Tab value="Python">
+
+```python
+class ProcessorOutput:
+    content: str
+    encoding: str
+    skipped: bool = False
+    skip_reason: str = None
+    error: str = None
+    additional_files: List[AdditionalFile] = None
+
+class AdditionalFile:
+    path: str
+    content: str
+    encoding: str = None
+```
+
+  </Tab>
+</Tabs>
+
+---
+
+## CyanFileHelper
+
+File operations available within processors.
+
+### Methods
+
+<Tabs groupId="sdk-language" items={['TypeScript', '.NET', 'Python']} persist>
+  <Tab value="TypeScript">
+
+```ts
+interface CyanFileHelper {
+  // Read file content
+  read(path: string, encoding?: string): Promise<string>;
+
+  // Read and parse JSON
+  readJson<T>(path: string): Promise<T>;
+
+  // Write file content
+  write(path: string, content: string, encoding?: string): Promise<void>;
+
+  // Write object as JSON
+  writeJson(path: string, data: any, indent?: number): Promise<void>;
+
+  // Check if file exists
+  exists(path: string): Promise<boolean>;
+
+  // Copy file
+  copy(source: string, destination: string): Promise<void>;
+
+  // Delete file
+  delete(path: string): Promise<void>;
+
+  // Create directory
+  mkdir(path: string, recursive?: boolean): Promise<void>;
+
+  // List directory contents
+  readdir(path: string): Promise<string[]>;
+
+  // Get file stats
+  stat(path: string): Promise<FileStats>;
+
+  // Check if path is directory
+  isDirectory(path: string): Promise<boolean>;
+
+  // Check if path is file
+  isFile(path: string): Promise<boolean>;
+}
+
+interface FileStats {
+  size: number;
+  created: Date;
+  modified: Date;
+  isDirectory: boolean;
+  isFile: boolean;
+}
+```
+
+  </Tab>
+  <Tab value=".NET">
+
+```csharp
+public class CyanFileHelper
+{
+    // Read file content
+    public Task<string> ReadAsync(string path, string encoding = "utf-8");
+
+    // Read and parse JSON
+    public Task<T> ReadJsonAsync<T>(string path);
+
+    // Write file content
+    public Task WriteAsync(string path, string content, string encoding = "utf-8");
+
+    // Write object as JSON
+    public Task WriteJsonAsync(string path, object data, int indent = 2);
+
+    // Check if file exists
+    public Task<bool> ExistsAsync(string path);
+
+    // Copy file
+    public Task CopyAsync(string source, string destination);
+
+    // Delete file
+    public Task DeleteAsync(string path);
+
+    // Create directory
+    public Task MkdirAsync(string path, bool recursive = true);
+
+    // List directory contents
+    public Task<string[]> ReaddirAsync(string path);
+
+    // Get file stats
+    public Task<FileStats> StatAsync(string path);
+
+    // Check if path is directory
+    public Task<bool> IsDirectoryAsync(string path);
+
+    // Check if path is file
+    public Task<bool> IsFileAsync(string path);
+}
+
+public class FileStats
+{
+    public long Size { get; set; }
+    public DateTime Created { get; set; }
+    public DateTime Modified { get; set; }
+    public bool IsDirectory { get; set; }
+    public bool IsFile { get; set; }
+}
+```
+
+  </Tab>
+  <Tab value="Python">
+
+```python
+class CyanFileHelper:
+    # Read file content
+    async def read(self, path: str, encoding: str = "utf-8") -> str: ...
+
+    # Read and parse JSON
+    async def read_json(self, path: str) -> Any: ...
+
+    # Write file content
+    async def write(self, path: str, content: str, encoding: str = "utf-8") -> None: ...
+
+    # Write object as JSON
+    async def write_json(self, path: str, data: Any, indent: int = 2) -> None: ...
+
+    # Check if file exists
+    async def exists(self, path: str) -> bool: ...
+
+    # Copy file
+    async def copy(self, source: str, destination: str) -> None: ...
+
+    # Delete file
+    async def delete(self, path: str) -> None: ...
+
+    # Create directory
+    async def mkdir(self, path: str, recursive: bool = True) -> None: ...
+
+    # List directory contents
+    async def readdir(self, path: str) -> List[str]: ...
+
+    # Get file stats
+    async def stat(self, path: str) -> FileStats: ...
+
+    # Check if path is directory
+    async def is_directory(self, path: str) -> bool: ...
+
+    # Check if path is file
+    async def is_file(self, path: str) -> bool: ...
+
+class FileStats:
+    size: int
+    created: datetime
+    modified: datetime
+    is_directory: bool
+    is_file: bool
+```
+
+  </Tab>
+</Tabs>
+
+---
+
+## Determinism
+
+Deterministic random generation (same as template context).
+
+### Methods
+
+<Tabs groupId="sdk-language" items={['TypeScript', '.NET', 'Python']} persist>
+  <Tab value="TypeScript">
+
+```ts
+interface Determinism {
+  // Generate deterministic UUID
+  uuid(): string;
+
+  // Random float between 0 and 1
+  random(): number;
+
+  // Random integer in range (inclusive)
+  randomInt(min: number, max: number): number;
+
+  // Random string of specified length
+  randomString(length: number): string;
+
+  // Shuffle array deterministically
+  shuffle<T>(array: T[]): T[];
+
+  // Pick random element
+  pick<T>(array: T[]): T;
+
+  // Boolean with probability
+  chance(probability: number): boolean;
+}
+```
+
+  </Tab>
+  <Tab value=".NET">
+
+```csharp
+public class Determinism
+{
+    // Generate deterministic UUID
+    public string Uuid();
+
+    // Random double between 0 and 1
+    public double Random();
+
+    // Random integer in range (inclusive)
+    public int RandomInt(int min, int max);
+
+    // Random string of specified length
+    public string RandomString(int length);
+
+    // Shuffle array deterministically
+    public T[] Shuffle<T>(T[] array);
+
+    // Pick random element
+    public T Pick<T>(T[] array);
+
+    // Boolean with probability
+    public bool Chance(double probability);
+}
+```
+
+  </Tab>
+  <Tab value="Python">
+
+```python
+class Determinism:
+    # Generate deterministic UUID
+    def uuid(self) -> str: ...
+
+    # Random float between 0 and 1
+    def random(self) -> float: ...
+
+    # Random integer in range (inclusive)
+    def random_int(self, min: int, max: int) -> int: ...
+
+    # Random string of specified length
+    def random_string(self, length: int) -> str: ...
+
+    # Shuffle list deterministically
+    def shuffle(self, array: List[T]) -> List[T]: ...
+
+    # Pick random element
+    def pick(self, array: List[T]) -> T: ...
+
+    # Boolean with probability
+    def chance(self, probability: float) -> bool: ...
+```
+
+  </Tab>
+</Tabs>
+
+---
+
+## Logger
+
+Logging utilities for debugging.
+
+### Methods
+
+<Tabs groupId="sdk-language" items={['TypeScript', '.NET', 'Python']} persist>
+  <Tab value="TypeScript">
+
+```ts
+interface Logger {
+  info(message: string): void;
+  warn(message: string): void;
+  error(message: string): void;
+  debug(message: string): void;
+  success(message: string): void;
+}
+```
+
+  </Tab>
+  <Tab value=".NET">
+
+```csharp
+public class Logger
+{
+    public void Info(string message);
+    public void Warn(string message);
+    public void Error(string message);
+    public void Debug(string message);
+    public void Success(string message);
+}
+```
+
+  </Tab>
+  <Tab value="Python">
+
+```python
+class Logger:
+    def info(self, message: str) -> None: ...
+    def warn(self, message: str) -> None: ...
+    def error(self, message: str) -> None: ...
+    def debug(self, message: str) -> None: ...
+    def success(self, message: str) -> None: ...
+```
+
+  </Tab>
+</Tabs>
+
+---
+
+## Answers
+
+Read-only access to template answers.
+
+### Methods
+
+<Tabs groupId="sdk-language" items={['TypeScript', '.NET', 'Python']} persist>
+  <Tab value="TypeScript">
+
+```ts
+interface Answers {
+  // Direct property access
+  [key: string]: any;
+
+  // Get typed value
+  get<T>(key: string): T | undefined;
+
+  // Get with default
+  getOrDefault<T>(key: string, defaultValue: T): T;
+
+  // Check if answer exists
+  has(key: string): boolean;
+}
+```
+
+  </Tab>
+  <Tab value=".NET">
+
+```csharp
+public class Answers
+{
+    // Indexer access
+    public object this[string key] { get; }
+
+    // Get typed value
+    public T Get<T>(string key);
+
+    // Get or default
+    public T GetOrDefault<T>(string key, T defaultValue);
+
+    // Check existence
+    public bool Has(string key);
+
+    // Try get value
+    public bool TryGetValue<T>(string key, out T value);
+}
+```
+
+  </Tab>
+  <Tab value="Python">
+
+```python
+class Answers:
+    # Dictionary-like access
+    def __getitem__(self, key: str) -> Any: ...
+
+    # Get with optional default
+    def get(self, key: str, default: Any = None) -> Any: ...
+
+    # Check existence
+    def has(self, key: str) -> bool: ...
+```
+
+  </Tab>
+</Tabs>
+
+---
+
+## Processor Configuration
+
+### cyanprint.json
+
+```json
+{
+  "name": "@org/my-processor",
+  "version": "1.0.0",
+  "type": "processor",
+  "entryPoint": "dist/index.js",
+  "fileExtensions": [".txt", ".md"],
+  "config": {
+    "defaultOption": "value"
+  }
+}
+```
+
+### Configuration Fields
+
+| Field | Type | Required | Description |
+| ----- | ---- | -------- | ----------- |
+| `name` | string | Yes | Processor package name |
+| `version` | string | Yes | Semantic version |
+| `type` | string | Yes | Must be `"processor"` |
+| `entryPoint` | string | Yes | Path to compiled processor |
+| `fileExtensions` | string[] | No | Auto-apply to these extensions |
+| `config` | object | No | Default configuration |
+
+### Using in Templates
+
+<Tabs groupId="sdk-language" items={['TypeScript', '.NET', 'Python']} persist>
+  <Tab value="TypeScript">
+
+```ts
+// In template cyanprint.json
+{
+  "processors": [
+    {
+      "name": "@org/my-processor",
+      "config": {
+        "customOption": "value"
+      }
+    }
+  ]
+}
+```
+
+  </Tab>
+  <Tab value=".NET">
+
+```csharp
+// In template cyanprint.json
+{
+  "processors": [
+    {
+      "name": "@org/my-processor",
+      "config": {
+        "customOption": "value"
+      }
+    }
+  ]
+}
+```
+
+  </Tab>
+  <Tab value="Python">
+
+```python
+# In template cyanprint.json
+{
+  "processors": [
+    {
+      "name": "@org/my-processor",
+      "config": {
+        "customOption": "value"
+      }
+    }
+  ]
+}
+```
+
+  </Tab>
+</Tabs>
+
+---
+
+## See Also
+
+- [First Processor](./01-first-processor) - Getting started guide
+- [File Operations](./02-file-operations) - Advanced file handling
+- [Template API Reference](../templates/11-api-reference) - Template API

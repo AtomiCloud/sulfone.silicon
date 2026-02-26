@@ -1,0 +1,868 @@
+---
+title: First Processor
+description: Create your first custom processor for file transformation
+---
+
+# First Processor
+
+Processors transform file content during template execution. This tutorial guides you through creating a custom processor.
+
+**Time estimate**: 15-20 minutes
+
+## What is a Processor?
+
+A processor is a CyanPrint artifact that:
+
+1. **Receives** file content as input
+2. **Transforms** the content based on configuration
+3. **Returns** transformed content
+
+Common processor use cases:
+
+- Template variable substitution (default processor)
+- Code formatting (Prettier, ESLint fix)
+- JSON/YAML transformation
+- Custom DSL compilation
+- File format conversion
+
+## Processor Interface
+
+All processors implement the `ICyanProcessor` interface:
+
+import { Tab, Tabs } from 'fumadocs-ui/components/tabs';
+
+<Tabs groupId="sdk-language" items={['TypeScript', '.NET', 'Python']} persist>
+  <Tab value="TypeScript">
+
+```ts
+interface ICyanProcessor {
+  process(input: CyanProcessorInput): Promise<ProcessorOutput>;
+}
+```
+
+  </Tab>
+  <Tab value=".NET">
+
+```csharp
+public interface ICyanProcessor
+{
+    Task<ProcessorOutput> ProcessAsync(CyanProcessorInput input);
+}
+```
+
+  </Tab>
+  <Tab value="Python">
+
+```python
+class ICyanProcessor(ABC):
+    @abstractmethod
+    async def process(self, input: CyanProcessorInput) -> ProcessorOutput:
+        pass
+```
+
+  </Tab>
+</Tabs>
+
+## Project Setup
+
+### Create the Project
+
+<Tabs groupId="sdk-language" items={['TypeScript', '.NET', 'Python']} persist>
+  <Tab value="TypeScript">
+
+```bash
+# Create project directory
+mkdir my-processor
+cd my-processor
+
+# Initialize npm project
+npm init -y
+
+# Install Helium SDK
+npm install @atomicloud/helium-sdk
+
+# Create processor file
+mkdir -p src
+touch src/index.ts
+```
+
+  </Tab>
+  <Tab value=".NET">
+
+```bash
+# Create project directory
+mkdir MyProcessor
+cd MyProcessor
+
+# Create class library
+dotnet new classlib
+
+# Add Helium SDK
+dotnet add package AtomiCloud.Helium
+
+# Rename default file
+ren Class1.cs Processor.cs
+```
+
+  </Tab>
+  <Tab value="Python">
+
+```bash
+# Create project directory
+mkdir my-processor
+cd my-processor
+
+# Create virtual environment
+python -m venv .venv
+source .venv/bin/activate
+
+# Install Helium SDK
+pip install cyanprint-helium
+
+# Create processor file
+touch processor.py
+```
+
+  </Tab>
+</Tabs>
+
+## Create a Simple Processor
+
+Let's create a processor that converts text to uppercase:
+
+<Tabs groupId="sdk-language" items={['TypeScript', '.NET', 'Python']} persist>
+  <Tab value="TypeScript">
+
+```ts
+// src/index.ts
+import { CyanProcessorInput, ProcessorOutput, ICyanProcessor } from '@atomicloud/helium-sdk';
+
+export default class UppercaseProcessor implements ICyanProcessor {
+  async process(input: CyanProcessorInput): Promise<ProcessorOutput> {
+    // Get the file content
+    const content = input.content;
+
+    // Transform to uppercase
+    const transformed = content.toUpperCase();
+
+    // Return the output
+    return {
+      content: transformed,
+      encoding: input.encoding
+    };
+  }
+}
+```
+
+  </Tab>
+  <Tab value=".NET">
+
+```csharp
+// Processor.cs
+using AtomiCloud.Helium;
+
+public class UppercaseProcessor : ICyanProcessor
+{
+    public async Task<ProcessorOutput> ProcessAsync(CyanProcessorInput input)
+    {
+        // Get the file content
+        var content = input.Content;
+
+        // Transform to uppercase
+        var transformed = content.ToUpper();
+
+        // Return the output
+        return new ProcessorOutput
+        {
+            Content = transformed,
+            Encoding = input.Encoding
+        };
+    }
+}
+```
+
+  </Tab>
+  <Tab value="Python">
+
+```python
+# processor.py
+from helium_sdk import CyanProcessorInput, ProcessorOutput, ICyanProcessor
+
+class UppercaseProcessor(ICyanProcessor):
+    async def process(self, input: CyanProcessorInput) -> ProcessorOutput:
+        # Get the file content
+        content = input.content
+
+        # Transform to uppercase
+        transformed = content.upper()
+
+        # Return the output
+        return ProcessorOutput(
+            content=transformed,
+            encoding=input.encoding
+        )
+```
+
+  </Tab>
+</Tabs>
+
+## Configure the Processor
+
+Create `cyanprint.json`:
+
+```json
+{
+  "name": "uppercase-processor",
+  "version": "1.0.0",
+  "description": "Converts file content to uppercase",
+  "type": "processor",
+  "entryPoint": "dist/index.js",
+  "fileExtensions": [".txt", ".md"]
+}
+```
+
+### Configuration Options
+
+| Field | Description | Required |
+| ----- | ----------- | -------- |
+| `name` | Processor package name | Yes |
+| `version` | Semantic version | Yes |
+| `type` | Must be `"processor"` | Yes |
+| `entryPoint` | Path to compiled processor | Yes |
+| `fileExtensions` | Auto-apply to these extensions | No |
+| `config` | Default configuration | No |
+
+## Accessing Configuration
+
+Processors can receive configuration from templates:
+
+<Tabs groupId="sdk-language" items={['TypeScript', '.NET', 'Python']} persist>
+  <Tab value="TypeScript">
+
+```ts
+export default class ConfigurableProcessor implements ICyanProcessor {
+  async process(input: CyanProcessorInput): Promise<ProcessorOutput> {
+    // Access configuration
+    const config = input.config || {};
+    const prefix = config.prefix || '';
+    const suffix = config.suffix || '';
+
+    // Apply transformation with config
+    const transformed = prefix + input.content + suffix;
+
+    return {
+      content: transformed,
+      encoding: input.encoding
+    };
+  }
+}
+```
+
+  </Tab>
+  <Tab value=".NET">
+
+```csharp
+public class ConfigurableProcessor : ICyanProcessor
+{
+    public async Task<ProcessorOutput> ProcessAsync(CyanProcessorInput input)
+    {
+        // Access configuration
+        var config = input.Config ?? new Dictionary<string, object>();
+        var prefix = config.TryGetValue("prefix", out var p) ? p.ToString() : "";
+        var suffix = config.TryGetValue("suffix", out var s) ? s.ToString() : "";
+
+        // Apply transformation with config
+        var transformed = prefix + input.Content + suffix;
+
+        return new ProcessorOutput
+        {
+            Content = transformed,
+            Encoding = input.Encoding
+        };
+    }
+}
+```
+
+  </Tab>
+  <Tab value="Python">
+
+```python
+class ConfigurableProcessor(ICyanProcessor):
+    async def process(self, input: CyanProcessorInput) -> ProcessorOutput:
+        # Access configuration
+        config = input.config or {}
+        prefix = config.get("prefix", "")
+        suffix = config.get("suffix", "")
+
+        # Apply transformation with config
+        transformed = prefix + input.content + suffix
+
+        return ProcessorOutput(
+            content=transformed,
+            encoding=input.encoding
+        )
+```
+
+  </Tab>
+</Tabs>
+
+Templates pass configuration:
+
+<Tabs groupId="sdk-language" items={['TypeScript', '.NET', 'Python']} persist>
+  <Tab value="TypeScript">
+
+```ts
+// In template
+await cyan.processors.run('configurable-processor', {
+  input: 'template/file.txt',
+  output: 'output.txt',
+  config: {
+    prefix: '// START\n',
+    suffix: '\n// END'
+  }
+});
+```
+
+  </Tab>
+  <Tab value=".NET">
+
+```csharp
+// In template
+await cyan.Processors.RunAsync("configurable-processor", new ProcessorOptions
+{
+    Input = "template/file.txt",
+    Output = "output.txt",
+    Config = new
+    {
+        Prefix = "// START\n",
+        Suffix = "\n// END"
+    }
+});
+```
+
+  </Tab>
+  <Tab value="Python">
+
+```python
+# In template
+await cyan.processors.run("configurable-processor", {
+    "input": "template/file.txt",
+    "output": "output.txt",
+    "config": {
+        "prefix": "// START\n",
+        "suffix": "\n// END"
+    }
+})
+```
+
+  </Tab>
+</Tabs>
+
+## Accessing File Information
+
+The input provides file metadata:
+
+<Tabs groupId="sdk-language" items={['TypeScript', '.NET', 'Python']} persist>
+  <Tab value="TypeScript">
+
+```ts
+export default class MetadataProcessor implements ICyanProcessor {
+  async process(input: CyanProcessorInput): Promise<ProcessorOutput> {
+    // Available metadata
+    const {
+      content,      // File content as string
+      filePath,     // Relative path to file
+      encoding,     // File encoding (e.g., 'utf-8')
+      extension,    // File extension (e.g., '.ts')
+      config        // Processor configuration
+    } = input;
+
+    // Log for debugging
+    console.log(`Processing: ${filePath}`);
+
+    // Process based on extension
+    let transformed = content;
+    if (extension === '.json') {
+      transformed = this.processJson(content);
+    } else if (extension === '.md') {
+      transformed = this.processMarkdown(content);
+    }
+
+    return { content: transformed, encoding };
+  }
+
+  private processJson(content: string): string {
+    const parsed = JSON.parse(content);
+    // Transform JSON
+    return JSON.stringify(parsed, null, 2);
+  }
+
+  private processMarkdown(content: string): string {
+    // Transform Markdown
+    return content;
+  }
+}
+```
+
+  </Tab>
+  <Tab value=".NET">
+
+```csharp
+public class MetadataProcessor : ICyanProcessor
+{
+    public async Task<ProcessorOutput> ProcessAsync(CyanProcessorInput input)
+    {
+        // Available metadata
+        var content = input.Content;      // File content as string
+        var filePath = input.FilePath;    // Relative path to file
+        var encoding = input.Encoding;    // File encoding
+        var extension = input.Extension;  // File extension
+        var config = input.Config;        // Processor configuration
+
+        // Log for debugging
+        Console.WriteLine($"Processing: {filePath}");
+
+        // Process based on extension
+        string transformed = content;
+        if (extension == ".json")
+        {
+            transformed = ProcessJson(content);
+        }
+        else if (extension == ".md")
+        {
+            transformed = ProcessMarkdown(content);
+        }
+
+        return new ProcessorOutput
+        {
+            Content = transformed,
+            Encoding = encoding
+        };
+    }
+
+    private string ProcessJson(string content)
+    {
+        var parsed = JsonSerializer.Deserialize<JsonElement>(content);
+        // Transform JSON
+        return JsonSerializer.Serialize(parsed, new JsonSerializerOptions { WriteIndented = true });
+    }
+
+    private string ProcessMarkdown(string content)
+    {
+        // Transform Markdown
+        return content;
+    }
+}
+```
+
+  </Tab>
+  <Tab value="Python">
+
+```python
+import json
+
+class MetadataProcessor(ICyanProcessor):
+    async def process(self, input: CyanProcessorInput) -> ProcessorOutput:
+        # Available metadata
+        content = input.content       # File content as string
+        file_path = input.file_path   # Relative path to file
+        encoding = input.encoding     # File encoding
+        extension = input.extension   # File extension
+        config = input.config         # Processor configuration
+
+        # Log for debugging
+        print(f"Processing: {file_path}")
+
+        # Process based on extension
+        transformed = content
+        if extension == ".json":
+            transformed = self._process_json(content)
+        elif extension == ".md":
+            transformed = self._process_markdown(content)
+
+        return ProcessorOutput(
+            content=transformed,
+            encoding=encoding
+        )
+
+    def _process_json(self, content: str) -> str:
+        parsed = json.loads(content)
+        # Transform JSON
+        return json.dumps(parsed, indent=2)
+
+    def _process_markdown(self, content: str) -> str:
+        # Transform Markdown
+        return content
+```
+
+  </Tab>
+</Tabs>
+
+## Accessing Answers
+
+Processors can access template answers:
+
+<Tabs groupId="sdk-language" items={['TypeScript', '.NET', 'Python']} persist>
+  <Tab value="TypeScript">
+
+```ts
+export default class AnswerAwareProcessor implements ICyanProcessor {
+  async process(input: CyanProcessorInput): Promise<ProcessorOutput> {
+    // Access answers from the template
+    const answers = input.answers;
+
+    // Use answers in transformation
+    const projectName = answers.projectName || 'unknown';
+    const author = answers.author || 'Anonymous';
+
+    // Replace placeholders
+    let content = input.content;
+    content = content.replace(/\{\{projectName\}\}/g, projectName);
+    content = content.replace(/\{\{author\}\}/g, author);
+
+    return {
+      content,
+      encoding: input.encoding
+    };
+  }
+}
+```
+
+  </Tab>
+  <Tab value=".NET">
+
+```csharp
+public class AnswerAwareProcessor : ICyanProcessor
+{
+    public async Task<ProcessorOutput> ProcessAsync(CyanProcessorInput input)
+    {
+        // Access answers from the template
+        var answers = input.Answers;
+
+        // Use answers in transformation
+        var projectName = answers.TryGetValue("projectName", out var pn) ? pn.ToString() : "unknown";
+        var author = answers.TryGetValue("author", out var a) ? a.ToString() : "Anonymous";
+
+        // Replace placeholders
+        var content = input.Content;
+        content = Regex.Replace(content, @"\{\{projectName\}\}", projectName);
+        content = Regex.Replace(content, @"\{\{author\}\}", author);
+
+        return new ProcessorOutput
+        {
+            Content = content,
+            Encoding = input.Encoding
+        };
+    }
+}
+```
+
+  </Tab>
+  <Tab value="Python">
+
+```python
+import re
+
+class AnswerAwareProcessor(ICyanProcessor):
+    async def process(self, input: CyanProcessorInput) -> ProcessorOutput:
+        # Access answers from the template
+        answers = input.answers
+
+        # Use answers in transformation
+        project_name = answers.get("projectName", "unknown")
+        author = answers.get("author", "Anonymous")
+
+        # Replace placeholders
+        content = input.content
+        content = re.sub(r'\{\{projectName\}\}', project_name, content)
+        content = re.sub(r'\{\{author\}\}', author, content)
+
+        return ProcessorOutput(
+            content=content,
+            encoding=input.encoding
+        )
+```
+
+  </Tab>
+</Tabs>
+
+## Error Handling
+
+Handle errors gracefully:
+
+<Tabs groupId="sdk-language" items={['TypeScript', '.NET', 'Python']} persist>
+  <Tab value="TypeScript">
+
+```ts
+export default class SafeProcessor implements ICyanProcessor {
+  async process(input: CyanProcessorInput): Promise<ProcessorOutput> {
+    try {
+      // Validate input
+      if (!input.content) {
+        return {
+          content: '',
+          encoding: input.encoding,
+          skipped: true,
+          skipReason: 'Empty content'
+        };
+      }
+
+      // Process content
+      const transformed = await this.transform(input.content, input.config);
+
+      return {
+        content: transformed,
+        encoding: input.encoding
+      };
+    } catch (error) {
+      // Return error information
+      return {
+        content: input.content,  // Return original on error
+        encoding: input.encoding,
+        error: error instanceof Error ? error.message : 'Unknown error'
+      };
+    }
+  }
+
+  private async transform(content: string, config: any): Promise<string> {
+    // Transformation logic
+    return content;
+  }
+}
+```
+
+  </Tab>
+  <Tab value=".NET">
+
+```csharp
+public class SafeProcessor : ICyanProcessor
+{
+    public async Task<ProcessorOutput> ProcessAsync(CyanProcessorInput input)
+    {
+        try
+        {
+            // Validate input
+            if (string.IsNullOrEmpty(input.Content))
+            {
+                return new ProcessorOutput
+                {
+                    Content = "",
+                    Encoding = input.Encoding,
+                    Skipped = true,
+                    SkipReason = "Empty content"
+                };
+            }
+
+            // Process content
+            var transformed = await TransformAsync(input.Content, input.Config);
+
+            return new ProcessorOutput
+            {
+                Content = transformed,
+                Encoding = input.Encoding
+            };
+        }
+        catch (Exception ex)
+        {
+            // Return error information
+            return new ProcessorOutput
+            {
+                Content = input.Content,  // Return original on error
+                Encoding = input.Encoding,
+                Error = ex.Message
+            };
+        }
+    }
+
+    private async Task<string> TransformAsync(string content, Dictionary<string, object> config)
+    {
+        // Transformation logic
+        return content;
+    }
+}
+```
+
+  </Tab>
+  <Tab value="Python">
+
+```python
+class SafeProcessor(ICyanProcessor):
+    async def process(self, input: CyanProcessorInput) -> ProcessorOutput:
+        try:
+            # Validate input
+            if not input.content:
+                return ProcessorOutput(
+                    content="",
+                    encoding=input.encoding,
+                    skipped=True,
+                    skip_reason="Empty content"
+                )
+
+            # Process content
+            transformed = await self._transform(input.content, input.config)
+
+            return ProcessorOutput(
+                content=transformed,
+                encoding=input.encoding
+            )
+        except Exception as e:
+            # Return error information
+            return ProcessorOutput(
+                content=input.content,  # Return original on error
+                encoding=input.encoding,
+                error=str(e)
+            )
+
+    async def _transform(self, content: str, config: dict) -> str:
+        # Transformation logic
+        return content
+```
+
+  </Tab>
+</Tabs>
+
+## Testing the Processor
+
+### Local Testing
+
+<Tabs groupId="sdk-language" items={['TypeScript', '.NET', 'Python']} persist>
+  <Tab value="TypeScript">
+
+```ts
+// tests/processor.test.ts
+import { describe, it, expect } from 'vitest';
+import UppercaseProcessor from '../src/index';
+
+describe('UppercaseProcessor', () => {
+  const processor = new UppercaseProcessor();
+
+  it('converts content to uppercase', async () => {
+    const result = await processor.process({
+      content: 'hello world',
+      filePath: 'test.txt',
+      encoding: 'utf-8',
+      extension: '.txt',
+      config: {}
+    });
+
+    expect(result.content).toBe('HELLO WORLD');
+  });
+
+  it('preserves encoding', async () => {
+    const result = await processor.process({
+      content: 'test',
+      filePath: 'test.txt',
+      encoding: 'utf-8',
+      extension: '.txt',
+      config: {}
+    });
+
+    expect(result.encoding).toBe('utf-8');
+  });
+});
+```
+
+  </Tab>
+  <Tab value=".NET">
+
+```csharp
+// Tests/ProcessorTests.cs
+using Xunit;
+
+public class ProcessorTests
+{
+    private readonly UppercaseProcessor _processor;
+
+    public ProcessorTests()
+    {
+        _processor = new UppercaseProcessor();
+    }
+
+    [Fact]
+    public async Task ConvertsContentToUppercase()
+    {
+        var result = await _processor.ProcessAsync(new CyanProcessorInput
+        {
+            Content = "hello world",
+            FilePath = "test.txt",
+            Encoding = "utf-8",
+            Extension = ".txt",
+            Config = new Dictionary<string, object>()
+        });
+
+        Assert.Equal("HELLO WORLD", result.Content);
+    }
+
+    [Fact]
+    public async Task PreservesEncoding()
+    {
+        var result = await _processor.ProcessAsync(new CyanProcessorInput
+        {
+            Content = "test",
+            FilePath = "test.txt",
+            Encoding = "utf-8",
+            Extension = ".txt",
+            Config = new Dictionary<string, object>()
+        });
+
+        Assert.Equal("utf-8", result.Encoding);
+    }
+}
+```
+
+  </Tab>
+  <Tab value="Python">
+
+```python
+# tests/test_processor.py
+import pytest
+from processor import UppercaseProcessor
+
+@pytest.fixture
+def processor():
+    return UppercaseProcessor()
+
+class TestUppercaseProcessor:
+    @pytest.mark.asyncio
+    async def test_converts_content_to_uppercase(self, processor):
+        result = await processor.process(CyanProcessorInput(
+            content="hello world",
+            file_path="test.txt",
+            encoding="utf-8",
+            extension=".txt",
+            config={}
+        ))
+
+        assert result.content == "HELLO WORLD"
+
+    @pytest.mark.asyncio
+    async def test_preserves_encoding(self, processor):
+        result = await processor.process(CyanProcessorInput(
+            content="test",
+            file_path="test.txt",
+            encoding="utf-8",
+            extension=".txt",
+            config={}
+        ))
+
+        assert result.encoding == "utf-8"
+```
+
+  </Tab>
+</Tabs>
+
+## Summary
+
+You've learned to create a custom processor:
+
+- **ICyanProcessor interface** - Required methods
+- **Input/Output types** - Content, metadata, configuration
+- **Configuration** - Pass options from templates
+- **Answers** - Access user responses
+- **Error handling** - Graceful failures
+
+## Next Steps
+
+- [File Operations](./02-file-operations) - Advanced file handling
+- [API Reference](./03-api-reference) - Complete processor API
+- [Default Processor](../templates/02-default-processor) - Learn from the built-in processor

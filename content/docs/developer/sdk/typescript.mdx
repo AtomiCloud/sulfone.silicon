@@ -1,0 +1,494 @@
+---
+title: TypeScript SDK
+description: Complete API reference for the TypeScript Helium SDK
+---
+
+# TypeScript SDK Reference
+
+Complete API reference for the `@atomicloud/helium-sdk` package.
+
+## Installation
+
+```bash
+npm install @atomicloud/helium-sdk
+```
+
+## Imports
+
+```ts
+import {
+  // Main types
+  Cyan,
+  ICyanTemplate,
+  ICyanProcessor,
+  ICyanPlugin,
+
+  // Input/Output types
+  CyanProcessorInput,
+  ProcessorOutput,
+  PluginContext,
+
+  // Helper types
+  Answers,
+  Inquirer,
+  Determinism,
+  FileHelper,
+  Logger,
+  PluginManager,
+  ProcessorRunner,
+  ChildRunner
+} from '@atomicloud/helium-sdk';
+```
+
+---
+
+## Core Interfaces
+
+### ICyanTemplate
+
+All templates implement this interface:
+
+```ts
+interface ICyanTemplate {
+  execute(cyan: Cyan): Promise<void>;
+}
+```
+
+### ICyanProcessor
+
+All processors implement this interface:
+
+```ts
+interface ICyanProcessor {
+  process(input: CyanProcessorInput): Promise<ProcessorOutput>;
+}
+```
+
+### ICyanPlugin
+
+All plugins implement this interface:
+
+```ts
+interface ICyanPlugin {
+  name: string;
+  version: string;
+  initialize(context: PluginContext): Promise<void>;
+  dispose?(): Promise<void>;
+}
+```
+
+---
+
+## Cyan Object
+
+The main object passed to templates.
+
+```ts
+interface Cyan {
+  // Properties
+  answers: Answers;
+  config: Record<string, any>;
+  inquirer: Inquirer;
+  determinism: Determinism;
+  files: FileHelper;
+  processors: ProcessorRunner;
+  plugins: PluginManager;
+  children: ChildRunner;
+  logger: Logger;
+
+  // Methods
+  glob(pattern: string | string[]): string[];
+  glob(pattern: string, options: GlobOptions): string[];
+}
+
+interface GlobOptions {
+  cwd?: string;
+  dot?: boolean;
+  absolute?: boolean;
+  onlyFiles?: boolean;
+  onlyDirectories?: boolean;
+}
+```
+
+---
+
+## Answers
+
+Access to user answers.
+
+```ts
+interface Answers {
+  // Index signature for direct access
+  [key: string]: any;
+
+  // Methods
+  get<T>(key: string): T | undefined;
+  getOrDefault<T>(key: string, defaultValue: T): T;
+  has(key: string): boolean;
+  set(key: string, value: any): void;
+
+  // Conditional prompting
+  getOrPrompt(key: string, options: TextOptions): Promise<string>;
+  getOrPromptSelect(key: string, options: SelectOptions): Promise<string>;
+  getOrPromptCheckbox(key: string, options: CheckboxOptions): Promise<string[]>;
+}
+```
+
+---
+
+## Inquirer
+
+User interaction methods.
+
+```ts
+interface Inquirer {
+  // Text input
+  text(options: TextOptions): Promise<string>;
+
+  // Single selection
+  select(options: SelectOptions): Promise<string>;
+
+  // Multiple selections
+  checkbox(options: CheckboxOptions): Promise<string[]>;
+
+  // Yes/No confirmation
+  confirm(options: ConfirmOptions): Promise<boolean>;
+
+  // Masked input
+  password(options: PasswordOptions): Promise<string>;
+
+  // Date picker
+  date(options: DateOptions): Promise<Date>;
+
+  // Number input
+  number(options: NumberOptions): Promise<number>;
+
+  // Expandable selection
+  expand(options: ExpandOptions): Promise<any>;
+}
+
+// Option interfaces
+interface TextOptions {
+  message: string;
+  default?: string;
+  placeholder?: string;
+  validate?: (value: string) => boolean | string;
+  transformer?: (value: string) => string;
+  required?: boolean;
+}
+
+interface SelectOption {
+  value: string;
+  label: string;
+  description?: string;
+  disabled?: boolean;
+}
+
+interface SelectOptions {
+  message: string;
+  options: (string | SelectOption)[];
+  default?: string;
+  pageSize?: number;
+}
+
+interface CheckboxOption {
+  value: string;
+  label: string;
+  checked?: boolean;
+  disabled?: boolean;
+}
+
+interface CheckboxOptions {
+  message: string;
+  options: (string | CheckboxOption)[];
+  required?: boolean;
+  min?: number;
+  max?: number;
+  pageSize?: number;
+}
+
+interface ConfirmOptions {
+  message: string;
+  default?: boolean;
+}
+
+interface PasswordOptions {
+  message: string;
+  mask?: string;
+  validate?: (value: string) => boolean | string;
+}
+
+interface DateOptions {
+  message: string;
+  default?: Date;
+  min?: Date;
+  max?: Date;
+  format?: string;
+}
+
+interface NumberOptions {
+  message: string;
+  default?: number;
+  min?: number;
+  max?: number;
+  step?: number;
+  validate?: (value: number) => boolean | string;
+}
+
+interface ExpandOption {
+  key: string;
+  name: string;
+  value: any;
+}
+
+interface ExpandOptions {
+  message: string;
+  options: ExpandOption[];
+  default?: string;
+}
+```
+
+---
+
+## Determinism
+
+Deterministic random generation.
+
+```ts
+interface Determinism {
+  uuid(): string;
+  random(): number;
+  randomInt(min: number, max: number): number;
+  randomString(length: number): string;
+  shuffle<T>(array: T[]): T[];
+  pick<T>(array: T[]): T;
+  chance(probability: number): boolean;
+}
+```
+
+---
+
+## FileHelper
+
+File operations.
+
+```ts
+interface FileHelper {
+  read(path: string, encoding?: string): Promise<string>;
+  readJson<T>(path: string): Promise<T>;
+  write(path: string, content: string, encoding?: string): Promise<void>;
+  writeJson(path: string, data: any, indent?: number): Promise<void>;
+  exists(path: string): Promise<boolean>;
+  copy(source: string, destination: string): Promise<void>;
+  copyDir(source: string, destination: string): Promise<void>;
+  delete(path: string): Promise<void>;
+  mkdir(path: string, recursive?: boolean): Promise<void>;
+  readdir(path: string): Promise<string[]>;
+  stat(path: string): Promise<FileStats>;
+  isDirectory(path: string): Promise<boolean>;
+  isFile(path: string): Promise<boolean>;
+}
+
+interface FileStats {
+  size: number;
+  created: Date;
+  modified: Date;
+  isDirectory: boolean;
+  isFile: boolean;
+}
+```
+
+---
+
+## ProcessorRunner
+
+Execute processors.
+
+```ts
+interface ProcessorRunner {
+  run(name: string, options: ProcessorOptions): Promise<void>;
+  run(name: string, options: ProcessorOptions, config: any): Promise<void>;
+  has(name: string): boolean;
+}
+
+interface ProcessorOptions {
+  input: string;
+  output: string;
+  encoding?: string;
+  config?: any;
+}
+```
+
+---
+
+## PluginManager
+
+Access plugins.
+
+```ts
+interface PluginManager {
+  get<T = any>(name: string): T;
+  has(name: string): boolean;
+  list(): PluginInfo[];
+}
+
+interface PluginInfo {
+  name: string;
+  version: string;
+  provides: string[];
+}
+```
+
+---
+
+## ChildRunner
+
+Execute child templates.
+
+```ts
+interface ChildRunner {
+  run(name: string, options?: ChildOptions): Promise<void>;
+}
+
+interface ChildOptions {
+  path?: string;
+  config?: any;
+}
+```
+
+---
+
+## Logger
+
+Logging utilities.
+
+```ts
+interface Logger {
+  info(message: string): void;
+  warn(message: string): void;
+  error(message: string): void;
+  debug(message: string): void;
+  success(message: string): void;
+}
+```
+
+---
+
+## Processor Types
+
+### CyanProcessorInput
+
+```ts
+interface CyanProcessorInput {
+  content: string;
+  filePath: string;
+  encoding: string;
+  extension: string;
+  config: Record<string, any>;
+  answers: Answers;
+  files: FileHelper;
+  determinism: Determinism;
+  logger: Logger;
+}
+```
+
+### ProcessorOutput
+
+```ts
+interface ProcessorOutput {
+  content: string;
+  encoding: string;
+  skipped?: boolean;
+  skipReason?: string;
+  error?: string;
+  additionalFiles?: AdditionalFile[];
+}
+
+interface AdditionalFile {
+  path: string;
+  content: string;
+  encoding?: string;
+}
+```
+
+---
+
+## Plugin Types
+
+### PluginContext
+
+```ts
+interface PluginContext {
+  config: Record<string, any>;
+  logger: Logger;
+  hooks: HookRegistry;
+  plugins: PluginManager;
+  files: FileHelper;
+}
+```
+
+### HookRegistry
+
+```ts
+interface HookRegistry {
+  beforeExecute(callback: (event: BeforeExecuteEvent) => Promise<void>): void;
+  afterInquirer(callback: (event: AfterInquirerEvent) => Promise<void>): void;
+  beforeProcess(callback: (event: BeforeProcessEvent) => Promise<void>): void;
+  afterProcess(callback: (event: AfterProcessEvent) => Promise<void>): void;
+  afterExecute(callback: (event: AfterExecuteEvent) => Promise<void>): void;
+  onError(callback: (event: ErrorEvent) => Promise<void>): void;
+}
+```
+
+### Hook Event Types
+
+```ts
+interface BeforeExecuteEvent {
+  templateName: string;
+  templateVersion: string;
+  answers: Record<string, any>;
+  timestamp: Date;
+}
+
+interface AfterInquirerEvent {
+  templateName: string;
+  answers: Record<string, any>;
+  questionCount: number;
+}
+
+interface BeforeProcessEvent {
+  templateName: string;
+  inputFileCount: number;
+  inputFiles: string[];
+}
+
+interface AfterProcessEvent {
+  templateName: string;
+  outputFileCount: number;
+  outputFiles: string[];
+  processDuration: number;
+}
+
+interface AfterExecuteEvent {
+  templateName: string;
+  success: boolean;
+  duration: number;
+  fileCount: number;
+  errors: string[];
+}
+
+interface ErrorEvent {
+  templateName: string;
+  error: Error;
+  phase: 'inquirer' | 'process' | 'output' | 'unknown';
+  recoverable: boolean;
+}
+```
+
+---
+
+## See Also
+
+- [Template API Reference](../templates/11-api-reference) - Template development
+- [Processor API Reference](../processors/03-api-reference) - Processor development
+- [Plugin API Reference](../plugins/02-api-reference) - Plugin development

@@ -1,0 +1,702 @@
+---
+title: Testing Templates
+description: Test your templates locally before publishing
+---
+
+# Testing Templates
+
+Testing ensures your templates work correctly before publishing. This guide covers local testing strategies and best practices.
+
+## Why Test Templates?
+
+- **Catch errors early** - Identify issues before users encounter them
+- **Ensure reproducibility** - Verify consistent output
+- **Validate interactions** - Test question flows
+- **Document behavior** - Tests serve as documentation
+
+## Local Testing
+
+### Basic Test Run
+
+Test your template locally using the `--local` flag:
+
+```bash
+# Test from template directory
+cyanprint init test-output --local .
+
+# Test with specific version
+cyanprint init test-output --local . --version 1.0.0
+```
+
+### Test Directory Structure
+
+```
+my-template/
+├── template/
+│   ├── index.ts
+│   └── files/
+├── tests/
+│   ├── basic.test.ts
+│   ├── features.test.ts
+│   └── fixtures/
+│       └── expected-output/
+├── cyanprint.json
+└── package.json
+```
+
+## Automated Testing
+
+### Test Framework Setup
+
+import { Tab, Tabs } from 'fumadocs-ui/components/tabs';
+
+<Tabs groupId="sdk-language" items={['TypeScript', '.NET', 'Python']} persist>
+  <Tab value="TypeScript">
+
+```bash
+# Install test dependencies
+npm install -D vitest @atomicloud/helium-testing
+```
+
+Create test files in `tests/`:
+
+```ts
+// tests/template.test.ts
+import { describe, it, expect } from 'vitest';
+import { TemplateTester } from '@atomicloud/helium-testing';
+import path from 'path';
+
+describe('My Template', () => {
+  const tester = new TemplateTester({
+    templatePath: path.join(__dirname, '..')
+  });
+
+  it('generates basic project structure', async () => {
+    const result = await tester.run({
+      answers: {
+        projectName: 'test-project',
+        description: 'A test project'
+      }
+    });
+
+    expect(result.success).toBe(true);
+    expect(result.files).toContain('package.json');
+    expect(result.files).toContain('README.md');
+    expect(result.files).toContain('src/index.ts');
+  });
+
+  it('includes TypeScript files when selected', async () => {
+    const result = await tester.run({
+      answers: {
+        projectName: 'ts-project',
+        typescript: true
+      }
+    });
+
+    expect(result.files).toContain('tsconfig.json');
+    expect(result.files).toContain('src/index.ts');
+  });
+
+  it('excludes TypeScript files when not selected', async () => {
+    const result = await tester.run({
+      answers: {
+        projectName: 'js-project',
+        typescript: false
+      }
+    });
+
+    expect(result.files).not.toContain('tsconfig.json');
+  });
+});
+```
+
+  </Tab>
+  <Tab value=".NET">
+
+```bash
+# Add test dependencies
+dotnet add package AtomiCloud.Helium.Testing
+dotnet add package xunit
+```
+
+Create test files:
+
+```csharp
+// Tests/TemplateTests.cs
+using AtomiCloud.Helium.Testing;
+using Xunit;
+
+public class TemplateTests
+{
+    private readonly TemplateTester _tester;
+
+    public TemplateTests()
+    {
+        _tester = new TemplateTester(new TemplateTesterOptions
+        {
+            TemplatePath = Path.GetFullPath("..")
+        });
+    }
+
+    [Fact]
+    public async Task GeneratesBasicProjectStructure()
+    {
+        var result = await _tester.RunAsync(new TestOptions
+        {
+            Answers = new Dictionary<string, object>
+            {
+                ["projectName"] = "test-project",
+                ["description"] = "A test project"
+            }
+        });
+
+        Assert.True(result.Success);
+        Assert.Contains("package.json", result.Files);
+        Assert.Contains("README.md", result.Files);
+        Assert.Contains("src/index.ts", result.Files);
+    }
+
+    [Fact]
+    public async Task IncludesTypeScriptFilesWhenSelected()
+    {
+        var result = await _tester.RunAsync(new TestOptions
+        {
+            Answers = new Dictionary<string, object>
+            {
+                ["projectName"] = "ts-project",
+                ["typescript"] = true
+            }
+        });
+
+        Assert.Contains("tsconfig.json", result.Files);
+        Assert.Contains("src/index.ts", result.Files);
+    }
+
+    [Fact]
+    public async Task ExcludesTypeScriptFilesWhenNotSelected()
+    {
+        var result = await _tester.RunAsync(new TestOptions
+        {
+            Answers = new Dictionary<string, object>
+            {
+                ["projectName"] = "js-project",
+                ["typescript"] = false
+            }
+        });
+
+        Assert.DoesNotContain("tsconfig.json", result.Files);
+    }
+}
+```
+
+  </Tab>
+  <Tab value="Python">
+
+```bash
+# Install test dependencies
+pip install pytest cyanprint-helium-testing
+```
+
+Create test files:
+
+```python
+# tests/test_template.py
+import pytest
+from pathlib import Path
+from helium_testing import TemplateTester
+
+@pytest.fixture
+def tester():
+    return TemplateTester({
+        "template_path": str(Path(__file__).parent.parent)
+    })
+
+class TestTemplate:
+    async def test_generates_basic_project_structure(self, tester):
+        result = await tester.run({
+            "answers": {
+                "projectName": "test-project",
+                "description": "A test project"
+            }
+        })
+
+        assert result.success == True
+        assert "package.json" in result.files
+        assert "README.md" in result.files
+        assert "src/index.ts" in result.files
+
+    async def test_includes_typescript_when_selected(self, tester):
+        result = await tester.run({
+            "answers": {
+                "projectName": "ts-project",
+                "typescript": True
+            }
+        })
+
+        assert "tsconfig.json" in result.files
+        assert "src/index.ts" in result.files
+
+    async def test_excludes_typescript_when_not_selected(self, tester):
+        result = await tester.run({
+            "answers": {
+                "projectName": "js-project",
+                "typescript": False
+            }
+        })
+
+        assert "tsconfig.json" not in result.files
+```
+
+  </Tab>
+</Tabs>
+
+## Content Verification
+
+Test file contents, not just file existence:
+
+<Tabs groupId="sdk-language" items={['TypeScript', '.NET', 'Python']} persist>
+  <Tab value="TypeScript">
+
+```ts
+it('generates correct package.json', async () => {
+  const result = await tester.run({
+    answers: {
+      projectName: 'my-app',
+      version: '2.0.0',
+      author: 'Test Author'
+    }
+  });
+
+  const packageJson = result.readFile('package.json');
+  const parsed = JSON.parse(packageJson);
+
+  expect(parsed.name).toBe('my-app');
+  expect(parsed.version).toBe('2.0.0');
+  expect(parsed.author).toBe('Test Author');
+});
+
+it('applies templating correctly', async () => {
+  const result = await tester.run({
+    answers: {
+      projectName: 'my-project'
+    }
+  });
+
+  const readme = result.readFile('README.md');
+  expect(readme).toContain('# my-project');
+});
+```
+
+  </Tab>
+  <Tab value=".NET">
+
+```csharp
+[Fact]
+public async Task GeneratesCorrectPackageJson()
+{
+    var result = await _tester.RunAsync(new TestOptions
+    {
+        Answers = new Dictionary<string, object>
+        {
+            ["projectName"] = "my-app",
+            ["version"] = "2.0.0",
+            ["author"] = "Test Author"
+        }
+    });
+
+    var packageJson = result.ReadFile("package.json");
+    var parsed = JsonSerializer.Deserialize<JsonElement>(packageJson);
+
+    Assert.Equal("my-app", parsed.GetProperty("name").GetString());
+    Assert.Equal("2.0.0", parsed.GetProperty("version").GetString());
+    Assert.Equal("Test Author", parsed.GetProperty("author").GetString());
+}
+
+[Fact]
+public async Task AppliesTemplatingCorrectly()
+{
+    var result = await _tester.RunAsync(new TestOptions
+    {
+        Answers = new Dictionary<string, object>
+        {
+            ["projectName"] = "my-project"
+        }
+    });
+
+    var readme = result.ReadFile("README.md");
+    Assert.Contains("# my-project", readme);
+}
+```
+
+  </Tab>
+  <Tab value="Python">
+
+```python
+import json
+
+async def test_generates_correct_package_json(self, tester):
+    result = await tester.run({
+        "answers": {
+            "projectName": "my-app",
+            "version": "2.0.0",
+            "author": "Test Author"
+        }
+    })
+
+    package_json = result.read_file("package.json")
+    parsed = json.loads(package_json)
+
+    assert parsed["name"] == "my-app"
+    assert parsed["version"] == "2.0.0"
+    assert parsed["author"] == "Test Author"
+
+async def test_applies_templating_correctly(self, tester):
+    result = await tester.run({
+        "answers": {
+            "projectName": "my-project"
+        }
+    })
+
+    readme = result.read_file("README.md")
+    assert "# my-project" in readme
+```
+
+  </Tab>
+</Tabs>
+
+## Snapshot Testing
+
+Snapshot tests capture expected output and detect changes:
+
+<Tabs groupId="sdk-language" items={['TypeScript', '.NET', 'Python']} persist>
+  <Tab value="TypeScript">
+
+```ts
+import { describe, it, expect } from 'vitest';
+
+describe('Snapshot tests', () => {
+  it('matches snapshot for default options', async () => {
+    const result = await tester.run({
+      answers: {
+        projectName: 'snapshot-test'
+      }
+    });
+
+    // Create snapshot of file structure
+    expect(result.fileTree).toMatchSnapshot();
+
+    // Create snapshot of specific file
+    expect(result.readFile('package.json')).toMatchSnapshot();
+  });
+});
+```
+
+  </Tab>
+  <Tab value=".NET">
+
+```csharp
+// Using Verify library
+[UsesVerify]
+public class SnapshotTests
+{
+    [Fact]
+    public async Task MatchesSnapshotForDefaultOptions()
+    {
+        var result = await _tester.RunAsync(new TestOptions
+        {
+            Answers = new Dictionary<string, object>
+            {
+                ["projectName"] = "snapshot-test"
+            }
+        });
+
+        await Verifier.Verify(result.FileTree);
+        await Verifier.Verify(result.ReadFile("package.json"));
+    }
+}
+```
+
+  </Tab>
+  <Tab value="Python">
+
+```python
+# Using syrupy for snapshots
+import pytest
+
+class TestSnapshots:
+    async def test_matches_snapshot_for_default_options(self, tester, snapshot):
+        result = await tester.run({
+            "answers": {
+                "projectName": "snapshot-test"
+            }
+        })
+
+        # Create snapshot of file structure
+        assert result.file_tree == snapshot
+
+        # Create snapshot of specific file
+        assert result.read_file("package.json") == snapshot
+```
+
+  </Tab>
+</Tabs>
+
+## Testing Interactions
+
+Test question flows and validations:
+
+<Tabs groupId="sdk-language" items={['TypeScript', '.NET', 'Python']} persist>
+  <Tab value="TypeScript">
+
+```ts
+describe('Interactions', () => {
+  it('validates project name', async () => {
+    const result = await tester.run({
+      answers: {
+        projectName: 'Invalid Name!'  // Should fail validation
+      },
+      validateOnly: true
+    });
+
+    expect(result.valid).toBe(false);
+    expect(result.errors).toHaveProperty('projectName');
+  });
+
+  it('accepts valid project name', async () => {
+    const result = await tester.run({
+      answers: {
+        projectName: 'valid-project-name'
+      },
+      validateOnly: true
+    });
+
+    expect(result.valid).toBe(true);
+  });
+
+  it('handles all feature combinations', async () => {
+    const featureCombos = [
+      ['typescript'],
+      ['typescript', 'eslint'],
+      ['typescript', 'eslint', 'testing'],
+      ['eslint', 'testing'],
+      []
+    ];
+
+    for (const features of featureCombos) {
+      const result = await tester.run({
+        answers: {
+          projectName: 'test',
+          features
+        }
+      });
+
+      expect(result.success).toBe(true);
+    }
+  });
+});
+```
+
+  </Tab>
+  <Tab value=".NET">
+
+```csharp
+public class InteractionTests
+{
+    [Fact]
+    public async Task ValidatesProjectName()
+    {
+        var result = await _tester.RunAsync(new TestOptions
+        {
+            Answers = new Dictionary<string, object>
+            {
+                ["projectName"] = "Invalid Name!"  // Should fail validation
+            },
+            ValidateOnly = true
+        });
+
+        Assert.False(result.Valid);
+        Assert.True(result.Errors.ContainsKey("projectName"));
+    }
+
+    [Fact]
+    public async Task AcceptsValidProjectName()
+    {
+        var result = await _tester.RunAsync(new TestOptions
+        {
+            Answers = new Dictionary<string, object>
+            {
+                ["projectName"] = "valid-project-name"
+            },
+            ValidateOnly = true
+        });
+
+        Assert.True(result.Valid);
+    }
+
+    [Theory]
+    [InlineData(new[] { "typescript" })]
+    [InlineData(new[] { "typescript", "eslint" })]
+    [InlineData(new[] { "typescript", "eslint", "testing" })]
+    [InlineData(new[] { "eslint", "testing" })]
+    [InlineData(new string[0])]
+    public async Task HandlesAllFeatureCombinations(string[] features)
+    {
+        var result = await _tester.RunAsync(new TestOptions
+        {
+            Answers = new Dictionary<string, object>
+            {
+                ["projectName"] = "test",
+                ["features"] = features
+            }
+        });
+
+        Assert.True(result.Success);
+    }
+}
+```
+
+  </Tab>
+  <Tab value="Python">
+
+```python
+import pytest
+
+class TestInteractions:
+    async def test_validates_project_name(self, tester):
+        result = await tester.run({
+            "answers": {
+                "projectName": "Invalid Name!"  # Should fail validation
+            },
+            "validate_only": True
+        })
+
+        assert result.valid == False
+        assert "projectName" in result.errors
+
+    async def test_accepts_valid_project_name(self, tester):
+        result = await tester.run({
+            "answers": {
+                "projectName": "valid-project-name"
+            },
+            "validate_only": True
+        })
+
+        assert result.valid == True
+
+    @pytest.mark.parametrize("features", [
+        ["typescript"],
+        ["typescript", "eslint"],
+        ["typescript", "eslint", "testing"],
+        ["eslint", "testing"],
+        []
+    ])
+    async def test_handles_feature_combinations(self, tester, features):
+        result = await tester.run({
+            "answers": {
+                "projectName": "test",
+                "features": features
+            }
+        })
+
+        assert result.success == True
+```
+
+  </Tab>
+</Tabs>
+
+## Running Tests
+
+<Tabs groupId="sdk-language" items={['TypeScript', '.NET', 'Python']} persist>
+  <Tab value="TypeScript">
+
+```bash
+# Run all tests
+npm test
+
+# Run with coverage
+npm run test:coverage
+
+# Run specific test file
+npm test -- template.test.ts
+
+# Watch mode
+npm run test:watch
+```
+
+  </Tab>
+  <Tab value=".NET">
+
+```bash
+# Run all tests
+dotnet test
+
+# Run with coverage
+dotnet test --collect:"XPlat Code Coverage"
+
+# Run specific test
+dotnet test --filter "FullyQualifiedName~GeneratesBasicProjectStructure"
+```
+
+  </Tab>
+  <Tab value="Python">
+
+```bash
+# Run all tests
+pytest
+
+# Run with coverage
+pytest --cov
+
+# Run specific test file
+pytest tests/test_template.py
+
+# Verbose output
+pytest -v
+```
+
+  </Tab>
+</Tabs>
+
+## CI Integration
+
+Add testing to your CI pipeline:
+
+```yaml
+# .github/workflows/test.yml
+name: Test Template
+
+on: [push, pull_request]
+
+jobs:
+  test:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Setup Node
+        uses: actions/setup-node@v4
+        with:
+          node-version: '20'
+
+      - name: Install dependencies
+        run: npm ci
+
+      - name: Run tests
+        run: npm test
+
+      - name: Upload coverage
+        uses: codecov/codecov-action@v3
+```
+
+## Best Practices
+
+1. **Test all question paths** - Every branch in your inquirer flow
+2. **Test edge cases** - Empty strings, special characters, max lengths
+3. **Test determinism** - Verify same inputs produce same outputs
+4. **Use descriptive names** - Tests document behavior
+5. **Keep tests fast** - Use mocks for external dependencies
+
+## See Also
+
+- [Publishing](./10-publishing) - Publishing after testing
+- [Best Practices](./13-best-practices) - Template design patterns

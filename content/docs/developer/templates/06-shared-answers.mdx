@@ -1,0 +1,486 @@
+---
+title: Shared Answers
+description: Share answers between multiple templates to avoid re-prompting users
+---
+
+# Shared Answers
+
+When using multiple templates together, you often want to share answers between them. This guide shows you how to make templates share common configuration without re-prompting users.
+
+## Why Share Answers?
+
+In composite templates or template chains:
+
+- **Avoid repetition** - Don't ask for the project name multiple times
+- **Ensure consistency** - Same value used across all templates
+- **Improve UX** - Faster template execution
+
+## Answer Namespacing
+
+CyanPrint uses namespaces to organize answers and prevent conflicts:
+
+import { Tab, Tabs } from 'fumadocs-ui/components/tabs';
+
+```
+cyan.answers
+├── projectName      # Global/shared
+├── author          # Global/shared
+├── template1       # Template-specific
+│   ├── feature1
+│   └── feature2
+└── template2       # Template-specific
+    └── feature3
+```
+
+## Defining Shared Answers
+
+### In cyanprint.json
+
+```json
+{
+  "name": "my-template",
+  "version": "1.0.0",
+  "sharedAnswers": ["projectName", "author", "license"],
+  "processors": [...]
+}
+```
+
+Answers defined in `sharedAnswers` are:
+1. **Checked first** - If already provided by parent template, use existing value
+2. **Stored globally** - Available to child templates
+3. **Prompted once** - Only ask if not already available
+
+## Using Shared Answers
+
+<Tabs groupId="sdk-language" items={['TypeScript', '.NET', 'Python']} persist>
+  <Tab value="TypeScript">
+
+```ts
+import { Cyan, ICyanTemplate } from '@atomicloud/helium-sdk';
+
+export default class SharedTemplate implements ICyanTemplate {
+  async execute(cyan: Cyan): Promise<void> {
+    // Check if answer already exists
+    if (!cyan.answers.projectName) {
+      // Only prompt if not already provided
+      cyan.answers.projectName = await cyan.inquirer.text({
+        message: 'Project name:'
+      });
+    }
+
+    // Use the answer (either from shared or just prompted)
+    const projectName = cyan.answers.projectName;
+
+    // Process files with the shared answer
+    await cyan.processors.run('default-processor', {
+      input: 'template/package.json',
+      output: 'package.json'
+    });
+  }
+}
+```
+
+  </Tab>
+  <Tab value=".NET">
+
+```csharp
+using AtomiCloud.Helium;
+
+public class SharedTemplate : ICyanTemplate
+{
+    public async Task ExecuteAsync(Cyan cyan)
+    {
+        // Check if answer already exists
+        if (!cyan.Answers.ContainsKey("projectName"))
+        {
+            // Only prompt if not already provided
+            var name = await cyan.Inquirer.TextAsync(new TextOptions
+            {
+                Message = "Project name:"
+            });
+            cyan.Answers["projectName"] = name;
+        }
+
+        // Use the answer (either from shared or just prompted)
+        var projectName = cyan.Answers["projectName"];
+
+        // Process files with the shared answer
+        await cyan.Processors.RunAsync("default-processor", new ProcessorOptions
+        {
+            Input = "template/package.json",
+            Output = "package.json"
+        });
+    }
+}
+```
+
+  </Tab>
+  <Tab value="Python">
+
+```python
+from helium_sdk import Cyan, ICyanTemplate
+
+class SharedTemplate(ICyanTemplate):
+    async def execute(self, cyan: Cyan):
+        # Check if answer already exists
+        if "projectName" not in cyan.answers:
+            # Only prompt if not already provided
+            name = await cyan.inquirer.text(
+                message="Project name:"
+            )
+            cyan.answers["projectName"] = name
+
+        # Use the answer (either from shared or just prompted)
+        project_name = cyan.answers["projectName"]
+
+        # Process files with the shared answer
+        await cyan.processors.run("default-processor", {
+            "input": "template/package.json",
+            "output": "package.json"
+        })
+```
+
+  </Tab>
+</Tabs>
+
+## Answer Helpers
+
+The SDK provides helpers for conditional prompting:
+
+<Tabs groupId="sdk-language" items={['TypeScript', '.NET', 'Python']} persist>
+  <Tab value="TypeScript">
+
+```ts
+// Helper: getOrPrompt
+const projectName = await cyan.answers.getOrPrompt('projectName', {
+  message: 'Project name:',
+  default: 'my-project'
+});
+
+// Helper: getOrPrompt with validation
+const email = await cyan.answers.getOrPrompt('email', {
+  message: 'Email:',
+  validate: (value) => value.includes('@') || 'Invalid email'
+});
+
+// Helper: getOrPromptSelect
+const framework = await cyan.answers.getOrPromptSelect('framework', {
+  message: 'Framework:',
+  options: ['React', 'Vue', 'Svelte']
+});
+
+// Helper: getOrPromptCheckbox
+const features = await cyan.answers.getOrPromptCheckbox('features', {
+  message: 'Features:',
+  options: ['TypeScript', 'ESLint', 'Testing']
+});
+```
+
+  </Tab>
+  <Tab value=".NET">
+
+```csharp
+// Helper: GetOrPromptAsync
+var projectName = await cyan.Answers.GetOrPromptAsync("projectName", new TextOptions
+{
+    Message = "Project name:",
+    Default = "my-project"
+});
+
+// Helper: GetOrPromptAsync with validation
+var email = await cyan.Answers.GetOrPromptAsync("email", new TextOptions
+{
+    Message = "Email:",
+    Validate = value => value.Contains("@") ? null : "Invalid email"
+});
+
+// Helper: GetOrPromptSelectAsync
+var framework = await cyan.Answers.GetOrPromptSelectAsync("framework", new SelectOptions
+{
+    Message = "Framework:",
+    Options = new[] { "React", "Vue", "Svelte" }
+});
+
+// Helper: GetOrPromptCheckboxAsync
+var features = await cyan.Answers.GetOrPromptCheckboxAsync("features", new CheckboxOptions
+{
+    Message = "Features:",
+    Options = new[] { "TypeScript", "ESLint", "Testing" }
+});
+```
+
+  </Tab>
+  <Tab value="Python">
+
+```python
+# Helper: get_or_prompt
+project_name = await cyan.answers.get_or_prompt("projectName", {
+    "message": "Project name:",
+    "default": "my-project"
+})
+
+# Helper: get_or_prompt with validation
+async def validate_email(value):
+    return True if "@" in value else "Invalid email"
+
+email = await cyan.answers.get_or_prompt("email", {
+    "message": "Email:",
+    "validate": validate_email
+})
+
+# Helper: get_or_prompt_select
+framework = await cyan.answers.get_or_prompt_select("framework", {
+    "message": "Framework:",
+    "options": ["React", "Vue", "Svelte"]
+})
+
+# Helper: get_or_prompt_checkbox
+features = await cyan.answers.get_or_prompt_checkbox("features", {
+    "message": "Features:",
+    "options": ["TypeScript", "ESLint", "Testing"]
+})
+```
+
+  </Tab>
+</Tabs>
+
+## Template Composition Pattern
+
+When composing multiple templates, define shared answers at the parent level:
+
+```json
+// parent-template/cyanprint.json
+{
+  "name": "fullstack-app",
+  "version": "1.0.0",
+  "sharedAnswers": [
+    "projectName",
+    "author",
+    "license",
+    "database"
+  ],
+  "children": [
+    {
+      "name": "frontend",
+      "template": "@company/react-template"
+    },
+    {
+      "name": "backend",
+      "template": "@company/api-template"
+    }
+  ]
+}
+```
+
+### Parent Template
+
+<Tabs groupId="sdk-language" items={['TypeScript', '.NET', 'Python']} persist>
+  <Tab value="TypeScript">
+
+```ts
+import { Cyan, ICyanTemplate } from '@atomicloud/helium-sdk';
+
+export default class FullstackTemplate implements ICyanTemplate {
+  async execute(cyan: Cyan): Promise<void> {
+    // Collect shared answers first
+    await this.collectSharedAnswers(cyan);
+
+    // Execute child templates
+    await cyan.children.run('frontend');
+    await cyan.children.run('backend');
+  }
+
+  private async collectSharedAnswers(cyan: Cyan): Promise<void> {
+    cyan.answers.projectName = await cyan.answers.getOrPrompt('projectName', {
+      message: 'Project name:'
+    });
+
+    cyan.answers.author = await cyan.answers.getOrPrompt('author', {
+      message: 'Author:'
+    });
+
+    cyan.answers.database = await cyan.answers.getOrPromptSelect('database', {
+      message: 'Database:',
+      options: ['PostgreSQL', 'MySQL', 'MongoDB']
+    });
+  }
+}
+```
+
+  </Tab>
+  <Tab value=".NET">
+
+```csharp
+using AtomiCloud.Helium;
+
+public class FullstackTemplate : ICyanTemplate
+{
+    public async Task ExecuteAsync(Cyan cyan)
+    {
+        // Collect shared answers first
+        await CollectSharedAnswersAsync(cyan);
+
+        // Execute child templates
+        await cyan.Children.RunAsync("frontend");
+        await cyan.Children.RunAsync("backend");
+    }
+
+    private async Task CollectSharedAnswersAsync(Cyan cyan)
+    {
+        cyan.Answers["projectName"] = await cyan.Answers.GetOrPromptAsync("projectName", new TextOptions
+        {
+            Message = "Project name:"
+        });
+
+        cyan.Answers["author"] = await cyan.Answers.GetOrPromptAsync("author", new TextOptions
+        {
+            Message = "Author:"
+        });
+
+        cyan.Answers["database"] = await cyan.Answers.GetOrPromptSelectAsync("database", new SelectOptions
+        {
+            Message = "Database:",
+            Options = new[] { "PostgreSQL", "MySQL", "MongoDB" }
+        });
+    }
+}
+```
+
+  </Tab>
+  <Tab value="Python">
+
+```python
+from helium_sdk import Cyan, ICyanTemplate
+
+class FullstackTemplate(ICyanTemplate):
+    async def execute(self, cyan: Cyan):
+        # Collect shared answers first
+        await self._collect_shared_answers(cyan)
+
+        # Execute child templates
+        await cyan.children.run("frontend")
+        await cyan.children.run("backend")
+
+    async def _collect_shared_answers(self, cyan: Cyan):
+        cyan.answers["projectName"] = await cyan.answers.get_or_prompt(
+            "projectName", {"message": "Project name:"}
+        )
+
+        cyan.answers["author"] = await cyan.answers.get_or_prompt(
+            "author", {"message": "Author:"}
+        )
+
+        cyan.answers["database"] = await cyan.answers.get_or_prompt_select(
+            "database", {
+                "message": "Database:",
+                "options": ["PostgreSQL", "MySQL", "MongoDB"]
+            }
+        )
+```
+
+  </Tab>
+</Tabs>
+
+### Child Templates
+
+Child templates can rely on shared answers being available:
+
+<Tabs groupId="sdk-language" items={['TypeScript', '.NET', 'Python']} persist>
+  <Tab value="TypeScript">
+
+```ts
+// frontend template
+export default class FrontendTemplate implements ICyanTemplate {
+  async execute(cyan: Cyan): Promise<void> {
+    // projectName is already set by parent
+    const projectName = cyan.answers.projectName;
+
+    // Only prompt for frontend-specific options
+    const framework = await cyan.inquirer.select({
+      message: 'Frontend framework:',
+      options: ['React', 'Vue', 'Svelte']
+    });
+
+    // Process files
+    await cyan.processors.run('default-processor', {
+      input: 'template/**/*',
+      output: '.'
+    });
+  }
+}
+```
+
+  </Tab>
+  <Tab value=".NET">
+
+```csharp
+// frontend template
+public class FrontendTemplate : ICyanTemplate
+{
+    public async Task ExecuteAsync(Cyan cyan)
+    {
+        // projectName is already set by parent
+        var projectName = cyan.Answers["projectName"];
+
+        // Only prompt for frontend-specific options
+        var framework = await cyan.Inquirer.SelectAsync(new SelectOptions
+        {
+            Message = "Frontend framework:",
+            Options = new[] { "React", "Vue", "Svelte" }
+        });
+
+        // Process files
+        await cyan.Processors.RunAsync("default-processor", new ProcessorOptions
+        {
+            Input = "template/**/*",
+            Output = "."
+        });
+    }
+}
+```
+
+  </Tab>
+  <Tab value="Python">
+
+```python
+# frontend template
+class FrontendTemplate(ICyanTemplate):
+    async def execute(self, cyan: Cyan):
+        # projectName is already set by parent
+        project_name = cyan.answers["projectName"]
+
+        # Only prompt for frontend-specific options
+        framework = await cyan.inquirer.select(
+            message="Frontend framework:",
+            options=["React", "Vue", "Svelte"]
+        )
+
+        # Process files
+        await cyan.processors.run("default-processor", {
+            "input": "template/**/*",
+            "output": "."
+        })
+```
+
+  </Tab>
+</Tabs>
+
+## Answer Scope
+
+| Scope | Description | Access |
+| ----- | ----------- | ------ |
+| Global | Available to all templates | `cyan.answers.key` |
+| Template-local | Specific to current template | `cyan.answers.templateName.key` |
+| Private | Not shared with children | `cyan.answers._private.key` |
+
+## Best Practices
+
+1. **Declare shared answers** in `cyanprint.json` for documentation
+2. **Use helper methods** to avoid manual existence checks
+3. **Namespace specific answers** to avoid conflicts
+4. **Document expected shared answers** in your template README
+
+## See Also
+
+- [Multiple Templates](./07-multiple-templates) - Template composition
+- [API Reference](./11-api-reference) - Full answers API

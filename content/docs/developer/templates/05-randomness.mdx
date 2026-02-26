@@ -1,0 +1,504 @@
+---
+title: Working with Randomness
+description: Use deterministic random generation for reproducible templates
+---
+
+# Working with Randomness
+
+Templates sometimes need random values—unique IDs, random ports, or shuffled lists. CyanPrint's determinism system ensures these values are reproducible across executions.
+
+## Why Determinism Matters
+
+<Callout type="info">
+When you run a template twice with the same inputs, you should get identical outputs. Deterministic random generation ensures this consistency, which is essential for:
+</Callout>
+
+- **Reproducible builds** - Same inputs produce same outputs
+- **Version control** - Generated files can be tracked
+- **Testing** - Predictable results in test environments
+- **Auditing** - Traceable generation process
+
+## The Determinism API
+
+Access the determinism system through `cyan.determinism`:
+
+import { Tab, Tabs } from 'fumadocs-ui/components/tabs';
+
+<Tabs groupId="sdk-language" items={['TypeScript', '.NET', 'Python']} persist>
+  <Tab value="TypeScript">
+
+```ts
+// Available methods
+cyan.determinism.uuid()
+cyan.determinism.random()
+cyan.determinism.randomInt(min, max)
+cyan.determinism.randomString(length)
+cyan.determinism.shuffle(array)
+cyan.determinism.pick(array)
+```
+
+  </Tab>
+  <Tab value=".NET">
+
+```csharp
+// Available methods
+cyan.Determinism.Uuid()
+cyan.Determinism.Random()
+cyan.Determinism.RandomInt(min, max)
+cyan.Determinism.RandomString(length)
+cyan.Determinism.Shuffle(array)
+cyan.Determinism.Pick(array)
+```
+
+  </Tab>
+  <Tab value="Python">
+
+```python
+# Available methods
+cyan.determinism.uuid()
+cyan.determinism.random()
+cyan.determinism.random_int(min, max)
+cyan.determinism.random_string(length)
+cyan.determinism.shuffle(array)
+cyan.determinism.pick(array)
+```
+
+  </Tab>
+</Tabs>
+
+## UUID Generation
+
+Generate unique identifiers that are deterministic based on the seed.
+
+<Tabs groupId="sdk-language" items={['TypeScript', '.NET', 'Python']} persist>
+  <Tab value="TypeScript">
+
+```ts
+// Generate a single UUID
+const id = cyan.determinism.uuid();
+// Returns: 'a1b2c3d4-e5f6-7890-abcd-ef1234567890'
+
+// Generate multiple UUIDs (each call produces a different value)
+const userId = cyan.determinism.uuid();
+const sessionId = cyan.determinism.uuid();
+const requestId = cyan.determinism.uuid();
+```
+
+  </Tab>
+  <Tab value=".NET">
+
+```csharp
+// Generate a single UUID
+var id = cyan.Determinism.Uuid();
+// Returns: "a1b2c3d4-e5f6-7890-abcd-ef1234567890"
+
+// Generate multiple UUIDs (each call produces a different value)
+var userId = cyan.Determinism.Uuid();
+var sessionId = cyan.Determinism.Uuid();
+var requestId = cyan.Determinism.Uuid();
+```
+
+  </Tab>
+  <Tab value="Python">
+
+```python
+# Generate a single UUID
+id = cyan.determinism.uuid()
+# Returns: 'a1b2c3d4-e5f6-7890-abcd-ef1234567890'
+
+# Generate multiple UUIDs (each call produces a different value)
+user_id = cyan.determinism.uuid()
+session_id = cyan.determinism.uuid()
+request_id = cyan.determinism.uuid()
+```
+
+  </Tab>
+</Tabs>
+
+<Callout type="tip">
+Each UUID call advances the internal state, so subsequent calls return different values. The sequence is deterministic based on the initial seed.
+</Callout>
+
+## Random Numbers
+
+Generate random numbers within a range.
+
+<Tabs groupId="sdk-language" items={['TypeScript', '.NET', 'Python']} persist>
+  <Tab value="TypeScript">
+
+```ts
+// Random float between 0 and 1
+const chance = cyan.determinism.random();
+
+// Random integer in range (inclusive)
+const port = cyan.determinism.randomInt(3000, 9999);
+
+// Random integer with step
+const timeout = cyan.determinism.randomInt(1, 10) * 1000;
+
+// Use in configuration
+const config = {
+  port: cyan.determinism.randomInt(3000, 9999),
+  retries: cyan.determinism.randomInt(3, 5)
+};
+```
+
+  </Tab>
+  <Tab value=".NET">
+
+```csharp
+// Random float between 0 and 1
+var chance = cyan.Determinism.Random();
+
+// Random integer in range (inclusive)
+var port = cyan.Determinism.RandomInt(3000, 9999);
+
+// Random integer with step
+var timeout = cyan.Determinism.RandomInt(1, 10) * 1000;
+
+// Use in configuration
+var config = new
+{
+    Port = cyan.Determinism.RandomInt(3000, 9999),
+    Retries = cyan.Determinism.RandomInt(3, 5)
+};
+```
+
+  </Tab>
+  <Tab value="Python">
+
+```python
+# Random float between 0 and 1
+chance = cyan.determinism.random()
+
+# Random integer in range (inclusive)
+port = cyan.determinism.random_int(3000, 9999)
+
+# Random integer with step
+timeout = cyan.determinism.random_int(1, 10) * 1000
+
+# Use in configuration
+config = {
+    "port": cyan.determinism.random_int(3000, 9999),
+    "retries": cyan.determinism.random_int(3, 5)
+}
+```
+
+  </Tab>
+</Tabs>
+
+## Random Strings
+
+Generate random alphanumeric strings for tokens, keys, or identifiers.
+
+<Tabs groupId="sdk-language" items={['TypeScript', '.NET', 'Python']} persist>
+  <Tab value="TypeScript">
+
+```ts
+// Generate random string (default: alphanumeric)
+const token = cyan.determinism.randomString(32);
+
+// Common use cases
+const apiKey = `key_${cyan.determinism.randomString(24)}`;
+const secret = cyan.determinism.randomString(64);
+const code = cyan.determinism.randomString(8).toUpperCase();
+```
+
+  </Tab>
+  <Tab value=".NET">
+
+```csharp
+// Generate random string (default: alphanumeric)
+var token = cyan.Determinism.RandomString(32);
+
+// Common use cases
+var apiKey = $"key_{cyan.Determinism.RandomString(24)}";
+var secret = cyan.Determinism.RandomString(64);
+var code = cyan.Determinism.RandomString(8).ToUpper();
+```
+
+  </Tab>
+  <Tab value="Python">
+
+```python
+# Generate random string (default: alphanumeric)
+token = cyan.determinism.random_string(32)
+
+# Common use cases
+api_key = f"key_{cyan.determinism.random_string(24)}"
+secret = cyan.determinism.random_string(64)
+code = cyan.determinism.random_string(8).upper()
+```
+
+  </Tab>
+</Tabs>
+
+## Shuffling Arrays
+
+Shuffle arrays in a deterministic order.
+
+<Tabs groupId="sdk-language" items={['TypeScript', '.NET', 'Python']} persist>
+  <Tab value="TypeScript">
+
+```ts
+// Shuffle an array
+const colors = ['red', 'blue', 'green', 'yellow'];
+const shuffled = cyan.determinism.shuffle(colors);
+
+// Use for random order in templates
+const features = ['auth', 'logging', 'caching', 'metrics'];
+const implementationOrder = cyan.determinism.shuffle(features);
+
+// The original array is not modified
+console.log(colors); // ['red', 'blue', 'green', 'yellow']
+console.log(shuffled); // ['green', 'red', 'yellow', 'blue'] (example)
+```
+
+  </Tab>
+  <Tab value=".NET">
+
+```csharp
+// Shuffle an array
+var colors = new[] { "red", "blue", "green", "yellow" };
+var shuffled = cyan.Determinism.Shuffle(colors);
+
+// Use for random order in templates
+var features = new[] { "auth", "logging", "caching", "metrics" };
+var implementationOrder = cyan.Determinism.Shuffle(features);
+
+// The original array is not modified
+Console.WriteLine(string.Join(", ", colors));    // red, blue, green, yellow
+Console.WriteLine(string.Join(", ", shuffled));  // green, red, yellow, blue (example)
+```
+
+  </Tab>
+  <Tab value="Python">
+
+```python
+# Shuffle a list
+colors = ["red", "blue", "green", "yellow"]
+shuffled = cyan.determinism.shuffle(colors)
+
+# Use for random order in templates
+features = ["auth", "logging", "caching", "metrics"]
+implementation_order = cyan.determinism.shuffle(features)
+
+# The original list is not modified
+print(colors)    # ['red', 'blue', 'green', 'yellow']
+print(shuffled)  # ['green', 'red', 'yellow', 'blue'] (example)
+```
+
+  </Tab>
+</Tabs>
+
+## Picking Random Elements
+
+Select a random element from an array.
+
+<Tabs groupId="sdk-language" items={['TypeScript', '.NET', 'Python']} persist>
+  <Tab value="TypeScript">
+
+```ts
+// Pick a random element
+const themes = ['dark', 'light', 'system'];
+const defaultTheme = cyan.determinism.pick(themes);
+
+// Pick from objects
+const templates = [
+  { name: 'basic', complexity: 1 },
+  { name: 'standard', complexity: 2 },
+  { name: 'advanced', complexity: 3 }
+];
+const selected = cyan.determinism.pick(templates);
+```
+
+  </Tab>
+  <Tab value=".NET">
+
+```csharp
+// Pick a random element
+var themes = new[] { "dark", "light", "system" };
+var defaultTheme = cyan.Determinism.Pick(themes);
+
+// Pick from objects
+var templates = new[]
+{
+    new { Name = "basic", Complexity = 1 },
+    new { Name = "standard", Complexity = 2 },
+    new { Name = "advanced", Complexity = 3 }
+};
+var selected = cyan.Determinism.Pick(templates);
+```
+
+  </Tab>
+  <Tab value="Python">
+
+```python
+# Pick a random element
+themes = ["dark", "light", "system"]
+default_theme = cyan.determinism.pick(themes)
+
+# Pick from objects
+templates = [
+    {"name": "basic", "complexity": 1},
+    {"name": "standard", "complexity": 2},
+    {"name": "advanced", "complexity": 3}
+]
+selected = cyan.determinism.pick(templates)
+```
+
+  </Tab>
+</Tabs>
+
+## Practical Example: Development Environment
+
+Here's a complete example using determinism to generate a development environment configuration:
+
+<Tabs groupId="sdk-language" items={['TypeScript', '.NET', 'Python']} persist>
+  <Tab value="TypeScript">
+
+```ts
+import { Cyan, ICyanTemplate } from '@atomicloud/helium-sdk';
+
+export default class DevEnvTemplate implements ICyanTemplate {
+  async execute(cyan: Cyan): Promise<void> {
+    // Generate deterministic configuration
+    const config = {
+      app: {
+        id: cyan.determinism.uuid(),
+        port: cyan.determinism.randomInt(3000, 9999),
+        secret: cyan.determinism.randomString(32)
+      },
+      database: {
+        port: cyan.determinism.randomInt(5432, 6432),
+        password: cyan.determinism.randomString(16)
+      },
+      redis: {
+        port: cyan.determinism.randomInt(6379, 7379)
+      },
+      services: {
+        order: cyan.determinism.shuffle(['api', 'worker', 'scheduler'])
+      }
+    };
+
+    // Store in answers for use in templates
+    cyan.answers.config = config;
+
+    // Process configuration file
+    await cyan.processors.run('default-processor', {
+      input: 'templates/docker-compose.yml',
+      output: 'docker-compose.yml'
+    });
+  }
+}
+```
+
+  </Tab>
+  <Tab value=".NET">
+
+```csharp
+using AtomiCloud.Helium;
+
+public class DevEnvTemplate : ICyanTemplate
+{
+    public async Task ExecuteAsync(Cyan cyan)
+    {
+        // Generate deterministic configuration
+        var config = new
+        {
+            App = new
+            {
+                Id = cyan.Determinism.Uuid(),
+                Port = cyan.Determinism.RandomInt(3000, 9999),
+                Secret = cyan.Determinism.RandomString(32)
+            },
+            Database = new
+            {
+                Port = cyan.Determinism.RandomInt(5432, 6432),
+                Password = cyan.Determinism.RandomString(16)
+            },
+            Redis = new
+            {
+                Port = cyan.Determinism.RandomInt(6379, 7379)
+            },
+            Services = new
+            {
+                Order = cyan.Determinism.Shuffle(new[] { "api", "worker", "scheduler" })
+            }
+        };
+
+        // Store in answers for use in templates
+        cyan.Answers["config"] = config;
+
+        // Process configuration file
+        await cyan.Processors.RunAsync("default-processor", new ProcessorOptions
+        {
+            Input = "templates/docker-compose.yml",
+            Output = "docker-compose.yml"
+        });
+    }
+}
+```
+
+  </Tab>
+  <Tab value="Python">
+
+```python
+from helium_sdk import Cyan, ICyanTemplate
+
+class DevEnvTemplate(ICyanTemplate):
+    async def execute(self, cyan: Cyan):
+        # Generate deterministic configuration
+        config = {
+            "app": {
+                "id": cyan.determinism.uuid(),
+                "port": cyan.determinism.random_int(3000, 9999),
+                "secret": cyan.determinism.random_string(32)
+            },
+            "database": {
+                "port": cyan.determinism.random_int(5432, 6432),
+                "password": cyan.determinism.random_string(16)
+            },
+            "redis": {
+                "port": cyan.determinism.random_int(6379, 7379)
+            },
+            "services": {
+                "order": cyan.determinism.shuffle(["api", "worker", "scheduler"])
+            }
+        }
+
+        # Store in answers for use in templates
+        cyan.answers["config"] = config
+
+        # Process configuration file
+        await cyan.processors.run("default-processor", {
+            "input": "templates/docker-compose.yml",
+            "output": "docker-compose.yml"
+        })
+```
+
+  </Tab>
+</Tabs>
+
+## Seed Behavior
+
+The determinism seed is derived from:
+
+1. User answers (if provided)
+2. Template version
+3. Execution context
+
+This means:
+- Same answers + same version = same output
+- Different answers = different output
+- Version change = different output (expected for upgrades)
+
+<Callout type="warn">
+Never use JavaScript's `Math.random()`, Python's `random` module, or .NET's `Random` class directly. These produce non-deterministic results across different execution environments. Always use `cyan.determinism` instead.
+</Callout>
+
+## See Also
+
+- [Core Concepts](../01-concepts) - Understanding determinism
+- [API Reference](./11-api-reference) - Full determinism API
+- [Testing](./09-testing) - Testing with deterministic values

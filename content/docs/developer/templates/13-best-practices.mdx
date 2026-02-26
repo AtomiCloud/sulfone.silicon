@@ -1,0 +1,892 @@
+---
+title: Best Practices
+description: Design patterns and best practices for creating maintainable templates
+---
+
+# Best Practices
+
+This guide covers best practices for creating high-quality, maintainable CyanPrint templates.
+
+## Template Design Principles
+
+### 1. Single Responsibility
+
+Each template should do one thing well:
+
+import { Tab, Tabs } from 'fumadocs-ui/components/tabs';
+
+| Good | Avoid |
+| ---- | ----- |
+| React component template | React + Vue + Angular template |
+| Node.js API template | Node.js + Python + Go API template |
+| Docker configuration template | Full DevOps pipeline template |
+
+### 2. Composability
+
+Design templates to work together:
+
+```json
+// Instead of a monolithic template:
+{
+  "name": "fullstack-monolith",
+  // Contains: frontend + backend + database + deployment
+}
+
+// Prefer composable templates:
+{
+  "name": "fullstack-app",
+  "children": [
+    { "name": "frontend", "template": "@org/react-template" },
+    { "name": "backend", "template": "@org/node-api-template" },
+    { "name": "database", "template": "@org/postgres-template" }
+  ]
+}
+```
+
+### 3. Convention over Configuration
+
+Provide sensible defaults:
+
+<Tabs groupId="sdk-language" items={['TypeScript', '.NET', 'Python']} persist>
+  <Tab value="TypeScript">
+
+```ts
+// Good: Sensible defaults with override capability
+const options = {
+  typescript: await cyan.inquirer.confirm({
+    message: 'Use TypeScript?',
+    default: true  // Sensible default
+  }),
+  testing: await cyan.inquirer.confirm({
+    message: 'Include testing setup?',
+    default: true  // Sensible default
+  }),
+  packageManager: await cyan.inquirer.select({
+    message: 'Package manager:',
+    options: ['npm', 'yarn', 'pnpm'],
+    default: 'npm'  // Most common choice
+  })
+};
+```
+
+  </Tab>
+  <Tab value=".NET">
+
+```csharp
+// Good: Sensible defaults with override capability
+var useTypeScript = await cyan.Inquirer.ConfirmAsync(new ConfirmOptions
+{
+    Message = "Use TypeScript?",
+    Default = true  // Sensible default
+});
+
+var includeTesting = await cyan.Inquirer.ConfirmAsync(new ConfirmOptions
+{
+    Message = "Include testing setup?",
+    Default = true  // Sensible default
+});
+
+var packageManager = await cyan.Inquirer.SelectAsync(new SelectOptions
+{
+    Message = "Package manager:",
+    Options = new[] { "npm", "yarn", "pnpm" },
+    Default = "npm"  // Most common choice
+});
+```
+
+  </Tab>
+  <Tab value="Python">
+
+```python
+# Good: Sensible defaults with override capability
+use_typescript = await cyan.inquirer.confirm(
+    message="Use TypeScript?",
+    default=True  # Sensible default
+)
+
+include_testing = await cyan.inquirer.confirm(
+    message="Include testing setup?",
+    default=True  # Sensible default
+)
+
+package_manager = await cyan.inquirer.select(
+    message="Package manager:",
+    options=["npm", "yarn", "pnpm"],
+    default="npm"  # Most common choice
+)
+```
+
+  </Tab>
+</Tabs>
+
+## Question Design
+
+### Ask Only What You Need
+
+<Tabs groupId="sdk-language" items={['TypeScript', '.NET', 'Python']} persist>
+  <Tab value="TypeScript">
+
+```ts
+// Avoid: Too many questions
+const answers = {
+  name: await cyan.inquirer.text({ message: 'Name:' }),
+  description: await cyan.inquirer.text({ message: 'Description:' }),
+  version: await cyan.inquirer.text({ message: 'Version:', default: '1.0.0' }),
+  author: await cyan.inquirer.text({ message: 'Author:' }),
+  email: await cyan.inquirer.text({ message: 'Email:' }),
+  license: await cyan.inquirer.text({ message: 'License:', default: 'MIT' }),
+  repository: await cyan.inquirer.text({ message: 'Repository:' }),
+  // ... 10 more questions
+};
+
+// Prefer: Essential questions only
+const answers = {
+  name: await cyan.inquirer.text({ message: 'Project name:' }),
+  description: await cyan.inquirer.text({ message: 'Description:' }),
+  // Derive the rest from name or use defaults
+};
+```
+
+  </Tab>
+  <Tab value=".NET">
+
+```csharp
+// Avoid: Too many questions
+var answers = new
+{
+    Name = await cyan.Inquirer.TextAsync(new TextOptions { Message = "Name:" }),
+    Description = await cyan.Inquirer.TextAsync(new TextOptions { Message = "Description:" }),
+    Version = await cyan.Inquirer.TextAsync(new TextOptions { Message = "Version:", Default = "1.0.0" }),
+    Author = await cyan.Inquirer.TextAsync(new TextOptions { Message = "Author:" }),
+    Email = await cyan.Inquirer.TextAsync(new TextOptions { Message = "Email:" }),
+    License = await cyan.Inquirer.TextAsync(new TextOptions { Message = "License:", Default = "MIT" }),
+    Repository = await cyan.Inquirer.TextAsync(new TextOptions { Message = "Repository:" }),
+    // ... 10 more questions
+};
+
+// Prefer: Essential questions only
+var answers = new
+{
+    Name = await cyan.Inquirer.TextAsync(new TextOptions { Message = "Project name:" }),
+    Description = await cyan.Inquirer.TextAsync(new TextOptions { Message = "Description:" }),
+    // Derive the rest from name or use defaults
+};
+```
+
+  </Tab>
+  <Tab value="Python">
+
+```python
+# Avoid: Too many questions
+answers = {
+    "name": await cyan.inquirer.text(message="Name:"),
+    "description": await cyan.inquirer.text(message="Description:"),
+    "version": await cyan.inquirer.text(message="Version:", default="1.0.0"),
+    "author": await cyan.inquirer.text(message="Author:"),
+    "email": await cyan.inquirer.text(message="Email:"),
+    "license": await cyan.inquirer.text(message="License:", default="MIT"),
+    "repository": await cyan.inquirer.text(message="Repository:"),
+    # ... 10 more questions
+}
+
+# Prefer: Essential questions only
+answers = {
+    "name": await cyan.inquirer.text(message="Project name:"),
+    "description": await cyan.inquirer.text(message="Description:"),
+    # Derive the rest from name or use defaults
+}
+```
+
+  </Tab>
+</Tabs>
+
+### Group Related Questions
+
+<Tabs groupId="sdk-language" items={['TypeScript', '.NET', 'Python']} persist>
+  <Tab value="TypeScript">
+
+```ts
+// Organize questions logically
+async function collectBasicInfo(cyan: Cyan) {
+  return {
+    projectName: await cyan.inquirer.text({ message: 'Project name:' }),
+    description: await cyan.inquirer.text({ message: 'Description:' })
+  };
+}
+
+async function collectFrameworkOptions(cyan: Cyan) {
+  const framework = await cyan.inquirer.select({
+    message: 'Framework:',
+    options: ['React', 'Vue', 'Svelte']
+  });
+
+  const features = await cyan.inquirer.checkbox({
+    message: 'Features:',
+    options: this.getFeaturesForFramework(framework)
+  });
+
+  return { framework, features };
+}
+
+async function collectDeploymentOptions(cyan: Cyan) {
+  return {
+    docker: await cyan.inquirer.confirm({ message: 'Add Docker?', default: true }),
+    ci: await cyan.inquirer.confirm({ message: 'Add CI/CD?', default: true })
+  };
+}
+```
+
+  </Tab>
+  <Tab value=".NET">
+
+```csharp
+// Organize questions logically
+private async Task<(string ProjectName, string Description)> CollectBasicInfoAsync(Cyan cyan)
+{
+    return (
+        await cyan.Inquirer.TextAsync(new TextOptions { Message = "Project name:" }),
+        await cyan.Inquirer.TextAsync(new TextOptions { Message = "Description:" })
+    );
+}
+
+private async Task<(string Framework, string[] Features)> CollectFrameworkOptionsAsync(Cyan cyan)
+{
+    var framework = await cyan.Inquirer.SelectAsync(new SelectOptions
+    {
+        Message = "Framework:",
+        Options = new[] { "React", "Vue", "Svelte" }
+    });
+
+    var features = await cyan.Inquirer.CheckboxAsync(new CheckboxOptions
+    {
+        Message = "Features:",
+        Options = GetFeaturesForFramework(framework)
+    });
+
+    return (framework, features);
+}
+
+private async Task<(bool Docker, bool Ci)> CollectDeploymentOptionsAsync(Cyan cyan)
+{
+    return (
+        await cyan.Inquirer.ConfirmAsync(new ConfirmOptions { Message = "Add Docker?", Default = true }),
+        await cyan.Inquirer.ConfirmAsync(new ConfirmOptions { Message = "Add CI/CD?", Default = true })
+    );
+}
+```
+
+  </Tab>
+  <Tab value="Python">
+
+```python
+# Organize questions logically
+async def _collect_basic_info(self, cyan: Cyan):
+    return {
+        "project_name": await cyan.inquirer.text(message="Project name:"),
+        "description": await cyan.inquirer.text(message="Description:")
+    }
+
+async def _collect_framework_options(self, cyan: Cyan):
+    framework = await cyan.inquirer.select(
+        message="Framework:",
+        options=["React", "Vue", "Svelte"]
+    )
+
+    features = await cyan.inquirer.checkbox(
+        message="Features:",
+        options=self._get_features_for_framework(framework)
+    )
+
+    return {"framework": framework, "features": features}
+
+async def _collect_deployment_options(self, cyan: Cyan):
+    return {
+        "docker": await cyan.inquirer.confirm(message="Add Docker?", default=True),
+        "ci": await cyan.inquirer.confirm(message="Add CI/CD?", default=True)
+    }
+```
+
+  </Tab>
+</Tabs>
+
+### Validate Input Early
+
+<Tabs groupId="sdk-language" items={['TypeScript', '.NET', 'Python']} persist>
+  <Tab value="TypeScript">
+
+```ts
+const projectName = await cyan.inquirer.text({
+  message: 'Project name:',
+  validate: (value) => {
+    if (!value.trim()) return 'Project name is required';
+    if (!/^[a-z0-9-]+$/.test(value)) {
+      return 'Project name must be lowercase alphanumeric with dashes only';
+    }
+    if (value.length > 100) {
+      return 'Project name must be less than 100 characters';
+    }
+    if (value.startsWith('-') || value.endsWith('-')) {
+      return 'Project name cannot start or end with a dash';
+    }
+    return true;
+  }
+});
+```
+
+  </Tab>
+  <Tab value=".NET">
+
+```csharp
+var projectName = await cyan.Inquirer.TextAsync(new TextOptions
+{
+    Message = "Project name:",
+    Validate = value =>
+    {
+        if (string.IsNullOrWhiteSpace(value)) return "Project name is required";
+        if (!Regex.IsMatch(value, @"^[a-z0-9-]+$"))
+            return "Project name must be lowercase alphanumeric with dashes only";
+        if (value.Length > 100)
+            return "Project name must be less than 100 characters";
+        if (value.StartsWith("-") || value.EndsWith("-"))
+            return "Project name cannot start or end with a dash";
+        return null;
+    }
+});
+```
+
+  </Tab>
+  <Tab value="Python">
+
+```python
+async def validate_project_name(value):
+    if not value.strip():
+        return "Project name is required"
+    if not re.match(r'^[a-z0-9-]+$', value):
+        return "Project name must be lowercase alphanumeric with dashes only"
+    if len(value) > 100:
+        return "Project name must be less than 100 characters"
+    if value.startswith("-") or value.endswith("-"):
+        return "Project name cannot start or end with a dash"
+    return True
+
+project_name = await cyan.inquirer.text(
+    message="Project name:",
+    validate=validate_project_name
+)
+```
+
+  </Tab>
+</Tabs>
+
+## File Organization
+
+### Template Directory Structure
+
+```
+my-template/
+├── cyanprint.json           # Configuration
+├── README.md                # Documentation
+├── template/
+│   ├── index.ts             # Entry point
+│   ├── helpers/             # Helper functions
+│   │   ├── validators.ts
+│   │   └── generators.ts
+│   └── files/               # Template files
+│       ├── base/            # Always included
+│       ├── typescript/      # Conditional
+│       └── testing/         # Optional
+└── tests/
+    ├── template.test.ts
+    └── fixtures/
+```
+
+### Conditional File Selection
+
+<Tabs groupId="sdk-language" items={['TypeScript', '.NET', 'Python']} persist>
+  <Tab value="TypeScript">
+
+```ts
+async execute(cyan: Cyan): Promise<void> {
+  const features = cyan.answers.features as string[];
+
+  // Always include base files
+  const baseFiles = cyan.glob('template/files/base/**/*');
+
+  // Conditionally include feature files
+  const featureFiles = [];
+  if (features.includes('typescript')) {
+    featureFiles.push(...cyan.glob('template/files/typescript/**/*'));
+  }
+  if (features.includes('testing')) {
+    featureFiles.push(...cyan.glob('template/files/testing/**/*'));
+  }
+
+  // Process all files
+  for (const file of [...baseFiles, ...featureFiles]) {
+    await this.processFile(cyan, file);
+  }
+}
+```
+
+  </Tab>
+  <Tab value=".NET">
+
+```csharp
+public async Task ExecuteAsync(Cyan cyan)
+{
+    var features = (string[])cyan.Answers["features"];
+
+    // Always include base files
+    var baseFiles = cyan.Glob("template/files/base/**/*");
+
+    // Conditionally include feature files
+    var featureFiles = new List<string>();
+    if (features.Contains("typescript"))
+    {
+        featureFiles.AddRange(cyan.Glob("template/files/typescript/**/*"));
+    }
+    if (features.Contains("testing"))
+    {
+        featureFiles.AddRange(cyan.Glob("template/files/testing/**/*"));
+    }
+
+    // Process all files
+    foreach (var file in baseFiles.Concat(featureFiles))
+    {
+        await ProcessFileAsync(cyan, file);
+    }
+}
+```
+
+  </Tab>
+  <Tab value="Python">
+
+```python
+async def execute(self, cyan: Cyan):
+    features = cyan.answers["features"]
+
+    # Always include base files
+    base_files = cyan.glob("template/files/base/**/*")
+
+    # Conditionally include feature files
+    feature_files = []
+    if "typescript" in features:
+        feature_files.extend(cyan.glob("template/files/typescript/**/*"))
+    if "testing" in features:
+        feature_files.extend(cyan.glob("template/files/testing/**/*"))
+
+    # Process all files
+    for file in base_files + feature_files:
+        await self._process_file(cyan, file)
+```
+
+  </Tab>
+</Tabs>
+
+## Error Handling
+
+### Graceful Degradation
+
+<Tabs groupId="sdk-language" items={['TypeScript', '.NET', 'Python']} persist>
+  <Tab value="TypeScript">
+
+```ts
+async execute(cyan: Cyan): Promise<void> {
+  // Check optional dependencies
+  const hasGitPlugin = cyan.plugins.has('git-plugin');
+  const hasLicensePlugin = cyan.plugins.has('license-plugin');
+
+  // Generate LICENSE if plugin available
+  if (hasLicensePlugin) {
+    const license = cyan.plugins.get('license-plugin');
+    const content = await license.generate({ type: 'MIT' });
+    await cyan.files.write('LICENSE', content);
+  } else {
+    // Fallback: copy default LICENSE
+    await cyan.files.copy('templates/default-LICENSE', 'LICENSE');
+    cyan.logger.warn('License plugin not available, using default MIT license');
+  }
+
+  // Initialize git if plugin available
+  if (hasGitPlugin) {
+    const git = cyan.plugins.get('git-plugin');
+    await git.init();
+  }
+}
+```
+
+  </Tab>
+  <Tab value=".NET">
+
+```csharp
+public async Task ExecuteAsync(Cyan cyan)
+{
+    // Check optional dependencies
+    var hasGitPlugin = cyan.Plugins.Has("git-plugin");
+    var hasLicensePlugin = cyan.Plugins.Has("license-plugin");
+
+    // Generate LICENSE if plugin available
+    if (hasLicensePlugin)
+    {
+        var license = cyan.Plugins.Get("license-plugin");
+        var content = await license.GenerateAsync(new { type = "MIT" });
+        await cyan.Files.WriteAsync("LICENSE", content);
+    }
+    else
+    {
+        // Fallback: copy default LICENSE
+        await cyan.Files.CopyAsync("templates/default-LICENSE", "LICENSE");
+        cyan.Logger.Warn("License plugin not available, using default MIT license");
+    }
+
+    // Initialize git if plugin available
+    if (hasGitPlugin)
+    {
+        var git = cyan.Plugins.Get("git-plugin");
+        await git.InitAsync();
+    }
+}
+```
+
+  </Tab>
+  <Tab value="Python">
+
+```python
+async def execute(self, cyan: Cyan):
+    # Check optional dependencies
+    has_git_plugin = cyan.plugins.has("git-plugin")
+    has_license_plugin = cyan.plugins.has("license-plugin")
+
+    # Generate LICENSE if plugin available
+    if has_license_plugin:
+        license = cyan.plugins.get("license-plugin")
+        content = await license.generate({"type": "MIT"})
+        await cyan.files.write("LICENSE", content)
+    else:
+        # Fallback: copy default LICENSE
+        await cyan.files.copy("templates/default-LICENSE", "LICENSE")
+        cyan.logger.warn("License plugin not available, using default MIT license")
+
+    # Initialize git if plugin available
+    if has_git_plugin:
+        git = cyan.plugins.get("git-plugin")
+        await git.init()
+```
+
+  </Tab>
+</Tabs>
+
+## Documentation
+
+### README Template
+
+````markdown
+# @org/template-name
+
+Brief description of what this template generates.
+
+## Features
+
+- Feature 1
+- Feature 2
+- Feature 3
+
+## Usage
+
+```bash
+cyanprint init my-project --template @org/template-name
+```
+
+## Options
+
+| Option | Description | Default |
+| ------ | ----------- | ------- |
+| `projectName` | Project name | - |
+| `typescript` | Use TypeScript | `true` |
+| `testing` | Include testing | `false` |
+
+## Generated Structure
+
+```
+my-project/
+├── src/
+├── tests/
+├── package.json
+└── README.md
+```
+
+## Requirements
+
+- Node.js 18+
+- Docker
+
+## Examples
+
+See [examples/](./examples) for generated output samples.
+````
+
+### Code Comments
+
+<Tabs groupId="sdk-language" items={['TypeScript', '.NET', 'Python']} persist>
+  <Tab value="TypeScript">
+
+```ts
+/**
+ * Processes all template files with the default processor.
+ * Files are transformed using Eta templating with user answers.
+ *
+ * @param cyan - The Cyan SDK instance
+ * @param files - Array of file paths to process
+ */
+private async processFiles(cyan: Cyan, files: string[]): Promise<void> {
+  for (const file of files) {
+    // Calculate output path relative to template root
+    const outputPath = file.replace('template/files/', '');
+
+    // Skip files that don't match current configuration
+    if (this.shouldSkipFile(file, cyan.answers)) {
+      continue;
+    }
+
+    // Apply processor transformation
+    await cyan.processors.run('default-processor', {
+      input: file,
+      output: outputPath
+    });
+  }
+}
+```
+
+  </Tab>
+  <Tab value=".NET">
+
+```csharp
+/// <summary>
+/// Processes all template files with the default processor.
+/// Files are transformed using Eta templating with user answers.
+/// </summary>
+/// <param name="cyan">The Cyan SDK instance</param>
+/// <param name="files">Array of file paths to process</param>
+private async Task ProcessFilesAsync(Cyan cyan, string[] files)
+{
+    foreach (var file in files)
+    {
+        // Calculate output path relative to template root
+        var outputPath = file.Replace("template/files/", "");
+
+        // Skip files that don't match current configuration
+        if (ShouldSkipFile(file, cyan.Answers))
+        {
+            continue;
+        }
+
+        // Apply processor transformation
+        await cyan.Processors.RunAsync("default-processor", new ProcessorOptions
+        {
+            Input = file,
+            Output = outputPath
+        });
+    }
+}
+```
+
+  </Tab>
+  <Tab value="Python">
+
+```python
+async def _process_files(self, cyan: Cyan, files: List[str]):
+    """
+    Processes all template files with the default processor.
+    Files are transformed using Eta templating with user answers.
+
+    Args:
+        cyan: The Cyan SDK instance
+        files: List of file paths to process
+    """
+    for file in files:
+        # Calculate output path relative to template root
+        output_path = file.replace("template/files/", "")
+
+        # Skip files that don't match current configuration
+        if self._should_skip_file(file, cyan.answers):
+            continue
+
+        # Apply processor transformation
+        await cyan.processors.run("default-processor", {
+            "input": file,
+            "output": output_path
+        })
+```
+
+  </Tab>
+</Tabs>
+
+## Versioning
+
+### Semantic Versioning
+
+Follow [SemVer](https://semver.org/):
+
+- **MAJOR** (1.0.0 → 2.0.0): Breaking changes to template output or API
+- **MINOR** (1.0.0 → 1.1.0): New features, backward compatible
+- **PATCH** (1.0.0 → 1.0.1): Bug fixes
+
+### Breaking Changes
+
+Document breaking changes in CHANGELOG.md:
+
+```markdown
+# Changelog
+
+## 2.0.0
+
+### Breaking Changes
+- Removed `redux` option (use `stateManagement: 'redux'` instead)
+- Changed output directory structure
+
+### Features
+- Added support for state management selection
+
+### Fixes
+- Fixed TypeScript configuration for strict mode
+```
+
+## Security
+
+### Avoid Hardcoded Secrets
+
+<Tabs groupId="sdk-language" items={['TypeScript', '.NET', 'Python']} persist>
+  <Tab value="TypeScript">
+
+```ts
+// BAD: Hardcoded secret
+const config = {
+  apiKey: 'YOUR_API_KEY_HERE'
+};
+
+// GOOD: Use determinism for placeholders
+const config = {
+  apiKey: cyan.determinism.randomString(32)  // Placeholder
+};
+```
+
+  </Tab>
+  <Tab value=".NET">
+
+```csharp
+// BAD: Hardcoded secret
+var config = new
+{
+    ApiKey = "YOUR_API_KEY_HERE"
+};
+
+// GOOD: Use determinism for placeholders
+var config = new
+{
+    ApiKey = cyan.Determinism.RandomString(32)  // Placeholder
+};
+```
+
+  </Tab>
+  <Tab value="Python">
+
+```python
+# BAD: Hardcoded secret
+config = {
+    "api_key": "YOUR_API_KEY_HERE"
+}
+
+# GOOD: Use determinism for placeholders
+config = {
+    "api_key": cyan.determinism.random_string(32)  # Placeholder
+}
+```
+
+  </Tab>
+</Tabs>
+
+### Validate External Input
+
+Always validate user input and external data:
+
+<Tabs groupId="sdk-language" items={['TypeScript', '.NET', 'Python']} persist>
+  <Tab value="TypeScript">
+
+```ts
+const projectName = await cyan.inquirer.text({
+  message: 'Project name:',
+  validate: (value) => {
+    // Prevent directory traversal
+    if (value.includes('..') || value.includes('/') || value.includes('\\')) {
+      return 'Invalid characters in project name';
+    }
+    // Prevent command injection
+    if (/[;&|`$]/.test(value)) {
+      return 'Invalid characters in project name';
+    }
+    return true;
+  }
+});
+```
+
+  </Tab>
+  <Tab value=".NET">
+
+```csharp
+var projectName = await cyan.Inquirer.TextAsync(new TextOptions
+{
+    Message = "Project name:",
+    Validate = value =>
+    {
+        // Prevent directory traversal
+        if (value.Contains("..") || value.Contains("/") || value.Contains("\\"))
+            return "Invalid characters in project name";
+        // Prevent command injection
+        if (Regex.IsMatch(value, @"[;&|`$]"))
+            return "Invalid characters in project name";
+        return null;
+    }
+});
+```
+
+  </Tab>
+  <Tab value="Python">
+
+```python
+async def validate_project_name(value):
+    # Prevent directory traversal
+    if ".." in value or "/" in value or "\\" in value:
+        return "Invalid characters in project name"
+    # Prevent command injection
+    if re.search(r'[;&|`$]', value):
+        return "Invalid characters in project name"
+    return True
+
+project_name = await cyan.inquirer.text(
+    message="Project name:",
+    validate=validate_project_name
+)
+```
+
+  </Tab>
+</Tabs>
+
+## Checklist
+
+Before publishing, verify:
+
+- [ ] All code uses tabs for multi-language SDK examples
+- [ ] README documents all options
+- [ ] Tests cover main functionality
+- [ ] Determinism is used for random values
+- [ ] Input validation is in place
+- [ ] No hardcoded secrets
+- [ ] Error handling is graceful
+- [ ] Version follows semver
+- [ ] CHANGELOG is updated
+
+## See Also
+
+- [Testing Templates](./09-testing) - Test before publishing
+- [Publishing Templates](./10-publishing) - Publish to registry
+- [Template Lifecycle](./12-lifecycle) - Understanding execution

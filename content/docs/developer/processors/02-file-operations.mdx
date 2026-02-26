@@ -1,0 +1,896 @@
+---
+title: File Operations
+description: Read, write, and transform files in processors
+---
+
+# File Operations
+
+Processors can perform various file operations beyond simple content transformation. This guide covers advanced file handling techniques.
+
+## File Helper Access
+
+Processors have access to file operations through the input's `files` property:
+
+import { Tab, Tabs } from 'fumadocs-ui/components/tabs';
+
+<Tabs groupId="sdk-language" items={['TypeScript', '.NET', 'Python']} persist>
+  <Tab value="TypeScript">
+
+```ts
+import { CyanProcessorInput, ProcessorOutput, ICyanProcessor } from '@atomicloud/helium-sdk';
+
+export default class FileProcessor implements ICyanProcessor {
+  async process(input: CyanProcessorInput): Promise<ProcessorOutput> {
+    // Access file helper
+    const files = input.files;
+
+    // Read additional files
+    const configFile = await files.read('config.json');
+
+    // Process and return
+    return {
+      content: input.content,
+      encoding: input.encoding
+    };
+  }
+}
+```
+
+  </Tab>
+  <Tab value=".NET">
+
+```csharp
+using AtomiCloud.Helium;
+
+public class FileProcessor : ICyanProcessor
+{
+    public async Task<ProcessorOutput> ProcessAsync(CyanProcessorInput input)
+    {
+        // Access file helper
+        var files = input.Files;
+
+        // Read additional files
+        var configFile = await files.ReadAsync("config.json");
+
+        // Process and return
+        return new ProcessorOutput
+        {
+            Content = input.Content,
+            Encoding = input.Encoding
+        };
+    }
+}
+```
+
+  </Tab>
+  <Tab value="Python">
+
+```python
+from helium_sdk import CyanProcessorInput, ProcessorOutput, ICyanProcessor
+
+class FileProcessor(ICyanProcessor):
+    async def process(self, input: CyanProcessorInput) -> ProcessorOutput:
+        # Access file helper
+        files = input.files
+
+        # Read additional files
+        config_file = await files.read("config.json")
+
+        # Process and return
+        return ProcessorOutput(
+            content=input.content,
+            encoding=input.encoding
+        )
+```
+
+  </Tab>
+</Tabs>
+
+## Reading Files
+
+### Read Single File
+
+<Tabs groupId="sdk-language" items={['TypeScript', '.NET', 'Python']} persist>
+  <Tab value="TypeScript">
+
+```ts
+// Read text file
+const content = await input.files.read('path/to/file.txt');
+
+// Read JSON file
+const data = await input.files.readJson<{ key: string }>('data.json');
+
+// Read with specific encoding
+const binary = await input.files.read('binary.bin', 'binary');
+```
+
+  </Tab>
+  <Tab value=".NET">
+
+```csharp
+// Read text file
+var content = await input.Files.ReadAsync("path/to/file.txt");
+
+// Read JSON file
+var data = await input.Files.ReadJsonAsync<Dictionary<string, string>>("data.json");
+
+// Read with specific encoding
+var binary = await input.Files.ReadAsync("binary.bin", Encoding.Binary);
+```
+
+  </Tab>
+  <Tab value="Python">
+
+```python
+# Read text file
+content = await input.files.read("path/to/file.txt")
+
+# Read JSON file
+data = await input.files.read_json("data.json")
+
+# Read with specific encoding
+binary = await input.files.read("binary.bin", "binary")
+```
+
+  </Tab>
+</Tabs>
+
+### Read Multiple Files
+
+<Tabs groupId="sdk-language" items={['TypeScript', '.NET', 'Python']} persist>
+  <Tab value="TypeScript">
+
+```ts
+export default class MultiFileProcessor implements ICyanProcessor {
+  async process(input: CyanProcessorInput): Promise<ProcessorOutput> {
+    // Read related files
+    const packageJson = await input.files.readJson<{
+      name: string;
+      dependencies: Record<string, string>;
+    }>('package.json');
+
+    const tsconfig = await input.files.readJson<{
+      compilerOptions: Record<string, any>;
+    }>('tsconfig.json');
+
+    // Combine information
+    const info = {
+      name: packageJson.name,
+      hasTypeScript: !!tsconfig,
+      dependencyCount: Object.keys(packageJson.dependencies || {}).length
+    };
+
+    // Inject info into content
+    const content = input.content + '\n\n' + JSON.stringify(info, null, 2);
+
+    return { content, encoding: input.encoding };
+  }
+}
+```
+
+  </Tab>
+  <Tab value=".NET">
+
+```csharp
+public class MultiFileProcessor : ICyanProcessor
+{
+    public async Task<ProcessorOutput> ProcessAsync(CyanProcessorInput input)
+    {
+        // Read related files
+        var packageJson = await input.Files.ReadJsonAsync<PackageJson>("package.json");
+        var tsconfig = await input.Files.ReadJsonAsync<TsConfig>("tsconfig.json");
+
+        // Combine information
+        var info = new
+        {
+            Name = packageJson.Name,
+            HasTypeScript = tsconfig != null,
+            DependencyCount = packageJson.Dependencies?.Count ?? 0
+        };
+
+        // Inject info into content
+        var content = input.Content + "\n\n" + JsonSerializer.Serialize(info, new JsonSerializerOptions { WriteIndented = true });
+
+        return new ProcessorOutput { Content = content, Encoding = input.Encoding };
+    }
+}
+```
+
+  </Tab>
+  <Tab value="Python">
+
+```python
+import json
+
+class MultiFileProcessor(ICyanProcessor):
+    async def process(self, input: CyanProcessorInput) -> ProcessorOutput:
+        # Read related files
+        package_json = await input.files.read_json("package.json")
+        tsconfig = await input.files.read_json("tsconfig.json")
+
+        # Combine information
+        info = {
+            "name": package_json.get("name"),
+            "has_type_script": tsconfig is not None,
+            "dependency_count": len(package_json.get("dependencies", {}))
+        }
+
+        # Inject info into content
+        content = input.content + "\n\n" + json.dumps(info, indent=2)
+
+        return ProcessorOutput(content=content, encoding=input.encoding)
+```
+
+  </Tab>
+</Tabs>
+
+## Writing Files
+
+### Write During Processing
+
+<Tabs groupId="sdk-language" items={['TypeScript', '.NET', 'Python']} persist>
+  <Tab value="TypeScript">
+
+```ts
+export default class SideEffectProcessor implements ICyanProcessor {
+  async process(input: CyanProcessorInput): Promise<ProcessorOutput> {
+    // Generate additional files during processing
+    const manifest = {
+      processedAt: new Date().toISOString(),
+      originalPath: input.filePath,
+      size: input.content.length
+    };
+
+    // Write manifest file
+    await input.files.writeJson('.manifest.json', manifest);
+
+    // Return transformed content
+    return {
+      content: input.content,
+      encoding: input.encoding
+    };
+  }
+}
+```
+
+  </Tab>
+  <Tab value=".NET">
+
+```csharp
+public class SideEffectProcessor : ICyanProcessor
+{
+    public async Task<ProcessorOutput> ProcessAsync(CyanProcessorInput input)
+    {
+        // Generate additional files during processing
+        var manifest = new
+        {
+            ProcessedAt = DateTime.UtcNow,
+            OriginalPath = input.FilePath,
+            Size = input.Content.Length
+        };
+
+        // Write manifest file
+        await input.Files.WriteJsonAsync(".manifest.json", manifest);
+
+        // Return transformed content
+        return new ProcessorOutput
+        {
+            Content = input.Content,
+            Encoding = input.Encoding
+        };
+    }
+}
+```
+
+  </Tab>
+  <Tab value="Python">
+
+```python
+import json
+from datetime import datetime
+
+class SideEffectProcessor(ICyanProcessor):
+    async def process(self, input: CyanProcessorInput) -> ProcessorOutput:
+        # Generate additional files during processing
+        manifest = {
+            "processed_at": datetime.utcnow().isoformat(),
+            "original_path": input.file_path,
+            "size": len(input.content)
+        }
+
+        # Write manifest file
+        await input.files.write_json(".manifest.json", manifest)
+
+        # Return transformed content
+        return ProcessorOutput(
+            content=input.content,
+            encoding=input.encoding
+        )
+```
+
+  </Tab>
+</Tabs>
+
+### Multiple Output Files
+
+Use `additionalFiles` to generate multiple outputs:
+
+<Tabs groupId="sdk-language" items={['TypeScript', '.NET', 'Python']} persist>
+  <Tab value="TypeScript">
+
+```ts
+export default class MultiOutputProcessor implements ICyanProcessor {
+  async process(input: CyanProcessorInput): Promise<ProcessorOutput> {
+    // Parse input (e.g., a component file)
+    const componentName = this.extractComponentName(input.content);
+
+    // Generate multiple files
+    return {
+      content: input.content,
+      encoding: input.encoding,
+      additionalFiles: [
+        {
+          path: `${componentName}.test.ts`,
+          content: this.generateTest(componentName)
+        },
+        {
+          path: `${componentName}.stories.ts`,
+          content: this.generateStory(componentName)
+        },
+        {
+          path: `${componentName}.css`,
+          content: this.generateStyles(componentName)
+        }
+      ]
+    };
+  }
+
+  private extractComponentName(content: string): string {
+    const match = content.match(/export\s+(?:default\s+)?(?:class|function)\s+(\w+)/);
+    return match ? match[1] : 'Component';
+  }
+
+  private generateTest(name: string): string {
+    return `import { render } from '@testing-library/react';
+import ${name} from './${name}';
+
+describe('${name}', () => {
+  it('renders correctly', () => {
+    const { container } = render(<${name} />);
+    expect(container).toBeTruthy();
+  });
+});`;
+  }
+
+  private generateStory(name: string): string {
+    return `import type { Meta, StoryObj } from '@storybook/react';
+import ${name} from './${name}';
+
+const meta: Meta<typeof ${name}> = {
+  component: ${name},
+};
+
+export default meta;
+type Story = StoryObj<typeof ${name}>;
+
+export const Default: Story = {};`;
+  }
+
+  private generateStyles(name: string): string {
+    return `.${name.toLowerCase()} {
+  /* Add styles here */
+}`;
+  }
+}
+```
+
+  </Tab>
+  <Tab value=".NET">
+
+```csharp
+public class MultiOutputProcessor : ICyanProcessor
+{
+    public async Task<ProcessorOutput> ProcessAsync(CyanProcessorInput input)
+    {
+        // Parse input
+        var componentName = ExtractComponentName(input.Content);
+
+        // Generate multiple files
+        return new ProcessorOutput
+        {
+            Content = input.Content,
+            Encoding = input.Encoding,
+            AdditionalFiles = new List<AdditionalFile>
+            {
+                new AdditionalFile
+                {
+                    Path = $"{componentName}.test.ts",
+                    Content = GenerateTest(componentName)
+                },
+                new AdditionalFile
+                {
+                    Path = $"{componentName}.stories.ts",
+                    Content = GenerateStory(componentName)
+                },
+                new AdditionalFile
+                {
+                    Path = $"{componentName}.css",
+                    Content = GenerateStyles(componentName)
+                }
+            }
+        };
+    }
+
+    private string ExtractComponentName(string content)
+    {
+        var match = Regex.Match(content, @"export\s+(?:default\s+)?(?:class|function)\s+(\w+)");
+        return match.Success ? match.Groups[1].Value : "Component";
+    }
+
+    private string GenerateTest(string name) => $@"
+import {{ render }} from '@testing-library/react';
+import {name} from './{name}';
+
+describe('{name}', () => {{
+  it('renders correctly', () => {{
+    const {{ container }} = render(<{name} />);
+    expect(container).toBeTruthy();
+  }});
+}});";
+
+    private string GenerateStory(string name) => $@"
+import type {{ Meta, StoryObj }} from '@storybook/react';
+import {name} from './{name}';
+
+const meta: Meta<typeof {name}> = {{
+  component: {name},
+}};
+
+export default meta;
+type Story = StoryObj<typeof {name}>;
+
+export const Default: Story = {{}};";
+
+    private string GenerateStyles(string name) => $@"
+.{name.ToLower()} {{
+  /* Add styles here */
+}}";
+}
+```
+
+  </Tab>
+  <Tab value="Python">
+
+```python
+import re
+
+class MultiOutputProcessor(ICyanProcessor):
+    async def process(self, input: CyanProcessorInput) -> ProcessorOutput:
+        # Parse input
+        component_name = self._extract_component_name(input.content)
+
+        # Generate multiple files
+        return ProcessorOutput(
+            content=input.content,
+            encoding=input.encoding,
+            additional_files=[
+                AdditionalFile(
+                    path=f"{component_name}.test.ts",
+                    content=self._generate_test(component_name)
+                ),
+                AdditionalFile(
+                    path=f"{component_name}.stories.ts",
+                    content=self._generate_story(component_name)
+                ),
+                AdditionalFile(
+                    path=f"{component_name}.css",
+                    content=self._generate_styles(component_name)
+                )
+            ]
+        )
+
+    def _extract_component_name(self, content: str) -> str:
+        match = re.search(r'export\s+(?:default\s+)?(?:class|function)\s+(\w+)', content)
+        return match.group(1) if match else "Component"
+
+    def _generate_test(self, name: str) -> str:
+        return f"""import {{ render }} from '@testing-library/react';
+import {name} from './{name}';
+
+describe('{name}', () => {{
+  it('renders correctly', () => {{
+    const {{ container }} = render(<{name} />);
+    expect(container).toBeTruthy();
+  }});
+}});"""
+
+    def _generate_story(self, name: str) -> str:
+        return f"""import type {{ Meta, StoryObj }} from '@storybook/react';
+import {name} from './{name}';
+
+const meta: Meta<typeof {name}> = {{
+  component: {name},
+}};
+
+export default meta;
+type Story = StoryObj<typeof {name}>;
+
+export const Default: Story = {{}};"""
+
+    def _generate_styles(self, name: str) -> str:
+        return f""".{name.lower()} {{
+  /* Add styles here */
+}}"""
+```
+
+  </Tab>
+</Tabs>
+
+## File Existence Checks
+
+<Tabs groupId="sdk-language" items={['TypeScript', '.NET', 'Python']} persist>
+  <Tab value="TypeScript">
+
+```ts
+export default class ConditionalProcessor implements ICyanProcessor {
+  async process(input: CyanProcessorInput): Promise<ProcessorOutput> {
+    // Check if file exists
+    const hasConfig = await input.files.exists('custom.config.js');
+
+    let content = input.content;
+
+    if (hasConfig) {
+      // Include custom config
+      const customConfig = await input.files.read('custom.config.js');
+      content = `// Custom config loaded\n${customConfig}\n\n${content}`;
+    } else {
+      // Use default
+      content = `// Using default config\n${content}`;
+    }
+
+    return { content, encoding: input.encoding };
+  }
+}
+```
+
+  </Tab>
+  <Tab value=".NET">
+
+```csharp
+public class ConditionalProcessor : ICyanProcessor
+{
+    public async Task<ProcessorOutput> ProcessAsync(CyanProcessorInput input)
+    {
+        // Check if file exists
+        var hasConfig = await input.Files.ExistsAsync("custom.config.js");
+
+        var content = input.Content;
+
+        if (hasConfig)
+        {
+            // Include custom config
+            var customConfig = await input.Files.ReadAsync("custom.config.js");
+            content = $"// Custom config loaded\n{customConfig}\n\n{content}";
+        }
+        else
+        {
+            // Use default
+            content = $"// Using default config\n{content}";
+        }
+
+        return new ProcessorOutput { Content = content, Encoding = input.Encoding };
+    }
+}
+```
+
+  </Tab>
+  <Tab value="Python">
+
+```python
+class ConditionalProcessor(ICyanProcessor):
+    async def process(self, input: CyanProcessorInput) -> ProcessorOutput:
+        # Check if file exists
+        has_config = await input.files.exists("custom.config.js")
+
+        content = input.content
+
+        if has_config:
+            # Include custom config
+            custom_config = await input.files.read("custom.config.js")
+            content = f"// Custom config loaded\n{custom_config}\n\n{content}"
+        else:
+            # Use default
+            content = f"// Using default config\n{content}"
+
+        return ProcessorOutput(content=content, encoding=input.encoding)
+```
+
+  </Tab>
+</Tabs>
+
+## Directory Operations
+
+<Tabs groupId="sdk-language" items={['TypeScript', '.NET', 'Python']} persist>
+  <Tab value="TypeScript">
+
+```ts
+export default class DirectoryProcessor implements ICyanProcessor {
+  async process(input: CyanProcessorInput): Promise<ProcessorOutput> {
+    // List directory contents
+    const files = await input.files.readdir('src/components');
+
+    // Process each file
+    const components = [];
+    for (const file of files) {
+      if (file.endsWith('.tsx')) {
+        const content = await input.files.read(`src/components/${file}`);
+        components.push({
+          name: file.replace('.tsx', ''),
+          exports: this.extractExports(content)
+        });
+      }
+    }
+
+    // Generate index file content
+    const indexContent = components
+      .map(c => `export { ${c.exports.join(', ')} } from './${c.name}';`)
+      .join('\n');
+
+    return {
+      content: indexContent,
+      encoding: input.encoding
+    };
+  }
+
+  private extractExports(content: string): string[] {
+    const exports: string[] = [];
+    const regex = /export\s+(?:const|function|class|interface|type)\s+(\w+)/g;
+    let match;
+    while ((match = regex.exec(content)) !== null) {
+      exports.push(match[1]);
+    }
+    return exports;
+  }
+}
+```
+
+  </Tab>
+  <Tab value=".NET">
+
+```csharp
+public class DirectoryProcessor : ICyanProcessor
+{
+    public async Task<ProcessorOutput> ProcessAsync(CyanProcessorInput input)
+    {
+        // List directory contents
+        var files = await input.Files.ReaddirAsync("src/components");
+
+        // Process each file
+        var components = new List<ComponentInfo>();
+        foreach (var file in files)
+        {
+            if (file.EndsWith(".tsx"))
+            {
+                var content = await input.Files.ReadAsync($"src/components/{file}");
+                components.Add(new ComponentInfo
+                {
+                    Name = file.Replace(".tsx", ""),
+                    Exports = ExtractExports(content)
+                });
+            }
+        }
+
+        // Generate index file content
+        var indexContent = string.Join("\n",
+            components.Select(c => $"export {{ {string.Join(", ", c.Exports)} }} from './{c.Name}';"));
+
+        return new ProcessorOutput
+        {
+            Content = indexContent,
+            Encoding = input.Encoding
+        };
+    }
+
+    private List<string> ExtractExports(string content)
+    {
+        var exports = new List<string>();
+        var regex = new Regex(@"export\s+(?:const|function|class|interface|type)\s+(\w+)");
+        foreach (Match match in regex.Matches(content))
+        {
+            exports.Add(match.Groups[1].Value);
+        }
+        return exports;
+    }
+}
+```
+
+  </Tab>
+  <Tab value="Python">
+
+```python
+import re
+
+class DirectoryProcessor(ICyanProcessor):
+    async def process(self, input: CyanProcessorInput) -> ProcessorOutput:
+        # List directory contents
+        files = await input.files.readdir("src/components")
+
+        # Process each file
+        components = []
+        for file in files:
+            if file.endswith(".tsx"):
+                content = await input.files.read(f"src/components/{file}")
+                components.append({
+                    "name": file.replace(".tsx", ""),
+                    "exports": self._extract_exports(content)
+                })
+
+        # Generate index file content
+        index_lines = [
+            f"export {{ {', '.join(c['exports'])} }} from './{c['name']}';"
+            for c in components
+        ]
+        index_content = "\n".join(index_lines)
+
+        return ProcessorOutput(
+            content=index_content,
+            encoding=input.encoding
+        )
+
+    def _extract_exports(self, content: str) -> list:
+        exports = []
+        pattern = r'export\s+(?:const|function|class|interface|type)\s+(\w+)'
+        for match in re.finditer(pattern, content):
+            exports.append(match.group(1))
+        return exports
+```
+
+  </Tab>
+</Tabs>
+
+## Skip File Processing
+
+Return with `skipped: true` to skip output:
+
+<Tabs groupId="sdk-language" items={['TypeScript', '.NET', 'Python']} persist>
+  <Tab value="TypeScript">
+
+```ts
+export default class FilteringProcessor implements ICyanProcessor {
+  async process(input: CyanProcessorInput): Promise<ProcessorOutput> {
+    // Skip certain files
+    if (input.filePath.includes('.test.')) {
+      return {
+        content: '',
+        encoding: input.encoding,
+        skipped: true,
+        skipReason: 'Test files are not processed'
+      };
+    }
+
+    // Skip binary files
+    if (this.isBinary(input.content)) {
+      return {
+        content: input.content,
+        encoding: input.encoding,
+        skipped: true,
+        skipReason: 'Binary files are skipped'
+      };
+    }
+
+    // Process normally
+    return {
+      content: this.transform(input.content),
+      encoding: input.encoding
+    };
+  }
+
+  private isBinary(content: string): boolean {
+    // Simple binary detection
+    return /[\x00-\x08\x0E-\x1F]/.test(content);
+  }
+
+  private transform(content: string): string {
+    return content;
+  }
+}
+```
+
+  </Tab>
+  <Tab value=".NET">
+
+```csharp
+public class FilteringProcessor : ICyanProcessor
+{
+    public async Task<ProcessorOutput> ProcessAsync(CyanProcessorInput input)
+    {
+        // Skip certain files
+        if (input.FilePath.Contains(".test."))
+        {
+            return new ProcessorOutput
+            {
+                Content = "",
+                Encoding = input.Encoding,
+                Skipped = true,
+                SkipReason = "Test files are not processed"
+            };
+        }
+
+        // Skip binary files
+        if (IsBinary(input.Content))
+        {
+            return new ProcessorOutput
+            {
+                Content = input.Content,
+                Encoding = input.Encoding,
+                Skipped = true,
+                SkipReason = "Binary files are skipped"
+            };
+        }
+
+        // Process normally
+        return new ProcessorOutput
+        {
+            Content = Transform(input.Content),
+            Encoding = input.Encoding
+        };
+    }
+
+    private bool IsBinary(string content)
+    {
+        // Simple binary detection
+        return Regex.IsMatch(content, @"[\x00-\x08\x0E-\x1F]");
+    }
+
+    private string Transform(string content) => content;
+}
+```
+
+  </Tab>
+  <Tab value="Python">
+
+```python
+import re
+
+class FilteringProcessor(ICyanProcessor):
+    async def process(self, input: CyanProcessorInput) -> ProcessorOutput:
+        # Skip certain files
+        if ".test." in input.file_path:
+            return ProcessorOutput(
+                content="",
+                encoding=input.encoding,
+                skipped=True,
+                skip_reason="Test files are not processed"
+            )
+
+        # Skip binary files
+        if self._is_binary(input.content):
+            return ProcessorOutput(
+                content=input.content,
+                encoding=input.encoding,
+                skipped=True,
+                skip_reason="Binary files are skipped"
+            )
+
+        # Process normally
+        return ProcessorOutput(
+            content=self._transform(input.content),
+            encoding=input.encoding
+        )
+
+    def _is_binary(self, content: str) -> bool:
+        # Simple binary detection
+        return bool(re.search(r'[\x00-\x08\x0E-\x1F]', content))
+
+    def _transform(self, content: str) -> str:
+        return content
+```
+
+  </Tab>
+</Tabs>
+
+## See Also
+
+- [First Processor](./01-first-processor) - Getting started
+- [API Reference](./03-api-reference) - Complete API
+- [Default Processor](../templates/02-default-processor) - Example implementation

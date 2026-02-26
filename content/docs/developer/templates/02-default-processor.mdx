@@ -1,0 +1,443 @@
+---
+title: Default Processor
+description: Learn templating with the default processor using Eta syntax
+---
+
+# Default Processor
+
+The default processor enables dynamic content generation using Eta templating. This tutorial shows you how to use variable substitution to create customizable templates.
+
+**Time estimate**: 15-20 minutes
+
+## What is a Processor?
+
+A processor transforms file content during template execution. The **default processor** (ketone.default-processor) uses [Eta](https://eta.js.org/) templating to replace placeholders with actual values from user answers.
+
+## How Eta Templating Works
+
+The default processor uses a simple syntax for variable substitution:
+
+| Syntax | Description |
+| ------ | ----------- |
+| `var__name__` | Substitute with the value of `name` |
+| `var__project.name__` | Access nested properties |
+| `var__count | default: 1__` | Provide default value |
+
+<Callout type="info">
+The default syntax uses `var__` prefix and `__` suffix to avoid conflicts with common template syntaxes like `{{ }}` or `${ }`. You can customize these delimiters in the processor configuration.
+</Callout>
+
+## Setup
+
+Continue from the [Glob and Copy](./01-glob-and-copy) tutorial or start fresh:
+
+import { Tab, Tabs } from 'fumadocs-ui/components/tabs';
+
+<Tabs groupId="sdk-language" items={['TypeScript', '.NET', 'Python']} persist>
+  <Tab value="TypeScript">
+
+```bash
+# Install the default processor plugin
+npm install @atomicloud/ketone-default-processor
+```
+
+  </Tab>
+  <Tab value=".NET">
+
+```bash
+# Add the default processor package
+dotnet add package AtomiCloud.Ketone.DefaultProcessor
+```
+
+  </Tab>
+  <Tab value="Python">
+
+```bash
+# Install the default processor
+pip install cyanprint-default-processor
+```
+
+  </Tab>
+</Tabs>
+
+## Create Templated Files
+
+Update your template files to use Eta syntax.
+
+### package.json with Variables
+
+**template/files/package.json**
+
+```json
+{
+  "name": "var__projectName__",
+  "version": "var__version | default: 1.0.0__",
+  "description": "var__description__",
+  "main": "src/index.ts",
+  "scripts": {
+    "dev": "tsx src/index.ts",
+    "build": "tsc"
+  },
+  "author": "var__author__",
+  "license": "var__license | default: MIT__"
+}
+```
+
+### README with Variables
+
+**template/files/README.md**
+
+```markdown
+# var__projectName__
+
+var__description__
+
+## Getting Started
+
+\`\`\`bash
+npm install
+npm run dev
+\`\`\`
+
+## Author
+
+Created by var__author__
+```
+
+### Source File with Variables
+
+**template/files/src/index.ts**
+
+```typescript
+/**
+ * var__projectName__
+ * var__description__
+ */
+
+const config = {
+  name: 'var__projectName__',
+  version: 'var__version__',
+  environment: 'var__environment | default: development__'
+};
+
+console.log(`Starting ${config.name} v${config.version}`);
+console.log(`Environment: ${config.environment}`);
+```
+
+## Configure the Processor
+
+Update `cyanprint.json` to register the default processor:
+
+```json
+{
+  "name": "templated-project",
+  "version": "1.0.0",
+  "description": "A template with variable substitution",
+  "processors": [
+    {
+      "name": "default-processor",
+      "config": {
+        "vars": {
+          "projectName": "string",
+          "version": "string",
+          "description": "string",
+          "author": "string",
+          "license": "string",
+          "environment": "string"
+        },
+        "parser": {
+          "prefix": "var__",
+          "suffix": "__"
+        }
+      }
+    }
+  ],
+  "plugins": []
+}
+```
+
+### Configuration Options
+
+| Option | Description | Default |
+| ------ | ----------- | ------- |
+| `vars` | Variable definitions with types | `{}` |
+| `parser.prefix` | Prefix for variable markers | `var__` |
+| `parser.suffix` | Suffix for variable markers | `__` |
+
+### Variable Types
+
+| Type | Description |
+| ---- | ----------- |
+| `string` | Text value |
+| `number` | Numeric value |
+| `boolean` | True/false value |
+| `array` | Array of values |
+| `object` | Nested object |
+
+## Update Template Entry Point
+
+<Tabs groupId="sdk-language" items={['TypeScript', '.NET', 'Python']} persist>
+  <Tab value="TypeScript">
+
+Update `template/index.ts`:
+
+```ts
+import { Cyan, ICyanTemplate } from '@atomicloud/helium-sdk';
+
+export default class TemplatedProject implements ICyanTemplate {
+  async execute(cyan: Cyan): Promise<void> {
+    // Ask for template variables
+    const projectName = await cyan.inquirer.text({
+      message: 'Project name:',
+      default: 'my-project'
+    });
+
+    const version = await cyan.inquirer.text({
+      message: 'Version:',
+      default: '1.0.0'
+    });
+
+    const description = await cyan.inquirer.text({
+      message: 'Description:'
+    });
+
+    const author = await cyan.inquirer.text({
+      message: 'Author:'
+    });
+
+    const license = await cyan.inquirer.select({
+      message: 'License:',
+      options: ['MIT', 'Apache-2.0', 'GPL-3.0', 'BSD-3-Clause']
+    });
+
+    // Process files with default processor
+    const files = cyan.glob('template/files/**/*');
+
+    for (const file of files) {
+      const outputPath = file.replace('template/files/', '');
+
+      // The processor automatically uses cyan.answers
+      await cyan.processors.run('default-processor', {
+        input: file,
+        output: outputPath
+      });
+    }
+  }
+}
+```
+
+  </Tab>
+  <Tab value=".NET">
+
+Update `Template.cs`:
+
+```csharp
+using AtomiCloud.Helium;
+
+public class TemplatedProject : ICyanTemplate
+{
+    public async Task ExecuteAsync(Cyan cyan)
+    {
+        // Ask for template variables
+        var projectName = await cyan.Inquirer.TextAsync(new TextOptions
+        {
+            Message = "Project name:",
+            Default = "my-project"
+        });
+
+        var version = await cyan.Inquirer.TextAsync(new TextOptions
+        {
+            Message = "Version:",
+            Default = "1.0.0"
+        });
+
+        var description = await cyan.Inquirer.TextAsync(new TextOptions
+        {
+            Message = "Description:"
+        });
+
+        var author = await cyan.Inquirer.TextAsync(new TextOptions
+        {
+            Message = "Author:"
+        });
+
+        var license = await cyan.Inquirer.SelectAsync(new SelectOptions
+        {
+            Message = "License:",
+            Options = new[] { "MIT", "Apache-2.0", "GPL-3.0", "BSD-3-Clause" }
+        });
+
+        // Process files with default processor
+        var files = cyan.Glob("template/files/**/*");
+
+        foreach (var file in files)
+        {
+            var outputPath = file.Replace("template/files/", "");
+
+            // The processor automatically uses cyan.Answers
+            await cyan.Processors.RunAsync("default-processor", new ProcessorOptions
+            {
+                Input = file,
+                Output = outputPath
+            });
+        }
+    }
+}
+```
+
+  </Tab>
+  <Tab value="Python">
+
+Update `template/__init__.py`:
+
+```python
+from helium_sdk import Cyan, ICyanTemplate
+
+class TemplatedProject(ICyanTemplate):
+    async def execute(self, cyan: Cyan):
+        # Ask for template variables
+        project_name = await cyan.inquirer.text(
+            message="Project name:",
+            default="my-project"
+        )
+
+        version = await cyan.inquirer.text(
+            message="Version:",
+            default="1.0.0"
+        )
+
+        description = await cyan.inquirer.text(
+            message="Description:"
+        )
+
+        author = await cyan.inquirer.text(
+            message="Author:"
+        )
+
+        license = await cyan.inquirer.select(
+            message="License:",
+            options=["MIT", "Apache-2.0", "GPL-3.0", "BSD-3-Clause"]
+        )
+
+        # Process files with default processor
+        files = cyan.glob("template/files/**/*")
+
+        for file in files:
+            output_path = file.replace("template/files/", "")
+
+            # The processor automatically uses cyan.answers
+            await cyan.processors.run("default-processor", {
+                "input": file,
+                "output": output_path
+            })
+```
+
+  </Tab>
+</Tabs>
+
+## Advanced Eta Features
+
+### Default Values
+
+Use pipe syntax to provide defaults:
+
+```markdown
+var__name | default: Untitled__
+var__port | default: 3000__
+```
+
+### Conditional Content
+
+Use Eta conditionals for optional sections:
+
+```markdown
+<% if (it.typescript) { %>
+import { Config } from './types';
+<% } %>
+```
+
+<Callout type="warn">
+To use Eta conditionals and loops, you may need to enable raw Eta tags in your configuration. The default setup only processes `var__` patterns for safety.
+</Callout>
+
+### Loops
+
+Iterate over arrays:
+
+```markdown
+<% it.features.forEach(function(feature) { %>
+- <%= feature %>
+<% }) %>
+```
+
+### Custom Delimiters
+
+If `var__` conflicts with your content, customize the delimiters:
+
+```json
+{
+  "processors": [
+    {
+      "name": "default-processor",
+      "config": {
+        "parser": {
+          "prefix": "{{",
+          "suffix": "}}"
+        }
+      }
+    }
+  ]
+}
+```
+
+## Testing Variable Substitution
+
+### Run the Template
+
+```bash
+cyanprint init my-project --local .
+```
+
+### Example Output
+
+When you provide these answers:
+
+```
+Project name: my-awesome-app
+Version: 2.0.0
+Description: An awesome application
+Author: Jane Developer
+License: MIT
+```
+
+The generated `package.json`:
+
+```json
+{
+  "name": "my-awesome-app",
+  "version": "2.0.0",
+  "description": "An awesome application",
+  "main": "src/index.ts",
+  "scripts": {
+    "dev": "tsx src/index.ts",
+    "build": "tsc"
+  },
+  "author": "Jane Developer",
+  "license": "MIT"
+}
+```
+
+## Summary
+
+You've learned to use the default processor for variable substitution:
+
+- **Eta syntax** uses `var__name__` for placeholders
+- **Default values** use pipe syntax: `var__name | default: value__`
+- **Configuration** defines available variables and parser settings
+- **Answers** are automatically available to processors
+
+## Next Steps
+
+- [Adding Interaction](./03-adding-interaction) - Learn more question types
+- [Inquirer Methods](./04-inquirer-methods) - Full API reference
+- [Testing](./09-testing) - Test templates locally

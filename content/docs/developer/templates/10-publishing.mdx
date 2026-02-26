@@ -1,0 +1,373 @@
+---
+title: Publishing Templates
+description: Publish your templates to the CyanPrint registry
+---
+
+# Publishing Templates
+
+After testing your template, publish it to the CyanPrint registry for others to use.
+
+## Prerequisites
+
+Before publishing, ensure:
+
+- [ ] Template is tested and working
+- [ ] `cyanprint.json` has complete metadata
+- [ ] README.md explains usage
+- [ ] Version number is appropriate
+- [ ] You have a CyanPrint account
+
+## Prepare Metadata
+
+### cyanprint.json
+
+```json
+{
+  "name": "@your-org/my-template",
+  "version": "1.0.0",
+  "description": "A brief description of what your template generates",
+  "author": {
+    "name": "Your Name",
+    "email": "you@example.com"
+  },
+  "license": "MIT",
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/your-org/my-template"
+  },
+  "keywords": [
+    "typescript",
+    "react",
+    "starter"
+  ],
+  "processors": [...],
+  "plugins": []
+}
+```
+
+### Required Fields
+
+| Field | Description |
+| ----- | ----------- |
+| `name` | Package name (scoped or unscoped) |
+| `version` | Semantic version |
+| `description` | Brief description |
+| `author` | Author information |
+
+### Optional Fields
+
+| Field | Description |
+| ----- | ----------- |
+| `license` | SPDX license identifier |
+| `repository` | Source repository |
+| `keywords` | Search keywords |
+| `homepage` | Project homepage |
+| `bugs` | Issue tracker URL |
+
+## README Template
+
+Create a comprehensive README:
+
+````markdown
+# @your-org/my-template
+
+Brief description of your template.
+
+## Features
+
+- Feature 1
+- Feature 2
+- Feature 3
+
+## Usage
+
+```bash
+cyanprint init my-project --template @your-org/my-template
+```
+
+## Options
+
+This template asks for:
+
+| Option | Description | Default |
+| ------ | ----------- | ------- |
+| `projectName` | Project name | - |
+| `typescript` | Use TypeScript | `true` |
+| `testing` | Add testing setup | `false` |
+
+## Generated Structure
+
+```
+my-project/
+├── src/
+│   └── index.ts
+├── package.json
+└── README.md
+```
+
+## Requirements
+
+- Node.js 18+
+- Docker (for template execution)
+
+## License
+
+MIT
+````
+
+## Authentication
+
+### Login to Registry
+
+```bash
+# Login to the CyanPrint registry
+cyanprint login
+
+# Or with specific registry
+cyanprint login --registry https://registry.cyanprint.dev
+```
+
+### Verify Authentication
+
+```bash
+cyanprint whoami
+# Output: logged in as your-username
+```
+
+## Versioning
+
+Follow [Semantic Versioning](https://semver.org/):
+
+- **MAJOR** - Breaking changes
+- **MINOR** - New features, backward compatible
+- **PATCH** - Bug fixes
+
+### Version Commands
+
+```bash
+# Patch version (1.0.0 -> 1.0.1)
+npm version patch
+
+# Minor version (1.0.0 -> 1.1.0)
+npm version minor
+
+# Major version (1.0.0 -> 2.0.0)
+npm version major
+```
+
+## Publishing
+
+### First Publish
+
+```bash
+# Dry run to see what will be published
+cyanprint publish --dry-run
+
+# Publish to registry
+cyanprint publish
+```
+
+### Update Publish
+
+```bash
+# After making changes and updating version
+cyanprint publish
+```
+
+### Publish Options
+
+| Option | Description |
+| ------ | ----------- |
+| `--dry-run` | Preview without publishing |
+| `--tag <tag>` | Publish to a specific tag (e.g., `beta`) |
+| `--access <level>` | Access level (`public` or `restricted`) |
+| `--registry <url>` | Use a different registry |
+
+### Publishing Pre-releases
+
+```bash
+# Publish beta version
+cyanprint publish --tag beta
+
+# Publish canary version
+cyanprint publish --tag canary
+```
+
+Users can install pre-releases:
+
+```bash
+cyanprint init my-project --template @your-org/my-template@beta
+```
+
+## Scoped Packages
+
+### Organization Scopes
+
+```json
+{
+  "name": "@mycompany/template-name"
+}
+```
+
+Publish with organization access:
+
+```bash
+cyanprint publish --access public
+```
+
+### Private Packages
+
+```bash
+cyanprint publish --access restricted
+```
+
+## CI/CD Publishing
+
+### GitHub Actions
+
+```yaml
+# .github/workflows/publish.yml
+name: Publish Template
+
+on:
+  release:
+    types: [published]
+
+jobs:
+  publish:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Setup Node
+        uses: actions/setup-node@v4
+        with:
+          node-version: '20'
+
+      - name: Install dependencies
+        run: npm ci
+
+      - name: Run tests
+        run: npm test
+
+      - name: Publish
+        run: cyanprint publish
+        env:
+          CYANPRINT_TOKEN: ${{ secrets.CYANPRINT_TOKEN }}
+```
+
+### Automated Versioning
+
+```yaml
+# .github/workflows/release.yml
+name: Release
+
+on:
+  push:
+    branches: [main]
+
+jobs:
+  release:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Setup Node
+        uses: actions/setup-node@v4
+        with:
+          node-version: '20'
+
+      - name: Install dependencies
+        run: npm ci
+
+      - name: Run tests
+        run: npm test
+
+      - name: Create Release
+        run: npx semantic-release
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          CYANPRINT_TOKEN: ${{ secrets.CYANPRINT_TOKEN }}
+```
+
+## Deprecating Versions
+
+Mark old versions as deprecated:
+
+```bash
+cyanprint deprecate @your-org/my-template@1.0.0 "Use 1.0.1 for security fix"
+```
+
+## Unpublishing
+
+<Callout type="warn">
+Unpublishing is permanent and can break projects that depend on your template. Only unpublish within 24 hours of publishing or if the package has no downloads.
+</Callout>
+
+```bash
+# Unpublish specific version
+cyanprint unpublish @your-org/my-template@1.0.0
+
+# Unpublish entire package (requires confirmation)
+cyanprint unpublish @your-org/my-template --force
+```
+
+## Registry Verification
+
+After publishing, verify your template:
+
+```bash
+# Search for your template
+cyanprint search @your-org/my-template
+
+# View template info
+cyanprint view @your-org/my-template
+
+# Test installation
+cyanprint init test-project --template @your-org/my-template
+```
+
+## Best Practices
+
+1. **Test before publishing** - Always run tests locally
+2. **Use semantic versioning** - Follow semver conventions
+3. **Write good descriptions** - Help users find your template
+4. **Include examples** - Show usage in README
+5. **Keep changelog** - Document changes between versions
+6. **Tag releases** - Use git tags for versions
+
+## Troubleshooting
+
+### Authentication Errors
+
+```bash
+# Re-login
+cyanprint logout
+cyanprint login
+```
+
+### Name Conflicts
+
+```bash
+# Check if name is available
+cyanprint search my-template-name
+
+# Use a scope for uniqueness
+# @your-org/my-template
+```
+
+### Publish Failures
+
+```bash
+# Check validation errors
+cyanprint publish --dry-run
+
+# Verify cyanprint.json syntax
+cat cyanprint.json | jq .
+```
+
+## See Also
+
+- [Testing](./09-testing) - Test before publishing
+- [Best Practices](./13-best-practices) - Template design patterns
+- [User Registry Guide](/user/07-registry) - Using the registry

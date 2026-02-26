@@ -1,0 +1,919 @@
+---
+title: First Plugin
+description: Create your first CyanPrint plugin
+---
+
+# First Plugin
+
+Plugins extend CyanPrint's capabilities by providing reusable functionality to templates. This tutorial guides you through creating a custom plugin.
+
+**Time estimate**: 20-25 minutes
+
+## What is a Plugin?
+
+A plugin is a CyanPrint artifact that:
+
+1. **Provides functionality** - Helper functions, utilities
+2. **Integrates services** - Connect to external APIs
+3. **Hooks into lifecycle** - Execute at specific template stages
+4. **Shares logic** - Reusable across multiple templates
+
+Common plugin use cases:
+
+- Git operations (initialize, commit, push)
+- License generation
+- Environment variable management
+- Validation utilities
+- API integrations
+
+## Plugin Interface
+
+All plugins implement the `ICyanPlugin` interface:
+
+import { Tab, Tabs } from 'fumadocs-ui/components/tabs';
+
+<Tabs groupId="sdk-language" items={['TypeScript', '.NET', 'Python']} persist>
+  <Tab value="TypeScript">
+
+```ts
+interface ICyanPlugin {
+  // Plugin metadata
+  name: string;
+  version: string;
+
+  // Called when plugin is loaded
+  initialize(context: PluginContext): Promise<void>;
+
+  // Called when plugin is unloaded
+  dispose?(): Promise<void>;
+}
+```
+
+  </Tab>
+  <Tab value=".NET">
+
+```csharp
+public interface ICyanPlugin
+{
+    // Plugin metadata
+    string Name { get; }
+    string Version { get; }
+
+    // Called when plugin is loaded
+    Task InitializeAsync(PluginContext context);
+
+    // Called when plugin is unloaded
+    Task DisposeAsync();
+}
+```
+
+  </Tab>
+  <Tab value="Python">
+
+```python
+from abc import ABC, abstractmethod
+
+class ICyanPlugin(ABC):
+    @property
+    @abstractmethod
+    def name(self) -> str:
+        pass
+
+    @property
+    @abstractmethod
+    def version(self) -> str:
+        pass
+
+    # Called when plugin is loaded
+    @abstractmethod
+    async def initialize(self, context: PluginContext) -> None:
+        pass
+
+    # Called when plugin is unloaded
+    async def dispose(self) -> None:
+        pass
+```
+
+  </Tab>
+</Tabs>
+
+## Project Setup
+
+### Create the Project
+
+<Tabs groupId="sdk-language" items={['TypeScript', '.NET', 'Python']} persist>
+  <Tab value="TypeScript">
+
+```bash
+# Create project directory
+mkdir my-plugin
+cd my-plugin
+
+# Initialize npm project
+npm init -y
+
+# Install Helium SDK
+npm install @atomicloud/helium-sdk
+
+# Create plugin file
+mkdir -p src
+touch src/index.ts
+```
+
+  </Tab>
+  <Tab value=".NET">
+
+```bash
+# Create project directory
+mkdir MyPlugin
+cd MyPlugin
+
+# Create class library
+dotnet new classlib
+
+# Add Helium SDK
+dotnet add package AtomiCloud.Helium
+
+# Rename default file
+ren Class1.cs Plugin.cs
+```
+
+  </Tab>
+  <Tab value="Python">
+
+```bash
+# Create project directory
+mkdir my-plugin
+cd my-plugin
+
+# Create virtual environment
+python -m venv .venv
+source .venv/bin/activate
+
+# Install Helium SDK
+pip install cyanprint-helium
+
+# Create plugin file
+touch plugin.py
+```
+
+  </Tab>
+</Tabs>
+
+## Create a Simple Plugin
+
+Let's create a plugin that generates license files:
+
+<Tabs groupId="sdk-language" items={['TypeScript', '.NET', 'Python']} persist>
+  <Tab value="TypeScript">
+
+```ts
+// src/index.ts
+import { ICyanPlugin, PluginContext } from '@atomicloud/helium-sdk';
+
+export default class LicensePlugin implements ICyanPlugin {
+  name = 'license-plugin';
+  version = '1.0.0';
+
+  private context!: PluginContext;
+
+  async initialize(context: PluginContext): Promise<void> {
+    this.context = context;
+    this.context.logger.info('License plugin initialized');
+  }
+
+  async dispose(): Promise<void> {
+    this.context.logger.info('License plugin disposed');
+  }
+
+  // Public API - available to templates
+  async generate(options: LicenseOptions): Promise<string> {
+    const { type, year, holder } = options;
+    const licenseYear = year || new Date().getFullYear();
+
+    switch (type) {
+      case 'MIT':
+        return this.generateMIT(licenseYear, holder);
+      case 'Apache-2.0':
+        return this.generateApache(licenseYear, holder);
+      case 'GPL-3.0':
+        return this.generateGPL(licenseYear, holder);
+      case 'BSD-3-Clause':
+        return this.generateBSD(licenseYear, holder);
+      default:
+        throw new Error(`Unknown license type: ${type}`);
+    }
+  }
+
+  // Get list of supported licenses
+  getSupportedLicenses(): string[] {
+    return ['MIT', 'Apache-2.0', 'GPL-3.0', 'BSD-3-Clause'];
+  }
+
+  // Validate license type
+  isValidLicense(type: string): boolean {
+    return this.getSupportedLicenses().includes(type);
+  }
+
+  private generateMIT(year: number, holder: string): string {
+    return `MIT License
+
+Copyright (c) ${year} ${holder}
+
+Permission is hereby granted, free of charge, to any person obtaining a copy
+of this software and associated documentation files (the "Software"), to deal
+in the Software without restriction, including without limitation the rights
+to use, copy, modify, merge, publish, distribute, sublicense, and/or sell
+copies of the Software, and to permit persons to whom the Software is
+furnished to do so, subject to the following conditions:
+
+The above copyright notice and this permission notice shall be included in all
+copies or substantial portions of the Software.
+
+THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR
+IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,
+FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE
+AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER
+LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM,
+OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
+SOFTWARE.`;
+  }
+
+  private generateApache(year: number, holder: string): string {
+    return `Apache License
+Version 2.0, January 2004
+Copyright (c) ${year} ${holder}
+
+Licensed under the Apache License, Version 2.0 (the "License");
+...`; // Abbreviated for example
+  }
+
+  private generateGPL(year: number, holder: string): string {
+    return `GNU GENERAL PUBLIC LICENSE
+Version 3, 29 June 2007
+Copyright (C) ${year} ${holder}
+
+This program is free software: you can redistribute it and/or modify
+...`; // Abbreviated for example
+  }
+
+  private generateBSD(year: number, holder: string): string {
+    return `BSD 3-Clause License
+Copyright (c) ${year} ${holder}
+
+Redistribution and use in source and binary forms, with or without
+modification, are permitted provided that the following conditions are met:
+...`; // Abbreviated for example
+  }
+}
+
+interface LicenseOptions {
+  type: 'MIT' | 'Apache-2.0' | 'GPL-3.0' | 'BSD-3-Clause';
+  year?: number;
+  holder: string;
+}
+```
+
+  </Tab>
+  <Tab value=".NET">
+
+```csharp
+// Plugin.cs
+using AtomiCloud.Helium;
+
+public class LicensePlugin : ICyanPlugin
+{
+    public string Name => "license-plugin";
+    public string Version => "1.0.0";
+
+    private PluginContext _context;
+
+    public async Task InitializeAsync(PluginContext context)
+    {
+        _context = context;
+        _context.Logger.Info("License plugin initialized");
+    }
+
+    public async Task DisposeAsync()
+    {
+        _context.Logger.Info("License plugin disposed");
+    }
+
+    // Public API - available to templates
+    public async Task<string> GenerateAsync(LicenseOptions options)
+    {
+        var year = options.Year ?? DateTime.Now.Year;
+
+        return options.Type.ToUpper() switch
+        {
+            "MIT" => GenerateMIT(year, options.Holder),
+            "APACHE-2.0" => GenerateApache(year, options.Holder),
+            "GPL-3.0" => GenerateGPL(year, options.Holder),
+            "BSD-3-CLAUSE" => GenerateBSD(year, options.Holder),
+            _ => throw new ArgumentException($"Unknown license type: {options.Type}")
+        };
+    }
+
+    // Get list of supported licenses
+    public string[] GetSupportedLicenses()
+    {
+        return new[] { "MIT", "Apache-2.0", "GPL-3.0", "BSD-3-Clause" };
+    }
+
+    // Validate license type
+    public bool IsValidLicense(string type)
+    {
+        return GetSupportedLicenses().Contains(type.ToUpper());
+    }
+
+    private string GenerateMIT(int year, string holder)
+    {
+        return $@"MIT License
+
+Copyright (c) {year} {holder}
+
+Permission is hereby granted, free of charge, to any person obtaining a copy
+of this software and associated documentation files (the ""Software""), to deal
+in the Software without restriction, including without limitation the rights
+to use, copy, modify, merge, publish, distribute, sublicense, and/or sell
+copies of the Software, and to permit persons to whom the Software is
+furnished to do so, subject to the following conditions:
+
+The above copyright notice and this permission notice shall be included in all
+copies or substantial portions of the Software.
+
+THE SOFTWARE IS PROVIDED ""AS IS"", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR
+IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,
+FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE
+AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER
+LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM,
+OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
+SOFTWARE.";
+    }
+
+    private string GenerateApache(int year, string holder) { /* ... */ }
+    private string GenerateGPL(int year, string holder) { /* ... */ }
+    private string GenerateBSD(int year, string holder) { /* ... */ }
+}
+
+public class LicenseOptions
+{
+    public string Type { get; set; }
+    public int? Year { get; set; }
+    public string Holder { get; set; }
+}
+```
+
+  </Tab>
+  <Tab value="Python">
+
+```python
+# plugin.py
+from helium_sdk import ICyanPlugin, PluginContext
+from datetime import datetime
+from typing import List, Optional
+
+class LicensePlugin(ICyanPlugin):
+    @property
+    def name(self) -> str:
+        return "license-plugin"
+
+    @property
+    def version(self) -> str:
+        return "1.0.0"
+
+    def __init__(self):
+        self._context = None
+
+    async def initialize(self, context: PluginContext) -> None:
+        self._context = context
+        self._context.logger.info("License plugin initialized")
+
+    async def dispose(self) -> None:
+        self._context.logger.info("License plugin disposed")
+
+    # Public API - available to templates
+    async def generate(self, options: dict) -> str:
+        license_type = options.get("type")
+        year = options.get("year", datetime.now().year)
+        holder = options.get("holder")
+
+        generators = {
+            "MIT": self._generate_mit,
+            "Apache-2.0": self._generate_apache,
+            "GPL-3.0": self._generate_gpl,
+            "BSD-3-Clause": self._generate_bsd,
+        }
+
+        if license_type not in generators:
+            raise ValueError(f"Unknown license type: {license_type}")
+
+        return generators[license_type](year, holder)
+
+    # Get list of supported licenses
+    def get_supported_licenses(self) -> List[str]:
+        return ["MIT", "Apache-2.0", "GPL-3.0", "BSD-3-Clause"]
+
+    # Validate license type
+    def is_valid_license(self, license_type: str) -> bool:
+        return license_type in self.get_supported_licenses()
+
+    def _generate_mit(self, year: int, holder: str) -> str:
+        return f"""MIT License
+
+Copyright (c) {year} {holder}
+
+Permission is hereby granted, free of charge, to any person obtaining a copy
+of this software and associated documentation files (the "Software"), to deal
+in the Software without restriction, including without limitation the rights
+to use, copy, modify, merge, publish, distribute, sublicense, and/or sell
+copies of the Software, and to permit persons to whom the Software is
+furnished to do so, subject to the following conditions:
+
+The above copyright notice and this permission notice shall be included in all
+copies or substantial portions of the Software.
+
+THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR
+IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,
+FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE
+AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER
+LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM,
+OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
+SOFTWARE."""
+
+    def _generate_apache(self, year: int, holder: str) -> str:
+        # Abbreviated for example
+        return f"Apache License Version 2.0, Copyright (c) {year} {holder}"
+
+    def _generate_gpl(self, year: int, holder: str) -> str:
+        # Abbreviated for example
+        return f"GNU GPL v3, Copyright (C) {year} {holder}"
+
+    def _generate_bsd(self, year: int, holder: str) -> str:
+        # Abbreviated for example
+        return f"BSD 3-Clause License, Copyright (c) {year} {holder}"
+```
+
+  </Tab>
+</Tabs>
+
+## Configure the Plugin
+
+Create `cyanprint.json`:
+
+```json
+{
+  "name": "license-plugin",
+  "version": "1.0.0",
+  "description": "Generate license files for projects",
+  "type": "plugin",
+  "entryPoint": "dist/index.js",
+  "provides": ["license"]
+}
+```
+
+### Configuration Fields
+
+| Field | Description | Required |
+| ----- | ----------- | -------- |
+| `name` | Plugin package name | Yes |
+| `version` | Semantic version | Yes |
+| `type` | Must be `"plugin"` | Yes |
+| `entryPoint` | Path to compiled plugin | Yes |
+| `provides` | List of provided capabilities | No |
+| `hooks` | Lifecycle hooks to subscribe | No |
+
+## Using the Plugin in Templates
+
+### Declare Plugin Dependency
+
+In template's `cyanprint.json`:
+
+```json
+{
+  "name": "my-template",
+  "plugins": [
+    {
+      "name": "license-plugin",
+      "version": "^1.0.0"
+    }
+  ]
+}
+```
+
+### Use in Template Code
+
+<Tabs groupId="sdk-language" items={['TypeScript', '.NET', 'Python']} persist>
+  <Tab value="TypeScript">
+
+```ts
+import { Cyan, ICyanTemplate } from '@atomicloud/helium-sdk';
+
+export default class MyTemplate implements ICyanTemplate {
+  async execute(cyan: Cyan): Promise<void> {
+    // Get plugin
+    const licensePlugin = cyan.plugins.get<LicensePlugin>('license-plugin');
+
+    // Ask user for license type
+    const licenseType = await cyan.inquirer.select({
+      message: 'Choose a license:',
+      options: licensePlugin.getSupportedLicenses()
+    });
+
+    // Generate license
+    const licenseContent = await licensePlugin.generate({
+      type: licenseType,
+      holder: cyan.answers.author
+    });
+
+    // Write to output
+    await cyan.files.write('LICENSE', licenseContent);
+  }
+}
+```
+
+  </Tab>
+  <Tab value=".NET">
+
+```csharp
+using AtomiCloud.Helium;
+
+public class MyTemplate : ICyanTemplate
+{
+    public async Task ExecuteAsync(Cyan cyan)
+    {
+        // Get plugin
+        var licensePlugin = cyan.Plugins.Get<LicensePlugin>("license-plugin");
+
+        // Ask user for license type
+        var licenseType = await cyan.Inquirer.SelectAsync(new SelectOptions
+        {
+            Message = "Choose a license:",
+            Options = licensePlugin.GetSupportedLicenses()
+        });
+
+        // Generate license
+        var licenseContent = await licensePlugin.GenerateAsync(new LicenseOptions
+        {
+            Type = licenseType,
+            Holder = cyan.Answers["author"].ToString()
+        });
+
+        // Write to output
+        await cyan.Files.WriteAsync("LICENSE", licenseContent);
+    }
+}
+```
+
+  </Tab>
+  <Tab value="Python">
+
+```python
+from helium_sdk import Cyan, ICyanTemplate
+
+class MyTemplate(ICyanTemplate):
+    async def execute(self, cyan: Cyan):
+        # Get plugin
+        license_plugin = cyan.plugins.get("license-plugin")
+
+        # Ask user for license type
+        license_type = await cyan.inquirer.select(
+            message="Choose a license:",
+            options=license_plugin.get_supported_licenses()
+        )
+
+        # Generate license
+        license_content = await license_plugin.generate({
+            "type": license_type,
+            "holder": cyan.answers["author"]
+        })
+
+        # Write to output
+        await cyan.files.write("LICENSE", license_content)
+```
+
+  </Tab>
+</Tabs>
+
+## Lifecycle Hooks
+
+Plugins can subscribe to template lifecycle events:
+
+<Tabs groupId="sdk-language" items={['TypeScript', '.NET', 'Python']} persist>
+  <Tab value="TypeScript">
+
+```ts
+export default class AuditPlugin implements ICyanPlugin {
+  name = 'audit-plugin';
+  version = '1.0.0';
+
+  async initialize(context: PluginContext): Promise<void> {
+    // Register hooks
+    context.hooks.beforeExecute(this.onBeforeExecute.bind(this));
+    context.hooks.afterExecute(this.onAfterExecute.bind(this));
+    context.hooks.onError(this.onError.bind(this));
+  }
+
+  private async onBeforeExecute(event: BeforeExecuteEvent): Promise<void> {
+    console.log(`Template ${event.templateName} starting...`);
+  }
+
+  private async onAfterExecute(event: AfterExecuteEvent): Promise<void> {
+    console.log(`Template ${event.templateName} completed in ${event.duration}ms`);
+  }
+
+  private async onError(event: ErrorEvent): Promise<void> {
+    console.error(`Template failed: ${event.error.message}`);
+  }
+}
+```
+
+  </Tab>
+  <Tab value=".NET">
+
+```csharp
+public class AuditPlugin : ICyanPlugin
+{
+    public string Name => "audit-plugin";
+    public string Version => "1.0.0";
+
+    public async Task InitializeAsync(PluginContext context)
+    {
+        // Register hooks
+        context.Hooks.BeforeExecute(OnBeforeExecuteAsync);
+        context.Hooks.AfterExecute(OnAfterExecuteAsync);
+        context.Hooks.OnError(OnErrorAsync);
+    }
+
+    private async Task OnBeforeExecuteAsync(BeforeExecuteEvent event)
+    {
+        Console.WriteLine($"Template {event.TemplateName} starting...");
+    }
+
+    private async Task OnAfterExecuteAsync(AfterExecuteEvent event)
+    {
+        Console.WriteLine($"Template {event.TemplateName} completed in {event.Duration}ms");
+    }
+
+    private async Task OnErrorAsync(ErrorEvent event)
+    {
+        Console.WriteLine($"Template failed: {event.Error.Message}");
+    }
+}
+```
+
+  </Tab>
+  <Tab value="Python">
+
+```python
+class AuditPlugin(ICyanPlugin):
+    @property
+    def name(self) -> str:
+        return "audit-plugin"
+
+    @property
+    def version(self) -> str:
+        return "1.0.0"
+
+    async def initialize(self, context: PluginContext):
+        # Register hooks
+        context.hooks.before_execute(self._on_before_execute)
+        context.hooks.after_execute(self._on_after_execute)
+        context.hooks.on_error(self._on_error)
+
+    async def _on_before_execute(self, event):
+        print(f"Template {event.template_name} starting...")
+
+    async def _on_after_execute(self, event):
+        print(f"Template {event.template_name} completed in {event.duration}ms")
+
+    async def _on_error(self, event):
+        print(f"Template failed: {event.error.message}")
+```
+
+  </Tab>
+</Tabs>
+
+### Available Hooks
+
+| Hook | When | Event Data |
+| ---- | ---- | ---------- |
+| `beforeExecute` | Before template runs | `templateName`, `answers` |
+| `afterInquirer` | After questions answered | `templateName`, `answers` |
+| `beforeProcess` | Before file processing | `templateName`, `files` |
+| `afterProcess` | After file processing | `templateName`, `outputFiles` |
+| `afterExecute` | After template completes | `templateName`, `duration` |
+| `onError` | On error | `templateName`, `error` |
+
+## Plugin Context
+
+The `PluginContext` provides access to SDK functionality:
+
+<Tabs groupId="sdk-language" items={['TypeScript', '.NET', 'Python']} persist>
+  <Tab value="TypeScript">
+
+```ts
+interface PluginContext {
+  // Plugin configuration from cyanprint.json
+  config: Record<string, any>;
+
+  // Logger for debugging
+  logger: Logger;
+
+  // Hook registration
+  hooks: HookRegistry;
+
+  // Access to other plugins (if loaded)
+  plugins: PluginManager;
+
+  // File operations (read-only)
+  files: FileHelper;
+}
+```
+
+  </Tab>
+  <Tab value=".NET">
+
+```csharp
+public class PluginContext
+{
+    // Plugin configuration
+    public Dictionary<string, object> Config { get; set; }
+
+    // Logger
+    public Logger Logger { get; set; }
+
+    // Hook registration
+    public HookRegistry Hooks { get; set; }
+
+    // Plugin manager
+    public PluginManager Plugins { get; set; }
+
+    // File helper (read-only)
+    public FileHelper Files { get; set; }
+}
+```
+
+  </Tab>
+  <Tab value="Python">
+
+```python
+class PluginContext:
+    # Plugin configuration
+    config: dict
+
+    # Logger
+    logger: Logger
+
+    # Hook registration
+    hooks: HookRegistry
+
+    # Plugin manager
+    plugins: PluginManager
+
+    # File helper (read-only)
+    files: FileHelper
+```
+
+  </Tab>
+</Tabs>
+
+## Testing the Plugin
+
+<Tabs groupId="sdk-language" items={['TypeScript', '.NET', 'Python']} persist>
+  <Tab value="TypeScript">
+
+```ts
+// tests/plugin.test.ts
+import { describe, it, expect } from 'vitest';
+import LicensePlugin from '../src/index';
+
+describe('LicensePlugin', () => {
+  const plugin = new LicensePlugin();
+
+  it('returns supported licenses', () => {
+    const licenses = plugin.getSupportedLicenses();
+    expect(licenses).toContain('MIT');
+    expect(licenses).toContain('Apache-2.0');
+  });
+
+  it('validates license types', () => {
+    expect(plugin.isValidLicense('MIT')).toBe(true);
+    expect(plugin.isValidLicense('INVALID')).toBe(false);
+  });
+
+  it('generates MIT license', async () => {
+    const content = await plugin.generate({
+      type: 'MIT',
+      year: 2024,
+      holder: 'Test Holder'
+    });
+
+    expect(content).toContain('MIT License');
+    expect(content).toContain('2024');
+    expect(content).toContain('Test Holder');
+  });
+});
+```
+
+  </Tab>
+  <Tab value=".NET">
+
+```csharp
+// Tests/PluginTests.cs
+using Xunit;
+
+public class PluginTests
+{
+    private readonly LicensePlugin _plugin;
+
+    public PluginTests()
+    {
+        _plugin = new LicensePlugin();
+    }
+
+    [Fact]
+    public void ReturnsSupportedLicenses()
+    {
+        var licenses = _plugin.GetSupportedLicenses();
+        Assert.Contains("MIT", licenses);
+        Assert.Contains("Apache-2.0", licenses);
+    }
+
+    [Fact]
+    public void ValidatesLicenseTypes()
+    {
+        Assert.True(_plugin.IsValidLicense("MIT"));
+        Assert.False(_plugin.IsValidLicense("INVALID"));
+    }
+
+    [Fact]
+    public async Task GeneratesMitLicense()
+    {
+        var content = await _plugin.GenerateAsync(new LicenseOptions
+        {
+            Type = "MIT",
+            Year = 2024,
+            Holder = "Test Holder"
+        });
+
+        Assert.Contains("MIT License", content);
+        Assert.Contains("2024", content);
+        Assert.Contains("Test Holder", content);
+    }
+}
+```
+
+  </Tab>
+  <Tab value="Python">
+
+```python
+# tests/test_plugin.py
+import pytest
+from plugin import LicensePlugin
+
+@pytest.fixture
+def plugin():
+    return LicensePlugin()
+
+class TestLicensePlugin:
+    def test_returns_supported_licenses(self, plugin):
+        licenses = plugin.get_supported_licenses()
+        assert "MIT" in licenses
+        assert "Apache-2.0" in licenses
+
+    def test_validates_license_types(self, plugin):
+        assert plugin.is_valid_license("MIT") == True
+        assert plugin.is_valid_license("INVALID") == False
+
+    @pytest.mark.asyncio
+    async def test_generates_mit_license(self, plugin):
+        content = await plugin.generate({
+            "type": "MIT",
+            "year": 2024,
+            "holder": "Test Holder"
+        })
+
+        assert "MIT License" in content
+        assert "2024" in content
+        assert "Test Holder" in content
+```
+
+  </Tab>
+</Tabs>
+
+## Summary
+
+You've learned to create a CyanPrint plugin:
+
+- **ICyanPlugin interface** - Required methods and properties
+- **Public API** - Expose functionality to templates
+- **Lifecycle hooks** - Respond to template events
+- **Plugin context** - Access SDK features
+- **Testing** - Verify plugin behavior
+
+## Next Steps
+
+- [Plugin API Reference](./02-api-reference) - Complete API documentation
+- [Plugins in Templates](../templates/08-plugins-in-templates) - Using plugins
+- [Publishing](../templates/10-publishing) - Share your plugin

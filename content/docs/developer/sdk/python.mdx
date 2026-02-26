@@ -1,0 +1,521 @@
+---
+title: Python SDK
+description: Complete API reference for the Python Helium SDK
+---
+
+# Python SDK Reference
+
+Complete API reference for the `cyanprint-helium` package.
+
+## Installation
+
+```bash
+pip install cyanprint-helium
+```
+
+## Imports
+
+```python
+from helium_sdk import (
+    # Main types
+    Cyan,
+    ICyanTemplate,
+    ICyanProcessor,
+    ICyanPlugin,
+
+    # Input/Output types
+    CyanProcessorInput,
+    ProcessorOutput,
+    PluginContext,
+
+    # Helper types
+    Answers,
+    Inquirer,
+    Determinism,
+    FileHelper,
+    Logger,
+    PluginManager,
+    ProcessorRunner,
+    ChildRunner,
+
+    # Additional file type
+    AdditionalFile
+)
+```
+
+---
+
+## Core Classes
+
+### ICyanTemplate
+
+All templates inherit from this abstract class:
+
+```python
+from abc import ABC, abstractmethod
+
+class ICyanTemplate(ABC):
+    @abstractmethod
+    async def execute(self, cyan: Cyan) -> None:
+        pass
+```
+
+### ICyanProcessor
+
+All processors inherit from this abstract class:
+
+```python
+class ICyanProcessor(ABC):
+    @abstractmethod
+    async def process(self, input: CyanProcessorInput) -> ProcessorOutput:
+        pass
+```
+
+### ICyanPlugin
+
+All plugins inherit from this abstract class:
+
+```python
+class ICyanPlugin(ABC):
+    @property
+    @abstractmethod
+    def name(self) -> str:
+        pass
+
+    @property
+    @abstractmethod
+    def version(self) -> str:
+        pass
+
+    @abstractmethod
+    async def initialize(self, context: PluginContext) -> None:
+        pass
+
+    async def dispose(self) -> None:
+        pass
+```
+
+---
+
+## Cyan Object
+
+The main object passed to templates.
+
+```python
+class Cyan:
+    # Properties
+    answers: Answers
+    config: dict
+    inquirer: Inquirer
+    determinism: Determinism
+    files: FileHelper
+    processors: ProcessorRunner
+    plugins: PluginManager
+    children: ChildRunner
+    logger: Logger
+
+    # Methods
+    def glob(self, pattern: str) -> List[str]: ...
+    def glob(self, patterns: List[str]) -> List[str]: ...
+    def glob(self, pattern: str, options: dict) -> List[str]: ...
+
+# Glob options
+{
+    "cwd": str,
+    "dot": bool,
+    "absolute": bool,
+    "only_files": bool,
+    "only_directories": bool
+}
+```
+
+---
+
+## Answers
+
+Access to user answers.
+
+```python
+class Answers:
+    # Dictionary-like access
+    def __getitem__(self, key: str) -> Any: ...
+    def __setitem__(self, key: str, value: Any) -> None: ...
+
+    # Methods
+    def get(self, key: str, default: Any = None) -> Any: ...
+    def has(self, key: str) -> bool: ...
+    def set(self, key: str, value: Any) -> None: ...
+
+    # Conditional prompting
+    async def get_or_prompt(self, key: str, options: dict) -> str: ...
+    async def get_or_prompt_select(self, key: str, options: dict) -> str: ...
+    async def get_or_prompt_checkbox(self, key: str, options: dict) -> List[str]: ...
+```
+
+---
+
+## Inquirer
+
+User interaction methods.
+
+```python
+class Inquirer:
+    # Text input
+    async def text(self, **options) -> str: ...
+
+    # Single selection
+    async def select(self, **options) -> str: ...
+
+    # Multiple selections
+    async def checkbox(self, **options) -> List[str]: ...
+
+    # Yes/No confirmation
+    async def confirm(self, **options) -> bool: ...
+
+    # Masked input
+    async def password(self, **options) -> str: ...
+
+    # Date picker
+    async def date(self, **options) -> date: ...
+
+    # Number input
+    async def number(self, **options) -> int: ...
+
+    # Expandable selection
+    async def expand(self, **options) -> Any: ...
+
+# Option dictionaries
+# Text options
+{
+    "message": str,
+    "default": str,
+    "placeholder": str,
+    "validate": Callable[[str], Union[bool, str]],
+    "transformer": Callable[[str], str],
+    "required": bool
+}
+
+# Select options
+{
+    "message": str,
+    "options": Union[List[str], List[dict]],
+    "default": str,
+    "page_size": int
+}
+
+# Select option dict
+{
+    "value": str,
+    "label": str,
+    "description": str,
+    "disabled": bool
+}
+
+# Checkbox options
+{
+    "message": str,
+    "options": Union[List[str], List[dict]],
+    "required": bool,
+    "min": int,
+    "max": int,
+    "page_size": int
+}
+
+# Checkbox option dict
+{
+    "value": str,
+    "label": str,
+    "checked": bool,
+    "disabled": bool
+}
+
+# Confirm options
+{
+    "message": str,
+    "default": bool
+}
+
+# Password options
+{
+    "message": str,
+    "mask": str,
+    "validate": Callable[[str], Union[bool, str]]
+}
+
+# Date options
+{
+    "message": str,
+    "default": date,
+    "min": date,
+    "max": date,
+    "format": str
+}
+
+# Number options
+{
+    "message": str,
+    "default": int,
+    "min": int,
+    "max": int,
+    "step": int,
+    "validate": Callable[[int], Union[bool, str]]
+}
+
+# Expand options
+{
+    "message": str,
+    "options": List[dict],
+    "default": str
+}
+
+# Expand option dict
+{
+    "key": str,
+    "name": str,
+    "value": Any
+}
+```
+
+---
+
+## Determinism
+
+Deterministic random generation.
+
+```python
+class Determinism:
+    def uuid(self) -> str: ...
+    def random(self) -> float: ...
+    def random_int(self, min: int, max: int) -> int: ...
+    def random_string(self, length: int) -> str: ...
+    def shuffle(self, array: List[T]) -> List[T]: ...
+    def pick(self, array: List[T]) -> T: ...
+    def chance(self, probability: float) -> bool: ...
+```
+
+---
+
+## FileHelper
+
+File operations.
+
+```python
+class FileHelper:
+    async def read(self, path: str, encoding: str = "utf-8") -> str: ...
+    async def read_json(self, path: str) -> Any: ...
+    async def write(self, path: str, content: str, encoding: str = "utf-8") -> None: ...
+    async def write_json(self, path: str, data: Any, indent: int = 2) -> None: ...
+    async def exists(self, path: str) -> bool: ...
+    async def copy(self, source: str, destination: str) -> None: ...
+    async def copy_dir(self, source: str, destination: str) -> None: ...
+    async def delete(self, path: str) -> None: ...
+    async def mkdir(self, path: str, recursive: bool = True) -> None: ...
+    async def readdir(self, path: str) -> List[str]: ...
+    async def stat(self, path: str) -> FileStats: ...
+    async def is_directory(self, path: str) -> bool: ...
+    async def is_file(self, path: str) -> bool: ...
+
+class FileStats:
+    size: int
+    created: datetime
+    modified: datetime
+    is_directory: bool
+    is_file: bool
+```
+
+---
+
+## ProcessorRunner
+
+Execute processors.
+
+```python
+class ProcessorRunner:
+    async def run(self, name: str, options: dict) -> None: ...
+    async def run(self, name: str, options: dict, config: Any) -> None: ...
+    def has(self, name: str) -> bool: ...
+
+# Processor options
+{
+    "input": str,
+    "output": str,
+    "encoding": str,
+    "config": Any
+}
+```
+
+---
+
+## PluginManager
+
+Access plugins.
+
+```python
+class PluginManager:
+    def get(self, name: str) -> Any: ...
+    def has(self, name: str) -> bool: ...
+    def list(self) -> List[PluginInfo]: ...
+
+class PluginInfo:
+    name: str
+    version: str
+    provides: List[str]
+```
+
+---
+
+## ChildRunner
+
+Execute child templates.
+
+```python
+class ChildRunner:
+    async def run(self, name: str, options: dict = None) -> None: ...
+
+# Child options
+{
+    "path": str,
+    "config": Any
+}
+```
+
+---
+
+## Logger
+
+Logging utilities.
+
+```python
+class Logger:
+    def info(self, message: str) -> None: ...
+    def warn(self, message: str) -> None: ...
+    def error(self, message: str) -> None: ...
+    def debug(self, message: str) -> None: ...
+    def success(self, message: str) -> None: ...
+```
+
+---
+
+## Processor Types
+
+### CyanProcessorInput
+
+```python
+class CyanProcessorInput:
+    content: str
+    file_path: str
+    encoding: str
+    extension: str
+    config: dict
+    answers: Answers
+    files: FileHelper
+    determinism: Determinism
+    logger: Logger
+```
+
+### ProcessorOutput
+
+```python
+class ProcessorOutput:
+    content: str
+    encoding: str
+    skipped: bool = False
+    skip_reason: str = None
+    error: str = None
+    additional_files: List[AdditionalFile] = None
+
+class AdditionalFile:
+    path: str
+    content: str
+    encoding: str = None
+```
+
+---
+
+## Plugin Types
+
+### PluginContext
+
+```python
+class PluginContext:
+    config: dict
+    logger: Logger
+    hooks: HookRegistry
+    plugins: PluginManager
+    files: FileHelper
+```
+
+### HookRegistry
+
+```python
+class HookRegistry:
+    def before_execute(self, callback: Callable[[BeforeExecuteEvent], Awaitable[None]]) -> None: ...
+    def after_inquirer(self, callback: Callable[[AfterInquirerEvent], Awaitable[None]]) -> None: ...
+    def before_process(self, callback: Callable[[BeforeProcessEvent], Awaitable[None]]) -> None: ...
+    def after_process(self, callback: Callable[[AfterProcessEvent], Awaitable[None]]) -> None: ...
+    def after_execute(self, callback: Callable[[AfterExecuteEvent], Awaitable[None]]) -> None: ...
+    def on_error(self, callback: Callable[[ErrorEvent], Awaitable[None]]) -> None: ...
+```
+
+### Hook Event Types
+
+```python
+class BeforeExecuteEvent:
+    template_name: str
+    template_version: str
+    answers: dict
+    timestamp: datetime
+
+class AfterInquirerEvent:
+    template_name: str
+    answers: dict
+    question_count: int
+
+class BeforeProcessEvent:
+    template_name: str
+    input_file_count: int
+    input_files: List[str]
+
+class AfterProcessEvent:
+    template_name: str
+    output_file_count: int
+    output_files: List[str]
+    process_duration: int
+
+class AfterExecuteEvent:
+    template_name: str
+    success: bool
+    duration: int
+    file_count: int
+    errors: List[str]
+
+class ErrorEvent:
+    template_name: str
+    error: Exception
+    phase: str  # "inquirer", "process", "output", "unknown"
+    recoverable: bool
+```
+
+---
+
+## Type Hints
+
+The SDK includes comprehensive type hints for IDE support:
+
+```python
+from typing import (
+    List, Dict, Any, Optional,
+    Callable, Awaitable, Union,
+    TypeVar, Generic
+)
+
+T = TypeVar('T')
+```
+
+---
+
+## See Also
+
+- [Template API Reference](../templates/11-api-reference) - Template development
+- [Processor API Reference](../processors/03-api-reference) - Processor development
+- [Plugin API Reference](../plugins/02-api-reference) - Plugin development

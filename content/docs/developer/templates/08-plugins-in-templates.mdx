@@ -1,0 +1,568 @@
+---
+title: Plugins in Templates
+description: Use plugins to extend template functionality
+---
+
+# Plugins in Templates
+
+Plugins provide reusable functionality that templates can leverage. This guide shows you how to use plugins in your templates.
+
+## What are Plugins?
+
+Plugins are CyanPrint artifacts that:
+
+- Add helper functions and utilities
+- Provide integrations with external services
+- Hook into template lifecycle events
+- Share common functionality across templates
+
+Unlike templates (which generate files) and processors (which transform content), plugins provide **behavioral extensions**.
+
+## Declaring Plugin Dependencies
+
+In `cyanprint.json`:
+
+```json
+{
+  "name": "my-template",
+  "version": "1.0.0",
+  "plugins": [
+    {
+      "name": "git-plugin",
+      "version": "^1.0.0"
+    },
+    {
+      "name": "license-plugin",
+      "version": "^2.0.0"
+    }
+  ]
+}
+```
+
+## Using Plugins
+
+Access plugins through `cyan.plugins`:
+
+import { Tab, Tabs } from 'fumadocs-ui/components/tabs';
+
+<Tabs groupId="sdk-language" items={['TypeScript', '.NET', 'Python']} persist>
+  <Tab value="TypeScript">
+
+```ts
+import { Cyan, ICyanTemplate } from '@atomicloud/helium-sdk';
+
+export default class MyTemplate implements ICyanTemplate {
+  async execute(cyan: Cyan): Promise<void> {
+    // Collect answers
+    const projectName = await cyan.inquirer.text({
+      message: 'Project name:'
+    });
+
+    // Use git plugin to initialize repository
+    const gitPlugin = cyan.plugins.get('git-plugin');
+    await gitPlugin.init({
+      name: projectName,
+      branch: 'main'
+    });
+
+    // Use license plugin to generate LICENSE file
+    const licensePlugin = cyan.plugins.get('license-plugin');
+    const licenseContent = await licensePlugin.generate({
+      type: 'MIT',
+      year: new Date().getFullYear(),
+      holder: cyan.answers.author
+    });
+
+    await cyan.files.write('LICENSE', licenseContent);
+  }
+}
+```
+
+  </Tab>
+  <Tab value=".NET">
+
+```csharp
+using AtomiCloud.Helium;
+
+public class MyTemplate : ICyanTemplate
+{
+    public async Task ExecuteAsync(Cyan cyan)
+    {
+        // Collect answers
+        var projectName = await cyan.Inquirer.TextAsync(new TextOptions
+        {
+            Message = "Project name:"
+        });
+
+        // Use git plugin to initialize repository
+        var gitPlugin = cyan.Plugins.Get("git-plugin");
+        await gitPlugin.InitAsync(new GitInitOptions
+        {
+            Name = projectName,
+            Branch = "main"
+        });
+
+        // Use license plugin to generate LICENSE file
+        var licensePlugin = cyan.Plugins.Get("license-plugin");
+        var licenseContent = await licensePlugin.GenerateAsync(new LicenseOptions
+        {
+            Type = "MIT",
+            Year = DateTime.Now.Year,
+            Holder = cyan.Answers["author"].ToString()
+        });
+
+        await cyan.Files.WriteAsync("LICENSE", licenseContent);
+    }
+}
+```
+
+  </Tab>
+  <Tab value="Python">
+
+```python
+from helium_sdk import Cyan, ICyanTemplate
+from datetime import datetime
+
+class MyTemplate(ICyanTemplate):
+    async def execute(self, cyan: Cyan):
+        # Collect answers
+        project_name = await cyan.inquirer.text(
+            message="Project name:"
+        )
+
+        # Use git plugin to initialize repository
+        git_plugin = cyan.plugins.get("git-plugin")
+        await git_plugin.init({
+            "name": project_name,
+            "branch": "main"
+        })
+
+        # Use license plugin to generate LICENSE file
+        license_plugin = cyan.plugins.get("license-plugin")
+        license_content = await license_plugin.generate({
+            "type": "MIT",
+            "year": datetime.now().year,
+            "holder": cyan.answers["author"]
+        })
+
+        await cyan.files.write("LICENSE", license_content)
+```
+
+  </Tab>
+</Tabs>
+
+## Common Plugin Types
+
+### Git Plugin
+
+Initialize and configure Git repositories:
+
+<Tabs groupId="sdk-language" items={['TypeScript', '.NET', 'Python']} persist>
+  <Tab value="TypeScript">
+
+```ts
+const git = cyan.plugins.get('git-plugin');
+
+// Initialize repository
+await git.init({ branch: 'main' });
+
+// Add files
+await git.add('.');
+
+// Create initial commit
+await git.commit('Initial commit from template');
+
+// Add remote
+await git.addRemote('origin', 'https://github.com/user/repo.git');
+```
+
+  </Tab>
+  <Tab value=".NET">
+
+```csharp
+var git = cyan.Plugins.Get("git-plugin");
+
+// Initialize repository
+await git.InitAsync(new { branch = "main" });
+
+// Add files
+await git.AddAsync(".");
+
+// Create initial commit
+await git.CommitAsync("Initial commit from template");
+
+// Add remote
+await git.AddRemoteAsync("origin", "https://github.com/user/repo.git");
+```
+
+  </Tab>
+  <Tab value="Python">
+
+```python
+git = cyan.plugins.get("git-plugin")
+
+# Initialize repository
+await git.init({"branch": "main"})
+
+# Add files
+await git.add(".")
+
+# Create initial commit
+await git.commit("Initial commit from template")
+
+# Add remote
+await git.add_remote("origin", "https://github.com/user/repo.git")
+```
+
+  </Tab>
+</Tabs>
+
+### License Plugin
+
+Generate license files:
+
+<Tabs groupId="sdk-language" items={['TypeScript', '.NET', 'Python']} persist>
+  <Tab value="TypeScript">
+
+```ts
+const license = cyan.plugins.get('license-plugin');
+
+const licenseType = await cyan.inquirer.select({
+  message: 'License:',
+  options: ['MIT', 'Apache-2.0', 'GPL-3.0', 'BSD-3-Clause']
+});
+
+const content = await license.generate({
+  type: licenseType,
+  year: new Date().getFullYear(),
+  holder: cyan.answers.author
+});
+
+await cyan.files.write('LICENSE', content);
+```
+
+  </Tab>
+  <Tab value=".NET">
+
+```csharp
+var license = cyan.Plugins.Get("license-plugin");
+
+var licenseType = await cyan.Inquirer.SelectAsync(new SelectOptions
+{
+    Message = "License:",
+    Options = new[] { "MIT", "Apache-2.0", "GPL-3.0", "BSD-3-Clause" }
+});
+
+var content = await license.GenerateAsync(new LicenseOptions
+{
+    Type = licenseType,
+    Year = DateTime.Now.Year,
+    Holder = cyan.Answers["author"].ToString()
+});
+
+await cyan.Files.WriteAsync("LICENSE", content);
+```
+
+  </Tab>
+  <Tab value="Python">
+
+```python
+from datetime import datetime
+
+license = cyan.plugins.get("license-plugin")
+
+license_type = await cyan.inquirer.select(
+    message="License:",
+    options=["MIT", "Apache-2.0", "GPL-3.0", "BSD-3-Clause"]
+)
+
+content = await license.generate({
+    "type": license_type,
+    "year": datetime.now().year,
+    "holder": cyan.answers["author"]
+})
+
+await cyan.files.write("LICENSE", content)
+```
+
+  </Tab>
+</Tabs>
+
+### Environment Plugin
+
+Manage environment variables:
+
+<Tabs groupId="sdk-language" items={['TypeScript', '.NET', 'Python']} persist>
+  <Tab value="TypeScript">
+
+```ts
+const env = cyan.plugins.get('env-plugin');
+
+// Generate .env file from answers
+await env.generate({
+  output: '.env',
+  variables: {
+    NODE_ENV: 'development',
+    DATABASE_URL: `postgres://localhost:5432/${cyan.answers.projectName}`,
+    API_KEY: cyan.determinism.randomString(32)
+  }
+});
+
+// Generate .env.example
+await env.generateExample({
+  source: '.env',
+  output: '.env.example'
+});
+```
+
+  </Tab>
+  <Tab value=".NET">
+
+```csharp
+var env = cyan.Plugins.Get("env-plugin");
+
+// Generate .env file from answers
+await env.GenerateAsync(new EnvOptions
+{
+    Output = ".env",
+    Variables = new Dictionary<string, string>
+    {
+        ["NODE_ENV"] = "development",
+        ["DATABASE_URL"] = $"postgres://localhost:5432/{cyan.Answers["projectName"]}",
+        ["API_KEY"] = cyan.Determinism.RandomString(32)
+    }
+});
+
+// Generate .env.example
+await env.GenerateExampleAsync(new EnvExampleOptions
+{
+    Source = ".env",
+    Output = ".env.example"
+});
+```
+
+  </Tab>
+  <Tab value="Python">
+
+```python
+env = cyan.plugins.get("env-plugin")
+
+# Generate .env file from answers
+await env.generate({
+    "output": ".env",
+    "variables": {
+        "NODE_ENV": "development",
+        "DATABASE_URL": f"postgres://localhost:5432/{cyan.answers['projectName']}",
+        "API_KEY": cyan.determinism.random_string(32)
+    }
+})
+
+# Generate .env.example
+await env.generate_example({
+    "source": ".env",
+    "output": ".env.example"
+})
+```
+
+  </Tab>
+</Tabs>
+
+### Validator Plugin
+
+Validate user input:
+
+<Tabs groupId="sdk-language" items={['TypeScript', '.NET', 'Python']} persist>
+  <Tab value="TypeScript">
+
+```ts
+const validator = cyan.plugins.get('validator-plugin');
+
+// Validate project name
+const projectName = await cyan.inquirer.text({
+  message: 'Project name:',
+  validate: (value) => {
+    if (!validator.isPackageName(value)) {
+      return 'Must be a valid package name (lowercase, alphanumeric, dashes)';
+    }
+    if (await validator.isPackageTaken(value)) {
+      return 'Package name is already taken on npm';
+    }
+    return true;
+  }
+});
+
+// Validate GitHub repository
+const repo = await cyan.inquirer.text({
+  message: 'GitHub repository:',
+  validate: (value) => {
+    if (!validator.isGitHubRepo(value)) {
+      return 'Must be in format: owner/repo';
+    }
+    return true;
+  }
+});
+```
+
+  </Tab>
+  <Tab value=".NET">
+
+```csharp
+var validator = cyan.Plugins.Get("validator-plugin");
+
+// Validate project name
+var projectName = await cyan.Inquirer.TextAsync(new TextOptions
+{
+    Message = "Project name:",
+    Validate = async value =>
+    {
+        if (!validator.IsPackageName(value))
+        {
+            return "Must be a valid package name (lowercase, alphanumeric, dashes)";
+        }
+        if (await validator.IsPackageTakenAsync(value))
+        {
+            return "Package name is already taken on npm";
+        }
+        return null;
+    }
+});
+
+// Validate GitHub repository
+var repo = await cyan.Inquirer.TextAsync(new TextOptions
+{
+    Message = "GitHub repository:",
+    Validate = value =>
+    {
+        if (!validator.IsGitHubRepo(value))
+        {
+            return "Must be in format: owner/repo";
+        }
+        return null;
+    }
+});
+```
+
+  </Tab>
+  <Tab value="Python">
+
+```python
+validator = cyan.plugins.get("validator-plugin")
+
+# Validate project name
+async def validate_project_name(value):
+    if not validator.is_package_name(value):
+        return "Must be a valid package name (lowercase, alphanumeric, dashes)"
+    if await validator.is_package_taken(value):
+        return "Package name is already taken on npm"
+    return True
+
+project_name = await cyan.inquirer.text(
+    message="Project name:",
+    validate=validate_project_name
+)
+
+# Validate GitHub repository
+def validate_repo(value):
+    if not validator.is_github_repo(value):
+        return "Must be in format: owner/repo"
+    return True
+
+repo = await cyan.inquirer.text(
+    message="GitHub repository:",
+    validate=validate_repo
+)
+```
+
+  </Tab>
+</Tabs>
+
+## Plugin Lifecycle Hooks
+
+Plugins can hook into template lifecycle events:
+
+```json
+{
+  "plugins": [
+    {
+      "name": "audit-plugin",
+      "hooks": {
+        "beforeExecute": true,
+        "afterExecute": true,
+        "onError": true
+      }
+    }
+  ]
+}
+```
+
+### Available Hooks
+
+| Hook | When it runs |
+| ---- | ------------ |
+| `beforeExecute` | Before template execution starts |
+| `afterInquirer` | After user questions are answered |
+| `beforeProcess` | Before file processing begins |
+| `afterProcess` | After file processing completes |
+| `afterExecute` | After template execution finishes |
+| `onError` | When an error occurs |
+
+## Creating Custom Plugins
+
+See [Plugins](../plugins/01-first-plugin) for creating your own plugins.
+
+## Best Practices
+
+1. **Check plugin availability** before using
+2. **Handle missing plugins** gracefully
+3. **Document required plugins** in README
+4. **Version pin** for stability
+
+<Tabs groupId="sdk-language" items={['TypeScript', '.NET', 'Python']} persist>
+  <Tab value="TypeScript">
+
+```ts
+// Check if plugin is available
+if (cyan.plugins.has('git-plugin')) {
+  const git = cyan.plugins.get('git-plugin');
+  await git.init();
+} else {
+  console.log('Git plugin not available, skipping initialization');
+}
+```
+
+  </Tab>
+  <Tab value=".NET">
+
+```csharp
+// Check if plugin is available
+if (cyan.Plugins.Has("git-plugin"))
+{
+    var git = cyan.Plugins.Get("git-plugin");
+    await git.InitAsync();
+}
+else
+{
+    Console.WriteLine("Git plugin not available, skipping initialization");
+}
+```
+
+  </Tab>
+  <Tab value="Python">
+
+```python
+# Check if plugin is available
+if cyan.plugins.has("git-plugin"):
+    git = cyan.plugins.get("git-plugin")
+    await git.init()
+else:
+    print("Git plugin not available, skipping initialization")
+```
+
+  </Tab>
+</Tabs>
+
+## See Also
+
+- [Creating Plugins](../plugins/01-first-plugin) - Build your own plugin
+- [Plugin API Reference](../plugins/02-api-reference) - Full plugin API
+- [Best Practices](./13-best-practices) - Template design patterns

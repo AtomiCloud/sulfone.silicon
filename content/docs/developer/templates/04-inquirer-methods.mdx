@@ -1,0 +1,963 @@
+---
+title: Inquirer Methods
+description: Complete API reference for all inquirer question types
+---
+
+# Inquirer Methods
+
+This reference documents all available inquirer methods for collecting user input.
+
+import { Tab, Tabs } from 'fumadocs-ui/components/tabs';
+
+## text
+
+Collect free-form text input from the user.
+
+### Options
+
+| Property | Type | Required | Description |
+| -------- | ---- | -------- | ----------- |
+| `message` | string | Yes | The prompt message displayed to the user |
+| `default` | string | No | Default value if user presses Enter |
+| `placeholder` | string | No | Placeholder text shown in input |
+| `validate` | function | No | Validation function, returns `true` or error message |
+| `transformer` | function | No | Function to transform display value |
+| `required` | boolean | No | Whether input is required |
+
+### Examples
+
+<Tabs groupId="sdk-language" items={['TypeScript', '.NET', 'Python']} persist>
+  <Tab value="TypeScript">
+
+```ts
+// Basic text input
+const name = await cyan.inquirer.text({
+  message: 'Project name:'
+});
+
+// With default value
+const name = await cyan.inquirer.text({
+  message: 'Project name:',
+  default: 'my-project'
+});
+
+// With validation
+const email = await cyan.inquirer.text({
+  message: 'Email:',
+  validate: (value) => {
+    if (!value.includes('@')) {
+      return 'Please enter a valid email';
+    }
+    return true;
+  }
+});
+
+// With transformer (display only)
+const secret = await cyan.inquirer.text({
+  message: 'API Key:',
+  transformer: (value) => value.replace(/./g, '*')
+});
+```
+
+  </Tab>
+  <Tab value=".NET">
+
+```csharp
+// Basic text input
+var name = await cyan.Inquirer.TextAsync(new TextOptions
+{
+    Message = "Project name:"
+});
+
+// With default value
+var name = await cyan.Inquirer.TextAsync(new TextOptions
+{
+    Message = "Project name:",
+    Default = "my-project"
+});
+
+// With validation
+var email = await cyan.Inquirer.TextAsync(new TextOptions
+{
+    Message = "Email:",
+    Validate = value =>
+    {
+        if (!value.Contains("@"))
+        {
+            return "Please enter a valid email";
+        }
+        return null; // null means valid
+    }
+});
+
+// With transformer (display only)
+var secret = await cyan.Inquirer.TextAsync(new TextOptions
+{
+    Message = "API Key:",
+    Transformer = value => new string('*', value.Length)
+});
+```
+
+  </Tab>
+  <Tab value="Python">
+
+```python
+# Basic text input
+name = await cyan.inquirer.text(
+    message="Project name:"
+)
+
+# With default value
+name = await cyan.inquirer.text(
+    message="Project name:",
+    default="my-project"
+)
+
+# With validation
+async def validate_email(value):
+    if "@" not in value:
+        return "Please enter a valid email"
+    return True
+
+email = await cyan.inquirer.text(
+    message="Email:",
+    validate=validate_email
+)
+
+# With transformer (display only)
+def mask_value(value):
+    return "*" * len(value)
+
+secret = await cyan.inquirer.text(
+    message="API Key:",
+    transformer=mask_value
+)
+```
+
+  </Tab>
+</Tabs>
+
+---
+
+## select
+
+Allow user to select a single option from a list.
+
+### Options
+
+| Property | Type | Required | Description |
+| -------- | ---- | -------- | ----------- |
+| `message` | string | Yes | The prompt message |
+| `options` | array | Yes | Array of options (strings or objects) |
+| `default` | string | No | Default selected option value |
+| `pageSize` | number | No | Number of options to display at once |
+
+### Option Object
+
+| Property | Type | Description |
+| -------- | ---- | ----------- |
+| `value` | string | The value returned when selected |
+| `label` | string | Display text for the option |
+| `description` | string | Optional description shown below label |
+| `disabled` | boolean | Whether option is selectable |
+
+### Examples
+
+<Tabs groupId="sdk-language" items={['TypeScript', '.NET', 'Python']} persist>
+  <Tab value="TypeScript">
+
+```ts
+// Simple string options
+const framework = await cyan.inquirer.select({
+  message: 'Framework:',
+  options: ['React', 'Vue', 'Svelte']
+});
+
+// Object options with descriptions
+const framework = await cyan.inquirer.select({
+  message: 'Framework:',
+  options: [
+    {
+      value: 'react',
+      label: 'React',
+      description: 'A JavaScript library for building user interfaces'
+    },
+    {
+      value: 'vue',
+      label: 'Vue',
+      description: 'The progressive JavaScript framework'
+    },
+    {
+      value: 'svelte',
+      label: 'Svelte',
+      description: 'Cybernetically enhanced web apps'
+    }
+  ],
+  default: 'react'
+});
+
+// With disabled option
+const plan = await cyan.inquirer.select({
+  message: 'Select plan:',
+  options: [
+    { value: 'free', label: 'Free' },
+    { value: 'pro', label: 'Pro' },
+    { value: 'enterprise', label: 'Enterprise (Coming Soon)', disabled: true }
+  ]
+});
+
+// With pagination
+const template = await cyan.inquirer.select({
+  message: 'Select template:',
+  options: largeTemplateList,
+  pageSize: 10
+});
+```
+
+  </Tab>
+  <Tab value=".NET">
+
+```csharp
+// Simple string options
+var framework = await cyan.Inquirer.SelectAsync(new SelectOptions
+{
+    Message = "Framework:",
+    Options = new[] { "React", "Vue", "Svelte" }
+});
+
+// Object options with descriptions
+var framework = await cyan.Inquirer.SelectAsync(new SelectOptions
+{
+    Message = "Framework:",
+    Options = new[]
+    {
+        new SelectOption
+        {
+            Value = "react",
+            Label = "React",
+            Description = "A JavaScript library for building user interfaces"
+        },
+        new SelectOption
+        {
+            Value = "vue",
+            Label = "Vue",
+            Description = "The progressive JavaScript framework"
+        },
+        new SelectOption
+        {
+            Value = "svelte",
+            Label = "Svelte",
+            Description = "Cybernetically enhanced web apps"
+        }
+    },
+    Default = "react"
+});
+
+// With disabled option
+var plan = await cyan.Inquirer.SelectAsync(new SelectOptions
+{
+    Message = "Select plan:",
+    Options = new[]
+    {
+        new SelectOption { Value = "free", Label = "Free" },
+        new SelectOption { Value = "pro", Label = "Pro" },
+        new SelectOption { Value = "enterprise", Label = "Enterprise (Coming Soon)", Disabled = true }
+    }
+});
+
+// With pagination
+var template = await cyan.Inquirer.SelectAsync(new SelectOptions
+{
+    Message = "Select template:",
+    Options = largeTemplateList,
+    PageSize = 10
+});
+```
+
+  </Tab>
+  <Tab value="Python">
+
+```python
+# Simple string options
+framework = await cyan.inquirer.select(
+    message="Framework:",
+    options=["React", "Vue", "Svelte"]
+)
+
+# Object options with descriptions
+framework = await cyan.inquirer.select(
+    message="Framework:",
+    options=[
+        {
+            "value": "react",
+            "label": "React",
+            "description": "A JavaScript library for building user interfaces"
+        },
+        {
+            "value": "vue",
+            "label": "Vue",
+            "description": "The progressive JavaScript framework"
+        },
+        {
+            "value": "svelte",
+            "label": "Svelte",
+            "description": "Cybernetically enhanced web apps"
+        }
+    ],
+    default="react"
+)
+
+# With disabled option
+plan = await cyan.inquirer.select(
+    message="Select plan:",
+    options=[
+        {"value": "free", "label": "Free"},
+        {"value": "pro", "label": "Pro"},
+        {"value": "enterprise", "label": "Enterprise (Coming Soon)", "disabled": True}
+    ]
+)
+
+# With pagination
+template = await cyan.inquirer.select(
+    message="Select template:",
+    options=large_template_list,
+    page_size=10
+)
+```
+
+  </Tab>
+</Tabs>
+
+---
+
+## checkbox
+
+Allow user to select multiple options from a list.
+
+### Options
+
+| Property | Type | Required | Description |
+| -------- | ---- | -------- | ----------- |
+| `message` | string | Yes | The prompt message |
+| `options` | array | Yes | Array of options |
+| `required` | boolean | No | Require at least one selection |
+| `min` | number | No | Minimum number of selections |
+| `max` | number | No | Maximum number of selections |
+| `pageSize` | number | No | Number of options visible |
+
+### Option Object
+
+| Property | Type | Description |
+| -------- | ---- | ----------- |
+| `value` | string | The value returned when selected |
+| `label` | string | Display text |
+| `checked` | boolean | Pre-selected by default |
+| `disabled` | boolean | Option cannot be toggled |
+
+### Examples
+
+<Tabs groupId="sdk-language" items={['TypeScript', '.NET', 'Python']} persist>
+  <Tab value="TypeScript">
+
+```ts
+// Simple string options
+const features = await cyan.inquirer.checkbox({
+  message: 'Features:',
+  options: ['TypeScript', 'ESLint', 'Prettier', 'Vitest']
+});
+
+// With pre-selected options
+const features = await cyan.inquirer.checkbox({
+  message: 'Features:',
+  options: [
+    { value: 'typescript', label: 'TypeScript', checked: true },
+    { value: 'eslint', label: 'ESLint', checked: true },
+    { value: 'prettier', label: 'Prettier' },
+    { value: 'vitest', label: 'Vitest' }
+  ]
+});
+
+// With min/max constraints
+const features = await cyan.inquirer.checkbox({
+  message: 'Select 2-4 features:',
+  options: featureList,
+  min: 2,
+  max: 4
+});
+
+// Require at least one selection
+const packages = await cyan.inquirer.checkbox({
+  message: 'Select packages:',
+  options: packageList,
+  required: true
+});
+```
+
+  </Tab>
+  <Tab value=".NET">
+
+```csharp
+// Simple string options
+var features = await cyan.Inquirer.CheckboxAsync(new CheckboxOptions
+{
+    Message = "Features:",
+    Options = new[] { "TypeScript", "ESLint", "Prettier", "Vitest" }
+});
+
+// With pre-selected options
+var features = await cyan.Inquirer.CheckboxAsync(new CheckboxOptions
+{
+    Message = "Features:",
+    Options = new[]
+    {
+        new CheckboxOption { Value = "typescript", Label = "TypeScript", Checked = true },
+        new CheckboxOption { Value = "eslint", Label = "ESLint", Checked = true },
+        new CheckboxOption { Value = "prettier", Label = "Prettier" },
+        new CheckboxOption { Value = "vitest", Label = "Vitest" }
+    }
+});
+
+// With min/max constraints
+var features = await cyan.Inquirer.CheckboxAsync(new CheckboxOptions
+{
+    Message = "Select 2-4 features:",
+    Options = featureList,
+    Min = 2,
+    Max = 4
+});
+
+// Require at least one selection
+var packages = await cyan.Inquirer.CheckboxAsync(new CheckboxOptions
+{
+    Message = "Select packages:",
+    Options = packageList,
+    Required = true
+});
+```
+
+  </Tab>
+  <Tab value="Python">
+
+```python
+# Simple string options
+features = await cyan.inquirer.checkbox(
+    message="Features:",
+    options=["TypeScript", "ESLint", "Prettier", "Vitest"]
+)
+
+# With pre-selected options
+features = await cyan.inquirer.checkbox(
+    message="Features:",
+    options=[
+        {"value": "typescript", "label": "TypeScript", "checked": True},
+        {"value": "eslint", "label": "ESLint", "checked": True},
+        {"value": "prettier", "label": "Prettier"},
+        {"value": "vitest", "label": "Vitest"}
+    ]
+)
+
+# With min/max constraints
+features = await cyan.inquirer.checkbox(
+    message="Select 2-4 features:",
+    options=feature_list,
+    min=2,
+    max=4
+)
+
+# Require at least one selection
+packages = await cyan.inquirer.checkbox(
+    message="Select packages:",
+    options=package_list,
+    required=True
+)
+```
+
+  </Tab>
+</Tabs>
+
+---
+
+## confirm
+
+Ask a yes/no question.
+
+### Options
+
+| Property | Type | Required | Description |
+| -------- | ---- | -------- | ----------- |
+| `message` | string | Yes | The prompt message |
+| `default` | boolean | No | Default value (default: `true`) |
+
+### Examples
+
+<Tabs groupId="sdk-language" items={['TypeScript', '.NET', 'Python']} persist>
+  <Tab value="TypeScript">
+
+```ts
+// Basic confirmation
+const proceed = await cyan.inquirer.confirm({
+  message: 'Continue?'
+});
+
+// With default value
+const useGit = await cyan.inquirer.confirm({
+  message: 'Initialize git repository?',
+  default: true
+});
+
+const installDeps = await cyan.inquirer.confirm({
+  message: 'Install dependencies?',
+  default: false
+});
+```
+
+  </Tab>
+  <Tab value=".NET">
+
+```csharp
+// Basic confirmation
+var proceed = await cyan.Inquirer.ConfirmAsync(new ConfirmOptions
+{
+    Message = "Continue?"
+});
+
+// With default value
+var useGit = await cyan.Inquirer.ConfirmAsync(new ConfirmOptions
+{
+    Message = "Initialize git repository?",
+    Default = true
+});
+
+var installDeps = await cyan.Inquirer.ConfirmAsync(new ConfirmOptions
+{
+    Message = "Install dependencies?",
+    Default = false
+});
+```
+
+  </Tab>
+  <Tab value="Python">
+
+```python
+# Basic confirmation
+proceed = await cyan.inquirer.confirm(
+    message="Continue?"
+)
+
+# With default value
+use_git = await cyan.inquirer.confirm(
+    message="Initialize git repository?",
+    default=True
+)
+
+install_deps = await cyan.inquirer.confirm(
+    message="Install dependencies?",
+    default=False
+)
+```
+
+  </Tab>
+</Tabs>
+
+---
+
+## password
+
+Collect masked text input for sensitive data.
+
+### Options
+
+| Property | Type | Required | Description |
+| -------- | ---- | -------- | ----------- |
+| `message` | string | Yes | The prompt message |
+| `mask` | string | No | Character to mask input (default: `*`) |
+| `validate` | function | No | Validation function |
+
+### Examples
+
+<Tabs groupId="sdk-language" items={['TypeScript', '.NET', 'Python']} persist>
+  <Tab value="TypeScript">
+
+```ts
+// Basic password input
+const apiKey = await cyan.inquirer.password({
+  message: 'API Key:'
+});
+
+// With custom mask
+const token = await cyan.inquirer.password({
+  message: 'Access Token:',
+  mask: '•'
+});
+
+// With validation
+const password = await cyan.inquirer.password({
+  message: 'Password:',
+  validate: (value) => {
+    if (value.length < 8) {
+      return 'Password must be at least 8 characters';
+    }
+    return true;
+  }
+});
+```
+
+  </Tab>
+  <Tab value=".NET">
+
+```csharp
+// Basic password input
+var apiKey = await cyan.Inquirer.PasswordAsync(new PasswordOptions
+{
+    Message = "API Key:"
+});
+
+// With custom mask
+var token = await cyan.Inquirer.PasswordAsync(new PasswordOptions
+{
+    Message = "Access Token:",
+    Mask = "•"
+});
+
+// With validation
+var password = await cyan.Inquirer.PasswordAsync(new PasswordOptions
+{
+    Message = "Password:",
+    Validate = value =>
+    {
+        if (value.Length < 8)
+        {
+            return "Password must be at least 8 characters";
+        }
+        return null;
+    }
+});
+```
+
+  </Tab>
+  <Tab value="Python">
+
+```python
+# Basic password input
+api_key = await cyan.inquirer.password(
+    message="API Key:"
+)
+
+# With custom mask
+token = await cyan.inquirer.password(
+    message="Access Token:",
+    mask="•"
+)
+
+# With validation
+async def validate_password(value):
+    if len(value) < 8:
+        return "Password must be at least 8 characters"
+    return True
+
+password = await cyan.inquirer.password(
+    message="Password:",
+    validate=validate_password
+)
+```
+
+  </Tab>
+</Tabs>
+
+---
+
+## date
+
+Collect date input from the user.
+
+### Options
+
+| Property | Type | Required | Description |
+| -------- | ---- | -------- | ----------- |
+| `message` | string | Yes | The prompt message |
+| `default` | Date | No | Default date value |
+| `min` | Date | No | Minimum selectable date |
+| `max` | Date | No | Maximum selectable date |
+| `format` | string | No | Display format (default: `YYYY-MM-DD`) |
+
+### Examples
+
+<Tabs groupId="sdk-language" items={['TypeScript', '.NET', 'Python']} persist>
+  <Tab value="TypeScript">
+
+```ts
+// Basic date input
+const startDate = await cyan.inquirer.date({
+  message: 'Start date:'
+});
+
+// With default value
+const deadline = await cyan.inquirer.date({
+  message: 'Project deadline:',
+  default: new Date('2025-12-31')
+});
+
+// With date range
+const eventDate = await cyan.inquirer.date({
+  message: 'Event date:',
+  min: new Date(),
+  max: new Date('2025-12-31')
+});
+
+// Custom format
+const birthday = await cyan.inquirer.date({
+  message: 'Birthday:',
+  format: 'MM/DD/YYYY'
+});
+```
+
+  </Tab>
+  <Tab value=".NET">
+
+```csharp
+// Basic date input
+var startDate = await cyan.Inquirer.DateAsync(new DateOptions
+{
+    Message = "Start date:"
+});
+
+// With default value
+var deadline = await cyan.Inquirer.DateAsync(new DateOptions
+{
+    Message = "Project deadline:",
+    Default = new DateTime(2025, 12, 31)
+});
+
+// With date range
+var eventDate = await cyan.Inquirer.DateAsync(new DateOptions
+{
+    Message = "Event date:",
+    Min = DateTime.Today,
+    Max = new DateTime(2025, 12, 31)
+});
+
+// Custom format
+var birthday = await cyan.Inquirer.DateAsync(new DateOptions
+{
+    Message = "Birthday:",
+    Format = "MM/dd/yyyy"
+});
+```
+
+  </Tab>
+  <Tab value="Python">
+
+```python
+from datetime import datetime, date
+
+# Basic date input
+start_date = await cyan.inquirer.date(
+    message="Start date:"
+)
+
+# With default value
+deadline = await cyan.inquirer.date(
+    message="Project deadline:",
+    default=date(2025, 12, 31)
+)
+
+# With date range
+event_date = await cyan.inquirer.date(
+    message="Event date:",
+    min=date.today(),
+    max=date(2025, 12, 31)
+)
+
+# Custom format
+birthday = await cyan.inquirer.date(
+    message="Birthday:",
+    format="MM/DD/YYYY"
+)
+```
+
+  </Tab>
+</Tabs>
+
+---
+
+## number
+
+Collect numeric input from the user.
+
+### Options
+
+| Property | Type | Required | Description |
+| -------- | ---- | -------- | ----------- |
+| `message` | string | Yes | The prompt message |
+| `default` | number | No | Default value |
+| `min` | number | No | Minimum value |
+| `max` | number | No | Maximum value |
+| `step` | number | No | Step increment |
+| `validate` | function | No | Validation function |
+
+### Examples
+
+<Tabs groupId="sdk-language" items={['TypeScript', '.NET', 'Python']} persist>
+  <Tab value="TypeScript">
+
+```ts
+// Basic number input
+const port = await cyan.inquirer.number({
+  message: 'Port number:'
+});
+
+// With range constraints
+const port = await cyan.inquirer.number({
+  message: 'Port:',
+  default: 3000,
+  min: 1024,
+  max: 65535
+});
+
+// With step increment
+const timeout = await cyan.inquirer.number({
+  message: 'Timeout (ms):',
+  default: 5000,
+  step: 1000
+});
+```
+
+  </Tab>
+  <Tab value=".NET">
+
+```csharp
+// Basic number input
+var port = await cyan.Inquirer.NumberAsync(new NumberOptions
+{
+    Message = "Port number:"
+});
+
+// With range constraints
+var port = await cyan.Inquirer.NumberAsync(new NumberOptions
+{
+    Message = "Port:",
+    Default = 3000,
+    Min = 1024,
+    Max = 65535
+});
+
+// With step increment
+var timeout = await cyan.Inquirer.NumberAsync(new NumberOptions
+{
+    Message = "Timeout (ms):",
+    Default = 5000,
+    Step = 1000
+});
+```
+
+  </Tab>
+  <Tab value="Python">
+
+```python
+# Basic number input
+port = await cyan.inquirer.number(
+    message="Port number:"
+)
+
+# With range constraints
+port = await cyan.inquirer.number(
+    message="Port:",
+    default=3000,
+    min=1024,
+    max=65535
+)
+
+# With step increment
+timeout = await cyan.inquirer.number(
+    message="Timeout (ms):",
+    default=5000,
+    step=1000
+)
+```
+
+  </Tab>
+</Tabs>
+
+---
+
+## expand
+
+Compact selection prompt with single-character shortcuts.
+
+### Options
+
+| Property | Type | Required | Description |
+| -------- | ---- | -------- | ----------- |
+| `message` | string | Yes | The prompt message |
+| `options` | array | Yes | Array of expand options |
+| `default` | string | No | Default key |
+
+### Option Object
+
+| Property | Type | Description |
+| -------- | ---- | ----------- |
+| `key` | string | Single character shortcut |
+| `name` | string | Full option name |
+| `value` | any | Value returned when selected |
+
+### Examples
+
+<Tabs groupId="sdk-language" items={['TypeScript', '.NET', 'Python']} persist>
+  <Tab value="TypeScript">
+
+```ts
+const action = await cyan.inquirer.expand({
+  message: 'Conflict detected:',
+  options: [
+    { key: 'o', name: 'Overwrite', value: 'overwrite' },
+    { key: 'a', name: 'Overwrite all', value: 'overwrite-all' },
+    { key: 's', name: 'Skip', value: 'skip' },
+    { key: 'x', name: 'Abort', value: 'abort' }
+  ],
+  default: 'o'
+});
+```
+
+  </Tab>
+  <Tab value=".NET">
+
+```csharp
+var action = await cyan.Inquirer.ExpandAsync(new ExpandOptions
+{
+    Message = "Conflict detected:",
+    Options = new[]
+    {
+        new ExpandOption { Key = "o", Name = "Overwrite", Value = "overwrite" },
+        new ExpandOption { Key = "a", Name = "Overwrite all", Value = "overwrite-all" },
+        new ExpandOption { Key = "s", Name = "Skip", Value = "skip" },
+        new ExpandOption { Key = "x", Name = "Abort", Value = "abort" }
+    },
+    Default = "o"
+});
+```
+
+  </Tab>
+  <Tab value="Python">
+
+```python
+action = await cyan.inquirer.expand(
+    message="Conflict detected:",
+    options=[
+        {"key": "o", "name": "Overwrite", "value": "overwrite"},
+        {"key": "a", "name": "Overwrite all", "value": "overwrite-all"},
+        {"key": "s", "name": "Skip", "value": "skip"},
+        {"key": "x", "name": "Abort", "value": "abort"}
+    ],
+    default="o"
+)
+```
+
+  </Tab>
+</Tabs>
+
+---
+
+## See Also
+
+- [Adding Interaction](./03-adding-interaction) - Tutorial on using inquirer
+- [API Reference](./11-api-reference) - Full SDK API reference

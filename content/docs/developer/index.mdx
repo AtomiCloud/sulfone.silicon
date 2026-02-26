@@ -1,8 +1,191 @@
 ---
 title: Developer Overview
-description: Overview of the Developer documentation
+description: Build templates, processors, and plugins with the Helium SDK
 ---
 
-# Developer Docs
+# Developer Documentation
 
-This is the documentation for developers
+Welcome to the CyanPrint developer documentation. This section guides you through creating reusable artifacts that power the CyanPrint ecosystem.
+
+## Three Types of Artifacts
+
+CyanPrint provides three extensibility points for developers:
+
+### Templates
+
+Templates are the primary artifact type. They define file structures, content patterns, and user interactions for generating projects. Templates use glob patterns to select files and processors to transform content.
+
+<div className="grid grid-cols-1 md:grid-cols-3 gap-4 not-prose my-6">
+
+<div className="border rounded-lg p-4 bg-fd-muted/50">
+  <h4 className="font-semibold mb-2 flex items-center gap-2">
+    <span className="i-lucide-file-code" />
+    What Templates Do
+  </h4>
+  <ul className="text-sm space-y-1 text-fd-muted-foreground">
+    <li>Generate project scaffolds</li>
+    <li>Apply user configurations</li>
+    <li>Create consistent file structures</li>
+  </ul>
+</div>
+
+<div className="border rounded-lg p-4 bg-fd-muted/50">
+  <h4 className="font-semibold mb-2 flex items-center gap-2">
+    <span className="i-lucide-wrench" />
+    Template Components
+  </h4>
+  <ul className="text-sm space-y-1 text-fd-muted-foreground">
+    <li>Glob patterns for file selection</li>
+    <li>Processors for content transformation</li>
+    <li>Inquirer for user interaction</li>
+  </ul>
+</div>
+
+<div className="border rounded-lg p-4 bg-fd-muted/50">
+  <h4 className="font-semibold mb-2 flex items-center gap-2">
+    <span className="i-lucide-rocket" />
+    Getting Started
+  </h4>
+  <ul className="text-sm space-y-1 text-fd-muted-foreground">
+    <li>[Glob and Copy](/developer/templates/01-glob-and-copy)</li>
+    <li>[Default Processor](/developer/templates/02-default-processor)</li>
+    <li>[Adding Interaction](/developer/templates/03-adding-interaction)</li>
+  </ul>
+</div>
+
+</div>
+
+### Processors
+
+Processors transform file content during template execution. The default processor uses Eta templating, but you can create custom processors for specialized transformations like code generation, configuration merging, or format conversion.
+
+<div className="grid grid-cols-1 md:grid-cols-3 gap-4 not-prose my-6">
+
+<div className="border rounded-lg p-4 bg-fd-muted/50">
+  <h4 className="font-semibold mb-2 flex items-center gap-2">
+    <span className="i-lucide-cpu" />
+    What Processors Do
+  </h4>
+  <ul className="text-sm space-y-1 text-fd-muted-foreground">
+    <li>Transform file content</li>
+    <li>Apply templating logic</li>
+    <li>Handle special file formats</li>
+  </ul>
+</div>
+
+<div className="border rounded-lg p-4 bg-fd-muted/50">
+  <h4 className="font-semibold mb-2 flex items-center gap-2">
+    <span className="i-lucide-cog" />
+    Processor Features
+  </h4>
+  <ul className="text-sm space-y-1 text-fd-muted-foreground">
+    <li>File read/write operations</li>
+    <li>Content transformation pipeline</li>
+    <li>Access to template answers</li>
+  </ul>
+</div>
+
+<div className="border rounded-lg p-4 bg-fd-muted/50">
+  <h4 className="font-semibold mb-2 flex items-center gap-2">
+    <span className="i-lucide-rocket" />
+    Getting Started
+  </h4>
+  <ul className="text-sm space-y-1 text-fd-muted-foreground">
+    <li>[First Processor](/developer/processors/01-first-processor)</li>
+    <li>[File Operations](/developer/processors/02-file-operations)</li>
+    <li>[API Reference](/developer/processors/03-api-reference)</li>
+  </ul>
+</div>
+
+</div>
+
+### Plugins
+
+Plugins extend CyanPrint's capabilities by adding new functionality that templates can use. They provide shared utilities, integrations with external services, or custom behaviors across multiple templates.
+
+<div className="grid grid-cols-1 md:grid-cols-3 gap-4 not-prose my-6">
+
+<div className="border rounded-lg p-4 bg-fd-muted/50">
+  <h4 className="font-semibold mb-2 flex items-center gap-2">
+    <span className="i-lucide-puzzle" />
+    What Plugins Do
+  </h4>
+  <ul className="text-sm space-y-1 text-fd-muted-foreground">
+    <li>Add reusable functionality</li>
+    <li>Integrate external services</li>
+    <li>Share code across templates</li>
+  </ul>
+</div>
+
+<div className="border rounded-lg p-4 bg-fd-muted/50">
+  <h4 className="font-semibold mb-2 flex items-center gap-2">
+    <span className="i-lucide-bolt" />
+    Plugin Capabilities
+  </h4>
+  <ul className="text-sm space-y-1 text-fd-muted-foreground">
+    <li>Expose helper functions</li>
+    <li>Hook into lifecycle events</li>
+    <li>Provide shared configuration</li>
+  </ul>
+</div>
+
+<div className="border rounded-lg p-4 bg-fd-muted/50">
+  <h4 className="font-semibold mb-2 flex items-center gap-2">
+    <span className="i-lucide-rocket" />
+    Getting Started
+  </h4>
+  <ul className="text-sm space-y-1 text-fd-muted-foreground">
+    <li>[First Plugin](/developer/plugins/01-first-plugin)</li>
+    <li>[API Reference](/developer/plugins/02-api-reference)</li>
+  </ul>
+</div>
+
+</div>
+
+## Multi-Language SDK Support
+
+The Helium SDK is available in three languages, allowing you to write artifacts in your preferred language:
+
+import { Tab, Tabs } from 'fumadocs-ui/components/tabs';
+
+<Tabs groupId="sdk-language" items={['TypeScript', '.NET', 'Python']} persist>
+  <Tab value="TypeScript">
+
+```bash
+npm install @atomicloud/helium-sdk
+```
+
+  </Tab>
+  <Tab value=".NET">
+
+```bash
+dotnet add package AtomiCloud.Helium
+```
+
+  </Tab>
+  <Tab value="Python">
+
+```bash
+pip install cyanprint-helium
+```
+
+  </Tab>
+</Tabs>
+
+All SDKs provide equivalent functionality with idiomatic APIs for each language. Code examples throughout this documentation show implementations in all three languages.
+
+## How to Use This Documentation
+
+This documentation follows the [Divio documentation system](https://documentation.divio.com/):
+
+1. **Tutorials** - Start here if you're new. Step-by-step guides that teach the basics.
+2. **How-to Guides** - Practical guides for solving specific problems.
+3. **Reference** - Technical specifications for APIs and interfaces.
+4. **Explanation** - Deeper understanding of concepts and design decisions.
+
+## Next Steps
+
+- New to CyanPrint development? Start with [Core Concepts](./01-concepts)
+- Ready to build? Jump to [Templates](./templates/01-glob-and-copy)
+- Building a processor? See [Processors](./processors/01-first-processor)
+- Creating a plugin? See [Plugins](./plugins/01-first-plugin)

@@ -1,6 +1,7 @@
 {
-  "title": "Contributors",
+  "title": "Contributor",
   "description": "Contribute to CyanPrint",
-  "icon": "UsersRound",
+  "icon": "Github",
+  "root": true,
   "pages": ["index", "architecture/index", "repositories/index", "development/index"]
 }

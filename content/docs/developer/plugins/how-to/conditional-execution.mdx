@@ -1,0 +1,208 @@
+---
+title: Conditional Execution
+description: Run plugin logic based on configuration
+---
+
+import { Callout } from 'fumadocs-ui/components/callout';
+
+# Conditional Execution
+
+Run plugin logic based on configuration from the template. This allows templates to control which post-processing steps run.
+
+## Using Config
+
+The `config` property passed to plugins contains configuration defined in the template:
+
+```ts
+import { StartPluginWithLambda } from '@atomicloud/cyan-sdk';
+import { $ } from 'bun';
+
+StartPluginWithLambda(async (input) => {
+  const { directory, config } = input;
+
+  // Define your config type
+  const cfg = config as {
+    git?: boolean;
+    installDeps?: boolean;
+    packageManager?: 'npm' | 'bun' | 'yarn' | 'pnpm';
+    formatter?: 'prettier' | 'biome' | 'none';
+    runBuild?: boolean;
+  };
+
+  // Git initialization
+  if (cfg.git) {
+    await $`git -C ${directory} init`.quiet();
+    await $`git -C ${directory} add .`.quiet();
+    await $`git -C ${directory} commit -m "Initial commit"`.quiet();
+  }
+
+  // Install dependencies
+  if (cfg.installDeps) {
+    const pm = cfg.packageManager || 'npm';
+    await $`cd ${directory} && ${pm} install`.quiet();
+  }
+
+  // Run formatter
+  if (cfg.formatter === 'prettier') {
+    await $`cd ${directory} && npx prettier --write .`.quiet();
+  } else if (cfg.formatter === 'biome') {
+    await $`cd ${directory} && npx biome format --write .`.quiet();
+  }
+
+  // Run build
+  if (cfg.runBuild) {
+    await $`cd ${directory} && npm run build --if-present`.quiet();
+  }
+
+  return { directory };
+});
+```
+
+## Template Configuration
+
+Configure the plugin in your template's `cyan.yaml` or `index.ts`:
+
+### Using cyan.yaml
+
+```yaml
+plugins:
+  - name: myorg/setup-plugin
+    config:
+      git: true
+      installDeps: true
+      packageManager: bun
+      formatter: biome
+      runBuild: false
+```
+
+### Using index.ts
+
+```ts
+return {
+  processors: [
+    // ... processors
+  ],
+  plugins: [{
+    name: 'myorg/setup-plugin',
+    config: {
+      git: true,
+      installDeps: answers.installDeps,
+      packageManager: answers.packageManager,
+      formatter: 'prettier',
+      runBuild: false
+    }
+  }]
+};
+```
+
+## Advanced Patterns
+
+### Feature Flags
+
+```ts
+StartPluginWithLambda(async (input) => {
+  const { directory, config } = input;
+
+  const features = config as {
+    features?: {
+      eslint?: boolean;
+      prettier?: boolean;
+      testing?: boolean;
+      ci?: boolean;
+    };
+  };
+
+  const enabledFeatures = features.features || {};
+
+  if (enabledFeatures.eslint) {
+    await $`cd ${directory} && npm install -D eslint`.quiet();
+    // Create .eslintrc.json
+    await fs.writeFile(
+      path.join(directory, '.eslintrc.json'),
+      JSON.stringify({ extends: ['eslint:recommended'] }, null, 2)
+    );
+  }
+
+  if (enabledFeatures.prettier) {
+    await $`cd ${directory} && npm install -D prettier`.quiet();
+  }
+
+  if (enabledFeatures.testing) {
+    await $`cd ${directory} && npm install -D vitest`.quiet();
+  }
+
+  if (enabledFeatures.ci) {
+    // Create GitHub Actions workflow
+    const workflowsDir = path.join(directory, '.github', 'workflows');
+    await fs.mkdir(workflowsDir, { recursive: true });
+    await fs.writeFile(
+      path.join(workflowsDir, 'ci.yml'),
+      `name: CI\non: [push]\njobs:\n  test:\n    runs-on: ubuntu-latest\n    steps:\n      - uses: actions/checkout@v4\n      - run: npm ci\n      - run: npm test\n`
+    );
+  }
+
+  return { directory };
+});
+```
+
+### Conditional Based on Project Type
+
+```ts
+StartPluginWithLambda(async (input) => {
+  const { directory, config } = input;
+
+  const cfg = config as {
+    projectType?: 'nextjs' | 'react' | 'node' | 'cli';
+  };
+
+  switch (cfg.projectType) {
+    case 'nextjs':
+      await $`cd ${directory} && npm install next react react-dom`.quiet();
+      break;
+    case 'react':
+      await $`cd ${directory} && npm install react react-dom`.quiet();
+      break;
+    case 'node':
+      // Minimal setup for node
+      break;
+    case 'cli':
+      await $`cd ${directory} && npm install commander`.quiet();
+      break;
+  }
+
+  return { directory };
+});
+```
+
+### Using Defaults
+
+```ts
+StartPluginWithLambda(async (input) => {
+  const { directory, config } = input;
+
+  // Provide defaults for all config options
+  const cfg = {
+    git: true,
+    installDeps: true,
+    packageManager: 'npm' as const,
+    formatter: 'none' as const,
+    ...(config as Record<string, unknown>)
+  };
+
+  if (cfg.git) {
+    await $`git -C ${directory} init`.quiet();
+  }
+
+  return { directory };
+});
+```
+
+<Callout type="info">
+Always provide sensible defaults for optional configuration. Templates should work without specifying every option.
+</Callout>
+
+## Related
+
+- [Run Shell Commands](/developer/plugins/how-to/run-commands) - Execute commands
+- [Modify Generated Files](/developer/plugins/how-to/modify-files) - Edit files
+- [Plugin Input/Output](/developer/plugins/reference/sdk/input-output) - API reference

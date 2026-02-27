@@ -1,0 +1,225 @@
+---
+title: Run Shell Commands
+description: Execute shell commands in the generated project directory
+---
+
+import { Callout } from 'fumadocs-ui/components/callout';
+import { Tabs } from 'fumadocs-ui/components/tabs';
+
+# Run Shell Commands
+
+Execute shell commands in the generated project directory. This is one of the most common plugin use cases.
+
+## Using Bun Shell
+
+Bun provides a convenient shell API using template literals:
+
+```ts
+import { StartPluginWithLambda } from '@atomicloud/cyan-sdk';
+import { $ } from 'bun';
+
+StartPluginWithLambda(async (input) => {
+  const { directory } = input;
+
+  // Initialize git
+  await $`git -C ${directory} init`;
+
+  // Add all files
+  await $`git -C ${directory} add .`;
+
+  // Create initial commit
+  await $`git -C ${directory} commit -m "Initial commit"`;
+
+  return { directory };
+});
+```
+
+### Bun Shell Features
+
+| Feature | Example | Description |
+|---------|---------|-------------|
+| Interpolation | `` $`cd ${dir}` `` | Variables are escaped and safe |
+| Quiet mode | `` $`cmd`.quiet() `` | Suppress stdout/stderr |
+| Output capture | `` const p = await $`cmd` `` | Access `p.stdout`, `p.stderr` |
+| Pipes | `` $`cmd1 \| cmd2` `` | Shell pipes work naturally |
+| Redirects | `` $`cmd > file.txt` `` | Output redirection |
+
+### Capturing Output
+
+```ts
+StartPluginWithLambda(async (input) => {
+  const { directory } = input;
+
+  // Capture command output
+  const result = await $`git -C ${directory} rev-parse HEAD`;
+  const commitHash = result.stdout.toString().trim();
+
+  console.log('Current commit:', commitHash);
+
+  return { directory };
+});
+```
+
+### Handling Errors
+
+```ts
+StartPluginWithLambda(async (input) => {
+  const { directory } = input;
+
+  try {
+    await $`git -C ${directory} status`;
+  } catch (error) {
+    // Git not initialized or other error
+    console.log('Git status failed:', error);
+  }
+
+  return { directory };
+});
+```
+
+## Using Node.js child_process
+
+For more control or compatibility, use Node.js APIs:
+
+<Tabs items={['exec', 'spawn', 'execa']}>
+
+```ts
+import { exec } from 'child_process';
+import { promisify } from 'util';
+
+const execAsync = promisify(exec);
+
+StartPluginWithLambda(async (input) => {
+  const { directory } = input;
+
+  // Execute command
+  const { stdout, stderr } = await execAsync('npm install', {
+    cwd: directory,
+    maxBuffer: 1024 * 1024 * 10 // 10MB buffer
+  });
+
+  console.log('Output:', stdout);
+  if (stderr) console.error('Errors:', stderr);
+
+  return { directory };
+});
+```
+
+```ts
+import { spawn } from 'child_process';
+
+StartPluginWithLambda(async (input) => {
+  const { directory } = input;
+
+  return new Promise((resolve) => {
+    const proc = spawn('npm', ['install'], {
+      cwd: directory,
+      stdio: 'inherit' // Pipe to parent
+    });
+
+    proc.on('close', (code) => {
+      if (code === 0) {
+        resolve({ directory });
+      } else {
+        throw new Error(`npm install failed with code ${code}`);
+      }
+    });
+  });
+});
+```
+
+```ts
+// Install: bun add execa
+import { execa } from 'execa';
+
+StartPluginWithLambda(async (input) => {
+  const { directory } = input;
+
+  // execa provides better DX
+  await execa('npm', ['install'], {
+    cwd: directory,
+    stdio: 'inherit'
+  });
+
+  return { directory };
+});
+```
+
+</Tabs>
+
+## Common Command Patterns
+
+### Package Manager Commands
+
+```ts
+StartPluginWithLambda(async (input) => {
+  const { directory, config } = input;
+  const cfg = config as { packageManager?: string };
+  const pm = cfg.packageManager || 'npm';
+
+  const commands: Record<string, string> = {
+    npm: 'npm install',
+    bun: 'bun install',
+    yarn: 'yarn install',
+    pnpm: 'pnpm install'
+  };
+
+  await $`cd ${directory} && ${commands[pm]}`;
+
+  return { directory };
+});
+```
+
+### Git Operations
+
+```ts
+StartPluginWithLambda(async (input) => {
+  const { directory } = input;
+
+  // Initialize
+  await $`git -C ${directory} init`;
+
+  // Configure user (from env or config)
+  await $`git -C ${directory} config user.email "bot@example.com"`;
+  await $`git -C ${directory} config user.name "CyanPrint Bot"`;
+
+  // Add and commit
+  await $`git -C ${directory} add .`;
+  await $`git -C ${directory} commit -m "Initial commit from CyanPrint"`;
+
+  return { directory };
+});
+```
+
+### Running Build Tools
+
+```ts
+StartPluginWithLambda(async (input) => {
+  const { directory } = input;
+
+  // Run linter
+  await $`cd ${directory} && npm run lint --if-present`;
+
+  // Run tests (optional)
+  try {
+    await $`cd ${directory} && npm test --if-present`.quiet();
+  } catch {
+    console.log('Tests skipped or failed');
+  }
+
+  // Build
+  await $`cd ${directory} && npm run build --if-present`;
+
+  return { directory };
+});
+```
+
+<Callout type="warn">
+Be careful with long-running commands. The plugin timeout is configurable but has limits. For heavy operations, consider making them optional.
+</Callout>
+
+## Related
+
+- [Modify Generated Files](/developer/plugins/how-to/modify-files) - Edit files
+- [Conditional Execution](/developer/plugins/how-to/conditional-execution) - Run based on config
+- [Plugin Input/Output](/developer/plugins/reference/sdk/input-output) - API reference

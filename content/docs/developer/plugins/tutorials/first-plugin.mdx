@@ -1,0 +1,189 @@
+---
+title: Your First Plugin
+description: Create a plugin that runs post-processing commands
+---
+
+import { Steps } from 'fumadocs-ui/components/steps';
+import { Callout } from 'fumadocs-ui/components/callout';
+
+# Your First Plugin
+
+Create a plugin that runs post-processing commands after file generation. This tutorial builds a plugin that initializes git and optionally installs dependencies.
+
+## Prerequisites
+
+- Docker installed and running
+- Node.js 18+ or Bun installed
+- Basic TypeScript knowledge
+
+## Create Project
+
+<Steps>
+
+### Initialize Project
+
+Create a new directory and initialize:
+
+```bash
+mkdir my-plugin
+cd my-plugin
+bun init -y
+bun add @atomicloud/cyan-sdk
+```
+
+### Create Plugin Logic
+
+Create `index.ts`:
+
+```ts
+import { StartPluginWithLambda } from '@atomicloud/cyan-sdk';
+import { $ } from 'bun';
+
+StartPluginWithLambda(async (input) => {
+  const { directory, config } = input;
+
+  // Cast config to expected type
+  const cfg = config as {
+    gitInit?: boolean;
+    installDeps?: boolean;
+    packageManager?: 'npm' | 'bun' | 'yarn' | 'pnpm';
+  };
+
+  // Initialize git if requested
+  if (cfg.gitInit !== false) {
+    await $`git -C ${directory} init`.quiet();
+    await $`git -C ${directory} add .`.quiet();
+  }
+
+  // Install dependencies if requested
+  if (cfg.installDeps) {
+    const pm = cfg.packageManager || 'npm';
+    if (pm === 'bun') {
+      await $`cd ${directory} && bun install`.quiet();
+    } else if (pm === 'yarn') {
+      await $`cd ${directory} && yarn install`.quiet();
+    } else if (pm === 'pnpm') {
+      await $`cd ${directory} && pnpm install`.quiet();
+    } else {
+      await $`cd ${directory} && npm install`.quiet();
+    }
+  }
+
+  // Always return the directory
+  return { directory };
+});
+```
+
+### Create Dockerfile
+
+Create `Dockerfile`:
+
+```dockerfile
+FROM oven/bun:1.1.31
+
+WORKDIR /app
+
+# Mark as CyanPrint plugin
+LABEL cyanprint.dev=true
+
+# Install dependencies
+COPY package.json bun.lockb* ./
+RUN bun install
+
+# Copy plugin code
+COPY . .
+
+# Run plugin
+CMD ["bun", "run", "index.ts"]
+```
+
+</Steps>
+
+## Understanding the Code
+
+### StartPluginWithLambda
+
+Entry point for plugin logic. Receives one argument:
+
+| Argument | Type | Purpose |
+|----------|------|---------|
+| `input` | `PluginInput` | Contains directory and config |
+
+Unlike processors, plugins don't receive a file helper - they work directly with the filesystem.
+
+### PluginInput
+
+| Property | Type | Description |
+|----------|------|-------------|
+| `directory` | `string` | Path to generated project files |
+| `config` | `unknown` | Configuration from template |
+
+### PluginOutput
+
+| Property | Type | Description |
+|----------|------|-------------|
+| `directory` | `string` | Must return the directory path |
+
+### Bun Shell
+
+The `$` template literal from Bun provides a convenient way to run commands:
+
+```ts
+// Simple command
+await $`echo "Hello"`;
+
+// With variable interpolation
+await $`cd ${directory} && npm install`;
+
+// Quiet mode (suppress output)
+await $`git init`.quiet();
+```
+
+## Build and Test
+
+### Build Docker Image
+
+```bash
+docker build -t my-plugin:dev .
+```
+
+### Use in Template
+
+Configure your template to use the plugin:
+
+```ts
+// In template's index.ts
+return {
+  processors: [
+    // ... processors
+  ],
+  plugins: [{
+    name: 'my-plugin:dev',
+    config: {
+      gitInit: true,
+      installDeps: true,
+      packageManager: 'bun'
+    }
+  }]
+};
+```
+
+<Callout type="info">
+During development, use local Docker images with the `:dev` tag. Push to a registry when ready to share.
+</Callout>
+
+## What You Learned
+
+- How to create a plugin project
+- Using `StartPluginWithLambda` as the entry point
+- Running shell commands with Bun's `$` API
+- Accessing plugin configuration
+- Returning the directory path
+
+## Next Steps
+
+Learn more about plugin capabilities:
+
+- [Run Shell Commands](/developer/plugins/how-to/run-commands) - Command execution patterns
+- [Modify Generated Files](/developer/plugins/how-to/modify-files) - Edit files in the directory
+- [Plugin Input/Output](/developer/plugins/reference/sdk/input-output) - Full API reference

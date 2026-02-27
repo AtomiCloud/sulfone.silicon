@@ -1,0 +1,237 @@
+---
+title: Push to Registry
+description: Build and publish your plugin to a container registry
+---
+
+import { Steps } from 'fumadocs-ui/components/steps';
+import { Callout } from 'fumadocs-ui/components/callout';
+import { Tabs } from 'fumadocs-ui/components/tabs';
+
+# Push to Registry
+
+Publish your plugin to a container registry so others can use it.
+
+## Prerequisites
+
+- Docker installed and logged in
+- Access to a container registry (Docker Hub, GitHub GHCR, etc.)
+- Plugin code ready to publish
+
+## Build and Push
+
+<Steps>
+
+### Tag Your Image
+
+Choose a naming convention for your plugin:
+
+```bash
+# Docker Hub
+docker tag my-plugin:dev username/cyan-plugin-my-plugin:latest
+
+# GitHub Container Registry
+docker tag my-plugin:dev ghcr.io/orgname/cyan-plugin-my-plugin:latest
+
+# Private registry
+docker tag my-plugin:dev registry.company.com/cyan-plugins/my-plugin:latest
+```
+
+### Push to Registry
+
+<Tabs items={['Docker Hub', 'GitHub GHCR', 'Private Registry']}>
+
+```bash
+# Login to Docker Hub
+docker login
+
+# Push
+docker push username/cyan-plugin-my-plugin:latest
+
+# Also push a versioned tag
+docker push username/cyan-plugin-my-plugin:1.0.0
+```
+
+```bash
+# Login to GitHub Container Registry
+echo $GITHUB_TOKEN | docker login ghcr.io -u USERNAME --password-stdin
+
+# Push
+docker push ghcr.io/orgname/cyan-plugin-my-plugin:latest
+docker push ghcr.io/orgname/cyan-plugin-my-plugin:1.0.0
+```
+
+```bash
+# Login to private registry
+docker login registry.company.com
+
+# Push
+docker push registry.company.com/cyan-plugins/my-plugin:latest
+```
+
+</Tabs>
+
+### Verify the Push
+
+```bash
+# Pull the image to verify
+docker pull username/cyan-plugin-my-plugin:latest
+
+# Run a test
+docker run --rm username/cyan-plugin-my-plugin:latest
+```
+
+</Steps>
+
+## Naming Convention
+
+Follow a consistent naming pattern:
+
+| Pattern | Example | Description |
+|---------|---------|-------------|
+| `org/plugin-name` | `atomi/setup-plugin` | Organization namespace |
+| `username/cyan-plugin-name` | `johndoe/cyan-plugin-git-init` | User namespace |
+| `registry/org/plugin-name` | `ghcr.io/atomi/plugins/setup` | Full registry path |
+
+<Callout type="info">
+Use `cyan-plugin-` prefix or similar to distinguish plugins from other Docker images.
+</Callout>
+
+## Versioning
+
+### Semantic Versioning
+
+Use semantic versioning for releases:
+
+```bash
+# Major version (breaking changes)
+docker tag my-plugin:dev org/my-plugin:2.0.0
+
+# Minor version (new features)
+docker tag my-plugin:dev org/my-plugin:1.1.0
+
+# Patch version (bug fixes)
+docker tag my-plugin:dev org/my-plugin:1.0.1
+
+# Latest tag (current stable)
+docker tag my-plugin:dev org/my-plugin:latest
+```
+
+### Using in Templates
+
+Templates can pin to specific versions:
+
+```yaml
+# cyan.yaml
+plugins:
+  - name: org/my-plugin:1.0.0  # Pinned version
+    config: {}
+
+  - name: org/my-plugin:latest  # Always latest
+    config: {}
+
+  - name: org/my-plugin:1       # Latest 1.x.x
+    config: {}
+```
+
+## Automation
+
+### GitHub Actions
+
+Create `.github/workflows/publish.yml`:
+
+```yaml
+name: Publish Plugin
+
+on:
+  release:
+    types: [published]
+
+jobs:
+  publish:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Set up Docker Buildx
+        uses: docker/setup-buildx-action@v3
+
+      - name: Login to GHCR
+        uses: docker/login-action@v3
+        with:
+          registry: ghcr.io
+          username: ${{ github.actor }}
+          password: ${{ secrets.GITHUB_TOKEN }}
+
+      - name: Extract version
+        id: version
+        run: echo "VERSION=${GITHUB_REF#refs/tags/}" >> $GITHUB_OUTPUT
+
+      - name: Build and push
+        uses: docker/build-push-action@v5
+        with:
+          context: .
+          push: true
+          tags: |
+            ghcr.io/${{ github.repository_owner }}/my-plugin:latest
+            ghcr.io/${{ github.repository_owner }}/my-plugin:${{ steps.version.outputs.VERSION }}
+```
+
+### CI/CD Pipeline
+
+```yaml
+# Example GitLab CI
+stages:
+  - build
+  - publish
+
+build:
+  stage: build
+  image: docker:latest
+  script:
+    - docker build -t my-plugin:$CI_COMMIT_SHA .
+
+publish:
+  stage: publish
+  image: docker:latest
+  only:
+    - tags
+  script:
+    - docker tag my-plugin:$CI_COMMIT_SHA registry.company.com/plugins/my-plugin:$CI_COMMIT_TAG
+    - docker push registry.company.com/plugins/my-plugin:$CI_COMMIT_TAG
+```
+
+## Documentation
+
+Include usage documentation with your plugin:
+
+### README.md
+
+```markdown
+# My Plugin
+
+A CyanPrint plugin that [description].
+
+## Usage
+
+Add to your template's `cyan.yaml`:
+
+\`\`\`yaml
+plugins:
+  - name: org/my-plugin:1.0.0
+    config:
+      option1: value1
+      option2: value2
+\`\`\`
+
+## Configuration
+
+| Option | Type | Default | Description |
+|--------|------|---------|-------------|
+| `option1` | `string` | `""` | Description |
+| `option2` | `boolean` | `false` | Description |
+```
+
+## Related
+
+- [Plugin Dockerfile](/developer/plugins/reference/dockerfile) - Container setup
+- [First Plugin](/developer/plugins/tutorials/first-plugin) - Create your first plugin

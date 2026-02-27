@@ -1,0 +1,176 @@
+---
+title: Plugin Type Definitions
+description: Complete type reference for CyanPrint plugins
+---
+
+# Plugin Type Definitions
+
+Complete type reference for the CyanPrint plugin SDK.
+
+## Core Types
+
+### PluginInput
+
+```ts
+interface PluginInput {
+  /**
+   * Path to the generated project files.
+   * Plugin should operate on files within this directory.
+   */
+  directory: string;
+
+  /**
+   * Configuration from the template.
+   * Type is unknown - cast to your expected type.
+   */
+  config: unknown;
+}
+```
+
+### PluginOutput
+
+```ts
+interface PluginOutput {
+  /**
+   * Output directory path.
+   * Should be the same as input.directory.
+   */
+  directory: string;
+}
+```
+
+### PluginHandler
+
+```ts
+/**
+ * Function signature for plugin handler
+ */
+type PluginHandler = (input: PluginInput) => Promise<PluginOutput>;
+```
+
+## Entry Point
+
+### StartPluginWithLambda
+
+```ts
+/**
+ * Register a plugin handler function.
+ * Starts HTTP server on port 5552.
+ *
+ * @param handler - Async function that processes the directory
+ */
+function StartPluginWithLambda(handler: PluginHandler): void;
+```
+
+## Usage Example
+
+### Complete Plugin with Types
+
+```ts
+import { StartPluginWithLambda, type PluginInput, type PluginOutput } from '@atomicloud/cyan-sdk';
+import { $ } from 'bun';
+
+// Define your config interface
+interface GitSetupConfig {
+  init?: boolean;
+  addAll?: boolean;
+  initialCommit?: boolean;
+  commitMessage?: string;
+  branch?: string;
+}
+
+// Define your plugin function with proper typing
+async function setupGit(input: PluginInput): Promise<PluginOutput> {
+  const { directory } = input;
+
+  // Type-safe config with defaults
+  const config: GitSetupConfig = {
+    init: true,
+    addAll: true,
+    initialCommit: true,
+    commitMessage: 'Initial commit',
+    branch: 'main',
+    ...(input.config as Partial<GitSetupConfig>)
+  };
+
+  if (config.init) {
+    await $`git -C ${directory} init`.quiet();
+
+    if (config.branch) {
+      await $`git -C ${directory} checkout -b ${config.branch}`.quiet();
+    }
+  }
+
+  if (config.addAll) {
+    await $`git -C ${directory} add .`.quiet();
+  }
+
+  if (config.initialCommit && config.commitMessage) {
+    await $`git -C ${directory} commit -m ${config.commitMessage}`.quiet();
+  }
+
+  return { directory };
+}
+
+// Register plugin
+StartPluginWithLambda(setupGit);
+```
+
+## Type Guards
+
+### Validating Config
+
+```ts
+import { StartPluginWithLambda } from '@atomicloud/cyan-sdk';
+
+interface MyConfig {
+  enabled: boolean;
+  items: string[];
+}
+
+function isMyConfig(config: unknown): config is MyConfig {
+  const c = config as Record<string, unknown>;
+  return (
+    typeof c?.enabled === 'boolean' &&
+    Array.isArray(c?.items) &&
+    c.items.every((i: unknown) => typeof i === 'string')
+  );
+}
+
+StartPluginWithLambda(async (input) => {
+  if (!isMyConfig(input.config)) {
+    throw new Error('Invalid config');
+  }
+
+  // Now TypeScript knows input.config is MyConfig
+  if (input.config.enabled) {
+    for (const item of input.config.items) {
+      console.log(item);
+    }
+  }
+
+  return { directory: input.directory };
+});
+```
+
+### With Defaults
+
+```ts
+interface Config {
+  option1: boolean;
+  option2: string;
+}
+
+function parseConfig(config: unknown): Config {
+  const c = config as Record<string, unknown> | undefined;
+  return {
+    option1: typeof c?.option1 === 'boolean' ? c.option1 : true,
+    option2: typeof c?.option2 === 'string' ? c.option2 : 'default'
+  };
+}
+```
+
+## Related
+
+- [StartPluginWithLambda](/developer/plugins/reference/sdk/start-plugin) - Entry point
+- [Plugin Input/Output](/developer/plugins/reference/sdk/input-output) - Interface details

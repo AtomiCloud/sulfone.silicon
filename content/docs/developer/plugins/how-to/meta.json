@@ -1,4 +1,5 @@
 {
   "title": "How-To Guides",
-  "icon": "ListChecks"
+  "icon": "ListChecks",
+  "pages": ["run-commands", "modify-files", "conditional-execution", "push-to-registry"]
 }

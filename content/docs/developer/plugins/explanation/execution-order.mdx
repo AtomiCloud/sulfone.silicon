@@ -1,0 +1,201 @@
+---
+title: Execution Order
+description: Understanding the order of operations in the CyanPrint pipeline
+---
+
+import { Callout } from 'fumadocs-ui/components/callout';
+
+# Execution Order
+
+Understanding the execution order helps you decide where to place your logic - in a processor or a plugin.
+
+## Pipeline Overview
+
+```mermaid
+graph LR
+    A[Template] --> B[Processor 1]
+    B --> C[Processor 2]
+    C --> D[Processor N]
+    D --> E[Plugin 1]
+    E --> F[Plugin 2]
+    F --> G[Plugin N]
+    G --> H[Output]
+```
+
+## Detailed Sequence
+
+### Phase 1: Template Collection
+
+1. User invokes template
+2. Template asks questions via `IInquirer`
+3. Template returns `CyanConfig` with processors and plugins
+
+```ts
+// Template index.ts
+return {
+  processors: [...],  // File transformers
+  plugins: [...]      // Post-processors
+};
+```
+
+### Phase 2: Processing (Processors)
+
+```mermaid
+sequenceDiagram
+    participant T as Template
+    participant P1 as Processor 1
+    participant P2 as Processor 2
+    participant FS as Filesystem
+
+    T->>P1: Files + Config
+    P1->>P1: Transform content
+    P1->>P2: Transformed files
+    P2->>P2: Transform content
+    P2->>FS: Write files
+```
+
+For each processor in order:
+
+1. Processor receives input (files, config, directories)
+2. Processor reads files using `CyanFileHelper`
+3. Processor transforms file content
+4. Processor writes files to output directory
+5. Output directory becomes input for next processor
+
+### Phase 3: Writing
+
+1. All transformed files are written to the output directory
+2. Directory structure is finalized
+3. No more content transformations
+
+### Phase 4: Post-Processing (Plugins)
+
+```mermaid
+sequenceDiagram
+    participant FS as Filesystem
+    participant PL1 as Plugin 1
+    participant PL2 as Plugin 2
+
+    FS->>PL1: Directory path + Config
+    PL1->>FS: Run commands/Modify files
+    PL1->>PL2: Directory path
+    PL2->>FS: Run commands/Modify files
+    PL2->>FS: Return directory
+```
+
+For each plugin in order:
+
+1. Plugin receives directory path and config
+2. Plugin runs operations (commands, file modifications)
+3. Plugin returns directory path
+4. Directory passed to next plugin
+
+### Phase 5: Output
+
+1. Final directory delivered to user
+2. User can open and use the project
+
+## Example Pipeline
+
+```ts
+// Template configuration
+return {
+  processors: [
+    { name: 'cyan/default', ... },      // Step 1: Eta templating
+    { name: 'custom/formatter', ... },  // Step 2: Format code
+  ],
+  plugins: [
+    { name: 'atomi/git-init', ... },    // Step 3: Initialize git
+    { name: 'atomi/npm-install', ... }, // Step 4: Install deps
+  ]
+};
+```
+
+```mermaid
+graph TD
+    A[Template Files] --> B[cyan/default]
+    B --> C[var__name__ → MyProject]
+    C --> D[custom/formatter]
+    D --> E[Prettier formatting]
+    E --> F[Write to disk]
+    F --> G[atomi/git-init]
+    G --> H[git init]
+    H --> I[atomi/npm-install]
+    I --> J[npm install]
+    J --> K[Final Project]
+```
+
+## Timing Considerations
+
+| Phase | Duration | Bottleneck |
+|-------|----------|------------|
+| Processing | Fast | File size |
+| Writing | Fast | File count |
+| Post-Processing | Variable | Network (npm install) |
+
+<Callout type="info">
+Plugins can be slow (especially `npm install`). Consider making heavy operations optional via config.
+</Callout>
+
+## Error Handling
+
+### During Processing
+
+- If any processor fails, the pipeline stops
+- No files are written to output
+- Error is reported to user
+
+### During Post-Processing
+
+- If a plugin fails, the pipeline stops
+- Partial files may exist
+- User may need to clean up
+
+## Multiple Plugins
+
+Plugins run in the order defined:
+
+```ts
+plugins: [
+  { name: 'plugin-a', config: {} },  // Runs first
+  { name: 'plugin-b', config: {} },  // Runs second
+  { name: 'plugin-c', config: {} },  // Runs third
+]
+```
+
+### Dependency Order
+
+Consider dependencies when ordering plugins:
+
+```ts
+plugins: [
+  // Git must be initialized before hooks
+  { name: 'atomi/git-init', config: {} },
+  // Hooks require git
+  { name: 'atomi/husky-setup', config: {} },
+  // Dependencies must be installed before build
+  { name: 'atomi/npm-install', config: {} },
+  // Build requires dependencies
+  { name: 'atomi/npm-build', config: {} },
+]
+```
+
+## What Runs Where
+
+| Operation | Phase | Component |
+|-----------|-------|-----------|
+| Variable substitution | Processing | Processor |
+| Syntax transformation | Processing | Processor |
+| Code generation | Processing | Processor |
+| File filtering | Processing | Processor |
+| `git init` | Post-processing | Plugin |
+| `npm install` | Post-processing | Plugin |
+| `prettier --write` | Post-processing | Plugin |
+| File creation | Post-processing | Plugin |
+| Symlink creation | Post-processing | Plugin |
+
+## Related
+
+- [Plugins vs Processors](/developer/plugins/explanation/plugins-vs-processors) - Comparison
+- [What Are Plugins](/developer/plugins/explanation/what-are-plugins) - Plugin concepts
+- [First Plugin](/developer/plugins/tutorials/first-plugin) - Tutorial

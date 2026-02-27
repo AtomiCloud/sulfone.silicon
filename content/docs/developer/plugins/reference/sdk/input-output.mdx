@@ -1,0 +1,218 @@
+---
+title: Plugin Input/Output
+description: Type definitions for plugin interfaces
+---
+
+# Plugin Input/Output
+
+Type definitions for the data structures passed to and returned from plugins.
+
+## PluginInput
+
+The input object passed to the plugin handler.
+
+### Definition
+
+```ts
+interface PluginInput {
+  directory: string;
+  config: unknown;
+}
+```
+
+### Properties
+
+| Property | Type | Description |
+|----------|------|-------------|
+| `directory` | `string` | Path to the generated project files |
+| `config` | `unknown` | Configuration from the template |
+
+### Typical Values
+
+| Property | Typical Value |
+|----------|--------------|
+| `directory` | `/workspace/output/` |
+
+### Usage
+
+```ts
+import { StartPluginWithLambda } from '@atomicloud/cyan-sdk';
+
+StartPluginWithLambda(async (input) => {
+  console.log('Directory:', input.directory);
+  console.log('Config:', input.config);
+
+  return { directory: input.directory };
+});
+```
+
+---
+
+## PluginOutput
+
+The return value from the plugin handler.
+
+### Definition
+
+```ts
+interface PluginOutput {
+  directory: string;
+}
+```
+
+### Properties
+
+| Property | Type | Description |
+|----------|------|-------------|
+| `directory` | `string` | Output directory path (same as input) |
+
+### Usage
+
+```ts
+StartPluginWithLambda(async (input) => {
+  // ... processing ...
+
+  // Must return the directory
+  return { directory: input.directory };
+});
+```
+
+---
+
+## Config Type
+
+The `config` property is typed as `unknown`. Cast to your expected type:
+
+### Definition
+
+```ts
+// Define your config type
+interface MyPluginConfig {
+  git?: boolean;
+  installDeps?: boolean;
+  packageManager?: 'npm' | 'bun' | 'yarn' | 'pnpm';
+}
+```
+
+### Option 1: Direct Cast
+
+```ts
+StartPluginWithLambda(async (input) => {
+  // Cast to your type
+  const config = input.config as MyPluginConfig;
+
+  if (config.git) {
+    // ...
+  }
+
+  return { directory: input.directory };
+});
+```
+
+### Option 2: With Defaults
+
+```ts
+StartPluginWithLambda(async (input) => {
+  // Provide defaults and merge with incoming config
+  const config: MyPluginConfig = {
+    git: true,
+    installDeps: false,
+    packageManager: 'npm',
+    ...(input.config as Partial<MyPluginConfig>)
+  };
+
+  if (config.git) {
+    // ...
+  }
+
+  return { directory: input.directory };
+});
+```
+
+### Complex Config
+
+```ts
+interface PluginConfig {
+  // Simple types
+  enabled: boolean;
+  timeout: number;
+  outputPath: string;
+
+  // Arrays
+  commands: string[];
+
+  // Nested objects
+  git: {
+    init: boolean;
+    initialCommit: boolean;
+    message: string;
+  };
+
+  // Optional properties
+  formatter?: 'prettier' | 'biome';
+}
+```
+
+---
+
+## Full Example
+
+```ts
+import { StartPluginWithLambda } from '@atomicloud/cyan-sdk';
+import { $ } from 'bun';
+import * as fs from 'fs/promises';
+import * as path from 'path';
+
+// Define your config type
+interface SetupConfig {
+  git?: boolean;
+  installDeps?: boolean;
+  packageManager?: 'npm' | 'bun' | 'yarn' | 'pnpm';
+  createReadme?: boolean;
+  readmeContent?: string;
+}
+
+StartPluginWithLambda(async (input) => {
+  const { directory } = input;
+
+  // Parse config with defaults
+  const config: SetupConfig = {
+    git: true,
+    installDeps: false,
+    packageManager: 'npm',
+    createReadme: true,
+    ...(input.config as Partial<SetupConfig>)
+  };
+
+  // Log input information
+  console.log('Plugin Input:');
+  console.log('  Directory:', directory);
+  console.log('  Config:', JSON.stringify(config, null, 2));
+
+  // Initialize git
+  if (config.git) {
+    await $`git -C ${directory} init`.quiet();
+    await $`git -C ${directory} add .`.quiet();
+  }
+
+  // Install dependencies
+  if (config.installDeps) {
+    const pm = config.packageManager;
+    await $`cd ${directory} && ${pm} install`.quiet();
+  }
+
+  // Create README
+  if (config.createReadme) {
+    const readmePath = path.join(directory, 'README.md');
+    await fs.writeFile(readmePath, config.readmeContent || '# Project\n');
+  }
+
+  // Return output
+  return { directory };
+});
+```
+
+## Related
+
+- [StartPluginWithLambda](/developer/plugins/reference/sdk/start-plugin) - Entry point
+- [Types](/developer/plugins/reference/sdk/types) - All type definitions

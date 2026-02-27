@@ -1,4 +1,5 @@
 {
   "title": "Explanation",
-  "icon": "Lightbulb"
+  "icon": "Lightbulb",
+  "pages": ["what-are-plugins", "plugins-vs-processors", "execution-order"]
 }

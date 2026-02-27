@@ -1,0 +1,177 @@
+---
+title: Plugin Project Structure
+description: Standard directory layout for plugin projects
+---
+
+# Plugin Project Structure
+
+A typical plugin project has a simple structure:
+
+```
+my-plugin/
+├── index.ts           # Entry point with plugin logic
+├── package.json       # Dependencies
+├── bun.lockb          # Lock file
+├── Dockerfile         # Container definition
+├── .dockerignore      # Files to exclude from image
+├── cyan.yaml          # Plugin metadata (optional)
+└── README.md          # Documentation
+```
+
+## Required Files
+
+### index.ts
+
+The entry point containing plugin logic:
+
+```ts
+import { StartPluginWithLambda } from '@atomicloud/cyan-sdk';
+
+StartPluginWithLambda(async (input) => {
+  const { directory, config } = input;
+
+  // Plugin logic here
+
+  return { directory };
+});
+```
+
+### package.json
+
+Dependencies for the plugin:
+
+```json
+{
+  "name": "my-plugin",
+  "version": "1.0.0",
+  "type": "module",
+  "dependencies": {
+    "@atomicloud/cyan-sdk": "^1.0.0"
+  }
+}
+```
+
+### Dockerfile
+
+Container definition:
+
+```dockerfile
+FROM oven/bun:1.1.31
+
+WORKDIR /app
+
+LABEL cyanprint.dev=true
+
+COPY package.json bun.lockb* ./
+RUN bun install
+
+COPY . .
+
+CMD ["bun", "run", "index.ts"]
+```
+
+## Optional Files
+
+### .dockerignore
+
+Exclude unnecessary files from the Docker build:
+
+```text
+node_modules
+.git
+.gitignore
+*.md
+.env
+.env.*
+.DS_Store
+```
+
+### README.md
+
+Documentation for your plugin:
+
+```markdown
+# My Plugin
+
+Description of what the plugin does.
+
+## Configuration
+
+| Option | Type | Default | Description |
+|--------|------|---------|-------------|
+| `option1` | `boolean` | `true` | Description |
+
+## Usage
+
+plugins:
+  - name: org/my-plugin
+    config:
+      option1: false
+```
+
+### cyan.yaml
+
+Plugin metadata file:
+
+```yaml
+name: org/my-plugin
+version: 1.0.0
+description: A plugin that does something
+author: Your Name
+```
+
+## Multiple Files
+
+For complex plugins, organize code into multiple files:
+
+```
+my-plugin/
+├── index.ts           # Entry point
+├── lib/
+│   ├── git.ts         # Git operations
+│   ├── npm.ts         # npm operations
+│   └── files.ts       # File operations
+├── types/
+│   └── config.ts      # Config types
+├── package.json
+└── Dockerfile
+```
+
+### index.ts
+
+```ts
+import { StartPluginWithLambda } from '@atomicloud/cyan-sdk';
+import { initGit } from './lib/git';
+import { installDeps } from './lib/npm';
+import { createFiles } from './lib/files';
+import type { PluginConfig } from './types/config';
+
+StartPluginWithLambda(async (input) => {
+  const { directory, config } = input;
+  const cfg = config as PluginConfig;
+
+  await initGit(directory, cfg);
+  await installDeps(directory, cfg);
+  await createFiles(directory, cfg);
+
+  return { directory };
+});
+```
+
+### lib/git.ts
+
+```ts
+import { $ } from 'bun';
+
+export async function initGit(directory: string, config: { git?: boolean }) {
+  if (config.git) {
+    await $`git -C ${directory} init`.quiet();
+    await $`git -C ${directory} add .`.quiet();
+  }
+}
+```
+
+## Related
+
+- [Plugin Dockerfile](/developer/plugins/reference/dockerfile) - Container setup
+- [First Plugin](/developer/plugins/tutorials/first-plugin) - Create your first plugin

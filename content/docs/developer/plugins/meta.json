@@ -1,5 +1,5 @@
 {
   "title": "Plugins",
   "icon": "Puzzle",
-  "pages": ["tutorials/index", "how-to/index", "reference/index", "explanation/index"]
+  "pages": ["index", "tutorials/index", "how-to/index", "reference/index", "explanation/index"]
 }

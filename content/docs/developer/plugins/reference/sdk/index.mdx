@@ -1,0 +1,64 @@
+---
+title: Plugin SDK
+description: SDK reference for CyanPrint plugin development
+---
+
+# Plugin SDK
+
+The `@atomicloud/cyan-sdk` package provides the API for developing CyanPrint plugins.
+
+## Installation
+
+```bash
+bun add @atomicloud/cyan-sdk
+```
+
+## Overview
+
+The plugin SDK is minimal by design. Plugins receive a directory and config, perform operations, and return the directory path.
+
+### Key Components
+
+| Component | Purpose |
+|-----------|---------|
+| `StartPluginWithLambda` | Entry point for plugin logic |
+| `PluginInput` | Input data passed to plugin |
+| `PluginOutput` | Return value from plugin |
+
+### Quick Example
+
+```ts
+import { StartPluginWithLambda } from '@atomicloud/cyan-sdk';
+import { $ } from 'bun';
+
+StartPluginWithLambda(async (input) => {
+  const { directory, config } = input;
+
+  // Run commands
+  await $`git -C ${directory} init`.quiet();
+
+  // Return directory
+  return { directory };
+});
+```
+
+## SDK Reference
+
+- [StartPluginWithLambda](/developer/plugins/reference/sdk/start-plugin) - Entry point
+- [PluginInput/Output](/developer/plugins/reference/sdk/input-output) - Type definitions
+- [Types](/developer/plugins/reference/sdk/types) - All type definitions
+
+## Plugin vs Processor SDK
+
+| Feature | Plugin SDK | Processor SDK |
+|---------|------------|---------------|
+| Entry point | `StartPluginWithLambda` | `StartProcessorWithLambda` |
+| Input | `PluginInput` | `ProcessorInput` |
+| Output | `PluginOutput` | `ProcessorOutput` |
+| File helper | None (direct fs access) | `CyanFileHelper` |
+| Primary use | Post-processing | File transformation |
+
+## Related
+
+- [First Plugin](/developer/plugins/tutorials/first-plugin) - Create your first plugin
+- [Plugin Input/Output](/developer/plugins/reference/sdk/input-output) - Type definitions

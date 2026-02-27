@@ -114,8 +114,7 @@ Timestamp of generation:
 
 ## State Lifecycle
 
-```mermaid
-graph TD
+<Mermaid chart={`graph TD
     A[cyanprint create] --> B[Ask Questions]
     B --> C[Store Answers]
     C --> D[Generate Pin]
@@ -130,7 +129,7 @@ graph TD
     K --> L[Generate Files]
     L --> M[3-Way Merge]
     M --> N[Update Complete]
-```
+`} />
 
 ## Accessing State
 

@@ -33,8 +33,7 @@ Boron is the execution coordinator that manages container-based template executi
 
 ## Architecture
 
-```mermaid
-flowchart TB
+<Mermaid chart={`flowchart TB
     subgraph "Boron Service"
         API[gRPC API] --> QUEUE[Job Queue]
         QUEUE --> SCHED[Scheduler]
@@ -54,7 +53,7 @@ flowchart TB
     end
 
     DB[(PostgreSQL)] --> QUEUE
-```
+`} />
 
 ## API
 
@@ -71,8 +70,7 @@ service Executor {
 
 ## Job Lifecycle
 
-```mermaid
-stateDiagram-v2
+<Mermaid chart={`stateDiagram-v2
     [*] --> Queued: Submit
     Queued --> Scheduled: Assign Node
     Scheduled --> Running: Start Container
@@ -83,7 +81,7 @@ stateDiagram-v2
     Completed --> [*]
     Failed --> [*]
     Timeout --> [*]
-```
+`} />
 
 ## Resource Management
 

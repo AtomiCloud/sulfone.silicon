@@ -42,14 +42,13 @@ Plugins run after files are generated. They:
 
 ## How They Work Together
 
-```mermaid
-graph LR
+<Mermaid chart={`graph LR
     A[User] --> B[Template]
     B --> C[Processor]
     C --> D[Files]
     D --> E[Plugin]
     E --> F[Final Project]
-```
+`} />
 
 1. **Template** collects user input and generates a Cyan config
 2. **Processor** transforms template files using the config

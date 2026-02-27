@@ -66,8 +66,7 @@ interface IPlugin {
 
 ## Execution Flow
 
-```mermaid
-graph TD
+<Mermaid chart={`graph TD
     A[Start] --> B[Template Code]
     B --> C[Return ICyanConfig]
     C --> D[For each Processor]
@@ -83,7 +82,7 @@ graph TD
     D --> K[For each Plugin]
     K --> L[Run Plugin]
     L --> M[Complete]
-```
+`} />
 
 ## Processor Selection
 

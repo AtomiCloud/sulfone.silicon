@@ -11,8 +11,7 @@ Understanding the execution order helps you decide where to place your logic - i
 
 ## Pipeline Overview
 
-```mermaid
-graph LR
+<Mermaid chart={`graph LR
     A[Template] --> B[Processor 1]
     B --> C[Processor 2]
     C --> D[Processor N]
@@ -20,7 +19,7 @@ graph LR
     E --> F[Plugin 2]
     F --> G[Plugin N]
     G --> H[Output]
-```
+`} />
 
 ## Detailed Sequence
 
@@ -40,8 +39,7 @@ return {
 
 ### Phase 2: Processing (Processors)
 
-```mermaid
-sequenceDiagram
+<Mermaid chart={`sequenceDiagram
     participant T as Template
     participant P1 as Processor 1
     participant P2 as Processor 2
@@ -52,7 +50,7 @@ sequenceDiagram
     P1->>P2: Transformed files
     P2->>P2: Transform content
     P2->>FS: Write files
-```
+`} />
 
 For each processor in order:
 
@@ -70,8 +68,7 @@ For each processor in order:
 
 ### Phase 4: Post-Processing (Plugins)
 
-```mermaid
-sequenceDiagram
+<Mermaid chart={`sequenceDiagram
     participant FS as Filesystem
     participant PL1 as Plugin 1
     participant PL2 as Plugin 2
@@ -81,7 +78,7 @@ sequenceDiagram
     PL1->>PL2: Directory path
     PL2->>FS: Run commands/Modify files
     PL2->>FS: Return directory
-```
+`} />
 
 For each plugin in order:
 
@@ -111,8 +108,7 @@ return {
 };
 ```
 
-```mermaid
-graph TD
+<Mermaid chart={`graph TD
     A[Template Files] --> B[cyan/default]
     B --> C[var__name__ → MyProject]
     C --> D[custom/formatter]
@@ -123,7 +119,7 @@ graph TD
     H --> I[atomi/npm-install]
     I --> J[npm install]
     J --> K[Final Project]
-```
+`} />
 
 ## Timing Considerations
 

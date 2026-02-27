@@ -21,14 +21,13 @@ output = processor(input, files)
 // Same input always = same output
 ```
 
-```mermaid
-graph LR
+<Mermaid chart={`graph LR
     A[Input Files] --> B[Processor]
     C[Config] --> B
     B --> D[Output Files]
 
     style B fill:#f9f,stroke:#333
-```
+`} />
 
 ### No Side Effects
 

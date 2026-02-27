@@ -11,8 +11,7 @@ Processors work with two directories: `readDirectory` for input and `writeDirect
 
 ## Directory Overview
 
-```mermaid
-graph LR
+<Mermaid chart={`graph LR
     subgraph Container
         A[/workspace/cyanprint/<br/>readDirectory]
         B[Processor]
@@ -24,7 +23,7 @@ graph LR
 
     style A fill:#f9f,stroke:#333
     style C fill:#9f9,stroke:#333
-```
+`} />
 
 | Directory | Path | Purpose | Access |
 |-----------|------|---------|--------|
@@ -116,13 +115,12 @@ The `relative` property is the path **between** read and write:
 // Output: /workspace/output/templates/README.md
 ```
 
-```mermaid
-graph LR
+<Mermaid chart={`graph LR
     A["/workspace/cyanprint/"] --> B["templates/README.md"]
     B --> C["/workspace/output/"]
 
     B -.->|"file.relative"| B
-```
+`} />
 
 ## Path Resolution
 

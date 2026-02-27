@@ -53,8 +53,7 @@ cyan print auth login
 
 ## Architecture
 
-```mermaid
-flowchart LR
+<Mermaid chart={`flowchart LR
     A[User] --> B[CLI Parser]
     B --> C{Command}
     C -->|init| D[Template Resolver]
@@ -64,7 +63,7 @@ flowchart LR
     E --> G
     G --> H[Boron]
     F --> I[Zinc API]
-```
+`} />
 
 ## Building
 

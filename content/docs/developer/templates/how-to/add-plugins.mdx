@@ -13,13 +13,12 @@ Plugins run post-processing after file generation. They handle actions like git 
 
 Plugins execute after all processors have finished generating files:
 
-```mermaid
-graph LR
+<Mermaid chart={`graph LR
     A[Questions] --> B[Processors]
     B --> C[Generated Files]
     C --> D[Plugins]
     D --> E[Final Output]
-```
+`} />
 
 ## Adding Plugins
 

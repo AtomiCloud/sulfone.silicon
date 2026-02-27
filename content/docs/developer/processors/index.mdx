@@ -21,8 +21,7 @@ Processors are stateless file transformers - they receive input files and produc
 
 ## Processor Architecture
 
-```mermaid
-graph TD
+<Mermaid chart={`graph TD
     A[Template Blob] --> B[Processor Container]
     C[Processor Config] --> B
     B --> D[CyanFileHelper]
@@ -35,7 +34,7 @@ graph TD
     J --> K[Transform Content]
     K --> L[writeFile]
     L --> M[Output Directory]
-```
+`} />
 
 ### Components
 

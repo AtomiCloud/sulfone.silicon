@@ -113,15 +113,14 @@ const id = d.seq('id');
 2. **Template update** - Pin is reused
 3. **Deterministic values** - Same values generated
 
-```mermaid
-graph LR
+<Mermaid chart={`graph LR
     A[Template v1.0] --> B[Generate Project]
     B --> C[Store Pin]
     C --> D[Template v2.0]
     D --> E[Update Project]
     E --> F[Reuse Pin]
     F --> G[Same IDs!]
-```
+`} />
 
 ## 3-Way Merge
 

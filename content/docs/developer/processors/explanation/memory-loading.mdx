@@ -11,8 +11,7 @@ Processors load files into memory for transformation. Understanding memory impli
 
 ## The Memory Model
 
-```mermaid
-graph TD
+<Mermaid chart={`graph TD
     A[Template Files] --> B{Loading Method}
     B -->|resolveAll| C[All in Memory]
     B -->|read| D[Selected in Memory]
@@ -25,7 +24,7 @@ graph TD
     E --> J[Low Memory]
     F --> K[Low Memory]
     G --> L[Minimal Memory]
-```
+`} />
 
 ## Loading Methods Comparison
 

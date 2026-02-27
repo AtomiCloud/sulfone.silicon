@@ -111,8 +111,7 @@ Never use `Date.now()`, `Math.random()`, or `crypto.randomUUID()` - these break 
 
 ## Pin Lifecycle
 
-```mermaid
-graph LR
+<Mermaid chart={`graph LR
     A[First Generation] --> B[Create Pin]
     B --> C[Store in .cyan/]
     C --> D[Generate Files]
@@ -120,7 +119,7 @@ graph LR
     E --> F[Read Pin]
     F --> G[Same Deterministic Values]
     G --> H[Merge Changes]
-```
+`} />
 
 ## Deterministic Values in Templates
 

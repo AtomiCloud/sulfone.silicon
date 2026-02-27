@@ -33,8 +33,7 @@ Zinc is the registry API that stores template metadata, handles authentication, 
 
 ## Architecture
 
-```mermaid
-flowchart TB
+<Mermaid chart={`flowchart TB
     subgraph "Zinc API"
         AUTH[Auth Middleware] --> ROUTES[API Routes]
         ROUTES --> TEMPLATES[Template Service]
@@ -55,7 +54,7 @@ flowchart TB
 
     CLI --> AUTH
     WEB --> AUTH
-```
+`} />
 
 ## API Endpoints
 
@@ -100,8 +99,7 @@ PATCH /api/v1/users/me
 
 ## Data Model
 
-```mermaid
-erDiagram
+<Mermaid chart={`erDiagram
     USERS ||--o{ TEMPLATES : creates
     TEMPLATES ||--o{ VERSIONS : has
     TEMPLATES ||--o{ TAGS : has
@@ -126,7 +124,7 @@ erDiagram
         string container_image
         timestamp created_at
     }
-```
+`} />
 
 ## Building
 

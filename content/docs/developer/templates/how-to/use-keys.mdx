@@ -55,21 +55,19 @@ const version = await i.text('Version?', 'version', '...');
 
 When templates are composed, non-namespaced keys cause conflicts:
 
-```mermaid
-graph TD
+<Mermaid chart={`graph TD
     A[User runs composed template] --> B[Template A asks: name?]
     B --> |User answers: project-alpha| C[Template B asks: name?]
     C --> |Same key! Gets: project-alpha| D[Template B gets wrong answer!]
-```
+`} />
 
 With namespacing:
 
-```mermaid
-graph TD
+<Mermaid chart={`graph TD
     A[User runs composed template] --> B[Template A asks: template-a.name?]
     B --> |User answers: project-alpha| C[Template B asks: template-b.name?]
     C --> |Different key! Prompts user| D[Template B gets its own answer]
-```
+`} />
 
 ## Cross-Template Keys
 

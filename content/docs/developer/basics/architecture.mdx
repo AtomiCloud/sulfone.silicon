@@ -9,8 +9,7 @@ CyanPrint uses a containerized architecture where each artifact runs in its own 
 
 ## System Components
 
-```mermaid
-graph TB
+<Mermaid chart={`graph TB
     subgraph "User Machine"
         CLI[Iridium CLI]
     end
@@ -33,7 +32,7 @@ graph TB
     COORD --> P
     COORD --> PL
     UI --> API
-```
+`} />
 
 ### Component Overview
 
@@ -47,8 +46,7 @@ graph TB
 
 ## Execution Flow
 
-```mermaid
-sequenceDiagram
+<Mermaid chart={`sequenceDiagram
     participant User
     participant CLI
     participant Registry
@@ -65,7 +63,7 @@ sequenceDiagram
     Coordinator->>Processor: POST /api/process
     Processor-->>Coordinator: Processed files
     Coordinator-->>CLI: Project files
-```
+`} />
 
 ### Step-by-Step
 
@@ -85,12 +83,11 @@ sequenceDiagram
 
 ## Container Path Mechanics
 
-```mermaid
-graph LR
+<Mermaid chart={`graph LR
     A[Blob Image] -->|Extracts to| B[/workspace/cyanprint/]
     B -->|read_dir| C[Processor]
     C -->|write_dir| D[/workspace/output/]
-```
+`} />
 
 ### Critical Paths
 

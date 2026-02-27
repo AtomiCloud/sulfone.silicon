@@ -92,8 +92,7 @@ StartPluginWithLambda(async (input) => {
 
 ## Execution Order
 
-```mermaid
-graph TD
+<Mermaid chart={`graph TD
     A[Template] --> B[Processor 1]
     B --> C[Processor 2]
     C --> D[Processor N]
@@ -102,7 +101,7 @@ graph TD
     F --> G[Plugin 2]
     G --> H[Plugin N]
     H --> I[Final Output]
-```
+`} />
 
 1. Template collects user input
 2. Processors run in sequence (transform content)
@@ -170,8 +169,7 @@ Use processors for content transformation and plugins for operations. Together t
 
 ## Architecture View
 
-```mermaid
-graph LR
+<Mermaid chart={`graph LR
     subgraph Processing Phase
         A[Template Files] --> B[Processor]
         B --> C[Transformed Files]
@@ -185,7 +183,7 @@ graph LR
         D --> E[Plugin]
         E --> F[Final Project]
     end
-```
+`} />
 
 ## Related
 

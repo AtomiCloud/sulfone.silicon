@@ -9,8 +9,7 @@ CyanPrint is a distributed template execution platform designed to help develope
 
 ## High-Level Architecture
 
-```mermaid
-graph TB
+<Mermaid chart={`graph TB
     subgraph "User Machine"
         CLI[Iridium CLI]
         DEV[Developer]
@@ -48,7 +47,7 @@ graph TB
     PL --> TS
     TS -.-> PY
     TS -.-> CS
-```
+`} />
 
 ## Component Overview
 
@@ -80,8 +79,7 @@ graph TB
 
 ## Data Flow
 
-```mermaid
-sequenceDiagram
+<Mermaid chart={`sequenceDiagram
     participant User
     participant CLI as Iridium CLI
     participant API as Zinc API
@@ -97,7 +95,7 @@ sequenceDiagram
     Container-->>Coord: Return generated files
     Coord-->>CLI: Stream output files
     CLI-->>User: Write files to disk
-```
+`} />
 
 ## Execution Environment
 
@@ -110,8 +108,7 @@ Templates, processors, and plugins execute in isolated containers managed by Bor
 
 ## Communication Patterns
 
-```mermaid
-graph LR
+<Mermaid chart={`graph LR
     subgraph "Synchronous"
         CLI[CLI Commands]
         API[API Requests]
@@ -130,7 +127,7 @@ graph LR
     CLI --> API
     EXEC --> LOGS
     HOOKS --> EVENTS
-```
+`} />
 
 ## Next Steps
 

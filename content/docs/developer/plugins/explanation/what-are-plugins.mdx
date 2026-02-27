@@ -11,14 +11,13 @@ Plugins are post-processing components that run **after** all file generation is
 
 ## The Big Picture
 
-```mermaid
-graph LR
+<Mermaid chart={`graph LR
     A[User Input] --> B[Template]
     B --> C[Processors]
     C --> D[Generated Files]
     D --> E[Plugins]
     E --> F[Final Project]
-```
+`} />
 
 Plugins are the final step in the generation pipeline. After processors have transformed and written all files, plugins can:
 
@@ -52,8 +51,7 @@ Plugins receive:
 
 ### Execution
 
-```mermaid
-sequenceDiagram
+<Mermaid chart={`sequenceDiagram
     participant T as Template
     participant P as Processor
     participant PL as Plugin
@@ -65,7 +63,7 @@ sequenceDiagram
     PL->>FS: Run commands/modify files
     FS->>PL: Return directory
     PL->>T: Complete
-```
+`} />
 
 ### Output
 

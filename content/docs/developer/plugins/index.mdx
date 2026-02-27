@@ -21,8 +21,7 @@ Plugins are the final step in the generation pipeline - they run after all proce
 
 ## Plugin Architecture
 
-```mermaid
-graph TD
+<Mermaid chart={`graph TD
     A[Template Collects Input] --> B[Processors Transform Files]
     B --> C[Files Written to Directory]
     C --> D[Plugin Container]
@@ -32,7 +31,7 @@ graph TD
     F --> H[Return Directory]
     G --> H
     H --> I[Final Output]
-```
+`} />
 
 ### Components
 

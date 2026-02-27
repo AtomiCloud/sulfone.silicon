@@ -90,8 +90,7 @@ StartPluginWithLambda(async (input) => {
 3. **Handler executes** - Your async function processes the directory
 4. **Response sent** - Returns `PluginOutput` with directory path
 
-```mermaid
-sequenceDiagram
+<Mermaid chart={`sequenceDiagram
     participant Cyan as CyanPrint
     participant Plugin as Plugin Container
 
@@ -100,7 +99,7 @@ sequenceDiagram
     Plugin->>Plugin: Execute plugin logic
     Plugin->>Cyan: Return PluginOutput
     Note over Cyan: Continue pipeline
-```
+`} />
 
 ## Port
 

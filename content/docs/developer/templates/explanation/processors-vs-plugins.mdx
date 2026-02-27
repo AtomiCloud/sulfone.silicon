@@ -33,12 +33,11 @@ Processors handle **file transformation** during generation.
 
 ### How They Work
 
-```mermaid
-graph LR
+<Mermaid chart={`graph LR
     A[Template Files] --> B[Processor]
     C[Variables] --> B
     B --> D[Generated Files]
-```
+`} />
 
 ### Example
 
@@ -87,13 +86,12 @@ Plugins handle **post-generation actions** after files are created.
 
 ### How They Work
 
-```mermaid
-graph LR
+<Mermaid chart={`graph LR
     A[Generated Files] --> B[Plugin 1]
     B --> C[Plugin 2]
     C --> D[Plugin 3]
     D --> E[Final Project]
-```
+`} />
 
 ### Example
 
@@ -115,8 +113,7 @@ return {
 
 ## Decision Flow
 
-```mermaid
-graph TD
+<Mermaid chart={`graph TD
     A{Need to transform files?} -->|Yes| B{Standard templating?}
     A -->|No| C{Need post-gen action?}
     B -->|Yes| D[Use cyan/default processor]
@@ -127,7 +124,7 @@ graph TD
     E --> H
     F --> H
     G --> H
-```
+`} />
 
 ## Common Patterns
 

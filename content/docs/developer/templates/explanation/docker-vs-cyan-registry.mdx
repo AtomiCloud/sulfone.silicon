@@ -93,8 +93,7 @@ This registers:
 
 ## How They Work Together
 
-```mermaid
-graph TD
+<Mermaid chart={`graph TD
     A[Developer] --> B[Build Images]
     B --> C[Push to Docker Registry]
     C --> D[Push Metadata to CyanPrint Registry]
@@ -102,7 +101,7 @@ graph TD
     E --> F[Registry Returns Image Reference]
     F --> G[Pull Images from Docker Registry]
     G --> H[Generate Project]
-```
+`} />
 
 ## Workflow
 

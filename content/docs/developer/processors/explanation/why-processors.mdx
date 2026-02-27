@@ -35,8 +35,7 @@ Your team might prefer different syntax:
 | **Handlebars** | `{{name}}` | JavaScript projects |
 | **Mustache** | `{{name}}` | Logic-less templates |
 
-```mermaid
-graph LR
+<Mermaid chart={`graph LR
     A[Template Files] --> B{Which Engine?}
     B -->|Eta| C[cyan/default]
     B -->|Jinja| D[custom/jinja]
@@ -46,7 +45,7 @@ graph LR
     D --> G
     E --> G
     F --> G
-```
+`} />
 
 ### Custom Logic
 
@@ -111,13 +110,12 @@ StartProcessorWithLambda(async (input, fileHelper) => {
 
 Processors can be chained for complex transformations:
 
-```mermaid
-graph LR
+<Mermaid chart={`graph LR
     A[Source Files] --> B[Preprocessor]
     B --> C[Main Processor]
     C --> D[Postprocessor]
     D --> E[Final Output]
-```
+`} />
 
 ### Example: Multi-Stage Pipeline
 
@@ -157,8 +155,7 @@ Processors enable clean separation between:
 | File transformation | Processor |
 | Post-generation actions | Plugin |
 
-```mermaid
-graph TD
+<Mermaid chart={`graph TD
     A[Template] --> B[Ask Questions]
     B --> C[Define Variables]
     C --> D[Invoke Processors]
@@ -168,7 +165,7 @@ graph TD
     F --> G
     G --> H[Plugins]
     H --> I[Final Project]
-```
+`} />
 
 ## Extensibility
 

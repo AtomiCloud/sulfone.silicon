@@ -11,15 +11,14 @@ Processors receive configuration from templates through `input.config`. This ena
 
 ## Configuration Flow
 
-```mermaid
-graph LR
+<Mermaid chart={`graph LR
     A[Template] --> B[Processor Config]
     B --> C[Processor Execution]
     C --> D[input.config]
 
     style B fill:#f9f,stroke:#333
     style D fill:#9f9,stroke:#333
-```
+`} />
 
 ## Template Side
 

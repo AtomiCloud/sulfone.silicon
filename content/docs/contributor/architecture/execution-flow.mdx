@@ -11,8 +11,7 @@ This document explains how CyanPrint executes templates, processors, and plugins
 
 When a user runs a command like `cyan print init my-project`, the following high-level flow occurs:
 
-```mermaid
-flowchart TD
+<Mermaid chart={`flowchart TD
     A[User runs CLI command] --> B[CLI resolves template from registry]
     B --> C[CLI requests execution from Boron]
     C --> D[Boron schedules container]
@@ -22,7 +21,7 @@ flowchart TD
     G --> H[Plugins apply modifications]
     H --> I[Output streamed back to CLI]
     I --> J[CLI writes files to disk]
-```
+`} />
 
 ## Detailed Execution Phases
 
@@ -30,8 +29,7 @@ flowchart TD
 
 The CLI first resolves the requested template:
 
-```mermaid
-sequenceDiagram
+<Mermaid chart={`sequenceDiagram
     participant User
     participant CLI as Iridium CLI
     participant Registry as Zinc Registry
@@ -41,7 +39,7 @@ sequenceDiagram
     Registry-->>CLI: Template metadata + version info
     CLI->>CLI: Validate template exists
     CLI->>CLI: Resolve dependencies
-```
+`} />
 
 During this phase:
 1. The template identifier is parsed (name, version, registry)
@@ -53,8 +51,7 @@ During this phase:
 
 Once the template is resolved, inputs are collected:
 
-```mermaid
-flowchart LR
+<Mermaid chart={`flowchart LR
     A[Template Schema] --> B{Inputs Provided?}
     B -->|Yes| C[Validate Against Schema]
     B -->|No| D[Prompt User Interactively]
@@ -62,7 +59,7 @@ flowchart LR
     C -->|Valid| E[Proceed to Execution]
     C -->|Invalid| F[Show Errors]
     F --> D
-```
+`} />
 
 Input sources (in order of priority):
 1. Command-line flags (`--input key=value`)
@@ -74,8 +71,7 @@ Input sources (in order of priority):
 
 Boron manages container execution:
 
-```mermaid
-flowchart TD
+<Mermaid chart={`flowchart TD
     subgraph "Boron Coordinator"
         A[Receive Execution Request] --> B[Create Job Record]
         B --> C[Select Executor Node]
@@ -96,14 +92,13 @@ flowchart TD
     F --> I
     F --> J
     F --> K
-```
+`} />
 
 ### Phase 4: Template Execution
 
 Inside the container, the template executes:
 
-```mermaid
-flowchart TD
+<Mermaid chart={`flowchart TD
     A[Container Starts] --> B[Initialize SDK Runtime]
     B --> C[Load Template Module]
     C --> D[Call generate function]
@@ -111,7 +106,7 @@ flowchart TD
     E --> F[Execute Template Logic]
     F --> G[Return File Tree]
     G --> H[Container Exits]
-```
+`} />
 
 The template uses the Helium SDK to:
 1. Access validated inputs
@@ -123,8 +118,7 @@ The template uses the Helium SDK to:
 
 Processors transform the template output:
 
-```mermaid
-flowchart LR
+<Mermaid chart={`flowchart LR
     A[Template Output] --> B[Processor 1]
     B --> C[Processor 2]
     C --> D[Processor N]
@@ -135,7 +129,7 @@ flowchart LR
         G[Formatter]
         H[Template Variables]
     end
-```
+`} />
 
 Common processor types:
 - **Formatters**: Apply code formatting (Prettier, Biome, etc.)
@@ -147,8 +141,7 @@ Common processor types:
 
 Plugins can modify the final output:
 
-```mermaid
-flowchart TD
+<Mermaid chart={`flowchart TD
     A[Processor Output] --> B[Plugin Hook: pre-write]
     B --> C{Plugin Type}
     C -->|File Modifier| D[Apply Transformations]
@@ -158,14 +151,13 @@ flowchart TD
     E --> G
     F --> G
     G --> H[Final File Tree]
-```
+`} />
 
 ### Phase 7: Output Streaming
 
 Results are streamed back to the client:
 
-```mermaid
-sequenceDiagram
+<Mermaid chart={`sequenceDiagram
     participant Container
     participant Boron
     participant CLI as Iridium CLI
@@ -178,12 +170,11 @@ sequenceDiagram
     Container->>Boron: Execution complete
     Boron->>CLI: Final status
     CLI->>User: Summary report
-```
+`} />
 
 ## Container Lifecycle
 
-```mermaid
-stateDiagram-v2
+<Mermaid chart={`stateDiagram-v2
     [*] --> Pending: Job Created
     Pending --> Scheduled: Node Selected
     Scheduled --> Running: Container Started
@@ -193,7 +184,7 @@ stateDiagram-v2
     Succeeded --> [*]: Cleanup
     Failed --> [*]: Cleanup
     Timeout --> [*]: Cleanup
-```
+`} />
 
 ## Error Handling
 

@@ -33,8 +33,7 @@ Argon is the web-based user interface for browsing, searching, and managing Cyan
 
 ## Architecture
 
-```mermaid
-flowchart TB
+<Mermaid chart={`flowchart TB
     subgraph "Argon Web App"
         PAGES[Next.js Pages] --> COMPS[React Components]
         COMPS --> TRPC[tRPC Client]
@@ -50,7 +49,7 @@ flowchart TB
     end
 
     BROWSER[Browser] --> PAGES
-```
+`} />
 
 ## Features
 

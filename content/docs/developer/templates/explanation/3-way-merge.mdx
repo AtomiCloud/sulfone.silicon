@@ -15,14 +15,13 @@ CyanPrint uses 3-way merge to update templates while preserving user modificatio
 2. **Ours** - User modifications
 3. **Theirs** - New template version
 
-```mermaid
-graph TD
+<Mermaid chart={`graph TD
     A[Base - v1.0] --> B[Ours - User Changes]
     A --> C[Theirs - v2.0]
     B --> D[3-Way Merge]
     C --> D
     D --> E[Merged Result]
-```
+`} />
 
 ## Why 3-Way Merge?
 
@@ -59,8 +58,7 @@ Each generation stores its base state:
 
 ### Merge Algorithm
 
-```mermaid
-graph TD
+<Mermaid chart={`graph TD
     A[Compare Base vs Ours] --> B{User Changed?}
     B -->|Yes| C[Keep User Change]
     B -->|No| D[Compare Base vs Theirs]
@@ -72,7 +70,7 @@ graph TD
     G --> H
     H -->|Yes| I[Mark Conflict]
     H -->|No| J[Auto-Merge]
-```
+`} />
 
 ## Example Scenario
 

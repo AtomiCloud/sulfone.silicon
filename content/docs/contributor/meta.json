@@ -3,5 +3,5 @@
   "description": "Contribute to CyanPrint",
   "icon": "Github",
   "root": true,
-  "pages": ["index", "architecture/index", "repositories/index", "development/index"]
+  "pages": ["index", "architecture", "repositories", "development"]
 }

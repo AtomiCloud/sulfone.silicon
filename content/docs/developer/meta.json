@@ -3,5 +3,5 @@
   "description": "Develop CyanPrint Artifacts",
   "icon": "Code",
   "root": true,
-  "pages": ["index", "basics/index", "templates/index", "processors/index", "plugins/index"]
+  "pages": ["index", "basics", "templates", "processors", "plugins"]
 }

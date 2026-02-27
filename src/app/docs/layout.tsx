@@ -9,6 +9,7 @@ export default function Layout({ children }: { children: ReactNode }) {
       tree={source.pageTree}
       {...baseOptions}
       sidebar={{
+        defaultOpenLevel: 10,
         tabs: {
           transform: (option, node) => ({
             ...option,

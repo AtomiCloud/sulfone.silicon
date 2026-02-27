@@ -1,8 +1,109 @@
 ---
 title: Iridium
-description: CyanPrint Iridium repository
+description: The CyanPrint CLI tool
 ---
 
-# Iridium
+# sulfone.iridium
 
-CyanPrint Iridium repository.
+The CyanPrint command-line interface (CLI) is the primary way users interact with CyanPrint. It handles project creation, template management, and configuration.
+
+## Repository
+
+[github.com/AtomiCloud/sulfone.iridium](https://github.com/AtomiCloud/sulfone.iridium)
+
+## Tech Stack
+
+| Technology | Purpose |
+| ---------- | ------- |
+| Rust | Primary language for performance and safety |
+| Clap | CLI argument parsing framework |
+| Tokio | Async runtime |
+| Reqwest | HTTP client for API calls |
+
+## Key Files
+
+| Path | Description |
+| ---- | ----------- |
+| `src/main.rs` | Application entry point |
+| `src/commands/` | CLI command implementations |
+| `src/config/` | Configuration management |
+| `src/api/` | API client for Zinc registry |
+| `src/executor/` | Communication with Boron executor |
+
+## Commands
+
+The CLI provides the following main commands:
+
+```bash
+# Initialize a new project from a template
+cyan print init <project-name> --template <template-id>
+
+# Update an existing project
+cyan print update <project-name>
+
+# List available templates
+cyan print search <query>
+
+# Configure CyanPrint
+cyan print config set <key> <value>
+
+# Login to the registry
+cyan print auth login
+```
+
+## Architecture
+
+```mermaid
+flowchart LR
+    A[User] --> B[CLI Parser]
+    B --> C{Command}
+    C -->|init| D[Template Resolver]
+    C -->|update| E[Update Handler]
+    C -->|search| F[Registry Client]
+    D --> G[Executor Client]
+    E --> G
+    G --> H[Boron]
+    F --> I[Zinc API]
+```
+
+## Building
+
+```bash
+# Debug build
+cargo build
+
+# Release build
+cargo build --release
+
+# Run tests
+cargo test
+
+# Run with logging
+RUST_LOG=debug cargo run -- init my-project
+```
+
+## Configuration
+
+Iridium stores configuration in `~/.config/cyan-print/config.toml`:
+
+```toml
+[registry]
+url = "https://registry.cyanprint.dev"
+
+[executor]
+url = "https://executor.cyanprint.dev"
+timeout = "5m"
+
+[auth]
+token_file = "~/.config/cyan-print/auth/token"
+```
+
+## Contributing
+
+When contributing to Iridium:
+
+1. Follow Rust best practices and idiomatic code
+2. Run `cargo clippy` and address all warnings
+3. Ensure `cargo test` passes
+4. Update documentation for new commands
+5. Add integration tests for new features

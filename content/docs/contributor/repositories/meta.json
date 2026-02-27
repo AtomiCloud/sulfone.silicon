@@ -1,5 +1,5 @@
 {
   "title": "Repositories",
   "icon": "FolderGit2",
-  "pages": ["iridium", "boron", "zinc", "argon", "helium"]
+  "pages": ["index", "iridium", "boron", "zinc", "argon", "helium"]
 }

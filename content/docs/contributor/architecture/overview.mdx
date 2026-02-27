@@ -1,8 +1,139 @@
 ---
 title: Architecture Overview
-description: Overview of CyanPrint architecture
+description: Understanding the CyanPrint system architecture and component relationships
 ---
 
 # Architecture Overview
 
-Overview of CyanPrint architecture.
+CyanPrint is a distributed template execution platform designed to help developers scaffold projects quickly and consistently. This page provides an overview of the system architecture.
+
+## High-Level Architecture
+
+```mermaid
+graph TB
+    subgraph "User Machine"
+        CLI[Iridium CLI]
+        DEV[Developer]
+    end
+
+    subgraph "Remote Executor"
+        COORD[Boron Coordinator]
+        T[Template Container]
+        P[Processor Container]
+        PL[Plugin Container]
+    end
+
+    subgraph "Registry"
+        API[Zinc API]
+        DB[(Database)]
+        UI[Argon Web UI]
+    end
+
+    subgraph "SDKs"
+        TS[TypeScript SDK]
+        PY[Python SDK]
+        CS[.NET SDK]
+    end
+
+    DEV --> CLI
+    CLI --> API
+    CLI --> COORD
+    COORD --> T
+    COORD --> P
+    COORD --> PL
+    UI --> API
+    API --> DB
+    T --> TS
+    P --> TS
+    PL --> TS
+    TS -.-> PY
+    TS -.-> CS
+```
+
+## Component Overview
+
+### User-Facing Components
+
+| Component | Repository | Description |
+| --------- | ---------- | ----------- |
+| **Iridium** | [sulfone.iridium](https://github.com/AtomiCloud/sulfone.iridium) | The CLI tool that users interact with. Handles project creation, updates, and template management. |
+| **Argon** | [sulfone.argon](https://github.com/AtomiCloud/sulfone.argon) | Web-based registry UI where users can browse, search, and discover templates. |
+
+### Backend Services
+
+| Component | Repository | Description |
+| --------- | ---------- | ----------- |
+| **Zinc** | [sulfone.zinc](https://github.com/AtomiCloud/sulfone.zinc) | Registry API that stores template metadata, handles authentication, and serves template information. |
+| **Boron** | [sulfone.boron](https://github.com/AtomiCloud/sulfone.boron) | Execution coordinator that manages container-based template execution. |
+
+### SDKs and Libraries
+
+| Component | Repository | Description |
+| --------- | ---------- | ----------- |
+| **Helium** | [sulfone.helium](https://github.com/AtomiCloud/sulfone.helium) | Multi-language SDKs (TypeScript, Python, C#) used by templates, processors, and plugins. |
+
+### Documentation
+
+| Component | Repository | Description |
+| --------- | ---------- | ----------- |
+| **Silicon** | [sulfone.silicon](https://github.com/AtomiCloud/sulfone.silicon) | This documentation site, built with Next.js and Fumadocs. |
+
+## Data Flow
+
+```mermaid
+sequenceDiagram
+    participant User
+    participant CLI as Iridium CLI
+    participant API as Zinc API
+    participant Coord as Boron Coordinator
+    participant Container as Template Container
+
+    User->>CLI: cyan print init my-project
+    CLI->>API: Fetch template metadata
+    API-->>CLI: Template info
+    CLI->>Coord: Request execution
+    Coord->>Container: Spin up container
+    Container->>Container: Execute template
+    Container-->>Coord: Return generated files
+    Coord-->>CLI: Stream output files
+    CLI-->>User: Write files to disk
+```
+
+## Execution Environment
+
+Templates, processors, and plugins execute in isolated containers managed by Boron. This provides:
+
+- **Security**: Untrusted code runs in isolated environments
+- **Reproducibility**: Consistent execution across different machines
+- **Resource isolation**: Limits on CPU, memory, and network access
+- **Versioning**: Different versions can run simultaneously
+
+## Communication Patterns
+
+```mermaid
+graph LR
+    subgraph "Synchronous"
+        CLI[CLI Commands]
+        API[API Requests]
+    end
+
+    subgraph "Streaming"
+        EXEC[Execution Output]
+        LOGS[Log Streaming]
+    end
+
+    subgraph "Async"
+        HOOKS[Webhooks]
+        EVENTS[Events]
+    end
+
+    CLI --> API
+    EXEC --> LOGS
+    HOOKS --> EVENTS
+```
+
+## Next Steps
+
+- Learn about the [Execution Flow](/docs/contributor/architecture/execution-flow) in detail
+- Set up your [Development Environment](/docs/contributor/development/setup)
+- Explore the [Repositories](/docs/contributor/repositories)

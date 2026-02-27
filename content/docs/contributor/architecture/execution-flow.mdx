@@ -1,8 +1,235 @@
 ---
 title: Execution Flow
-description: Understanding CyanPrint execution flow
+description: Understanding how templates, processors, and plugins execute in CyanPrint
 ---
 
 # Execution Flow
 
-Understanding CyanPrint execution flow.
+This document explains how CyanPrint executes templates, processors, and plugins through the Boron coordinator using containerized environments.
+
+## Overview
+
+When a user runs a command like `cyan print init my-project`, the following high-level flow occurs:
+
+```mermaid
+flowchart TD
+    A[User runs CLI command] --> B[CLI resolves template from registry]
+    B --> C[CLI requests execution from Boron]
+    C --> D[Boron schedules container]
+    D --> E[Container pulls template image]
+    E --> F[Template executes with inputs]
+    F --> G[Processors transform output]
+    G --> H[Plugins apply modifications]
+    H --> I[Output streamed back to CLI]
+    I --> J[CLI writes files to disk]
+```
+
+## Detailed Execution Phases
+
+### Phase 1: Template Resolution
+
+The CLI first resolves the requested template:
+
+```mermaid
+sequenceDiagram
+    participant User
+    participant CLI as Iridium CLI
+    participant Registry as Zinc Registry
+
+    User->>CLI: cyan print init my-project
+    CLI->>Registry: GET /templates/my-template
+    Registry-->>CLI: Template metadata + version info
+    CLI->>CLI: Validate template exists
+    CLI->>CLI: Resolve dependencies
+```
+
+During this phase:
+1. The template identifier is parsed (name, version, registry)
+2. Template metadata is fetched from the Zinc registry
+3. Dependencies are resolved transitively
+4. Input schema is retrieved for validation
+
+### Phase 2: Input Collection
+
+Once the template is resolved, inputs are collected:
+
+```mermaid
+flowchart LR
+    A[Template Schema] --> B{Inputs Provided?}
+    B -->|Yes| C[Validate Against Schema]
+    B -->|No| D[Prompt User Interactively]
+    D --> C
+    C -->|Valid| E[Proceed to Execution]
+    C -->|Invalid| F[Show Errors]
+    F --> D
+```
+
+Input sources (in order of priority):
+1. Command-line flags (`--input key=value`)
+2. Input files (`--input-file inputs.yaml`)
+3. Environment variables (`CYAN_INPUT_KEY`)
+4. Interactive prompts
+
+### Phase 3: Container Scheduling
+
+Boron manages container execution:
+
+```mermaid
+flowchart TD
+    subgraph "Boron Coordinator"
+        A[Receive Execution Request] --> B[Create Job Record]
+        B --> C[Select Executor Node]
+        C --> D[Schedule Container]
+        D --> E[Mount Volumes]
+        E --> F[Set Resource Limits]
+        F --> G[Start Execution]
+    end
+
+    subgraph "Resource Limits"
+        H[CPU: 1 core default]
+        I[Memory: 512MB default]
+        J[Timeout: 5 minutes]
+        K[Network: Restricted]
+    end
+
+    F --> H
+    F --> I
+    F --> J
+    F --> K
+```
+
+### Phase 4: Template Execution
+
+Inside the container, the template executes:
+
+```mermaid
+flowchart TD
+    A[Container Starts] --> B[Initialize SDK Runtime]
+    B --> C[Load Template Module]
+    C --> D[Call generate function]
+    D --> E[Process Input Schema]
+    E --> F[Execute Template Logic]
+    F --> G[Return File Tree]
+    G --> H[Container Exits]
+```
+
+The template uses the Helium SDK to:
+1. Access validated inputs
+2. Generate files and directories
+3. Set file permissions and metadata
+4. Return a virtual file tree
+
+### Phase 5: Processor Pipeline
+
+Processors transform the template output:
+
+```mermaid
+flowchart LR
+    A[Template Output] --> B[Processor 1]
+    B --> C[Processor 2]
+    C --> D[Processor N]
+    D --> E[Final Output]
+
+    subgraph "Example Processors"
+        F[Linter]
+        G[Formatter]
+        H[Template Variables]
+    end
+```
+
+Common processor types:
+- **Formatters**: Apply code formatting (Prettier, Biome, etc.)
+- **Linters**: Check code quality and fix issues
+- **Transformers**: Modify file contents based on rules
+- **Validators**: Ensure output meets requirements
+
+### Phase 6: Plugin Application
+
+Plugins can modify the final output:
+
+```mermaid
+flowchart TD
+    A[Processor Output] --> B[Plugin Hook: pre-write]
+    B --> C{Plugin Type}
+    C -->|File Modifier| D[Apply Transformations]
+    C -->|Content Generator| E[Generate Additional Files]
+    C -->|Validator| F[Validate Output]
+    D --> G[Plugin Hook: post-write]
+    E --> G
+    F --> G
+    G --> H[Final File Tree]
+```
+
+### Phase 7: Output Streaming
+
+Results are streamed back to the client:
+
+```mermaid
+sequenceDiagram
+    participant Container
+    participant Boron
+    participant CLI as Iridium CLI
+    participant FS as File System
+
+    Container->>Boron: Stream file chunks
+    Boron->>CLI: Forward chunks via gRPC stream
+    CLI->>FS: Write files incrementally
+    CLI->>CLI: Display progress
+    Container->>Boron: Execution complete
+    Boron->>CLI: Final status
+    CLI->>User: Summary report
+```
+
+## Container Lifecycle
+
+```mermaid
+stateDiagram-v2
+    [*] --> Pending: Job Created
+    Pending --> Scheduled: Node Selected
+    Scheduled --> Running: Container Started
+    Running --> Succeeded: Exit 0
+    Running --> Failed: Exit NonZero
+    Running --> Timeout: Time Limit Exceeded
+    Succeeded --> [*]: Cleanup
+    Failed --> [*]: Cleanup
+    Timeout --> [*]: Cleanup
+```
+
+## Error Handling
+
+| Stage | Error Type | Handling |
+| ----- | ---------- | -------- |
+| Resolution | Template not found | Return error with suggestions |
+| Resolution | Version conflict | Show dependency tree, suggest resolution |
+| Input | Validation failed | Display errors, prompt for correction |
+| Execution | Container OOM | Increase limits, retry with larger container |
+| Execution | Timeout | Show partial output, suggest optimization |
+| Processing | Processor failed | Continue with remaining processors, warn user |
+| Output | Write failure | Retry with elevated permissions, suggest manual path |
+
+## Resource Management
+
+Default resource limits can be configured:
+
+```yaml
+# boron-config.yaml
+execution:
+  defaults:
+    cpu_limit: "1"
+    memory_limit: "512Mi"
+    timeout: "5m"
+    network_enabled: false
+
+  # Per-template overrides
+  templates:
+    heavy-template:
+      cpu_limit: "2"
+      memory_limit: "2Gi"
+      timeout: "15m"
+```
+
+## Next Steps
+
+- Learn about specific [Repositories](/docs/contributor/repositories)
+- Set up your [Development Environment](/docs/contributor/development/setup)
+- Return to [Architecture Overview](/docs/contributor/architecture/overview)

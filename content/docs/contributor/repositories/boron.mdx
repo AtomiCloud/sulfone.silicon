@@ -1,8 +1,154 @@
 ---
 title: Boron
-description: CyanPrint Boron repository
+description: The CyanPrint execution coordinator
 ---
 
-# Boron
+# sulfone.boron
 
-CyanPrint Boron repository.
+Boron is the execution coordinator that manages container-based template execution. It handles job scheduling, resource management, and container lifecycle.
+
+## Repository
+
+[github.com/AtomiCloud/sulfone.boron](https://github.com/AtomiCloud/sulfone.boron)
+
+## Tech Stack
+
+| Technology | Purpose |
+| ---------- | ------- |
+| Rust | Primary language for performance |
+| Tokio | Async runtime |
+| Tonic | gRPC server and client |
+| Docker/bollard | Container management |
+| SQLx | Database access |
+
+## Key Files
+
+| Path | Description |
+| ---- | ----------- |
+| `src/main.rs` | Application entry point |
+| `src/scheduler/` | Job scheduling logic |
+| `src/executor/` | Container execution management |
+| `src/api/` | gRPC API definitions |
+| `src/resources/` | Resource limit management |
+
+## Architecture
+
+```mermaid
+flowchart TB
+    subgraph "Boron Service"
+        API[gRPC API] --> QUEUE[Job Queue]
+        QUEUE --> SCHED[Scheduler]
+        SCHED --> EXEC[Executor Pool]
+    end
+
+    subgraph "Executor Nodes"
+        EXEC --> NODE1[Node 1]
+        EXEC --> NODE2[Node 2]
+        EXEC --> NODEN[Node N]
+    end
+
+    subgraph "Containers"
+        NODE1 --> C1[Template Container]
+        NODE2 --> C2[Processor Container]
+        NODEN --> C3[Plugin Container]
+    end
+
+    DB[(PostgreSQL)] --> QUEUE
+```
+
+## API
+
+Boron exposes a gRPC API for job management:
+
+```protobuf
+service Executor {
+    rpc SubmitJob(JobRequest) returns (JobResponse);
+    rpc GetJobStatus(JobStatusRequest) returns (JobStatus);
+    rpc StreamJobOutput(JobStreamRequest) returns (stream FileChunk);
+    rpc CancelJob(CancelRequest) returns (CancelResponse);
+}
+```
+
+## Job Lifecycle
+
+```mermaid
+stateDiagram-v2
+    [*] --> Queued: Submit
+    Queued --> Scheduled: Assign Node
+    Scheduled --> Running: Start Container
+    Running --> Streaming: Generate Output
+    Streaming --> Completed: Success
+    Running --> Failed: Error
+    Running --> Timeout: Exceed Limit
+    Completed --> [*]
+    Failed --> [*]
+    Timeout --> [*]
+```
+
+## Resource Management
+
+Boron enforces resource limits on containers:
+
+```yaml
+# Default limits
+resources:
+  cpu: "1"
+  memory: "512Mi"
+  timeout: "5m"
+
+# Per-template overrides can be specified
+template_overrides:
+  heavy-template:
+    cpu: "4"
+    memory: "4Gi"
+    timeout: "30m"
+```
+
+## Building
+
+```bash
+# Debug build
+cargo build
+
+# Release build
+cargo build --release
+
+# Run tests
+cargo test
+
+# Run locally (requires Docker)
+cargo run -- --config config/local.yaml
+```
+
+## Configuration
+
+```yaml
+# boron-config.yaml
+server:
+  grpc_addr: "0.0.0.0:50051"
+
+database:
+  url: "postgresql://localhost/boron"
+
+container_runtime:
+  socket: "/var/run/docker.sock"
+  network: "cyan-bridge"
+
+scheduler:
+  max_concurrent_jobs: 100
+  job_timeout_default: "5m"
+
+resources:
+  default_cpu: "1"
+  default_memory: "512Mi"
+```
+
+## Contributing
+
+When contributing to Boron:
+
+1. Ensure all async code is properly handled with Tokio
+2. Test container isolation thoroughly
+3. Handle resource cleanup in error paths
+4. Add metrics for new features
+5. Document API changes in protobuf files

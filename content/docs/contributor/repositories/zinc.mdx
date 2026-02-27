@@ -1,8 +1,178 @@
 ---
 title: Zinc
-description: CyanPrint Zinc repository
+description: The CyanPrint registry API
 ---
 
-# Zinc
+# sulfone.zinc
 
-CyanPrint Zinc repository.
+Zinc is the registry API that stores template metadata, handles authentication, and serves template information to CLI users and the web UI.
+
+## Repository
+
+[github.com/AtomiCloud/sulfone.zinc](https://github.com/AtomiCloud/sulfone.zinc)
+
+## Tech Stack
+
+| Technology | Purpose |
+| ---------- | ------- |
+| Rust | Primary language |
+| Axum | Web framework |
+| SQLx | Database access (PostgreSQL) |
+| Tower | Middleware and service utilities |
+| JWT | Authentication tokens |
+
+## Key Files
+
+| Path | Description |
+| ---- | ----------- |
+| `src/main.rs` | Application entry point |
+| `src/api/` | REST API routes and handlers |
+| `src/models/` | Database models |
+| `src/auth/` | Authentication and authorization |
+| `src/storage/` | Template storage backend |
+
+## Architecture
+
+```mermaid
+flowchart TB
+    subgraph "Zinc API"
+        AUTH[Auth Middleware] --> ROUTES[API Routes]
+        ROUTES --> TEMPLATES[Template Service]
+        ROUTES --> USERS[User Service]
+        ROUTES --> SEARCH[Search Service]
+    end
+
+    subgraph "Storage"
+        TEMPLATES --> DB[(PostgreSQL)]
+        USERS --> DB
+        SEARCH --> ES[(Elasticsearch)]
+    end
+
+    subgraph "Clients"
+        CLI[Iridium CLI]
+        WEB[Argon Web UI]
+    end
+
+    CLI --> AUTH
+    WEB --> AUTH
+```
+
+## API Endpoints
+
+### Templates
+
+```bash
+# List templates
+GET /api/v1/templates
+
+# Get template by ID
+GET /api/v1/templates/{id}
+
+# Search templates
+GET /api/v1/templates/search?q={query}
+
+# Get template versions
+GET /api/v1/templates/{id}/versions
+```
+
+### Authentication
+
+```bash
+# Login
+POST /api/v1/auth/login
+
+# Refresh token
+POST /api/v1/auth/refresh
+
+# Logout
+POST /api/v1/auth/logout
+```
+
+### Users
+
+```bash
+# Get current user
+GET /api/v1/users/me
+
+# Update user
+PATCH /api/v1/users/me
+```
+
+## Data Model
+
+```mermaid
+erDiagram
+    USERS ||--o{ TEMPLATES : creates
+    TEMPLATES ||--o{ VERSIONS : has
+    TEMPLATES ||--o{ TAGS : has
+    USERS {
+        uuid id PK
+        string email
+        string password_hash
+        timestamp created_at
+    }
+    TEMPLATES {
+        uuid id PK
+        string name
+        string description
+        uuid author_id FK
+        jsonb input_schema
+        timestamp created_at
+    }
+    VERSIONS {
+        uuid id PK
+        uuid template_id FK
+        string version
+        string container_image
+        timestamp created_at
+    }
+```
+
+## Building
+
+```bash
+# Debug build
+cargo build
+
+# Release build
+cargo build --release
+
+# Run tests
+cargo test
+
+# Run database migrations
+sqlx migrate run
+
+# Run locally
+cargo run -- --config config/local.yaml
+```
+
+## Configuration
+
+```yaml
+# zinc-config.yaml
+server:
+  http_addr: "0.0.0.0:8080"
+
+database:
+  url: "postgresql://localhost/zinc"
+
+auth:
+  jwt_secret: "your-secret-key"
+  token_expiry: "24h"
+
+storage:
+  type: "s3"
+  bucket: "cyan-templates"
+  region: "us-east-1"
+```
+
+## Contributing
+
+When contributing to Zinc:
+
+1. Follow RESTful API conventions
+2. Validate all inputs with schemas
+3. Use database transactions for data consistency
+4. Write integration tests for API endpoints
+5. Update API documentation for new endpoints

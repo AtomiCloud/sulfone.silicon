@@ -1,8 +1,154 @@
 ---
 title: Argon
-description: CyanPrint Argon repository
+description: The CyanPrint registry web UI
 ---
 
-# Argon
+# sulfone.argon
 
-CyanPrint Argon repository.
+Argon is the web-based user interface for browsing, searching, and managing CyanPrint templates. It provides a visual interface to the Zinc registry.
+
+## Repository
+
+[github.com/AtomiCloud/sulfone.argon](https://github.com/AtomiCloud/sulfone.argon)
+
+## Tech Stack
+
+| Technology | Purpose |
+| ---------- | ------- |
+| TypeScript | Primary language |
+| React | UI framework |
+| Next.js | Full-stack framework |
+| Tailwind CSS | Styling |
+| tRPC | Type-safe API client |
+
+## Key Files
+
+| Path | Description |
+| ---- | ----------- |
+| `src/app/` | Next.js App Router pages |
+| `src/components/` | React components |
+| `src/lib/` | Utilities and helpers |
+| `src/server/` | Server-side code |
+| `prisma/` | Database schema |
+
+## Architecture
+
+```mermaid
+flowchart TB
+    subgraph "Argon Web App"
+        PAGES[Next.js Pages] --> COMPS[React Components]
+        COMPS --> TRPC[tRPC Client]
+    end
+
+    subgraph "Server"
+        TRPC --> ROUTERS[tRPC Routers]
+        ROUTERS --> ZINC[Zinc API Client]
+    end
+
+    subgraph "External"
+        ZINC --> API[Zinc REST API]
+    end
+
+    BROWSER[Browser] --> PAGES
+```
+
+## Features
+
+### Template Browsing
+
+- Grid and list views of templates
+- Category-based navigation
+- Advanced search with filters
+- Template preview and documentation
+
+### User Management
+
+- GitHub OAuth authentication
+- User profiles
+- Template ownership and permissions
+
+### Template Management
+
+- Create and publish templates
+- Version management
+- Usage analytics
+
+## Page Structure
+
+```
+/                    # Home page with featured templates
+/templates           # Browse all templates
+/templates/[id]      # Template details
+/templates/[id]/v/[version]  # Specific version
+/search              # Search templates
+/user/login          # Login page
+/user/profile        # User profile
+```
+
+## Building
+
+```bash
+# Install dependencies
+bun install
+
+# Development server
+bun run dev
+
+# Build for production
+bun run build
+
+# Run tests
+bun run test
+
+# Type checking
+bun run typecheck
+```
+
+## Configuration
+
+```env
+# .env.local
+NEXT_PUBLIC_API_URL=https://api.cyanprint.dev
+ZINC_API_URL=https://zinc.cyanprint.dev/internal
+GITHUB_CLIENT_ID=your-github-client-id
+GITHUB_CLIENT_SECRET=your-github-client-secret
+```
+
+## Key Components
+
+### Template Card
+
+Displays template information in a card format:
+
+```tsx
+<TemplateCard
+  template={{
+    name: "react-app",
+    description: "React application template",
+    author: "cyanprint",
+    downloads: 1500,
+    tags: ["react", "typescript"]
+  }}
+/>
+```
+
+### Search Bar
+
+Full-text search with autocomplete:
+
+```tsx
+<SearchBar
+  placeholder="Search templates..."
+  onSearch={(query) => router.push(`/search?q=${query}`)}
+/>
+```
+
+## Contributing
+
+When contributing to Argon:
+
+1. Follow React best practices and hooks patterns
+2. Use Tailwind CSS for styling
+3. Ensure responsive design works on mobile
+4. Add Storybook stories for new components
+5. Test accessibility with screen readers

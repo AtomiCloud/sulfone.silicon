@@ -1,8 +1,346 @@
 ---
 title: Development Setup
-description: Setting up the development environment
+description: Setting up your development environment for contributing to CyanPrint
 ---
+
+import { Tab, Tabs } from 'fumadocs-ui/components/tabs';
 
 # Development Setup
 
-Setting up the development environment.
+This guide will help you set up your development environment for contributing to CyanPrint.
+
+## Prerequisites
+
+Before you begin, ensure you have the following installed:
+
+| Tool | Version | Purpose |
+| ---- | ------- | ------- |
+| Git | 2.40+ | Version control |
+| Docker | 24.0+ | Container runtime for testing |
+| Node.js | 20+ | For Argon and Silicon |
+| Rust | 1.75+ | For Iridium, Boron, Zinc |
+| Python | 3.11+ | For Helium Python SDK |
+| .NET SDK | 8.0+ | For Helium C# SDK |
+
+## Quick Start
+
+### 1. Fork and Clone
+
+```bash
+# Fork the repository on GitHub, then clone your fork
+git clone https://github.com/YOUR_USERNAME/sulfone.REPO_NAME.git
+cd sulfone.REPO_NAME
+```
+
+### 2. Install Dependencies
+
+<Tabs groupId="repo" items={['Rust (Iridium/Boron/Zinc)', 'TypeScript (Argon/Silicon)', 'Python (Helium)', '.NET (Helium)']} persist>
+<Tab value="Rust (Iridium/Boron/Zinc)">
+
+```bash
+# Install Rust if not already installed
+curl --proto '=https' --tlsv1.2 -sSf https://sh.rustup.rs | sh
+
+# Build the project
+cargo build
+
+# Run tests
+cargo test
+```
+
+</Tab>
+<Tab value="TypeScript (Argon/Silicon)">
+
+```bash
+# Install bun (recommended) or npm
+curl -fsSL https://bun.sh/install | bash
+
+# Install dependencies
+bun install
+
+# Start development server
+bun run dev
+```
+
+</Tab>
+<Tab value="Python (Helium)">
+
+```bash
+# Create a virtual environment
+python -m venv .venv
+source .venv/bin/activate  # On Windows: .venv\Scripts\activate
+
+# Install dependencies
+pip install -e ".[dev]"
+
+# Run tests
+pytest
+```
+
+</Tab>
+<Tab value=".NET (Helium)">
+
+```bash
+# Restore dependencies
+dotnet restore
+
+# Build the project
+dotnet build
+
+# Run tests
+dotnet test
+```
+
+</Tab>
+</Tabs>
+
+## Repository-Specific Setup
+
+### Iridium (CLI)
+
+```bash
+# Additional setup for Iridium
+cd sulfone.iridium
+
+# Install cargo-make for task running
+cargo install cargo-make
+
+# Setup development configuration
+mkdir -p ~/.config/cyan-print
+cp config/dev.toml ~/.config/cyan-print/config.toml
+
+# Run CLI in development mode
+cargo run -- init test-project
+```
+
+### Boron (Executor)
+
+```bash
+# Additional setup for Boron
+cd sulfone.boron
+
+# Start local dependencies (requires Docker)
+docker-compose up -d postgres
+
+# Run database migrations
+sqlx migrate run
+
+# Start the executor
+cargo run -- --config config/local.yaml
+```
+
+### Zinc (Registry API)
+
+```bash
+# Additional setup for Zinc
+cd sulfone.zinc
+
+# Start local dependencies
+docker-compose up -d postgres elasticsearch
+
+# Run database migrations
+sqlx migrate run
+
+# Seed development data
+cargo run --bin seed
+
+# Start the API server
+cargo run
+```
+
+### Argon (Web UI)
+
+```bash
+# Additional setup for Argon
+cd sulfone.argon
+
+# Copy environment variables
+cp .env.example .env.local
+
+# Edit .env.local with your settings
+# NEXT_PUBLIC_API_URL=http://localhost:8080
+
+# Start development server
+bun run dev
+```
+
+### Helium (SDKs)
+
+```bash
+# Setup for all SDKs
+cd sulfone.helium
+
+# TypeScript SDK
+cd packages/typescript
+bun install
+bun run build
+
+# Python SDK
+cd ../python
+pip install -e ".[dev]"
+
+# .NET SDK
+cd ../dotnet
+dotnet restore
+```
+
+### Silicon (Documentation)
+
+```bash
+# Additional setup for Silicon
+cd sulfone.silicon
+
+# Install dependencies
+bun install
+
+# Start development server
+bun run dev
+
+# Build for production
+bun run build
+```
+
+## Development Workflow
+
+```mermaid
+flowchart TD
+    A[Fork Repository] --> B[Clone Locally]
+    B --> C[Create Branch]
+    C --> D[Make Changes]
+    D --> E[Run Tests]
+    E --> F{Tests Pass?}
+    F -->|No| D
+    F -->|Yes| G[Run Lint]
+    G --> H{Lint Pass?}
+    H -->|No| I[Fix Issues]
+    I --> G
+    H -->|Yes| J[Commit Changes]
+    J --> K[Push Branch]
+    K --> L[Create PR]
+```
+
+## Code Style
+
+### Rust Projects
+
+```bash
+# Format code
+cargo fmt
+
+# Run linter
+cargo clippy -- -D warnings
+```
+
+### TypeScript Projects
+
+```bash
+# Format and lint
+bun run lint:fix
+# or
+biome lint --write .
+```
+
+### Python Projects
+
+```bash
+# Format with black
+black src/
+
+# Sort imports
+isort src/
+
+# Lint with ruff
+ruff check src/
+```
+
+## Testing
+
+### Unit Tests
+
+Each repository has its own test command:
+
+| Repository | Command |
+| ---------- | ------- |
+| Iridium | `cargo test` |
+| Boron | `cargo test` |
+| Zinc | `cargo test` |
+| Argon | `bun run test` |
+| Helium (TS) | `bun run test` |
+| Helium (Python) | `pytest` |
+| Helium (.NET) | `dotnet test` |
+| Silicon | `bun run test` |
+
+### Integration Tests
+
+Some repositories have integration tests that require Docker:
+
+```bash
+# Start test infrastructure
+docker-compose -f docker-compose.test.yml up -d
+
+# Run integration tests
+cargo test --features integration
+
+# Cleanup
+docker-compose -f docker-compose.test.yml down
+```
+
+## IDE Setup
+
+### VS Code
+
+Recommended extensions:
+
+```json
+{
+  "recommendations": [
+    "rust-lang.rust-analyzer",
+    "bradlc.vscode-tailwindcss",
+    "esbenp.prettier-vscode",
+    "ms-python.python",
+    "ms-dotnettools.csharp",
+    "biomejs.biome"
+  ]
+}
+```
+
+### Rust Analyzer Settings
+
+```json
+{
+  "rust-analyzer.checkOnSave.command": "clippy",
+  "rust-analyzer.cargo.features": "all"
+}
+```
+
+## Troubleshooting
+
+### Common Issues
+
+**Docker not running:**
+```bash
+# Start Docker Desktop or Docker daemon
+# Linux: sudo systemctl start docker
+```
+
+**Port already in use:**
+```bash
+# Find process using port
+lsof -i :8080
+# Kill process
+kill -9 <PID>
+```
+
+**Database connection errors:**
+```bash
+# Check if PostgreSQL is running
+docker ps | grep postgres
+# Restart if needed
+docker-compose restart postgres
+```
+
+## Next Steps
+
+- Read the [Architecture Overview](/docs/contributor/architecture/overview)
+- Explore the [Repositories](/docs/contributor/repositories)
+- Check out [Good First Issues](https://github.com/AtomiCloud?q=label:good-first-issue)

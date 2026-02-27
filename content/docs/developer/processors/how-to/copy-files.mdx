@@ -1,0 +1,135 @@
+---
+title: Copy Files Directly
+description: Copy files without loading into memory
+---
+
+import { Callout } from 'fumadocs-ui/components/callout';
+
+# Copy Files Directly
+
+Use `copy()` to transfer files from input to output without loading or transforming content.
+
+## When to Use
+
+**Best for:**
+- Static assets (images, fonts, binaries)
+- Files that don't need transformation
+- Large files that shouldn't be loaded into memory
+- Preserving exact file content
+
+## Usage
+
+```ts
+import { StartProcessorWithLambda } from '@atomicloud/cyan-sdk';
+
+StartProcessorWithLambda(async (input, fileHelper) => {
+  // Process text files that need transformation
+  const textFiles = fileHelper.read({ root: 'templates', glob: '**/*.md' });
+
+  textFiles.forEach(file => {
+    file.content = processContent(file.content);
+    file.writeFile();
+  });
+
+  // Copy static assets directly - no loading needed
+  fileHelper.copy({ root: 'static', glob: '**/*' });
+
+  // Copy images without loading
+  fileHelper.copy({ root: 'assets', glob: '**/*.{png,jpg,svg}' });
+
+  return { directory: input.writeDirectory };
+});
+```
+
+## Copy with Glob Patterns
+
+```ts
+StartProcessorWithLambda(async (input, fileHelper) => {
+  // Copy specific file types
+  fileHelper.copy({ root: 'fonts', glob: '**/*.{woff,woff2,ttf}' });
+
+  // Copy entire directory
+  fileHelper.copy({ root: 'public', glob: '**/*' });
+
+  // Copy with exclusions
+  fileHelper.copy({
+    root: 'media',
+    glob: '**/*',
+    exclude: ['**/*.tmp', '**/*.bak']
+  });
+
+  return { directory: input.writeDirectory };
+});
+```
+
+## Example: Mixed Processing
+
+Combine processing and copying in the same processor:
+
+```ts
+interface ProcessorConfig {
+  transformDocs: boolean;
+}
+
+StartProcessorWithLambda(async (input, fileHelper) => {
+  const config = input.config as ProcessorConfig;
+
+  if (config.transformDocs) {
+    // Process documentation files
+    const docs = fileHelper.read({ root: 'docs', glob: '**/*.md' });
+    docs.forEach(file => {
+      file.content = addTableOfContents(file.content);
+      file.writeFile();
+    });
+  } else {
+    // Copy docs unchanged
+    fileHelper.copy({ root: 'docs', glob: '**/*.md' });
+  }
+
+  // Always copy these without processing
+  fileHelper.copy({ root: 'images', glob: '**/*' });
+  fileHelper.copy({ root: 'styles', glob: '**/*.css' });
+
+  return { directory: input.writeDirectory };
+});
+```
+
+## Example: Binary Assets
+
+```ts
+StartProcessorWithLambda(async (input, fileHelper) => {
+  // Process configuration files
+  const configs = fileHelper.read({ root: 'config', glob: '**/*.{json,yaml}' });
+  configs.forEach(file => {
+    const data = JSON.parse(file.content);
+    applyDefaults(data);
+    file.content = JSON.stringify(data, null, 2);
+    file.writeFile();
+  });
+
+  // Copy all binaries without touching them
+  fileHelper.copy({ root: 'binaries', glob: '**/*' });
+  fileHelper.copy({ root: 'node_modules', glob: '**/*' });
+
+  return { directory: input.writeDirectory };
+});
+```
+
+<Callout type="info">
+`copy()` is the most memory-efficient option because files are transferred directly from read directory to write directory without being loaded into the processor's memory.
+</Callout>
+
+## Performance Comparison
+
+| Method | Memory Usage | Speed | Use Case |
+|--------|--------------|-------|----------|
+| `copy()` | Minimal | Fastest | Static files |
+| `get()` + `copy()` | Minimal | Fast | Conditional copy |
+| `read()` | Medium | Medium | Need content |
+| `resolveAll()` | High | Slower | Process all |
+
+## Related
+
+- [Resolve All Files](/developer/processors/how-to/resolve-all-files) - Load all at once
+- [Lazy Load Files](/developer/processors/how-to/lazy-load-files) - Load on demand
+- [CyanFileHelper API](/developer/processors/reference/sdk/file-helper) - Full API reference

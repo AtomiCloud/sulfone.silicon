@@ -1,0 +1,119 @@
+---
+title: Lazy Load Files
+description: Get file references without loading content
+---
+
+import { Callout } from 'fumadocs-ui/components/callout';
+
+# Lazy Load Files
+
+Use `get()` to get file references without loading content. Load content only when needed.
+
+## When to Use
+
+**Best for:**
+- Conditional processing where you may not need all files
+- Checking file metadata before loading
+- Reducing initial memory footprint
+
+## Usage
+
+```ts
+import { StartProcessorWithLambda } from '@atomicloud/cyan-sdk';
+
+StartProcessorWithLambda(async (input, fileHelper) => {
+  // Get references WITHOUT loading content
+  const refs = fileHelper.get({ root: 'templates', glob: '**/*' });
+
+  for (const ref of refs) {
+    console.log(ref.relative); // Path available immediately
+    // ref.content NOT available - must load explicitly
+
+    // Only load content when needed
+    if (shouldProcess(ref.relative)) {
+      const content = await ref.load();
+      // Now transform and write
+      const transformed = processContent(content);
+      ref.writeFile(transformed);
+    } else {
+      // Copy without loading
+      ref.copy();
+    }
+  }
+
+  return { directory: input.writeDirectory };
+});
+```
+
+## VirtualFileReference Properties
+
+| Property | Type | Description |
+|----------|------|-------------|
+| `relative` | `string` | Path relative to read directory |
+
+## VirtualFileReference Methods
+
+| Method | Return | Description |
+|--------|--------|-------------|
+| `load()` | `Promise<string>` | Load file content |
+| `writeFile(content)` | `void` | Write content to output |
+| `copy()` | `void` | Copy file without loading |
+
+## Example: Conditional Processing
+
+```ts
+StartProcessorWithLambda(async (input, fileHelper) => {
+  const refs = fileHelper.get({ root: 'templates', glob: '**/*' });
+  const config = input.config as { processMarkdown: boolean };
+
+  for (const ref of refs) {
+    // Only process markdown files if enabled
+    if (config.processMarkdown && ref.relative.endsWith('.md')) {
+      const content = await ref.load();
+      const processed = transformMarkdown(content);
+      ref.writeFile(processed);
+    } else {
+      // Copy other files directly
+      ref.copy();
+    }
+  }
+
+  return { directory: input.writeDirectory };
+});
+```
+
+## Example: Skip Large Files
+
+```ts
+StartProcessorWithLambda(async (input, fileHelper) => {
+  const refs = fileHelper.get({ root: 'assets', glob: '**/*' });
+  const MAX_SIZE = 1024 * 1024; // 1MB
+
+  for (const ref of refs) {
+    const size = await ref.getSize();
+
+    if (size > MAX_SIZE) {
+      // Copy large files without processing
+      console.log(`Skipping large file: ${ref.relative}`);
+      ref.copy();
+    } else {
+      // Load and process small files
+      const content = await ref.load();
+      const processed = transform(content);
+      ref.writeFile(processed);
+    }
+  }
+
+  return { directory: input.writeDirectory };
+});
+```
+
+<Callout type="info">
+Lazy loading is memory-efficient because you only load content for files you actually need to process. Files that don't need transformation can be copied directly.
+</Callout>
+
+## Related
+
+- [Resolve All Files](/developer/processors/how-to/resolve-all-files) - Load all at once
+- [Copy Files](/developer/processors/how-to/copy-files) - Copy without loading
+- [CyanFileHelper API](/developer/processors/reference/sdk/file-helper) - Full API reference

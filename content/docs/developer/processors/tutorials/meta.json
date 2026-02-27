@@ -1,4 +1,5 @@
 {
   "title": "Tutorials",
-  "icon": "GraduationCap"
+  "icon": "GraduationCap",
+  "pages": ["first-processor"]
 }

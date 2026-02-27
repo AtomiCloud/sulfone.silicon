@@ -1,0 +1,167 @@
+---
+title: StartProcessorWithLambda
+description: Processor entry point API
+---
+
+# StartProcessorWithLambda
+
+The entry point for processor logic. Wrap your processor function with this to create a valid CyanPrint processor.
+
+## Signature
+
+```ts
+function StartProcessorWithLambda(
+  handler: (input: ProcessorInput, fileHelper: CyanFileHelper) => Promise<ProcessorOutput>
+): void;
+```
+
+## Parameters
+
+### handler
+
+The async function that implements processor logic.
+
+| Parameter | Type | Description |
+|-----------|------|-------------|
+| `input` | `ProcessorInput` | Contains directories, globs, and config |
+| `fileHelper` | `CyanFileHelper` | File operations API |
+
+**Returns:** `Promise<ProcessorOutput>`
+
+## Usage
+
+```ts
+import { StartProcessorWithLambda } from '@atomicloud/cyan-sdk';
+
+StartProcessorWithLambda(async (input, fileHelper) => {
+  // 1. Load files
+  const files = fileHelper.resolveAll();
+
+  // 2. Transform content
+  files.forEach(file => {
+    file.content = transform(file.content);
+  });
+
+  // 3. Write output
+  files.forEach(file => {
+    file.writeFile();
+  });
+
+  // 4. Return output directory
+  return { directory: input.writeDirectory };
+});
+```
+
+## ProcessorInput
+
+| Property | Type | Description |
+|----------|------|-------------|
+| `readDirectory` | `string` | Path to source files (`/workspace/cyanprint/`) |
+| `writeDirectory` | `string` | Path for output files (`/workspace/output/`) |
+| `globs` | `CyanGlob[]` | File patterns from template |
+| `config` | `unknown` | Configuration from template |
+
+## ProcessorOutput
+
+| Property | Type | Description |
+|----------|------|-------------|
+| `directory` | `string` | Must be `input.writeDirectory` |
+
+## Example: Simple Transform
+
+```ts
+import { StartProcessorWithLambda } from '@atomicloud/cyan-sdk';
+
+StartProcessorWithLambda(async (input, fileHelper) => {
+  const files = fileHelper.resolveAll();
+
+  for (const file of files) {
+    // Access file properties
+    console.log(`Processing: ${file.relative}`);
+    console.log(`Size: ${file.content.length} bytes`);
+
+    // Transform content
+    file.content = file.content.toUpperCase();
+
+    // Write to output
+    file.writeFile();
+  }
+
+  return { directory: input.writeDirectory };
+});
+```
+
+## Example: Using Config
+
+```ts
+interface MyConfig {
+  prefix: string;
+  suffix: string;
+}
+
+StartProcessorWithLambda(async (input, fileHelper) => {
+  const config = input.config as MyConfig;
+  const files = fileHelper.resolveAll();
+
+  files.forEach(file => {
+    file.content = `${config.prefix}\n${file.content}\n${config.suffix}`;
+    file.writeFile();
+  });
+
+  return { directory: input.writeDirectory };
+});
+```
+
+## Example: Selective Processing
+
+```ts
+StartProcessorWithLambda(async (input, fileHelper) => {
+  // Load only markdown files
+  const mdFiles = fileHelper.read({ root: 'templates', glob: '**/*.md' });
+
+  mdFiles.forEach(file => {
+    file.content = processMarkdown(file.content);
+    file.writeFile();
+  });
+
+  // Copy other files without loading
+  fileHelper.copy({ root: 'templates', glob: '**/*', exclude: ['**/*.md'] });
+
+  return { directory: input.writeDirectory };
+});
+```
+
+## Error Handling
+
+```ts
+StartProcessorWithLambda(async (input, fileHelper) => {
+  try {
+    const files = fileHelper.resolveAll();
+
+    if (files.length === 0) {
+      throw new Error('No files matched the processor globs');
+    }
+
+    for (const file of files) {
+      try {
+        file.content = transform(file.content);
+        file.writeFile();
+      } catch (err) {
+        console.error(`Failed to process ${file.relative}:`, err);
+        // Continue with other files or rethrow
+      }
+    }
+
+    return { directory: input.writeDirectory };
+  } catch (err) {
+    console.error('Processor failed:', err);
+    throw err;
+  }
+});
+```
+
+## Related
+
+- [ProcessorInput/Output](/developer/processors/reference/sdk/input-output) - Type definitions
+- [CyanFileHelper](/developer/processors/reference/sdk/file-helper) - File operations
+- [First Processor](/developer/processors/tutorials/first-processor) - Tutorial

@@ -1,0 +1,194 @@
+---
+title: Push to Registry
+description: Build and publish your processor to a registry
+---
+
+import { Steps } from 'fumadocs-ui/components/steps';
+import { Callout } from 'fumadocs-ui/components/callout';
+
+# Push to Registry
+
+Publish your processor to a Docker registry so others can use it in their templates.
+
+## Prerequisites
+
+- Docker installed and logged in
+- Access to a Docker registry (Docker Hub, GitHub Container Registry, etc.)
+- Completed processor code
+
+## Publish Process
+
+<Steps>
+
+### Tag Your Image
+
+Tag your processor image with the registry path:
+
+```bash
+# Docker Hub
+docker tag my-processor:dev username/my-processor:latest
+docker tag my-processor:dev username/my-processor:1.0.0
+
+# GitHub Container Registry
+docker tag my-processor:dev ghcr.io/org/my-processor:latest
+docker tag my-processor:dev ghcr.io/org/my-processor:1.0.0
+
+# Private registry
+docker tag my-processor:dev registry.company.com/processors/my-processor:latest
+```
+
+### Push to Registry
+
+```bash
+# Docker Hub
+docker push username/my-processor:latest
+docker push username/my-processor:1.0.0
+
+# GitHub Container Registry
+docker push ghcr.io/org/my-processor:latest
+docker push ghcr.io/org/my-processor:1.0.0
+
+# Private registry
+docker push registry.company.com/processors/my-processor:latest
+```
+
+### Use in Templates
+
+Reference the published processor in your templates:
+
+```ts
+return {
+  processors: [{
+    name: 'username/my-processor:1.0.0',  // Full image reference
+    files: [{ root: 'templates', glob: '**/*', exclude: [], type: GlobType.Template }],
+    config: { /* ... */ }
+  }]
+};
+```
+
+</Steps>
+
+## Naming Conventions
+
+### Registry Names
+
+Follow Docker naming conventions:
+
+| Registry | Format | Example |
+|----------|--------|---------|
+| Docker Hub | `username/name` | `atomicloud/mustache-processor` |
+| GHCR | `ghcr.io/org/name` | `ghcr.io/myorg/custom-processor` |
+| Private | `registry.host/path/name` | `registry.io/team/processor` |
+
+### Version Tags
+
+Use semantic versioning:
+
+```bash
+# Latest (development)
+username/my-processor:latest
+
+# Major version
+username/my-processor:1
+
+# Minor version
+username/my-processor:1.2
+
+# Patch version (recommended for production)
+username/my-processor:1.2.3
+```
+
+## Creating cyan.yaml
+
+Document your processor with a `cyan.yaml` file:
+
+```yaml
+name: myorg/my-processor
+version: 1.0.0
+description: Custom processor for XYZ transformations
+author: Your Name
+license: MIT
+
+# Processor-specific metadata
+processor:
+  inputs:
+    - name: transformType
+      type: string
+      default: "uppercase"
+      description: Type of transformation to apply
+    - name: includeMetadata
+      type: boolean
+      default: false
+      description: Add metadata header to files
+
+  # Expected config schema
+  configSchema:
+    type: object
+    properties:
+      transformType:
+        type: string
+        enum: [uppercase, lowercase, capitalize]
+      includeMetadata:
+        type: boolean
+```
+
+## CI/CD Integration
+
+### GitHub Actions
+
+```yaml
+# .github/workflows/publish.yml
+name: Publish Processor
+
+on:
+  push:
+    tags:
+      - 'v*'
+
+jobs:
+  publish:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Set up Docker Buildx
+        uses: docker/setup-buildx-action@v3
+
+      - name: Login to GitHub Container Registry
+        uses: docker/login-action@v3
+        with:
+          registry: ghcr.io
+          username: ${{ github.actor }}
+          password: ${{ secrets.GITHUB_TOKEN }}
+
+      - name: Extract version
+        id: version
+        run: echo "VERSION=${GITHUB_REF#refs/tags/v}" >> $GITHUB_OUTPUT
+
+      - name: Build and push
+        uses: docker/build-push-action@v5
+        with:
+          context: .
+          push: true
+          tags: |
+            ghcr.io/${{ github.repository }}:latest
+            ghcr.io/${{ github.repository }}:${{ steps.version.outputs.VERSION }}
+```
+
+<Callout type="info">
+Always use specific version tags in production templates. Avoid `:latest` to ensure reproducible builds.
+</Callout>
+
+## Best Practices
+
+1. **Version your processors** - Use semantic versioning
+2. **Document config schema** - Help users understand available options
+3. **Provide examples** - Include usage examples in README
+4. **Test before publishing** - Verify processor works correctly
+5. **Keep images small** - Use minimal base images
+
+## Related
+
+- [First Processor Tutorial](/developer/processors/tutorials/first-processor) - Create your first processor
+- [Project Structure](/developer/processors/reference/project-structure) - Processor file layout
+- [Dockerfile Reference](/developer/processors/reference/dockerfile) - Dockerfile best practices

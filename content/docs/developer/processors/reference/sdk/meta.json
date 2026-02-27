@@ -1,0 +1,5 @@
+{
+  "title": "SDK Reference",
+  "icon": "Code",
+  "pages": ["index", "start-processor", "file-helper", "input-output", "types"]
+}

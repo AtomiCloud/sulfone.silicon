@@ -1,0 +1,198 @@
+---
+title: Access Processor Config
+description: Access configuration passed from template
+---
+
+import { Callout } from 'fumadocs-ui/components/callout';
+
+# Access Processor Config
+
+Processors receive configuration from the template through `input.config`. This allows templates to customize processor behavior.
+
+## Template Configuration
+
+In the template's `index.ts`, pass config to the processor:
+
+```ts
+// Template's index.ts
+import { StartTemplateWithLambda, GlobType } from '@atomicloud/cyan-sdk';
+
+interface ProcessorConfig {
+  customSetting: boolean;
+  features: string[];
+  outputFormat: 'json' | 'yaml';
+}
+
+StartTemplateWithLambda(async (i, d) => {
+  // Ask user for preferences
+  const features = await i.checkbox(
+    'Select features:',
+    ['docker', 'ci', 'testing'],
+    'project.features',
+    'Choose features'
+  );
+
+  const format = await i.select(
+    'Output format:',
+    ['json', 'yaml'],
+    'config.format',
+    'Choose format'
+  );
+
+  return {
+    processors: [{
+      name: 'myorg/my-processor',
+      files: [{ root: 'templates', glob: '**/*', exclude: [], type: GlobType.Template }],
+      config: {
+        customSetting: true,
+        features: features,
+        outputFormat: format
+      } as ProcessorConfig
+    }]
+  };
+});
+```
+
+## Accessing Config in Processor
+
+```ts
+// Processor's index.ts
+import { StartProcessorWithLambda } from '@atomicloud/cyan-sdk';
+
+interface ProcessorConfig {
+  customSetting: boolean;
+  features: string[];
+  outputFormat: 'json' | 'yaml';
+}
+
+StartProcessorWithLambda(async (input, fileHelper) => {
+  // Cast config to your type
+  const config = input.config as ProcessorConfig;
+
+  // Use config values
+  if (config.customSetting) {
+    console.log('Custom setting enabled');
+  }
+
+  const files = fileHelper.resolveAll();
+
+  files.forEach(file => {
+    if (config.features.includes('docker')) {
+      file.content = addDockerConfig(file.content);
+    }
+
+    if (config.outputFormat === 'yaml') {
+      file.content = convertToYaml(file.content);
+    }
+
+    file.writeFile();
+  });
+
+  return { directory: input.writeDirectory };
+});
+```
+
+## Default Config Values
+
+Always handle missing config gracefully:
+
+```ts
+interface ProcessorConfig {
+  includeComments?: boolean;
+  indentSize?: number;
+  generateTypes?: boolean;
+}
+
+StartProcessorWithLambda(async (input, fileHelper) => {
+  // Provide defaults for missing values
+  const config: ProcessorConfig = {
+    includeComments: true,
+    indentSize: 2,
+    generateTypes: false,
+    ...(input.config as Partial<ProcessorConfig>)
+  };
+
+  const files = fileHelper.resolveAll();
+
+  files.forEach(file => {
+    const indent = ' '.repeat(config.indentSize);
+
+    if (config.generateTypes) {
+      file.content = generateTypes(file.content);
+    }
+
+    if (!config.includeComments) {
+      file.content = removeComments(file.content);
+    }
+
+    file.writeFile();
+  });
+
+  return { directory: input.writeDirectory };
+});
+```
+
+## Complex Config Example
+
+```ts
+// Template config
+{
+  name: 'myorg/codegen-processor',
+  files: [{ root: 'schemas', glob: '**/*.graphql', exclude: [], type: GlobType.Template }],
+  config: {
+    generateClient: true,
+    generateServer: false,
+    clientOptions: {
+      outputDir: 'src/client',
+      fetcher: 'axios',
+      typesOnly: false
+    },
+    scalars: {
+      DateTime: 'Date',
+      JSON: 'Record<string, unknown>'
+    }
+  }
+}
+
+// Processor handling complex config
+interface CodegenConfig {
+  generateClient?: boolean;
+  generateServer?: boolean;
+  clientOptions?: {
+    outputDir: string;
+    fetcher: 'axios' | 'fetch';
+    typesOnly: boolean;
+  };
+  scalars?: Record<string, string>;
+}
+
+StartProcessorWithLambda(async (input, fileHelper) => {
+  const config: CodegenConfig = input.config as CodegenConfig;
+
+  const files = fileHelper.resolveAll();
+
+  files.forEach(file => {
+    const schema = parseSchema(file.content);
+
+    if (config.generateClient) {
+      const clientCode = generateClient(schema, config.clientOptions);
+      // Write to additional output location
+      writeFileTo(config.clientOptions.outputDir, clientCode);
+    }
+
+    file.writeFile();
+  });
+
+  return { directory: input.writeDirectory };
+});
+```
+
+<Callout type="info">
+Config is passed as `unknown` type. Always cast to your expected type and provide default values for optional fields.
+</Callout>
+
+## Related
+
+- [Processor Input/Output](/developer/processors/reference/sdk/input-output) - Type definitions
+- [CyanFileHelper API](/developer/processors/reference/sdk/file-helper) - File operations
+- [Type Definitions](/developer/processors/reference/sdk/types) - Full type reference

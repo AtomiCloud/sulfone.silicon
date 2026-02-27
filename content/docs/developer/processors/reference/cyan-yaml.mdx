@@ -1,0 +1,182 @@
+---
+title: cyan.yaml Format
+description: Processor metadata and configuration schema
+---
+
+# cyan.yaml Format
+
+The `cyan.yaml` file documents your processor's metadata and configuration options.
+
+## Basic Structure
+
+```yaml
+name: myorg/my-processor
+version: 1.0.0
+description: Description of the processor's purpose
+author: Your Name
+license: MIT
+repository: https://github.com/org/my-processor
+```
+
+## Required Fields
+
+| Field | Type | Description |
+|-------|------|-------------|
+| `name` | string | Processor identifier (org/name format) |
+| `version` | string | Semantic version number |
+
+## Optional Fields
+
+| Field | Type | Description |
+|-------|------|-------------|
+| `description` | string | Brief description of functionality |
+| `author` | string | Author name or organization |
+| `license` | string | SPDX license identifier |
+| `repository` | string | Source repository URL |
+| `keywords` | string[] | Search keywords |
+| `processor` | object | Processor-specific configuration |
+
+## Processor Configuration Schema
+
+Document the config your processor accepts:
+
+```yaml
+processor:
+  inputs:
+    - name: transformType
+      type: string
+      required: true
+      default: "uppercase"
+      description: Type of transformation to apply
+      enum:
+        - uppercase
+        - lowercase
+        - capitalize
+
+    - name: includeMetadata
+      type: boolean
+      required: false
+      default: false
+      description: Add metadata header to output files
+
+    - name: outputFormat
+      type: object
+      required: false
+      description: Output formatting options
+      properties:
+        indent:
+          type: number
+          default: 2
+        newline:
+          type: string
+          default: "\n"
+```
+
+## Input Types
+
+| Type | Description | Example |
+|------|-------------|---------|
+| `string` | Text value | `"uppercase"` |
+| `number` | Numeric value | `2` |
+| `boolean` | True/false | `true` |
+| `array` | List of values | `["a", "b"]` |
+| `object` | Nested configuration | `{ indent: 2 }` |
+
+## Full Example
+
+```yaml
+name: atomicloud/markdown-processor
+version: 2.1.0
+description: Process markdown files with custom transformations
+author: Atomicloud
+license: Apache-2.0
+repository: https://github.com/atomicloud/markdown-processor
+keywords:
+  - markdown
+  - documentation
+  - processing
+
+processor:
+  inputs:
+    - name: features
+      type: array
+      required: false
+      default: ["toc", "anchors"]
+      description: Features to enable
+      items:
+        type: string
+        enum:
+          - toc
+          - anchors
+          - highlight
+          - math
+
+    - name: frontmatter
+      type: boolean
+      required: false
+      default: true
+      description: Parse and process YAML frontmatter
+
+    - name: headingPrefix
+      type: string
+      required: false
+      default: ""
+      description: Prefix for heading IDs
+
+    - name: formatting
+      type: object
+      required: false
+      description: Output formatting options
+      properties:
+        lineWidth:
+          type: number
+          default: 80
+        preserveBlankLines:
+          type: boolean
+          default: true
+```
+
+## Using Config in Processor
+
+The documented inputs map to `input.config`:
+
+```ts
+interface MarkdownConfig {
+  features?: string[];
+  frontmatter?: boolean;
+  headingPrefix?: string;
+  formatting?: {
+    lineWidth?: number;
+    preserveBlankLines?: boolean;
+  };
+}
+
+StartProcessorWithLambda(async (input, fileHelper) => {
+  const config: MarkdownConfig = {
+    features: ['toc'],
+    frontmatter: true,
+    ...(input.config as Partial<MarkdownConfig>)
+  };
+
+  // Use config values
+  if (config.features?.includes('toc')) {
+    // Generate table of contents
+  }
+
+  // ...
+});
+```
+
+## Best Practices
+
+1. **Document all options** - Help users understand available configuration
+2. **Provide defaults** - Make most options optional with sensible defaults
+3. **Use enums** - Restrict options to valid values when applicable
+4. **Include descriptions** - Explain what each option does
+5. **Version the schema** - Update version when adding breaking changes
+
+## Related
+
+- [Project Structure](/developer/processors/reference/project-structure) - File layout
+- [Access Config](/developer/processors/how-to/access-config) - Using config in code
+- [Type Definitions](/developer/processors/reference/sdk/types) - TypeScript types

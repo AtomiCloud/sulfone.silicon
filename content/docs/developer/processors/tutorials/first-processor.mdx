@@ -1,0 +1,161 @@
+---
+title: Your First Processor
+description: Create a simple processor that transforms files
+---
+
+import { Steps } from 'fumadocs-ui/components/steps';
+import { Callout } from 'fumadocs-ui/components/callout';
+
+# Your First Processor
+
+Create a processor that transforms template files. This tutorial builds a simple uppercase transformer.
+
+## Prerequisites
+
+- Docker installed and running
+- Node.js 18+ or Bun installed
+- Basic TypeScript knowledge
+
+## Create Project
+
+<Steps>
+
+### Initialize Project
+
+Create a new directory and initialize:
+
+```bash
+mkdir my-processor
+cd my-processor
+bun init -y
+bun add @atomicloud/cyan-sdk
+```
+
+### Create Processor Logic
+
+Create `index.ts`:
+
+```ts
+import { StartProcessorWithLambda } from '@atomicloud/cyan-sdk';
+
+StartProcessorWithLambda(async (input, fileHelper) => {
+  // Load all files into memory
+  const files = fileHelper.resolveAll();
+
+  // Transform each file
+  files.forEach(file => {
+    // Transform content (example: uppercase)
+    file.content = file.content.toUpperCase();
+
+    // Write to output directory
+    file.writeFile();
+  });
+
+  // Return output directory
+  return { directory: input.writeDirectory };
+});
+```
+
+### Create Dockerfile
+
+Create `Dockerfile`:
+
+```dockerfile
+FROM oven/bun:1.1.31
+
+WORKDIR /app
+
+# Mark as CyanPrint processor
+LABEL cyanprint.dev=true
+
+# Install dependencies
+COPY package.json bun.lockb* ./
+RUN bun install
+
+# Copy processor code
+COPY . .
+
+# Run processor
+CMD ["bun", "run", "index.ts"]
+```
+
+</Steps>
+
+## Understanding the Code
+
+### StartProcessorWithLambda
+
+Entry point for processor logic. Receives two arguments:
+
+| Argument | Type | Purpose |
+|----------|------|---------|
+| `input` | `ProcessorInput` | Contains directories, globs, and config |
+| `fileHelper` | `CyanFileHelper` | File operations API |
+
+### CyanFileHelper
+
+The file helper provides all file operations:
+
+| Method | Purpose | Memory Usage |
+|--------|---------|--------------|
+| `resolveAll()` | Load all files with content | High |
+| `read(glob)` | Load specific files | Medium |
+| `get(glob)` | Get references without content | Low |
+| `readAsStream(glob)` | Stream large files | Low |
+| `copy(glob)` | Copy without loading | Minimal |
+
+### VirtualFile
+
+Each file has:
+
+| Property | Type | Description |
+|----------|------|-------------|
+| `content` | `string` | File contents |
+| `relative` | `string` | Path relative to read directory |
+
+| Method | Description |
+|--------|-------------|
+| `writeFile()` | Write file to output directory |
+
+## Build and Test
+
+### Build Docker Image
+
+```bash
+docker build -t my-processor:dev .
+```
+
+### Test Locally
+
+Create a test template that uses your processor:
+
+```ts
+// In template's index.ts
+return {
+  processors: [{
+    name: 'my-processor:dev',  // Your processor image
+    files: [{ root: 'templates', glob: '**/*', exclude: [], type: GlobType.Template }],
+    config: {}  // Optional config
+  }]
+};
+```
+
+<Callout type="info">
+During development, use local Docker images with the `:dev` tag. Push to a registry when ready to share.
+</Callout>
+
+## What You Learned
+
+- How to create a processor project
+- Using `StartProcessorWithLambda` as the entry point
+- Loading files with `resolveAll()`
+- Transforming file content
+- Writing files with `writeFile()`
+
+## Next Steps
+
+Learn more about file operations:
+
+- [Resolve All Files](/developer/processors/how-to/resolve-all-files) - Load all files
+- [Lazy Load Files](/developer/processors/how-to/lazy-load-files) - Efficient loading
+- [CyanFileHelper API](/developer/processors/reference/sdk/file-helper) - Full API reference

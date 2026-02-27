@@ -1,4 +1,12 @@
 {
   "title": "How-To Guides",
-  "icon": "ListChecks"
+  "icon": "ListChecks",
+  "pages": [
+    "resolve-all-files",
+    "lazy-load-files",
+    "stream-large-files",
+    "copy-files",
+    "access-config",
+    "push-to-registry"
+  ]
 }

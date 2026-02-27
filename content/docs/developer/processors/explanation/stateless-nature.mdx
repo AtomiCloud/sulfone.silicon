@@ -1,0 +1,215 @@
+---
+title: Stateless Nature
+description: Understanding why processors are stateless and what that means
+---
+
+import { Callout } from 'fumadocs-ui/components/callout';
+
+# Stateless Nature
+
+Processors are **stateless** by design. This means they don't maintain internal state between invocations and always produce the same output for the same input.
+
+## What Stateless Means
+
+### Pure Function Behavior
+
+A processor is essentially a pure function:
+
+```ts
+// Conceptual model
+output = processor(input, files)
+// Same input always = same output
+```
+
+```mermaid
+graph LR
+    A[Input Files] --> B[Processor]
+    C[Config] --> B
+    B --> D[Output Files]
+
+    style B fill:#f9f,stroke:#333
+```
+
+### No Side Effects
+
+Processors should not:
+
+| ❌ Don't Do | ✅ Do Instead |
+|------------|--------------|
+| Write to external databases | Return all data in output |
+| Make network requests | Use config for external data |
+| Read from random locations | Use `fileHelper` APIs |
+| Store state between runs | Process fresh each time |
+| Modify global state | Keep transformations local |
+
+## Why Stateless?
+
+### Reproducibility
+
+Same template + same answers = identical output:
+
+```bash
+# Run 1
+cyanprint create myorg/my-template output1
+
+# Run 2 (with same answers)
+cyanprint create myorg/my-template output2
+
+# output1 and output2 are identical
+diff -r output1 output2  # No differences
+```
+
+### Security
+
+Containerized execution requires isolation:
+
+- No access to host filesystem
+- No persistent connections
+- No shared state with other processors
+
+### Scalability
+
+Stateless processors can be:
+
+- Run in parallel
+- Distributed across machines
+- Cached and reused
+- Easily tested
+
+## Implications
+
+### What You CAN Do
+
+```ts
+StartProcessorWithLambda(async (input, fileHelper) => {
+  // ✅ Read files through fileHelper
+  const files = fileHelper.resolveAll();
+
+  // ✅ Transform content
+  files.forEach(file => {
+    file.content = transform(file.content);
+  });
+
+  // ✅ Use config from template
+  const config = input.config as MyConfig;
+
+  // ✅ Write output files
+  files.forEach(file => file.writeFile());
+
+  return { directory: input.writeDirectory };
+});
+```
+
+### What You CAN'T Do
+
+```ts
+StartProcessorWithLambda(async (input, fileHelper) => {
+  // ❌ Don't access filesystem directly
+  // fs.readFileSync('/etc/passwd')
+
+  // ❌ Don't make network calls
+  // await fetch('https://api.example.com/data')
+
+  // ❌ Don't write outside output directory
+  // fs.writeFileSync('/tmp/cache', data)
+
+  // ❌ Don't use global state
+  // globalCache.set('key', value)
+
+  // ❌ Don't access environment for secrets
+  // process.env.DATABASE_URL
+});
+```
+
+<Callout type="warn">
+Processors that violate stateless principles may work in development but fail in production environments with stricter isolation.
+</Callout>
+
+## Designing for Stateless
+
+### Pass Data Through Config
+
+Instead of fetching data, have the template pass it:
+
+```ts
+// Template provides all needed data
+return {
+  processors: [{
+    name: 'myorg/my-processor',
+    files: [{ root: 'templates', glob: '**/*', exclude: [], type: GlobType.Template }],
+    config: {
+      // All data comes from config
+      apiUrl: 'https://api.example.com',
+      version: '1.0.0',
+      features: ['auth', 'api']
+    }
+  }]
+};
+```
+
+### Avoid External Dependencies
+
+```ts
+// ❌ Bad: External dependency
+import { fetchUserData } from 'external-api';
+
+// ✅ Good: Self-contained
+function transformContent(content: string, config: Config): string {
+  // Pure transformation
+  return content.replace(/{{name}}/g, config.name);
+}
+```
+
+### Use Deterministic Algorithms
+
+```ts
+// ❌ Bad: Non-deterministic
+file.content = content + Date.now();
+
+// ✅ Good: Deterministic
+file.content = content + config.timestamp;
+```
+
+## Testing Stateless Processors
+
+Stateless processors are easy to test:
+
+```ts
+// Processor test
+import { processFiles } from './processor';
+
+describe('my-processor', () => {
+  it('transforms content consistently', () => {
+    const input = {
+      content: 'Hello {{name}}',
+      relative: 'test.txt'
+    };
+
+    const config = { name: 'World' };
+
+    // Same input always produces same output
+    const result1 = processFiles(input, config);
+    const result2 = processFiles(input, config);
+
+    expect(result1).toBe(result2);
+    expect(result1).toBe('Hello World');
+  });
+});
+```
+
+## Benefits Summary
+
+| Benefit | Description |
+|---------|-------------|
+| **Reproducibility** | Same input → same output |
+| **Testability** | Easy to unit test |
+| **Security** | Isolated execution |
+| **Scalability** | Parallel processing |
+| **Caching** | Results can be cached |
+| **Debugging** | Predictable behavior |
+
+## Related
+
+- [Why Processors Exist](/developer/processors/explanation/why-processors) - Purpose and use cases
+- [Read/Write Directories](/developer/processors/explanation/read-write-dirs) - Path mechanics
+- [Memory Loading](/developer/processors/explanation/memory-loading) - Memory implications

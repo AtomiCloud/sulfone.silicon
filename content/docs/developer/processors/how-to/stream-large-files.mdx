@@ -1,0 +1,149 @@
+---
+title: Stream Large Files
+description: Stream large files for memory efficiency
+---
+
+import { Callout } from 'fumadocs-ui/components/callout';
+
+# Stream Large Files
+
+Use `readAsStream()` to process large files chunk by chunk without loading the entire file into memory.
+
+## When to Use
+
+**Best for:**
+- Large binary files
+- Files larger than available memory
+- Memory-constrained environments
+- Processing files line by line
+
+## Usage
+
+```ts
+import { StartProcessorWithLambda } from '@atomicloud/cyan-sdk';
+
+StartProcessorWithLambda(async (input, fileHelper) => {
+  // Get streams for large files
+  const streams = fileHelper.readAsStream({ root: 'assets', glob: '**/*' });
+
+  for await (const stream of streams) {
+    console.log(stream.relative); // File path
+
+    // Process chunk by chunk
+    let content = '';
+    for await (const chunk of stream.read()) {
+      content += chunk.toString();
+    }
+
+    // Transform and write
+    const processed = transformContent(content);
+    stream.writeFile(processed);
+  }
+
+  return { directory: input.writeDirectory };
+});
+```
+
+## VirtualFileStream Properties
+
+| Property | Type | Description |
+|----------|------|-------------|
+| `relative` | `string` | Path relative to read directory |
+
+## VirtualFileStream Methods
+
+| Method | Return | Description |
+|--------|--------|-------------|
+| `read()` | `AsyncIterable<Buffer>` | Read file as chunks |
+| `writeFile(content)` | `void` | Write content to output |
+
+## Example: Line-by-Line Processing
+
+```ts
+StartProcessorWithLambda(async (input, fileHelper) => {
+  const streams = fileHelper.readAsStream({ root: 'data', glob: '**/*.csv' });
+
+  for await (const stream of streams) {
+    const lines: string[] = [];
+
+    // Process line by line
+    for await (const chunk of stream.read()) {
+      const text = chunk.toString();
+      const newLines = text.split('\n');
+
+      for (const line of newLines) {
+        if (line.trim()) {
+          lines.push(processLine(line));
+        }
+      }
+    }
+
+    stream.writeFile(lines.join('\n'));
+  }
+
+  return { directory: input.writeDirectory };
+});
+```
+
+## Example: Binary File Processing
+
+```ts
+StartProcessorWithLambda(async (input, fileHelper) => {
+  const streams = fileHelper.readAsStream({ root: 'images', glob: '**/*' });
+
+  for await (const stream of streams) {
+    // Collect all chunks for binary processing
+    const chunks: Buffer[] = [];
+
+    for await (const chunk of stream.read()) {
+      chunks.push(chunk);
+    }
+
+    // Combine and process
+    const buffer = Buffer.concat(chunks);
+    const processed = transformImage(buffer);
+
+    stream.writeFile(processed.toString('base64'));
+  }
+
+  return { directory: input.writeDirectory };
+});
+```
+
+## Example: Transform While Streaming
+
+```ts
+import { Transform } from 'stream';
+
+StartProcessorWithLambda(async (input, fileHelper) => {
+  const streams = fileHelper.readAsStream({ root: 'logs', glob: '*.log' });
+
+  for await (const stream of streams) {
+    let result = '';
+
+    // Process chunks as they arrive
+    for await (const chunk of stream.read()) {
+      const transformed = chunk
+        .toString()
+        .replace(/ERROR/g, 'ERR')
+        .replace(/WARNING/g, 'WARN');
+
+      result += transformed;
+    }
+
+    stream.writeFile(result);
+  }
+
+  return { directory: input.writeDirectory };
+});
+```
+
+<Callout type="warn">
+Streaming requires accumulating content before writing. For truly massive files that don't fit in memory, consider using `copy()` to pass them through unchanged.
+</Callout>
+
+## Related
+
+- [Resolve All Files](/developer/processors/how-to/resolve-all-files) - Load all at once
+- [Copy Files](/developer/processors/how-to/copy-files) - Copy without loading
+- [CyanFileHelper API](/developer/processors/reference/sdk/file-helper) - Full API reference

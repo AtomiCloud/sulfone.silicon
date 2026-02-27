@@ -1,0 +1,252 @@
+---
+title: Processor Dockerfile
+description: Docker container configuration for processors
+---
+
+import { Callout } from 'fumadocs-ui/components/callout';
+
+# Processor Dockerfile
+
+Processors run as Docker containers. The Dockerfile defines the container environment.
+
+## Minimal Dockerfile
+
+```dockerfile
+FROM oven/bun:1.1.31
+
+WORKDIR /app
+
+# Required: Mark as CyanPrint processor
+LABEL cyanprint.dev=true
+
+# Install dependencies
+COPY package.json bun.lockb* ./
+RUN bun install --frozen-lockfile
+
+# Copy processor code
+COPY . .
+
+# Run processor
+CMD ["bun", "run", "index.ts"]
+```
+
+## Required Elements
+
+### LABEL cyanprint.dev=true
+
+This label identifies the container as a CyanPrint processor. Without it, the processor won't be recognized:
+
+```dockerfile
+LABEL cyanprint.dev=true
+```
+
+### WORKDIR
+
+Set the working directory. The convention is `/app`:
+
+```dockerfile
+WORKDIR /app
+```
+
+### CMD
+
+The command that runs the processor:
+
+```dockerfile
+# Bun
+CMD ["bun", "run", "index.ts"]
+
+# Node.js
+CMD ["node", "index.js"]
+```
+
+## Using Node.js
+
+If you prefer Node.js over Bun:
+
+```dockerfile
+FROM node:20-alpine
+
+WORKDIR /app
+
+LABEL cyanprint.dev=true
+
+# Install dependencies
+COPY package*.json ./
+RUN npm ci --only=production
+
+# Copy processor code
+COPY . .
+
+CMD ["node", "index.js"]
+```
+
+## Multi-Stage Build
+
+For smaller images with compiled code:
+
+```dockerfile
+# Build stage
+FROM oven/bun:1.1.31 AS builder
+
+WORKDIR /app
+
+COPY package.json bun.lockb* ./
+RUN bun install --frozen-lockfile
+
+COPY . .
+RUN bun build index.ts --outdir=dist --target=bun
+
+# Runtime stage
+FROM oven/bun:1.1.31-slim
+
+WORKDIR /app
+
+LABEL cyanprint.dev=true
+
+COPY --from=builder /app/dist/index.js ./
+COPY --from=builder /app/node_modules ./node_modules
+
+CMD ["bun", "run", "index.js"]
+```
+
+## Including Additional Files
+
+### Configuration Files
+
+```dockerfile
+COPY config ./config
+COPY templates ./templates
+```
+
+### Binary Tools
+
+```dockerfile
+# Install additional tools
+RUN apt-get update && apt-get install -y \
+    jq \
+    yq \
+    && rm -rf /var/lib/apt/lists/*
+
+COPY . .
+```
+
+## Environment Variables
+
+```dockerfile
+# Set environment variables
+ENV NODE_ENV=production
+ENV LOG_LEVEL=info
+
+# Runtime environment (can be overridden)
+ENV PROCESSOR_DEBUG=false
+```
+
+## Best Practices
+
+### 1. Use Specific Versions
+
+```dockerfile
+# Good: Specific version
+FROM oven/bun:1.1.31
+
+# Avoid: Latest (unpredictable)
+FROM oven/bun:latest
+```
+
+### 2. Minimize Layers
+
+```dockerfile
+# Good: Combined commands
+RUN apt-get update && apt-get install -y \
+    curl \
+    jq \
+    && rm -rf /var/lib/apt/lists/*
+
+# Avoid: Multiple layers
+RUN apt-get update
+RUN apt-get install -y curl
+RUN apt-get install -y jq
+```
+
+### 3. Use .dockerignore
+
+Create a `.dockerignore` file:
+
+```
+node_modules
+bun.lockb
+.git
+.gitignore
+*.md
+tests/
+.env*
+```
+
+### 4. Lock Dependencies
+
+```dockerfile
+# Good: Frozen lockfile
+RUN bun install --frozen-lockfile
+
+# Avoid: May change versions
+RUN bun install
+```
+
+<Callout type="info">
+Processors should be deterministic. Always use locked dependencies to ensure consistent behavior.
+</Callout>
+
+## Full Example
+
+```dockerfile
+#syntax=docker/dockerfile:1
+
+# Build stage
+FROM oven/bun:1.1.31-alpine AS builder
+
+WORKDIR /app
+
+# Install build dependencies
+COPY package.json bun.lockb* ./
+RUN bun install --frozen-lockfile
+
+# Build
+COPY tsconfig.json ./
+COPY src ./src
+COPY index.ts ./
+RUN bun build index.ts --outdir=dist --target=bun --minify
+
+# Runtime stage
+FROM oven/bun:1.1.31-alpine
+
+WORKDIR /app
+
+# Required label
+LABEL cyanprint.dev=true
+LABEL org.opencontainers.image.source=https://github.com/org/my-processor
+LABEL org.opencontainers.image.description="My custom processor"
+
+# Copy built files
+COPY --from=builder /app/dist/index.js ./
+
+# Production dependencies only
+COPY package.json bun.lockb* ./
+RUN bun install --frozen-lockfile --production
+
+# Set environment
+ENV NODE_ENV=production
+ENV LOG_LEVEL=info
+
+# Health check (optional)
+HEALTHCHECK --interval=30s --timeout=3s \
+  CMD bun -e "process.exit(0)"
+
+CMD ["bun", "run", "index.js"]
+```
+
+## Related
+
+- [Project Structure](/developer/processors/reference/project-structure) - File layout
+- [Push to Registry](/developer/processors/how-to/push-to-registry) - Publishing
+- [First Processor](/developer/processors/tutorials/first-processor) - Tutorial

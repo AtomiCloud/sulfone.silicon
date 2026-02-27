@@ -1,0 +1,312 @@
+---
+title: CyanFileHelper API
+description: File operations for processors
+---
+
+import { Callout } from 'fumadocs-ui/components/callout';
+
+# CyanFileHelper API
+
+The `CyanFileHelper` provides all file operations for processors. It manages reading from the source directory and writing to the output directory.
+
+## Methods Overview
+
+| Method | Memory Usage | Use Case |
+|--------|--------------|----------|
+| `resolveAll()` | High | Load all files with content |
+| `read(glob)` | Medium | Load specific files |
+| `get(glob)` | Low | Get file references only |
+| `readAsStream(glob)` | Low | Stream large files |
+| `copy(glob)` | Minimal | Copy without loading |
+
+---
+
+## resolveAll()
+
+Load all files matching the processor's globs into memory.
+
+### Signature
+
+```ts
+resolveAll(): VirtualFile[];
+```
+
+### Returns
+
+`VirtualFile[]` - Array of files with content.
+
+### Usage
+
+```ts
+const files = fileHelper.resolveAll();
+
+files.forEach(file => {
+  console.log(file.relative); // Path relative to read_dir
+  console.log(file.content);  // Full file content
+
+  file.writeFile();           // Write to output
+});
+```
+
+<Callout type="warn">
+Loads ALL matched files into memory. For large templates, consider `get()` or `readAsStream()`.
+</Callout>
+
+---
+
+## read(glob)
+
+Load specific files matching a glob pattern.
+
+### Signature
+
+```ts
+read(glob: CyanGlob): VirtualFile[];
+```
+
+### Parameters
+
+| Parameter | Type | Description |
+|-----------|------|-------------|
+| `glob` | `CyanGlob` | Glob configuration |
+
+### CyanGlob
+
+```ts
+interface CyanGlob {
+  root: string;      // Base directory
+  glob: string;      // Glob pattern (e.g., '**/*.md')
+  exclude?: string[]; // Patterns to exclude
+}
+```
+
+### Returns
+
+`VirtualFile[]` - Array of matching files.
+
+### Usage
+
+```ts
+// Load markdown files
+const mdFiles = fileHelper.read({
+  root: 'templates',
+  glob: '**/*.md'
+});
+
+// Load with exclusions
+const files = fileHelper.read({
+  root: 'src',
+  glob: '**/*.ts',
+  exclude: ['**/*.test.ts', '**/*.spec.ts']
+});
+```
+
+---
+
+## get(glob)
+
+Get file references without loading content. Use for lazy loading.
+
+### Signature
+
+```ts
+get(glob: CyanGlob): VirtualFileReference[];
+```
+
+### Parameters
+
+Same as `read(glob)`.
+
+### Returns
+
+`VirtualFileReference[]` - Array of file references.
+
+### Usage
+
+```ts
+const refs = fileHelper.get({ root: 'templates', glob: '**/*' });
+
+for (const ref of refs) {
+  console.log(ref.relative); // Path available
+
+  if (shouldProcess(ref.relative)) {
+    const content = await ref.load(); // Load only when needed
+    ref.writeFile(transform(content));
+  } else {
+    ref.copy(); // Copy without loading
+  }
+}
+```
+
+---
+
+## readAsStream(glob)
+
+Stream files for memory-efficient processing of large files.
+
+### Signature
+
+```ts
+readAsStream(glob: CyanGlob): VirtualFileStream[];
+```
+
+### Parameters
+
+Same as `read(glob)`.
+
+### Returns
+
+`VirtualFileStream[]` - Array of streaming file handles.
+
+### Usage
+
+```ts
+const streams = fileHelper.readAsStream({ root: 'assets', glob: '**/*' });
+
+for await (const stream of streams) {
+  let content = '';
+
+  for await (const chunk of stream.read()) {
+    content += chunk.toString();
+  }
+
+  stream.writeFile(transform(content));
+}
+```
+
+---
+
+## copy(glob)
+
+Copy files directly to output without loading into memory.
+
+### Signature
+
+```ts
+copy(glob: CyanGlob): void;
+```
+
+### Parameters
+
+Same as `read(glob)`.
+
+### Usage
+
+```ts
+// Copy static assets
+fileHelper.copy({ root: 'images', glob: '**/*' });
+
+// Copy with exclusions
+fileHelper.copy({
+  root: 'public',
+  glob: '**/*',
+  exclude: ['**/*.tmp']
+});
+```
+
+---
+
+## VirtualFile
+
+File object returned by `resolveAll()` and `read()`.
+
+### Properties
+
+| Property | Type | Description |
+|----------|------|-------------|
+| `content` | `string` | File contents |
+| `relative` | `string` | Path relative to read directory |
+
+### Methods
+
+| Method | Return | Description |
+|--------|--------|-------------|
+| `writeFile()` | `void` | Write file to output directory |
+
+---
+
+## VirtualFileReference
+
+Reference object returned by `get()`.
+
+### Properties
+
+| Property | Type | Description |
+|----------|------|-------------|
+| `relative` | `string` | Path relative to read directory |
+
+### Methods
+
+| Method | Return | Description |
+|--------|--------|-------------|
+| `load()` | `Promise<string>` | Load file content |
+| `writeFile(content)` | `void` | Write content to output |
+| `copy()` | `void` | Copy file without loading |
+
+---
+
+## VirtualFileStream
+
+Stream object returned by `readAsStream()`.
+
+### Properties
+
+| Property | Type | Description |
+|----------|------|-------------|
+| `relative` | `string` | Path relative to read directory |
+
+### Methods
+
+| Method | Return | Description |
+|--------|--------|-------------|
+| `read()` | `AsyncIterable<Buffer>` | Read file as chunks |
+| `writeFile(content)` | `void` | Write content to output |
+
+---
+
+## Best Practices
+
+### Choose the Right Method
+
+| Scenario | Method |
+|----------|--------|
+| Small files, need all | `resolveAll()` |
+| Specific files only | `read(glob)` |
+| Conditional processing | `get(glob)` |
+| Large files | `readAsStream(glob)` |
+| Static assets | `copy(glob)` |
+
+### Memory Efficiency
+
+```ts
+StartProcessorWithLambda(async (input, fileHelper) => {
+  // Process text files (small)
+  const textFiles = fileHelper.read({ root: 'docs', glob: '**/*.md' });
+  textFiles.forEach(f => {
+    f.content = transform(f.content);
+    f.writeFile();
+  });
+
+  // Copy binaries (large)
+  fileHelper.copy({ root: 'images', glob: '**/*' });
+
+  // Lazy load when needed
+  const refs = fileHelper.get({ root: 'data', glob: '**/*' });
+  for (const ref of refs) {
+    if (needsProcessing(ref.relative)) {
+      const content = await ref.load();
+      ref.writeFile(transform(content));
+    } else {
+      ref.copy();
+    }
+  }
+
+  return { directory: input.writeDirectory };
+});
+```
+
+## Related
+
+- [StartProcessorWithLambda](/developer/processors/reference/sdk/start-processor) - Entry point
+- [Input/Output Types](/developer/processors/reference/sdk/input-output) - Type definitions
+- [How-to Guides](/developer/processors/how-to) - Practical examples

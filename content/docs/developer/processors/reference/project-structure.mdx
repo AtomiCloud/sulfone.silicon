@@ -1,0 +1,187 @@
+---
+title: Project Structure
+description: Standard file layout for processor projects
+---
+
+# Project Structure
+
+A processor project follows a standard layout for consistency and ease of development.
+
+## Basic Structure
+
+```
+my-processor/
+├── index.ts           # Processor entry point
+├── package.json       # Dependencies and scripts
+├── bun.lockb          # Lock file (if using Bun)
+├── Dockerfile         # Container definition
+├── cyan.yaml          # Processor metadata
+├── tsconfig.json      # TypeScript configuration
+└── src/               # Optional: Additional source files
+    ├── transforms.ts
+    └── utils.ts
+```
+
+## File Descriptions
+
+### `index.ts`
+
+The main entry point using `StartProcessorWithLambda`:
+
+```ts
+import { StartProcessorWithLambda } from '@atomicloud/cyan-sdk';
+
+StartProcessorWithLambda(async (input, fileHelper) => {
+  const files = fileHelper.resolveAll();
+
+  files.forEach(file => {
+    // Transform file content
+    file.content = transform(file.content);
+    file.writeFile();
+  });
+
+  return { directory: input.writeDirectory };
+});
+```
+
+### `package.json`
+
+Define dependencies and scripts:
+
+```json
+{
+  "name": "my-processor",
+  "version": "1.0.0",
+  "type": "module",
+  "scripts": {
+    "start": "bun run index.ts",
+    "build": "bun build index.ts --outdir=dist"
+  },
+  "dependencies": {
+    "@atomicloud/cyan-sdk": "^1.0.0"
+  },
+  "devDependencies": {
+    "@types/bun": "latest"
+  }
+}
+```
+
+### `Dockerfile`
+
+Container definition for the processor:
+
+```dockerfile
+FROM oven/bun:1.1.31
+
+WORKDIR /app
+
+# Required: Mark as CyanPrint processor
+LABEL cyanprint.dev=true
+
+# Install dependencies
+COPY package.json bun.lockb* ./
+RUN bun install --frozen-lockfile
+
+# Copy processor code
+COPY . .
+
+# Run processor
+CMD ["bun", "run", "index.ts"]
+```
+
+### `cyan.yaml`
+
+Metadata and documentation:
+
+```yaml
+name: myorg/my-processor
+version: 1.0.0
+description: Description of what the processor does
+author: Your Name
+license: MIT
+
+processor:
+  inputs:
+    - name: option1
+      type: string
+      default: "value"
+      description: Description of the option
+```
+
+### `tsconfig.json`
+
+TypeScript configuration:
+
+```json
+{
+  "compilerOptions": {
+    "target": "ES2022",
+    "module": "ESNext",
+    "moduleResolution": "bundler",
+    "strict": true,
+    "skipLibCheck": true,
+    "esModuleInterop": true
+  },
+  "include": ["*.ts", "src/**/*.ts"]
+}
+```
+
+## Optional Directories
+
+### `src/`
+
+Organize larger processors into modules:
+
+```
+src/
+├── transforms/
+│   ├── markdown.ts
+│   └── code.ts
+├── utils/
+│   ├── parsing.ts
+│   └── formatting.ts
+└── index.ts
+```
+
+### `tests/`
+
+Unit tests for processor logic:
+
+```
+tests/
+├── transforms.test.ts
+└── utils.test.ts
+```
+
+## Multi-File Example
+
+For complex processors, split logic into modules:
+
+```ts
+// index.ts
+import { StartProcessorWithLambda } from '@atomicloud/cyan-sdk';
+import { transformMarkdown } from './src/transforms/markdown';
+import { transformCode } from './src/transforms/code';
+
+StartProcessorWithLambda(async (input, fileHelper) => {
+  const files = fileHelper.resolveAll();
+  const config = input.config as ProcessorConfig;
+
+  files.forEach(file => {
+    if (file.relative.endsWith('.md')) {
+      file.content = transformMarkdown(file.content, config);
+    } else if (file.relative.endsWith('.ts')) {
+      file.content = transformCode(file.content, config);
+    }
+    file.writeFile();
+  });
+
+  return { directory: input.writeDirectory };
+});
+```
+
+## Related
+
+- [Dockerfile Reference](/developer/processors/reference/dockerfile) - Docker configuration
+- [cyan.yaml Format](/developer/processors/reference/cyan-yaml) - Metadata format
+- [First Processor](/developer/processors/tutorials/first-processor) - Tutorial

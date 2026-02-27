@@ -1,0 +1,313 @@
+---
+title: Input Config
+description: Understanding how configuration flows from template to processor
+---
+
+import { Callout } from 'fumadocs-ui/components/callout';
+
+# Input Config
+
+Processors receive configuration from templates through `input.config`. This enables templates to customize processor behavior for each use case.
+
+## Configuration Flow
+
+```mermaid
+graph LR
+    A[Template] --> B[Processor Config]
+    B --> C[Processor Execution]
+    C --> D[input.config]
+
+    style B fill:#f9f,stroke:#333
+    style D fill:#9f9,stroke:#333
+```
+
+## Template Side
+
+Templates define processor configuration in the return value:
+
+```ts
+// Template's index.ts
+StartTemplateWithLambda(async (i, d) => {
+  // Collect user input
+  const projectName = await i.text('Project name?', 'project.name', 'Enter name');
+  const features = await i.checkbox('Features?', ['auth', 'api'], 'project.features', 'Select');
+  const format = await i.select('Format?', ['json', 'yaml'], 'config.format', 'Choose');
+
+  return {
+    processors: [{
+      name: 'myorg/my-processor',
+      files: [{ root: 'templates', glob: '**/*', exclude: [], type: GlobType.Template }],
+      config: {
+        // This becomes input.config in processor
+        projectName,
+        features,
+        outputFormat: format,
+        additionalSettings: {
+          strict: true,
+          minify: false
+        }
+      }
+    }]
+  };
+});
+```
+
+## Processor Side
+
+Processors receive config through `input.config`:
+
+```ts
+// Processor's index.ts
+
+// Define expected config shape
+interface MyProcessorConfig {
+  projectName: string;
+  features: string[];
+  outputFormat: 'json' | 'yaml';
+  additionalSettings?: {
+    strict?: boolean;
+    minify?: boolean;
+  };
+}
+
+StartProcessorWithLambda(async (input, fileHelper) => {
+  // Cast to your type
+  const config = input.config as MyProcessorConfig;
+
+  // Use config values
+  console.log('Project:', config.projectName);
+  console.log('Features:', config.features);
+
+  const files = fileHelper.resolveAll();
+
+  files.forEach(file => {
+    if (config.features.includes('auth')) {
+      file.content = addAuthCode(file.content);
+    }
+
+    file.writeFile();
+  });
+
+  return { directory: input.writeDirectory };
+});
+```
+
+## Config Structure
+
+### Simple Config
+
+```ts
+// Template
+config: {
+  prefix: 'MyApp',
+  suffix: '.generated'
+}
+
+// Processor
+interface SimpleConfig {
+  prefix: string;
+  suffix: string;
+}
+```
+
+### Complex Config
+
+```ts
+// Template
+config: {
+  transformations: [
+    { type: 'replace', from: 'old', to: 'new' },
+    { type: 'append', value: '// Generated' }
+  ],
+  output: {
+    directory: 'dist',
+    extension: '.gen.ts'
+  },
+  options: {
+    verbose: true,
+    dryRun: false
+  }
+}
+
+// Processor
+interface TransformRule {
+  type: 'replace' | 'append' | 'prepend';
+  from?: string;
+  to?: string;
+  value?: string;
+}
+
+interface ComplexConfig {
+  transformations: TransformRule[];
+  output: {
+    directory: string;
+    extension: string;
+  };
+  options?: {
+    verbose?: boolean;
+    dryRun?: boolean;
+  };
+}
+```
+
+## Default Values
+
+Always handle missing config gracefully:
+
+```ts
+interface Config {
+  required: string;
+  optional?: boolean;
+  withDefault?: number;
+}
+
+StartProcessorWithLambda(async (input, fileHelper) => {
+  // Provide defaults for optional fields
+  const config: Config = {
+    optional: true,
+    withDefault: 10,
+    ...(input.config as Partial<Config>)
+  };
+
+  // Now config.optional and config.withDefault are guaranteed
+  if (config.optional) {
+    // ...
+  }
+
+  return { directory: input.writeDirectory };
+});
+```
+
+<Callout type="info">
+`input.config` is typed as `unknown`. Always cast to your expected type and provide defaults for optional fields.
+</Callout>
+
+## Config Validation
+
+Validate config at processor start:
+
+```ts
+interface Config {
+  mode: 'dev' | 'prod';
+  maxFiles: number;
+}
+
+function validateConfig(config: unknown): Config {
+  if (typeof config !== 'object' || config === null) {
+    throw new Error('Config must be an object');
+  }
+
+  const c = config as Record<string, unknown>;
+
+  if (c.mode !== 'dev' && c.mode !== 'prod') {
+    throw new Error('mode must be "dev" or "prod"');
+  }
+
+  if (typeof c.maxFiles !== 'number' || c.maxFiles < 1) {
+    throw new Error('maxFiles must be a positive number');
+  }
+
+  return c as Config;
+}
+
+StartProcessorWithLambda(async (input, fileHelper) => {
+  const config = validateConfig(input.config);
+
+  // Config is now validated
+  // ...
+});
+```
+
+## Common Patterns
+
+### Variables Config
+
+Like the default processor:
+
+```ts
+config: {
+  vars: {
+    name: 'my-project',
+    version: '1.0.0',
+    author: 'Developer'
+  }
+}
+
+// Processor applies variables
+files.forEach(file => {
+  for (const [key, value] of Object.entries(config.vars)) {
+    file.content = file.content.replaceAll(`{{${key}}}`, String(value));
+  }
+});
+```
+
+### Feature Flags
+
+Enable/disable processor features:
+
+```ts
+config: {
+  features: {
+    authentication: true,
+    logging: false,
+    caching: true
+  }
+}
+
+// Processor checks features
+if (config.features.authentication) {
+  addAuthFiles();
+}
+```
+
+### Output Customization
+
+Control output format:
+
+```ts
+config: {
+  output: {
+    format: 'typescript',
+    directory: 'src/generated',
+    naming: 'camelCase'
+  }
+}
+```
+
+## Documentation
+
+Document your config schema in `cyan.yaml`:
+
+```yaml
+processor:
+  inputs:
+    - name: mode
+      type: string
+      required: true
+      enum: [dev, prod]
+      description: Processing mode
+
+    - name: maxFiles
+      type: number
+      required: false
+      default: 100
+      description: Maximum files to process
+
+    - name: features
+      type: object
+      required: false
+      description: Feature flags
+      properties:
+        authentication:
+          type: boolean
+          default: true
+        logging:
+          type: boolean
+          default: false
+```
+
+## Related
+
+- [Access Config](/developer/processors/how-to/access-config) - How-to guide
+- [cyan.yaml Format](/developer/processors/reference/cyan-yaml) - Config documentation
+- [Input/Output Types](/developer/processors/reference/sdk/input-output) - Type definitions

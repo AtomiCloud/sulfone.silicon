@@ -1,0 +1,216 @@
+---
+title: Memory Loading
+description: Understanding how processors load files into memory
+---
+
+import { Callout } from 'fumadocs-ui/components/callout';
+
+# Memory Loading
+
+Processors load files into memory for transformation. Understanding memory implications helps you choose the right approach.
+
+## The Memory Model
+
+```mermaid
+graph TD
+    A[Template Files] --> B{Loading Method}
+    B -->|resolveAll| C[All in Memory]
+    B -->|read| D[Selected in Memory]
+    B -->|get| E[Metadata Only]
+    B -->|readAsStream| F[Chunk by Chunk]
+    B -->|copy| G[Direct Transfer]
+
+    C --> H[High Memory]
+    D --> I[Medium Memory]
+    E --> J[Low Memory]
+    F --> K[Low Memory]
+    G --> L[Minimal Memory]
+```
+
+## Loading Methods Comparison
+
+| Method | Memory Usage | When to Use |
+|--------|--------------|-------------|
+| `resolveAll()` | High | Small files, need all |
+| `read(glob)` | Medium | Specific files |
+| `get(glob)` | Low | Conditional processing |
+| `readAsStream(glob)` | Low | Large files |
+| `copy(glob)` | Minimal | Static files |
+
+## resolveAll() Memory Implications
+
+`resolveAll()` loads **all matched files** into memory:
+
+```ts
+// If your template has:
+// - 100 files
+// - Average 50KB each
+// = 5MB in memory
+
+const files = fileHelper.resolveAll();
+```
+
+### When This Is Fine
+
+- Small templates (< 100 files)
+- Text files (not binary)
+- Sufficient container memory
+
+### When to Avoid
+
+- Many large files
+- Binary assets (images, videos)
+- Memory-constrained environments
+
+## Strategies for Large Templates
+
+### 1. Use read() for Specific Files
+
+```ts
+// Only load files you need
+const mdFiles = fileHelper.read({ root: 'docs', glob: '**/*.md' });
+// Only markdown files in memory
+```
+
+### 2. Use get() for Conditional Processing
+
+```ts
+// Get references first
+const refs = fileHelper.get({ root: 'assets', glob: '**/*' });
+
+// Load only what you need
+for (const ref of refs) {
+  if (needsProcessing(ref.relative)) {
+    const content = await ref.load();
+    // Process
+  } else {
+    ref.copy(); // No memory used
+  }
+}
+```
+
+### 3. Use readAsStream() for Large Files
+
+```ts
+// Stream large files
+const streams = fileHelper.readAsStream({ root: 'data', glob: '*.csv' });
+
+for await (const stream of streams) {
+  // Process chunk by chunk
+  for await (const chunk of stream.read()) {
+    // Low memory usage
+  }
+}
+```
+
+### 4. Use copy() for Static Files
+
+```ts
+// Copy without loading
+fileHelper.copy({ root: 'images', glob: '**/*' });
+// Zero memory for file content
+```
+
+## Memory Estimation
+
+Estimate memory needs:
+
+```
+Memory Needed = File Count × Average File Size × Overhead
+
+Example:
+- 100 files
+- 50KB average
+- 2x overhead (parsing, transformation)
+= 100 × 50KB × 2 = 10MB
+```
+
+<Callout type="info">
+Container memory limits vary. Default processor containers typically have 256MB-1GB. Large templates may need configuration.
+</Callout>
+
+## Practical Example: Mixed Approach
+
+```ts
+StartProcessorWithLambda(async (input, fileHelper) => {
+  // Small files: load all
+  const config = fileHelper.read({ root: 'config', glob: '**/*.{json,yaml}' });
+
+  // Medium files: conditional load
+  const docRefs = fileHelper.get({ root: 'docs', glob: '**/*.md' });
+  for (const ref of docRefs) {
+    if (ref.relative.includes('api')) {
+      const content = await ref.load();
+      ref.writeFile(transform(content));
+    } else {
+      ref.copy();
+    }
+  }
+
+  // Large files: stream
+  const dataStreams = fileHelper.readAsStream({ root: 'data', glob: '*.csv' });
+  for await (const stream of dataStreams) {
+    // Process with low memory
+  }
+
+  // Static files: copy directly
+  fileHelper.copy({ root: 'images', glob: '**/*' });
+  fileHelper.copy({ root: 'fonts', glob: '**/*' });
+
+  return { directory: input.writeDirectory };
+});
+```
+
+## Memory Troubleshooting
+
+### Symptoms of Memory Issues
+
+- Processor crashes with OOM error
+- Slow processing
+- Container killed unexpectedly
+
+### Solutions
+
+1. **Reduce loaded files** - Use `read()` instead of `resolveAll()`
+2. **Use streaming** - `readAsStream()` for large files
+3. **Copy static files** - `copy()` instead of loading
+4. **Lazy load** - `get()` with conditional `load()`
+
+## Best Practices
+
+### Do
+
+```ts
+// ✅ Choose appropriate method
+const files = needsAll ? fileHelper.resolveAll() : fileHelper.read(glob);
+
+// ✅ Copy static assets
+fileHelper.copy({ root: 'static', glob: '**/*' });
+
+// ✅ Stream large files
+for await (const stream of fileHelper.readAsStream(glob)) {
+  // Process chunks
+}
+```
+
+### Don't
+
+```ts
+// ❌ Load everything when not needed
+const all = fileHelper.resolveAll();
+// Process only 10% of files
+
+// ❌ Load binary files you won't transform
+const images = fileHelper.read({ root: 'images', glob: '**/*' });
+// Images don't need transformation
+
+// ❌ Ignore file sizes
+// Large files should be streamed or copied
+```
+
+## Related
+
+- [CyanFileHelper API](/developer/processors/reference/sdk/file-helper) - All methods
+- [Resolve All Files](/developer/processors/how-to/resolve-all-files) - Load all guide
+- [Stream Large Files](/developer/processors/how-to/stream-large-files) - Streaming guide
+- [Copy Files](/developer/processors/how-to/copy-files) - Direct copy guide

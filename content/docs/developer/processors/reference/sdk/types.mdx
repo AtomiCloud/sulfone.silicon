@@ -1,0 +1,314 @@
+---
+title: Type Definitions
+description: Full type reference for processor SDK
+---
+
+# Type Definitions
+
+Complete type reference for the processor SDK.
+
+## Core Types
+
+### ProcessorInput
+
+```ts
+interface ProcessorInput {
+  /**
+   * Path to source files from blob image
+   * @example "/workspace/cyanprint/"
+   */
+  readDirectory: string;
+
+  /**
+   * Path where processed files should be written
+   * @example "/workspace/output/"
+   */
+  writeDirectory: string;
+
+  /**
+   * File patterns passed from template configuration
+   */
+  globs: CyanGlob[];
+
+  /**
+   * Custom configuration from template's processor config
+   * Cast to your expected type when using
+   */
+  config: unknown;
+}
+```
+
+### ProcessorOutput
+
+```ts
+interface ProcessorOutput {
+  /**
+   * Output directory - must be input.writeDirectory
+   */
+  directory: string;
+}
+```
+
+### CyanGlob
+
+```ts
+interface CyanGlob {
+  /**
+   * Base directory for glob matching
+   * @example "templates"
+   */
+  root: string;
+
+  /**
+   * Glob pattern to match files
+   * @example "**/*.md"
+   */
+  glob: string;
+
+  /**
+   * Patterns to exclude from matching
+   * @optional
+   * @example ["**/*.test.ts"]
+   */
+  exclude?: string[];
+}
+```
+
+---
+
+## VirtualFile Types
+
+### VirtualFile
+
+File with loaded content (from `resolveAll()` or `read()`).
+
+```ts
+interface VirtualFile {
+  /**
+   * File contents as string
+   */
+  content: string;
+
+  /**
+   * Path relative to read directory
+   * @example "docs/readme.md"
+   */
+  relative: string;
+
+  /**
+   * Write file to output directory
+   */
+  writeFile(): void;
+}
+```
+
+### VirtualFileReference
+
+Lazy-loaded file reference (from `get()`).
+
+```ts
+interface VirtualFileReference {
+  /**
+   * Path relative to read directory
+   */
+  relative: string;
+
+  /**
+   * Load file content
+   * @returns Promise resolving to file content
+   */
+  load(): Promise<string>;
+
+  /**
+   * Write content to output directory
+   * @param content - Content to write
+   */
+  writeFile(content: string): void;
+
+  /**
+   * Copy file to output without loading
+   */
+  copy(): void;
+}
+```
+
+### VirtualFileStream
+
+Streaming file access (from `readAsStream()`).
+
+```ts
+interface VirtualFileStream {
+  /**
+   * Path relative to read directory
+   */
+  relative: string;
+
+  /**
+   * Read file as async iterable of chunks
+   * @returns Async iterable of Buffer chunks
+   */
+  read(): AsyncIterable<Buffer>;
+
+  /**
+   * Write content to output directory
+   * @param content - Content to write
+   */
+  writeFile(content: string): void;
+}
+```
+
+---
+
+## CyanFileHelper
+
+```ts
+interface CyanFileHelper {
+  /**
+   * Load all files matching processor globs into memory
+   * @returns Array of files with content
+   */
+  resolveAll(): VirtualFile[];
+
+  /**
+   * Load specific files matching glob pattern
+   * @param glob - Pattern to match
+   * @returns Array of matching files
+   */
+  read(glob: CyanGlob): VirtualFile[];
+
+  /**
+   * Get file references without loading content
+   * @param glob - Pattern to match
+   * @returns Array of file references
+   */
+  get(glob: CyanGlob): VirtualFileReference[];
+
+  /**
+   * Stream files for memory-efficient processing
+   * @param glob - Pattern to match
+   * @returns Array of streaming file handles
+   */
+  readAsStream(glob: CyanGlob): VirtualFileStream[];
+
+  /**
+   * Copy files directly to output without loading
+   * @param glob - Pattern to match
+   */
+  copy(glob: CyanGlob): void;
+}
+```
+
+---
+
+## Handler Function
+
+```ts
+/**
+ * Processor handler function type
+ * @param input - Processor input containing directories, globs, and config
+ * @param fileHelper - File operations API
+ * @returns Promise resolving to processor output
+ */
+type ProcessorHandler = (
+  input: ProcessorInput,
+  fileHelper: CyanFileHelper
+) => Promise<ProcessorOutput>;
+```
+
+---
+
+## Entry Point
+
+### StartProcessorWithLambda
+
+```ts
+/**
+ * Register processor handler
+ * @param handler - Async function implementing processor logic
+ */
+function StartProcessorWithLambda(
+  handler: ProcessorHandler
+): void;
+```
+
+---
+
+## Utility Types
+
+### Common Config Patterns
+
+```ts
+// Variable substitution config (like default processor)
+interface VariableConfig {
+  vars: Record<string, string | number | boolean>;
+}
+
+// Feature flags
+interface FeatureConfig {
+  features: string[];
+}
+
+// Output formatting
+interface FormatConfig {
+  indent?: number;
+  newline?: 'lf' | 'crlf';
+  encoding?: 'utf-8' | 'ascii';
+}
+
+// Combined config
+interface ProcessorConfig extends FeatureConfig, FormatConfig {
+  // Processor-specific options
+  customOption?: string;
+}
+```
+
+### Error Types
+
+```ts
+// Common errors processors may throw
+class ProcessorError extends Error {
+  constructor(message: string, public readonly file?: string) {
+    super(message);
+    this.name = 'ProcessorError';
+  }
+}
+
+class FileNotFoundError extends ProcessorError {
+  constructor(path: string) {
+    super(`File not found: ${path}`, path);
+    this.name = 'FileNotFoundError';
+  }
+}
+
+class TransformError extends ProcessorError {
+  constructor(message: string, file: string, public readonly line?: number) {
+    super(`${message} in ${file}${line ? `:${line}` : ''}`, file);
+    this.name = 'TransformError';
+  }
+}
+```
+
+---
+
+## Type Guards
+
+```ts
+// Type guard for checking config shape
+function isVariableConfig(config: unknown): config is VariableConfig {
+  return typeof config === 'object' && config !== null && 'vars' in config;
+}
+
+// Usage
+StartProcessorWithLambda(async (input, fileHelper) => {
+  if (isVariableConfig(input.config)) {
+    const vars = input.config.vars;
+    // ...
+  }
+});
+```
+
+## Related
+
+- [Processor Input/Output](/developer/processors/reference/sdk/input-output) - Detailed usage
+- [CyanFileHelper](/developer/processors/reference/sdk/file-helper) - File operations
+- [StartProcessorWithLambda](/developer/processors/reference/sdk/start-processor) - Entry point

@@ -1,0 +1,251 @@
+---
+title: Processor Input/Output
+description: Type definitions for processor interfaces
+---
+
+# Processor Input/Output
+
+Type definitions for the data structures passed to and returned from processors.
+
+## ProcessorInput
+
+The input object passed to the processor handler.
+
+### Definition
+
+```ts
+interface ProcessorInput {
+  readDirectory: string;
+  writeDirectory: string;
+  globs: CyanGlob[];
+  config: unknown;
+}
+```
+
+### Properties
+
+| Property | Type | Description |
+|----------|------|-------------|
+| `readDirectory` | `string` | Path to source files |
+| `writeDirectory` | `string` | Path for output files |
+| `globs` | `CyanGlob[]` | File patterns from template |
+| `config` | `unknown` | Configuration from template |
+
+### Typical Values
+
+| Property | Typical Value |
+|----------|--------------|
+| `readDirectory` | `/workspace/cyanprint/` |
+| `writeDirectory` | `/workspace/output/` |
+
+### Usage
+
+```ts
+StartProcessorWithLambda(async (input, fileHelper) => {
+  console.log('Reading from:', input.readDirectory);
+  console.log('Writing to:', input.writeDirectory);
+  console.log('Globs:', input.globs);
+  console.log('Config:', input.config);
+
+  // Always return writeDirectory
+  return { directory: input.writeDirectory };
+});
+```
+
+---
+
+## ProcessorOutput
+
+The return value from the processor handler.
+
+### Definition
+
+```ts
+interface ProcessorOutput {
+  directory: string;
+}
+```
+
+### Properties
+
+| Property | Type | Description |
+|----------|------|-------------|
+| `directory` | `string` | Output directory path |
+
+### Usage
+
+```ts
+StartProcessorWithLambda(async (input, fileHelper) => {
+  // ... processing ...
+
+  // Must return the write directory
+  return { directory: input.writeDirectory };
+});
+```
+
+---
+
+## CyanGlob
+
+Defines which files to process.
+
+### Definition
+
+```ts
+interface CyanGlob {
+  root: string;
+  glob: string;
+  exclude?: string[];
+}
+```
+
+### Properties
+
+| Property | Type | Required | Description |
+|----------|------|----------|-------------|
+| `root` | `string` | Yes | Base directory for glob |
+| `glob` | `string` | Yes | Glob pattern |
+| `exclude` | `string[]` | No | Patterns to exclude |
+
+### Examples
+
+```ts
+// All files in templates directory
+{ root: 'templates', glob: '**/*' }
+
+// Only markdown files
+{ root: 'docs', glob: '**/*.md' }
+
+// TypeScript files excluding tests
+{
+  root: 'src',
+  glob: '**/*.ts',
+  exclude: ['**/*.test.ts', '**/*.spec.ts']
+}
+
+// Multiple patterns (as array element)
+[
+  { root: 'src', glob: '**/*.ts' },
+  { root: 'styles', glob: '**/*.css' }
+]
+```
+
+### Glob Syntax
+
+| Pattern | Description |
+|---------|-------------|
+| `*` | Any file name |
+| `**` | Any directory depth |
+| `**/*` | All files recursively |
+| `*.md` | Files with .md extension |
+| `src/**/*.ts` | .ts files under src |
+| `!` prefix | Negation (in exclude array) |
+
+---
+
+## Config Type
+
+The `config` property is typed as `unknown`. Cast to your expected type:
+
+### Definition
+
+```ts
+// In your processor
+interface MyProcessorConfig {
+  // Define expected config shape
+  transformType: 'uppercase' | 'lowercase';
+  includeHeader: boolean;
+  customPrefix?: string;
+}
+
+StartProcessorWithLambda(async (input, fileHelper) => {
+  // Cast to your type
+  const config = input.config as MyProcessorConfig;
+
+  // Or provide defaults
+  const config: MyProcessorConfig = {
+    transformType: 'uppercase',
+    includeHeader: false,
+    ...(input.config as Partial<MyProcessorConfig>)
+  };
+});
+```
+
+### Complex Config
+
+```ts
+interface ProcessorConfig {
+  // Simple types
+  enabled: boolean;
+  maxSize: number;
+  outputPath: string;
+
+  // Arrays
+  includePatterns: string[];
+
+  // Nested objects
+  formatting: {
+    indent: number;
+    newline: 'lf' | 'crlf';
+  };
+
+  // Optional properties
+  customHandler?: string;
+}
+```
+
+---
+
+## Full Example
+
+```ts
+import { StartProcessorWithLambda } from '@atomicloud/cyan-sdk';
+
+// Define your config type
+interface MarkdownConfig {
+  generateToc: boolean;
+  headingAnchors: boolean;
+  maxDepth?: number;
+}
+
+StartProcessorWithLambda(async (input, fileHelper) => {
+  // Parse config with defaults
+  const config: MarkdownConfig = {
+    generateToc: false,
+    headingAnchors: true,
+    ...(input.config as Partial<MarkdownConfig>)
+  };
+
+  // Log input information
+  console.log('Processor Input:');
+  console.log('  Read directory:', input.readDirectory);
+  console.log('  Write directory:', input.writeDirectory);
+  console.log('  Globs:', JSON.stringify(input.globs, null, 2));
+  console.log('  Config:', JSON.stringify(config, null, 2));
+
+  // Load files based on globs
+  const files = fileHelper.resolveAll();
+
+  // Process files
+  files.forEach(file => {
+    if (config.generateToc) {
+      file.content = addTableOfContents(file.content, config.maxDepth);
+    }
+
+    if (config.headingAnchors) {
+      file.content = addHeadingAnchors(file.content);
+    }
+
+    file.writeFile();
+  });
+
+  // Return output
+  return { directory: input.writeDirectory };
+});
+```
+
+## Related
+
+- [StartProcessorWithLambda](/developer/processors/reference/sdk/start-processor) - Entry point
+- [CyanFileHelper](/developer/processors/reference/sdk/file-helper) - File operations
+- [Types](/developer/processors/reference/sdk/types) - All type definitions

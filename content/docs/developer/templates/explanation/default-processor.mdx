@@ -1,0 +1,256 @@
+---
+title: Default Processor
+description: How the cyan/default processor works with Eta templating
+---
+
+import { Callout } from 'fumadocs-ui/components/callout';
+
+# Default Processor
+
+The `cyan/default` processor uses **Eta templating** with custom delimiters for variable substitution.
+
+## Overview
+
+The default processor is the most commonly used processor. It:
+- Replaces variable placeholders with values
+- Supports nested variable access
+- Allows custom delimiters
+- Handles all text file types
+
+## Variable Syntax
+
+### Default Delimiters
+
+The default syntax uses `var__` prefix and `__` suffix:
+
+```
+var__name__
+var__project.version__
+```
+
+### Example
+
+Template file:
+
+```markdown
+# var__name__
+
+Welcome to var__name__!
+
+Author: var__author__
+Version: var__version__
+```
+
+With config:
+
+```ts
+config: {
+  vars: {
+    name: 'my-project',
+    author: 'John Doe',
+    version: '1.0.0'
+  }
+}
+```
+
+Generated output:
+
+```markdown
+# my-project
+
+Welcome to my-project!
+
+Author: John Doe
+Version: 1.0.0
+```
+
+## Nested Variables
+
+Access nested properties with dot notation:
+
+```ts
+config: {
+  vars: {
+    project: {
+      name: 'my-project',
+      version: '1.0.0'
+    }
+  }
+}
+```
+
+Template:
+
+```markdown
+Project: var__project.name__
+Version: var__project.version__
+```
+
+## Custom Delimiters
+
+Change the delimiters for compatibility with other template syntaxes:
+
+### Using Angle Brackets
+
+```ts
+config: {
+  vars: { name: 'my-project' },
+  parser: {
+    varSyntax: [['<%', '%>']]
+  }
+}
+```
+
+Template:
+
+```markdown
+# <% name %>
+```
+
+### Using Mustache Style
+
+```ts
+config: {
+  vars: { name: 'my-project' },
+  parser: {
+    varSyntax: [['{{', '}}']]
+  }
+}
+```
+
+Template:
+
+```markdown
+# {{ name }}
+```
+
+### Using Double Braces
+
+```ts
+config: {
+  vars: { name: 'my-project' },
+  parser: {
+    varSyntax: [['${{', '}}']]
+  }
+}
+```
+
+Template:
+
+```markdown
+# ${{ name }}
+```
+
+## Why var__ Syntax?
+
+The `var__name__` syntax is chosen to avoid conflicts:
+
+| Syntax | Potential Conflicts |
+|--------|---------------------|
+| `${name}` | JavaScript template literals |
+| `{{name}}` | Handlebars, Mustache |
+| `<%= name %>` | EJS |
+| `{name}` | JSON, YAML |
+| `var__name__` | Rarely used in any language |
+
+<Callout type="info">
+The `var__` prefix is verbose but ensures templates work correctly even when generating code that uses other template syntaxes.
+</Callout>
+
+## Eta Features
+
+The default processor is built on Eta, which supports more than simple substitution:
+
+### Conditionals
+
+```markdown
+<% if (typescript) { %>
+## TypeScript Configuration
+
+This project uses TypeScript.
+<% } %>
+```
+
+Note: This requires changing delimiters to avoid `var__`.
+
+### Loops
+
+```markdown
+## Features
+<% features.forEach(function(feature) { %>
+- <%= feature %>
+<% }) %>
+```
+
+### Filters
+
+```ts
+config: {
+  vars: { name: 'my project' },
+  parser: {
+    varSyntax: [['<%', '%>']],
+    filters: {
+      uppercase: (str) => str.toUpperCase(),
+      slug: (str) => str.toLowerCase().replace(/\s+/g, '-')
+    }
+  }
+}
+```
+
+```markdown
+# <% name | uppercase %>
+Slug: <% name | slug %>
+```
+
+## Processor Configuration
+
+Full configuration options:
+
+```ts
+{
+  name: 'cyan/default',
+  files: [/* ... */],
+  config: {
+    // Variables to substitute
+    vars: {
+      name: 'my-project',
+      version: '1.0.0'
+    },
+
+    // Parser configuration
+    parser: {
+      // Custom tag pairs
+      varSyntax: [['var__', '__']],
+
+      // Custom filters
+      filters: {},
+
+      // Other Eta options
+      autoEscape: false,
+      autoTrim: false
+    }
+  }
+}
+```
+
+## When to Use Default vs Custom
+
+### Use Default When
+
+- Standard variable substitution is sufficient
+- Working with common file formats
+- No special processing needed
+
+### Use Custom When
+
+- Need different template engine (Handlebars, Mustache)
+- Complex code generation required
+- Special file transformations needed
+
+See [Processors vs Plugins](/developer/templates/explanation/processors-vs-plugins) for more guidance.
+
+## Related
+
+- [Tutorial: Adding Variables](/developer/templates/tutorials/02-adding-variables) - Variable basics
+- [Processors vs Plugins](/developer/templates/explanation/processors-vs-plugins) - When to use each
+- [Use Custom Processor](/developer/templates/how-to/use-custom-processor) - Using custom processors

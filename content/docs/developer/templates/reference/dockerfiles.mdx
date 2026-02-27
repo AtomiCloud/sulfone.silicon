@@ -1,0 +1,218 @@
+---
+title: Dockerfiles Reference
+description: Template and blob Dockerfile configuration
+---
+
+import { Callout } from 'fumadocs-ui/components/callout';
+
+# Dockerfiles Reference
+
+CyanPrint templates use two Docker images: one for template execution and one for file storage.
+
+## Overview
+
+| Dockerfile | Purpose | Built As |
+|------------|---------|----------|
+| `template.Dockerfile` | Executes template logic | Template image |
+| `blob.Dockerfile` | Stores source files | Blob image |
+
+## template.Dockerfile
+
+Defines the environment where template logic runs.
+
+### Basic Template
+
+```dockerfile
+FROM node:20-alpine
+
+WORKDIR /workspace
+
+# Copy and install dependencies
+COPY cyan/package.json ./
+RUN npm install
+
+# Copy template source
+COPY cyan/ ./
+
+# Run template
+CMD ["node", "index.ts"]
+```
+
+### With Additional Tools
+
+```dockerfile
+FROM node:20-alpine
+
+# Install additional tools
+RUN apk add --no-cache git curl
+
+WORKDIR /workspace
+
+# Dependencies
+COPY cyan/package.json ./
+RUN npm install
+
+# Source
+COPY cyan/ ./
+
+CMD ["node", "index.ts"]
+```
+
+### Multi-Stage Build
+
+```dockerfile
+# Build stage
+FROM node:20-alpine AS builder
+
+WORKDIR /build
+COPY cyan/package.json ./
+RUN npm install
+COPY cyan/ ./
+RUN npm run build
+
+# Runtime stage
+FROM node:20-alpine
+
+WORKDIR /workspace
+COPY --from=builder /build/dist/ ./
+COPY cyan/templates/ ./templates/
+
+CMD ["node", "index.js"]
+```
+
+## blob.Dockerfile
+
+Stores template files for efficient transfer to the client.
+
+### Basic Blob
+
+```dockerfile
+FROM alpine:latest
+
+COPY cyan/templates/ /templates/
+```
+
+### With Multiple Directories
+
+```dockerfile
+FROM alpine:latest
+
+COPY cyan/templates/ /templates/
+COPY cyan/static/ /static/
+COPY cyan/configs/ /configs/
+```
+
+### Minimal Blob
+
+For templates with few files:
+
+```dockerfile
+FROM scratch
+
+COPY cyan/templates/ /templates/
+```
+
+## Best Practices
+
+### Template Dockerfile
+
+1. **Use specific versions**
+
+```dockerfile
+# Good: Specific version
+FROM node:20.11.0-alpine
+
+# Bad: Latest (unpredictable)
+FROM node:alpine
+```
+
+2. **Minimize layers**
+
+```dockerfile
+# Good: Combined commands
+RUN apk add --no-cache git curl && \
+    npm install -g pnpm
+
+# Bad: Multiple layers
+RUN apk add --no-cache git
+RUN apk add --no-cache curl
+RUN npm install -g pnpm
+```
+
+3. **Use .dockerignore**
+
+Create `.dockerignore` to exclude unnecessary files:
+
+```
+node_modules
+.git
+*.log
+.env
+```
+
+### Blob Dockerfile
+
+1. **Keep it minimal**
+
+```dockerfile
+# Good: Minimal image
+FROM alpine:latest
+COPY cyan/templates/ /templates/
+
+# Bad: Unnecessary bloat
+FROM node:20-alpine
+RUN npm install
+COPY cyan/templates/ /templates/
+```
+
+2. **Use consistent paths**
+
+Always copy to `/templates/` for consistency.
+
+## Building Images
+
+### Development Build
+
+```bash
+# Build template locally
+docker build -f cyan/template.Dockerfile -t my-template:dev .
+
+# Build blob locally
+docker build -f cyan/blob.Dockerfile -t my-template-blob:dev .
+```
+
+### Production Build (Multi-Arch)
+
+```bash
+# Build and push template
+docker buildx build --platform linux/amd64,linux/arm64 \
+  -f cyan/template.Dockerfile \
+  -t myorg/my-template:1.0.0 \
+  --push .
+
+# Build and push blob
+docker buildx build --platform linux/amd64,linux/arm64 \
+  -f cyan/blob.Dockerfile \
+  -t myorg/my-template-blob:1.0.0 \
+  --push .
+```
+
+<Callout type="info">
+See [Push to Registry](/developer/templates/how-to/push-to-registry) for complete publishing instructions.
+</Callout>
+
+## Image Sizes
+
+Optimize for smaller images:
+
+| Base Image | Size | Use Case |
+|------------|------|----------|
+| `alpine` | ~5MB | Blob images |
+| `node:alpine` | ~170MB | Template execution |
+| `node:slim` | ~240MB | Need glibc |
+
+## Related
+
+- [Push to Registry](/developer/templates/how-to/push-to-registry) - Publishing templates
+- [Project Structure](/developer/templates/reference/project-structure) - Template organization
+- [cyan.yaml Reference](/developer/templates/reference/cyan-yaml) - Metadata configuration

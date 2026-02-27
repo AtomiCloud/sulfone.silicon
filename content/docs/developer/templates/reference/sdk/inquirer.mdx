@@ -1,0 +1,273 @@
+---
+title: IInquirer Reference
+description: Complete API reference for user input collection
+---
+
+import { Callout } from 'fumadocs-ui/components/callout';
+
+# IInquirer Reference
+
+The `IInquirer` interface provides methods for collecting user input during template generation.
+
+## Overview
+
+The `i` parameter in `StartTemplateWithLambda` is an `IInquirer` instance:
+
+```ts
+StartTemplateWithLambda(async (i, d) => {
+  // i is IInquirer
+  const name = await i.text('Project name?', 'project.name', 'Enter name');
+});
+```
+
+## Methods
+
+### text()
+
+Collect text input from the user.
+
+#### Shorthand Form
+
+```ts
+const name = await i.text(
+  'Project name?',      // message
+  'project.name',       // id (key)
+  'Enter project name'  // description
+);
+// Returns: string
+```
+
+#### Object Form
+
+```ts
+const name = await i.text({
+  type: QuestionType.Text,
+  id: 'project.name',
+  message: 'Project name?',
+  desc: 'Enter project name',
+  default: 'my-project',
+  validate: (input) => {
+    if (!input) return 'Name is required';
+    if (input.length < 3) return 'Minimum 3 characters';
+    return null;
+  }
+});
+```
+
+---
+
+### select()
+
+Single selection from a list.
+
+#### Shorthand Form
+
+```ts
+const license = await i.select(
+  'License?',                          // message
+  ['MIT', 'Apache-2.0', 'GPL-3.0'],    // options
+  'project.license',                   // id
+  'Choose a license'                   // description
+);
+// Returns: string (selected option)
+```
+
+#### Object Form
+
+```ts
+const license = await i.select({
+  type: QuestionType.Select,
+  id: 'project.license',
+  message: 'License?',
+  desc: 'Choose a license',
+  options: ['MIT', 'Apache-2.0', 'GPL-3.0'],
+  default: 'MIT',
+  validate: (selected) => {
+    if (!selected) return 'Please select a license';
+    return null;
+  }
+});
+```
+
+---
+
+### confirm()
+
+Boolean yes/no confirmation.
+
+#### Shorthand Form
+
+```ts
+const typescript = await i.confirm(
+  'Use TypeScript?',      // message
+  'project.typescript',   // id
+  'Add TypeScript config' // description
+);
+// Returns: boolean
+```
+
+#### Object Form
+
+```ts
+const typescript = await i.confirm({
+  type: QuestionType.Confirm,
+  id: 'project.typescript',
+  message: 'Use TypeScript?',
+  desc: 'Add TypeScript configuration',
+  default: true
+});
+```
+
+---
+
+### checkbox()
+
+Multiple selection from a list.
+
+#### Shorthand Form
+
+```ts
+const features = await i.checkbox(
+  'Select features?',                     // message
+  ['ESLint', 'Prettier', 'Jest', 'Docker'], // options
+  'project.features',                     // id
+  'Choose features to include'            // description
+);
+// Returns: string[] (selected options)
+```
+
+#### Object Form
+
+```ts
+const features = await i.checkbox({
+  type: QuestionType.Checkbox,
+  id: 'project.features',
+  message: 'Select features?',
+  desc: 'Choose features to include',
+  options: ['ESLint', 'Prettier', 'Jest', 'Docker'],
+  default: ['ESLint'],
+  validate: (selected) => {
+    if (selected.length === 0) return 'Select at least one feature';
+    if (selected.length > 3) return 'Maximum 3 features';
+    return null;
+  }
+});
+```
+
+---
+
+### password()
+
+Hidden text input for sensitive data.
+
+#### Shorthand Form
+
+```ts
+const apiKey = await i.password(
+  'Enter API key',   // message
+  'secrets.apiKey',  // id
+  'Your API key'     // description
+);
+// Returns: string (hidden input)
+```
+
+#### Object Form
+
+```ts
+const apiKey = await i.password({
+  type: QuestionType.Password,
+  id: 'secrets.apiKey',
+  message: 'Enter API key',
+  desc: 'Your secret API key',
+  validate: (input) => {
+    if (!input) return 'API key is required';
+    if (input.length < 20) return 'API key seems too short';
+    return null;
+  }
+});
+```
+
+<Callout type="warn">
+Passwords should never be stored in generated files. Use for runtime configuration only.
+</Callout>
+
+---
+
+### dateSelect()
+
+Date selection.
+
+#### Shorthand Form
+
+```ts
+const deadline = await i.dateSelect(
+  'Project deadline?',  // message
+  'project.deadline',   // id
+  'Select target date'  // description
+);
+// Returns: Date
+```
+
+#### Object Form
+
+```ts
+const deadline = await i.dateSelect({
+  type: QuestionType.DateSelect,
+  id: 'project.deadline',
+  message: 'Project deadline?',
+  desc: 'Select target date',
+  default: new Date(),
+  validate: (date) => {
+    if (date < new Date()) return 'Deadline must be in the future';
+    return null;
+  }
+});
+```
+
+---
+
+## QuestionType Enum
+
+| Value | Type | Method |
+|-------|------|--------|
+| `0` | Text | `text()` |
+| `1` | DateSelect | `dateSelect()` |
+| `2` | Select | `select()` |
+| `3` | Checkbox | `checkbox()` |
+| `4` | Password | `password()` |
+| `5` | Confirm | `confirm()` |
+
+## Object Form Properties
+
+All object forms support these properties:
+
+| Property | Type | Required | Description |
+|----------|------|----------|-------------|
+| `type` | `QuestionType` | Yes | Question type enum |
+| `id` | `string` | Yes | Unique key for answer storage |
+| `message` | `string` | Yes | Question displayed to user |
+| `desc` | `string` | No | Help text / description |
+| `default` | varies | No | Default value |
+| `validate` | `(input) => string \| null` | No | Validation function |
+| `options` | `string[]` | For select/checkbox | Available choices |
+
+## Keys and Namespacing
+
+The `id` parameter is the **key** that determines answer storage and reuse:
+
+```ts
+// Same key = same answer
+const name1 = await i.text('Name?', 'project.name', '...');
+const name2 = await i.text('Confirm?', 'project.name', '...');
+// name1 === name2
+```
+
+<Callout type="info">
+Always namespace your keys to prevent collisions in composed templates. See [How to Use Keys](/developer/templates/how-to/use-keys).
+</Callout>
+
+## Related
+
+- [How to Use Keys](/developer/templates/how-to/use-keys) - Keys and namespacing
+- [Validate Input](/developer/templates/how-to/validate-input) - Validation patterns
+- [Default Values](/developer/templates/how-to/default-values) - Setting defaults

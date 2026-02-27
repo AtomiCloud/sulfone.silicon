@@ -1,0 +1,141 @@
+---
+title: Ask Date Questions
+description: How to ask for date selection
+---
+
+# How to Ask Date Questions
+
+Use date questions when users need to select a date.
+
+## Shorthand Form
+
+```ts
+const deadline = await i.dateSelect(
+  'Project deadline?',  // Message
+  'project.deadline',   // Key
+  'Select target date'  // Description
+);
+// Returns: Date object
+```
+
+## Object Form
+
+```ts
+const startDate = await i.dateSelect({
+  type: QuestionType.DateSelect,
+  id: 'project.startDate',
+  message: 'Start date?',
+  desc: 'When does the project start?',
+  default: new Date()  // Default to today
+});
+```
+
+## Using Results
+
+### Formatting Dates
+
+```ts
+const deadline = await i.dateSelect('Deadline?', 'project.deadline', 'Target date');
+
+// Format for display
+const formattedDate = deadline.toISOString().split('T')[0]; // "2024-12-31"
+
+// Format for template
+config: {
+  vars: {
+    deadline: formattedDate,
+    deadlineYear: deadline.getFullYear().toString(),
+    deadlineMonth: (deadline.getMonth() + 1).toString().padStart(2, '0')
+  }
+}
+```
+
+### In Template Files
+
+```markdown
+## Project Timeline
+
+- **Start Date:** var__startDate__
+- **Deadline:** var__deadline__
+
+This project is due in var__deadlineYear__.
+```
+
+### Date Calculations
+
+```ts
+const startDate = await i.dateSelect('Start date?', 'project.start', 'Begin date');
+const endDate = await i.dateSelect('End date?', 'project.end', 'End date');
+
+// Calculate duration
+const duration = Math.ceil((endDate.getTime() - startDate.getTime()) / (1000 * 60 * 60 * 24));
+
+config: {
+  vars: {
+    startDate: startDate.toISOString().split('T')[0],
+    endDate: endDate.toISOString().split('T')[0],
+    duration: duration.toString()
+  }
+}
+```
+
+## Common Patterns
+
+### Default to Future Date
+
+```ts
+const defaultDate = new Date();
+defaultDate.setMonth(defaultDate.getMonth() + 1); // 1 month from now
+
+const deadline = await i.dateSelect({
+  type: QuestionType.DateSelect,
+  id: 'project.deadline',
+  message: 'Deadline?',
+  desc: 'Target completion date',
+  default: defaultDate
+});
+```
+
+### Validation
+
+```ts
+const startDate = await i.dateSelect({
+  type: QuestionType.DateSelect,
+  id: 'project.start',
+  message: 'Start date?',
+  desc: 'Must be in the future',
+  validate: (date) => {
+    if (date < new Date()) {
+      return 'Start date must be in the future';
+    }
+    return null;
+  }
+});
+```
+
+### License Expiration Pattern
+
+```ts
+const licenseExpiry = await i.dateSelect(
+  'License expiration?',
+  'license.expiry',
+  'When does the license expire?'
+);
+
+const daysUntilExpiry = Math.ceil(
+  (licenseExpiry.getTime() - Date.now()) / (1000 * 60 * 60 * 24)
+);
+
+config: {
+  vars: {
+    licenseExpiry: licenseExpiry.toISOString().split('T')[0],
+    daysUntilExpiry: daysUntilExpiry.toString()
+  }
+}
+```
+
+## Related
+
+- [IInquirer Reference](/developer/templates/reference/sdk/inquirer) - Complete API documentation
+- [Default Values](/developer/templates/how-to/default-values) - Setting defaults
+- [Validate Input](/developer/templates/how-to/validate-input) - Input validation

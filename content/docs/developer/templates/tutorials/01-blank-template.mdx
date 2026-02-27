@@ -1,0 +1,118 @@
+---
+title: Tutorial 1 - Blank Template
+description: Create your first CyanPrint template using the meta template
+---
+
+import { Steps } from 'fumadocs-ui/components/steps';
+import { Callout } from 'fumadocs-ui/components/callout';
+
+# Tutorial 1: Blank Template
+
+Create a template using the meta template. This is the starting point for all template development.
+
+## Prerequisites
+
+- Docker installed and running
+- CyanPrint CLI installed
+- Node.js 18+ (for local development)
+
+## Create Project
+
+<Steps>
+
+### Generate from Meta Template
+
+```bash
+cyanprint create cyan/new my-first-template
+```
+
+This scaffolds a complete template project with all required files.
+
+### Navigate to Project
+
+```bash
+cd my-first-template
+```
+
+### Explore the Structure
+
+The generated project includes:
+
+```
+my-first-template/
+├── cyan/
+│   ├── index.ts          # Template logic
+│   ├── template.Dockerfile
+│   └── blob.Dockerfile
+├── cyan.yaml             # Template metadata
+└── package.json
+```
+
+</Steps>
+
+## Template Logic
+
+The `cyan/index.ts` file contains your template's logic:
+
+```ts
+import { StartTemplateWithLambda, GlobType } from '@atomicloud/cyan-sdk';
+
+StartTemplateWithLambda(async (i, d) => {
+  return {
+    processors: [{
+      name: 'cyan/default',
+      files: [{ root: 'templates', glob: '**/*', exclude: [], type: GlobType.Copy }],
+      config: { vars: {} }
+    }]
+  };
+});
+```
+
+### Understanding the Code
+
+| Part | Description |
+|------|-------------|
+| `StartTemplateWithLambda` | Entry point for template logic |
+| `i` | IInquirer - ask questions |
+| `d` | IDefine - access deterministic values |
+| `processors` | List of file processors to run |
+| `GlobType.Copy` | Copy files without processing |
+
+## Template Files
+
+Create your template files in `cyan/templates`:
+
+```bash
+mkdir -p cyan/templates
+echo "# My Project" > cyan/templates/README.md
+```
+
+This template copies `templates/README.md` to the output without any variable substitution.
+
+## Test Your Template
+
+Build and test locally:
+
+```bash
+# Build the template
+docker build -f cyan/template.Dockerfile -t my-first-template:dev .
+
+# Run locally
+cyanprint create my-first-template:dev ../test-output
+```
+
+<Callout type="info">
+During development, use local Docker images. Push to registry only when ready to share.
+</Callout>
+
+## What You Learned
+
+- How to create a template project using the meta template
+- The basic structure of a CyanPrint template
+- How `GlobType.Copy` copies files without processing
+
+## Next Steps
+
+In the next tutorial, you'll learn how to add variable substitution to process template files:
+
+[**Next: Adding Variables**](/developer/templates/tutorials/02-adding-variables)

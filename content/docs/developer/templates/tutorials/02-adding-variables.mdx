@@ -1,0 +1,127 @@
+---
+title: Tutorial 2 - Adding Variables
+description: Add variable substitution to your templates
+---
+
+import { Steps } from 'fumadocs-ui/components/steps';
+import { Callout } from 'fumadocs-ui/components/callout';
+
+# Tutorial 2: Adding Variables
+
+Add variable substitution using the default processor. This enables dynamic content generation based on variables.
+
+## Change to GlobType.Template
+
+First, update your file configuration to use `GlobType.Template` instead of `GlobType.Copy`:
+
+```ts
+files: [{ root: 'templates', glob: '**/*', exclude: [], type: GlobType.Template }]
+```
+
+<Callout type="warn">
+Using `GlobType.Template` on binary files (images, PDFs) will corrupt them. See [Tutorial 3](/developer/templates/tutorials/03-changing-glob) for handling mixed file types.
+</Callout>
+
+## Add Variables to Config
+
+Define variables in your processor configuration:
+
+```ts
+config: {
+  vars: {
+    name: 'my-project',
+    author: 'Your Name',
+    version: '1.0.0'
+  }
+}
+```
+
+## Use Variables in Files
+
+The default processor uses `var__name__` syntax for variable substitution:
+
+`cyan/templates/README.md`:
+
+```markdown
+# var__name__
+
+Welcome to var__name__!
+
+**Author:** var__author__
+**Version:** var__version__
+```
+
+## Complete Example
+
+Update `cyan/index.ts`:
+
+```ts
+import { StartTemplateWithLambda, GlobType } from '@atomicloud/cyan-sdk';
+
+StartTemplateWithLambda(async (i, d) => {
+  return {
+    processors: [{
+      name: 'cyan/default',
+      files: [
+        { root: 'templates', glob: '**/*', exclude: [], type: GlobType.Template }
+      ],
+      config: {
+        vars: {
+          name: 'my-project',
+          author: 'Your Name',
+          version: '1.0.0'
+        }
+      }
+    }]
+  };
+});
+```
+
+## Variable Syntax
+
+The default processor uses Eta templating with custom delimiters:
+
+| Syntax | Description |
+|--------|-------------|
+| `var__name__` | Variable substitution |
+| `var__author__` | Nested variable access |
+
+<Callout type="info">
+The default delimiter `var__` and `__` is chosen to avoid conflicts with common template syntaxes like `${}` or `{{}}`.
+</Callout>
+
+## Test Your Template
+
+```bash
+# Build
+docker build -f cyan/template.Dockerfile -t my-first-template:dev .
+
+# Test
+cyanprint create my-first-template:dev ../test-output
+
+# Check output
+cat ../test-output/README.md
+```
+
+Expected output:
+
+```markdown
+# my-project
+
+Welcome to my-project!
+
+**Author:** Your Name
+**Version:** 1.0.0
+```
+
+## What You Learned
+
+- How to use `GlobType.Template` for file processing
+- How to define variables in processor config
+- How to use `var__name__` syntax for substitution
+
+## Next Steps
+
+Learn how to handle different file types with different processing strategies:
+
+[**Next: Changing Glob Patterns**](/developer/templates/tutorials/03-changing-glob)

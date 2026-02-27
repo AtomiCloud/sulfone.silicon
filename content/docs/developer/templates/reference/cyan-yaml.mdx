@@ -1,0 +1,196 @@
+---
+title: cyan.yaml Reference
+description: Configuration format for template metadata
+---
+
+# cyan.yaml Reference
+
+The `cyan.yaml` file defines template metadata, dependencies, and configuration.
+
+## Basic Structure
+
+```yaml
+name: myorg/my-template
+version: 1.0.0
+description: A template description
+author: Your Organization
+license: MIT
+```
+
+## Fields Reference
+
+### `name`
+
+**Required.** The template identifier.
+
+```yaml
+name: myorg/my-template
+```
+
+Format: `{organization}/{template-name}`
+
+- Use lowercase letters
+- Use hyphens for separation
+- Must be unique within the organization
+
+### `version`
+
+**Required.** Semantic version of the template.
+
+```yaml
+version: 1.0.0
+```
+
+Follow [Semantic Versioning](https://semver.org/):
+- MAJOR: Breaking changes
+- MINOR: New features, backward compatible
+- PATCH: Bug fixes
+
+### `description`
+
+**Optional.** Brief description of what the template provides.
+
+```yaml
+description: A modern Node.js project template with TypeScript support
+```
+
+### `author`
+
+**Optional.** The template author or organization.
+
+```yaml
+author: Your Organization
+```
+
+### `license`
+
+**Optional.** License for the template itself.
+
+```yaml
+license: MIT
+```
+
+### `keywords`
+
+**Optional.** Tags for template discovery.
+
+```yaml
+keywords:
+  - nodejs
+  - typescript
+  - react
+  - starter
+```
+
+### `homepage`
+
+**Optional.** URL to template documentation or repository.
+
+```yaml
+homepage: https://github.com/myorg/my-template
+```
+
+### `repository`
+
+**Optional.** Source code repository.
+
+```yaml
+repository:
+  type: git
+  url: https://github.com/myorg/my-template.git
+```
+
+## Composition
+
+### `compose`
+
+**Optional.** Other templates to include.
+
+```yaml
+compose:
+  - name: shared/base-setup
+    version: "1.0.0"
+  - name: shared/typescript
+    version: "^2.0.0"
+  - name: shared/eslint
+    version: ">=1.5.0"
+```
+
+Version constraints:
+- Exact: `"1.0.0"`
+- Compatible: `"^1.0.0"` (1.x.x)
+- Range: `">=1.0.0 <2.0.0"`
+
+### Conditional Composition
+
+```yaml
+compose:
+  - name: shared/docker
+    version: "1.0.0"
+    condition: ${usesDocker}
+```
+
+## Plugins
+
+### `plugins`
+
+**Optional.** Default plugins for this template.
+
+```yaml
+plugins:
+  - name: cyan/init-git
+    config:
+      commitMessage: "Initial commit"
+```
+
+Users can override plugin configuration when using the template.
+
+## Complete Example
+
+```yaml
+# Basic metadata
+name: myorg/node-service
+version: 2.1.0
+description: Production-ready Node.js microservice template
+author: MyOrg Team
+license: MIT
+
+# Discovery
+keywords:
+  - nodejs
+  - microservice
+  - typescript
+  - grpc
+homepage: https://docs.myorg.io/templates/node-service
+repository:
+  type: git
+  url: https://github.com/myorg/node-service-template.git
+
+# Compose with other templates
+compose:
+  - name: myorg/base-node
+    version: "^3.0.0"
+  - name: myorg/typescript
+    version: "^2.0.0"
+  - name: myorg/docker
+    version: "^1.0.0"
+  - name: myorg/grpc
+    version: "^1.0.0"
+  - name: myorg/observability
+    version: "^2.0.0"
+
+# Default plugins
+plugins:
+  - name: cyan/init-git
+    config:
+      commitMessage: "Initial commit from node-service template"
+  - name: cyan/npm-install
+    config:
+      packageManager: pnpm
+```
+
+## Related
+
+- [Project Structure](/developer/templates/reference/project-structure) - Template files organization
+- [Dockerfiles Reference](/developer/templates/reference/dockerfiles) - Docker configuration
+- [Compose Templates](/developer/templates/how-to/compose-templates) - Composition how-to

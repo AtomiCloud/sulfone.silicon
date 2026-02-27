@@ -1,0 +1,136 @@
+---
+title: Tutorial 3 - Changing Glob Patterns
+description: Control which files are processed vs copied
+---
+
+import { Callout } from 'fumadocs-ui/components/callout';
+
+# Tutorial 3: Changing Glob Patterns
+
+Control which files are processed vs copied as-is. This is essential for projects with mixed content types.
+
+## The Problem
+
+Not all files should be processed the same way:
+
+- **Text files** (`.md`, `.ts`, `.json`) - Need variable substitution
+- **Binary files** (`.png`, `.jpg`, `.pdf`) - Must be copied as-is
+- **Static assets** - Don't need processing
+
+Using `GlobType.Template` on binary files corrupts them.
+
+## Multiple File Groups
+
+Use multiple file entries with different glob patterns:
+
+```ts
+files: [
+  // Process markdown and text files
+  { root: 'templates', glob: '**/*.md', exclude: [], type: GlobType.Template },
+  { root: 'templates', glob: '**/*.txt', exclude: [], type: GlobType.Template },
+  { root: 'templates', glob: '**/*.json', exclude: [], type: GlobType.Template },
+
+  // Copy images as-is
+  { root: 'templates', glob: '**/*.png', exclude: [], type: GlobType.Copy },
+  { root: 'templates', glob: '**/*.jpg', exclude: [], type: GlobType.Copy },
+
+  // Copy static assets
+  { root: 'static', glob: '**/*', exclude: [], type: GlobType.Copy }
+]
+```
+
+## Complete Example
+
+```ts
+import { StartTemplateWithLambda, GlobType } from '@atomicloud/cyan-sdk';
+
+StartTemplateWithLambda(async (i, d) => {
+  return {
+    processors: [{
+      name: 'cyan/default',
+      files: [
+        // Template files - variable substitution
+        { root: 'templates', glob: '**/*.md', exclude: [], type: GlobType.Template },
+        { root: 'templates', glob: '**/*.yaml', exclude: [], type: GlobType.Template },
+        { root: 'templates', glob: '**/*.json', exclude: [], type: GlobType.Template },
+
+        // Binary files - copy only
+        { root: 'templates', glob: '**/*.png', exclude: [], type: GlobType.Copy },
+        { root: 'templates', glob: '**/*.ico', exclude: [], type: GlobType.Copy },
+
+        // Static directory - copy all
+        { root: 'static', glob: '**/*', exclude: [], type: GlobType.Copy }
+      ],
+      config: {
+        vars: {
+          name: 'my-project',
+          author: 'Developer'
+        }
+      }
+    }]
+  };
+});
+```
+
+## Exclude Patterns
+
+Exclude files from processing:
+
+```ts
+files: [
+  {
+    root: 'templates',
+    glob: '**/*',
+    exclude: [
+      '**/test/**',        // Exclude test directories
+      '**/node_modules/**', // Exclude node_modules
+      '**/*.spec.ts'        // Exclude test files
+    ],
+    type: GlobType.Template
+  }
+]
+```
+
+## GlobType Options
+
+| Type | Behavior | Use Case |
+|------|----------|----------|
+| `GlobType.Template` | Process with variable substitution | Text files, configs |
+| `GlobType.Copy` | Copy without processing | Images, binaries |
+| `GlobType.Ignore` | Skip entirely | Temporary files |
+
+## Project Structure Example
+
+```
+cyan/
+├── index.ts
+├── templates/
+│   ├── README.md        # Template - will be processed
+│   ├── package.json     # Template - will be processed
+│   └── logo.png         # Binary - will be copied
+└── static/
+    └── favicon.ico      # Static - will be copied
+```
+
+## Best Practices
+
+1. **Be explicit** - List each file type separately rather than using `**/*`
+2. **Order matters** - More specific patterns should come first
+3. **Use exclude** - Keep your template directory clean
+4. **Test binary files** - Always verify images and binaries work correctly
+
+<Callout type="info">
+For detailed glob syntax, see the [Globbing Reference](/developer/templates/reference/sdk/globbing).
+</Callout>
+
+## What You Learned
+
+- How to use multiple file groups with different processing types
+- How to exclude files from processing
+- When to use `GlobType.Template` vs `GlobType.Copy`
+
+## Next Steps
+
+Learn how to ask users for input to customize the generated project:
+
+[**Next: Asking Questions**](/developer/templates/tutorials/04-asking-questions)

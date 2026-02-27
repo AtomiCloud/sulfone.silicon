@@ -1,0 +1,216 @@
+---
+title: Container Paths
+description: Understanding path mechanics in template containers
+---
+
+import { Callout } from 'fumadocs-ui/components/callout';
+
+# Container Paths
+
+Templates run in Docker containers with specific path conventions. Understanding these paths is essential for correct file references.
+
+## Container Structure
+
+### Default Paths
+
+```
+/
+├── workspace/          # Working directory
+│   └── (output)        # Generated files go here
+├── templates/          # Template source files (from blob)
+└── cyan/               # Template code
+    └── index.ts
+```
+
+### Working Directory
+
+The default working directory is `/workspace`:
+
+```dockerfile
+WORKDIR /workspace
+```
+
+Generated files are written here.
+
+## Path Variables
+
+### root in File Groups
+
+The `root` property in file groups refers to paths **inside the container**:
+
+```ts
+files: [
+  { root: 'templates', glob: '**/*', exclude: [], type: GlobType.Template }
+  // root: 'templates' -> /templates/ in container
+]
+```
+
+This path is relative to the container filesystem, not your development machine.
+
+## Blob Image Paths
+
+The blob Dockerfile defines where template files are placed:
+
+```dockerfile
+# blob.Dockerfile
+FROM alpine:latest
+
+# Copy template files to /templates/ in container
+COPY cyan/templates/ /templates/
+```
+
+Then reference in template:
+
+```ts
+files: [
+  { root: '/templates', glob: '**/*', exclude: [], type: GlobType.Template }
+  // or simply 'templates' (relative to /workspace)
+]
+```
+
+## Output Path
+
+Generated files are written to the output directory specified by the user:
+
+```bash
+cyanprint create myorg/template:1.0.0 ./my-project
+#                                    ^^^^^^^^^^^
+#                                    Output directory
+```
+
+Inside the container, this maps to `/workspace/output`.
+
+## Path Resolution
+
+### Absolute Paths
+
+Use absolute paths for clarity:
+
+```ts
+files: [
+  { root: '/templates', glob: '**/*.md', exclude: [], type: GlobType.Template }
+]
+```
+
+### Relative Paths
+
+Relative paths are resolved from `/workspace`:
+
+```ts
+files: [
+  { root: 'templates', glob: '**/*.md', exclude: [], type: GlobType.Template }
+  // Resolves to /workspace/templates
+]
+```
+
+<Callout type="info">
+If your blob image places files at `/templates`, use `/templates` (absolute) to avoid confusion.
+</Callout>
+
+## Common Patterns
+
+### Single Templates Directory
+
+```dockerfile
+# blob.Dockerfile
+FROM alpine:latest
+COPY cyan/templates/ /templates/
+```
+
+```ts
+files: [
+  { root: '/templates', glob: '**/*', exclude: [], type: GlobType.Template }
+]
+```
+
+### Multiple Source Directories
+
+```dockerfile
+# blob.Dockerfile
+FROM alpine:latest
+COPY cyan/templates/ /templates/
+COPY cyan/static/ /static/
+COPY cyan/configs/ /configs/
+```
+
+```ts
+files: [
+  { root: '/templates', glob: '**/*.md', exclude: [], type: GlobType.Template },
+  { root: '/static', glob: '**/*', exclude: [], type: GlobType.Copy },
+  { root: '/configs', glob: '**/*.json', exclude: [], type: GlobType.Template }
+]
+```
+
+### Feature-Based Organization
+
+```dockerfile
+# blob.Dockerfile
+FROM alpine:latest
+COPY cyan/templates/ /templates/
+```
+
+```ts
+files: [
+  // Base files
+  { root: '/templates/base', glob: '**/*', exclude: [], type: GlobType.Template },
+
+  // Conditional features
+  ...(typescript ? [
+    { root: '/templates/typescript', glob: '**/*', exclude: [], type: GlobType.Template }
+  ] : []),
+
+  ...(docker ? [
+    { root: '/templates/docker', glob: '**/*', exclude: [], type: GlobType.Template }
+  ] : [])
+]
+```
+
+## Output Structure
+
+The output structure mirrors the paths inside the templates directory:
+
+```
+Container: /templates/
+├── README.md
+├── src/
+│   └── index.ts
+└── package.json
+
+Output: ./my-project/
+├── README.md
+├── src/
+│   └── index.ts
+└── package.json
+```
+
+## Debugging Paths
+
+### Check Container Paths
+
+```bash
+# Run container and explore
+docker run -it --rm my-template:dev sh
+ls -la /
+ls -la /templates
+```
+
+### Common Issues
+
+1. **Wrong root path** - Files not found
+2. **Missing COPY in blob** - Templates not in container
+3. **Case sensitivity** - Linux containers are case-sensitive
+
+## Path Summary
+
+| Path | Location | Purpose |
+|------|----------|---------|
+| `/workspace` | Container | Working directory |
+| `/workspace/output` | Container | Generated files |
+| `/templates` | Container (from blob) | Template source |
+| `root` property | Container | Source for file groups |
+
+## Related
+
+- [Project Structure](/developer/templates/reference/project-structure) - Template organization
+- [Dockerfiles Reference](/developer/templates/reference/dockerfiles) - Docker configuration
+- [Globbing Reference](/developer/templates/reference/sdk/globbing) - File patterns

@@ -1,0 +1,125 @@
+---
+title: Ask Checkbox Questions
+description: How to ask multi-select checkbox questions
+---
+
+# How to Ask Checkbox Questions
+
+Use checkboxes when users need to select multiple options from a list.
+
+## Shorthand Form
+
+```ts
+const features = await i.checkbox(
+  'Select features',           // Message
+  ['ESLint', 'Prettier', 'Jest', 'Docker'],  // Options
+  'project.features',          // Key
+  'Choose features to include' // Description
+);
+// Returns: string[] - e.g., ['ESLint', 'Jest']
+```
+
+## Object Form (with options)
+
+```ts
+const features = await i.checkbox({
+  type: QuestionType.Checkbox,
+  id: 'project.features',
+  message: 'Select features',
+  desc: 'Choose features to include',
+  options: ['ESLint', 'Prettier', 'Jest', 'Docker'],
+  default: ['ESLint'],           // Pre-selected options
+  validate: (selected) => {
+    if (selected.length === 0) return 'Select at least one feature';
+    return null;
+  }
+});
+```
+
+## Using Results
+
+### In Template Logic
+
+```ts
+const features = await i.checkbox(
+  'Select features',
+  ['ESLint', 'Prettier', 'Jest'],
+  'project.features',
+  'Choose features'
+);
+
+// Check if specific feature is selected
+const hasEslint = features.includes('ESLint');
+const hasJest = features.includes('Jest');
+
+// Use in config
+config: {
+  vars: {
+    features: features.join(', '),  // "ESLint, Jest"
+    hasEslint: hasEslint ? 'true' : 'false',
+    hasJest: hasJest ? 'true' : 'false'
+  }
+}
+```
+
+### Conditional Files Based on Selection
+
+```ts
+const features = await i.checkbox(
+  'Select features',
+  ['ESLint', 'Prettier', 'Jest'],
+  'project.features',
+  'Choose features'
+);
+
+const files = [
+  { root: 'templates/base', glob: '**/*', exclude: [], type: GlobType.Template }
+];
+
+if (features.includes('ESLint')) {
+  files.push({ root: 'templates/eslint', glob: '**/*', exclude: [], type: GlobType.Copy });
+}
+
+if (features.includes('Jest')) {
+  files.push({ root: 'templates/jest', glob: '**/*', exclude: [], type: GlobType.Copy });
+}
+```
+
+## Common Patterns
+
+### With Validation
+
+```ts
+const databases = await i.checkbox({
+  type: QuestionType.Checkbox,
+  id: 'project.databases',
+  message: 'Select databases',
+  desc: 'Choose database support',
+  options: ['PostgreSQL', 'MySQL', 'MongoDB', 'Redis'],
+  validate: (selected) => {
+    if (selected.length > 2) {
+      return 'Maximum 2 databases supported';
+    }
+    return null;
+  }
+});
+```
+
+### With Defaults
+
+```ts
+const features = await i.checkbox({
+  type: QuestionType.Checkbox,
+  id: 'project.features',
+  message: 'Select features',
+  desc: 'Choose features',
+  options: ['ESLint', 'Prettier', 'Jest', 'Docker'],
+  default: ['ESLint', 'Prettier']  // Pre-selected
+});
+```
+
+## Related
+
+- [IInquirer Reference](/developer/templates/reference/sdk/inquirer) - Complete API documentation
+- [Ask Confirm](/developer/templates/how-to/ask-confirm) - Yes/no questions
+- [Validate Input](/developer/templates/how-to/validate-input) - Input validation patterns

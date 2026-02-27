@@ -1,8 +1,66 @@
 ---
 title: Template Reference
-description: Reference documentation for CyanPrint templates
+description: Technical reference documentation for CyanPrint templates
 ---
 
 # Template Reference
 
-Reference documentation for CyanPrint templates.
+Technical documentation for template structure, configuration, and SDK.
+
+## Project Structure
+
+- [Project Structure](/developer/templates/reference/project-structure) - Template directory organization
+- [cyan.yaml](/developer/templates/reference/cyan-yaml) - Metadata configuration
+- [Dockerfiles](/developer/templates/reference/dockerfiles) - Container configuration
+
+## SDK Reference
+
+Complete API documentation for the CyanPrint SDK:
+
+- [SDK Overview](/developer/templates/reference/sdk) - SDK introduction and exports
+- [IInquirer](/developer/templates/reference/sdk/inquirer) - Question asking API
+- [Cyan Config](/developer/templates/reference/sdk/cyan-config) - Configuration structure
+- [Globbing](/developer/templates/reference/sdk/globbing) - File pattern matching
+- [Types](/developer/templates/reference/sdk/types) - Type definitions
+
+## Quick Reference
+
+### Entry Point
+
+```ts
+import { StartTemplateWithLambda, GlobType } from '@atomicloud/cyan-sdk';
+
+StartTemplateWithLambda(async (i, d) => {
+  return {
+    processors: [{
+      name: 'cyan/default',
+      files: [{ root: 'templates', glob: '**/*', exclude: [], type: GlobType.Template }],
+      config: { vars: {} }
+    }]
+  };
+});
+```
+
+### Question Types
+
+| Method | Returns | Purpose |
+|--------|---------|---------|
+| `text()` | `string` | Text input |
+| `select()` | `string` | Single selection |
+| `confirm()` | `boolean` | Yes/no |
+| `checkbox()` | `string[]` | Multi-select |
+| `password()` | `string` | Hidden input |
+| `dateSelect()` | `Date` | Date selection |
+
+### File Processing
+
+| Type | Behavior |
+|------|----------|
+| `GlobType.Template` | Process with variable substitution |
+| `GlobType.Copy` | Copy without processing |
+| `GlobType.Ignore` | Skip entirely |
+
+## Next Steps
+
+- [How-To Guides](/developer/templates/how-to) - Task-oriented guides
+- [Explanation](/developer/templates/explanation) - Conceptual documentation

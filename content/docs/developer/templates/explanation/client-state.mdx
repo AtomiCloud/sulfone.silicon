@@ -1,0 +1,213 @@
+---
+title: Client State
+description: Managing state across template executions
+---
+
+# Client State
+
+Client state manages data persistence across template executions, enabling updates and reproducibility.
+
+## What is Client State?
+
+Client state is stored in the generated project at `.cyan/generation.json`:
+
+```json
+{
+  "version": "1.0",
+  "template": {
+    "name": "myorg/my-template",
+    "version": "1.0.0"
+  },
+  "pin": "abc123-def456-ghi789",
+  "answers": {
+    "project.name": "my-project",
+    "project.typescript": true,
+    "project.docker": false
+  },
+  "generated": "2024-01-15T10:30:00Z"
+}
+```
+
+## Purpose
+
+### Reproducibility
+
+Regenerate with the same configuration:
+
+```bash
+# Original generation stored answers
+cyanprint create myorg/template:1.0.0 ./my-project
+
+# Regenerate uses stored answers
+cyanprint regenerate ./my-project
+```
+
+### Updates
+
+Update to new template versions:
+
+```bash
+# Update to latest version
+cyanprint update ./my-project
+
+# Update to specific version
+cyanprint update ./my-project myorg/template:2.0.0
+```
+
+### Debugging
+
+Inspect what configuration was used:
+
+```bash
+cat ./my-project/.cyan/generation.json
+```
+
+## State Structure
+
+### Version
+
+Schema version for future compatibility:
+
+```json
+"version": "1.0"
+```
+
+### Template
+
+Template identification:
+
+```json
+"template": {
+  "name": "myorg/my-template",
+  "version": "1.0.0",
+  "registry": "https://registry.example.com"
+}
+```
+
+### Pin
+
+Determinism seed:
+
+```json
+"pin": "abc123-def456-ghi789"
+```
+
+### Answers
+
+User responses to questions (by key):
+
+```json
+"answers": {
+  "project.name": "my-project",
+  "project.typescript": true,
+  "project.features": ["ESLint", "Prettier"]
+}
+```
+
+### Generated
+
+Timestamp of generation:
+
+```json
+"generated": "2024-01-15T10:30:00Z"
+```
+
+## State Lifecycle
+
+```mermaid
+graph TD
+    A[cyanprint create] --> B[Ask Questions]
+    B --> C[Store Answers]
+    C --> D[Generate Pin]
+    D --> E[Generate Files]
+    E --> F[Write .cyan/generation.json]
+    F --> G[Generation Complete]
+
+    G --> H[cyanprint update]
+    H --> I[Read State]
+    I --> J[Reuse Pin]
+    J --> K[Reuse Answers]
+    K --> L[Generate Files]
+    L --> M[3-Way Merge]
+    M --> N[Update Complete]
+```
+
+## Accessing State
+
+### In Templates
+
+State is automatically managed. Access via keys:
+
+```ts
+const name = await i.text('Name?', 'project.name', '...');
+// This answer is stored in state
+```
+
+### Programmatically
+
+Read state directly:
+
+```bash
+# Read state
+cat .cyan/generation.json | jq '.answers'
+
+# Extract specific answer
+cat .cyan/generation.json | jq '.answers["project.name"]'
+```
+
+## State and Keys
+
+Keys are the bridge between questions and state:
+
+```ts
+// Question with key
+const name = await i.text('Name?', 'project.name', '...');
+
+// Stored in state as:
+// { "project.name": "user-entered-value" }
+```
+
+When updating:
+1. Read state to get previous answers
+2. Skip questions that have answers in state
+3. Use stored pin for deterministic values
+
+## Best Practices
+
+### Namespace Keys
+
+Prevent collisions with namespaced keys:
+
+```ts
+// Good: Namespaced
+const name = await i.text('Name?', 'my-template.project.name', '...');
+
+// Bad: Generic
+const name = await i.text('Name?', 'name', '...');
+```
+
+### Don't Modify State
+
+Never manually edit `.cyan/generation.json`:
+
+- Breaks determinism
+- Breaks update functionality
+- May corrupt template data
+
+### Version Control
+
+Decide whether to commit `.cyan/`:
+
+```gitignore
+# Option 1: Commit for reproducibility
+# (No entry in .gitignore)
+
+# Option 2: Ignore for cleaner history
+.cyan/
+```
+
+## Related
+
+- [Determinism](/developer/templates/explanation/determinism) - How reproducibility works
+- [3-Way Merge](/developer/templates/explanation/3-way-merge) - Update mechanics
+- [Use Keys](/developer/templates/how-to/use-keys) - Keys and namespacing

@@ -1,0 +1,262 @@
+---
+title: Type Definitions
+description: SDK type definitions and enums
+---
+
+# Type Definitions
+
+Complete type definitions for the CyanPrint SDK.
+
+## Enums
+
+### GlobType
+
+File processing types.
+
+```ts
+enum GlobType {
+  Template = 0,  // Process with variable substitution
+  Copy = 1,      // Copy without processing
+  Ignore = 2     // Skip entirely
+}
+```
+
+**Usage:**
+
+```ts
+import { GlobType } from '@atomicloud/cyan-sdk';
+
+files: [
+  { root: 'templates', glob: '**/*.md', exclude: [], type: GlobType.Template },
+  { root: 'templates', glob: '**/*.png', exclude: [], type: GlobType.Copy }
+]
+```
+
+---
+
+### QuestionType
+
+Question type identifiers.
+
+```ts
+enum QuestionType {
+  Text = 0,
+  DateSelect = 1,
+  Select = 2,
+  Checkbox = 3,
+  Password = 4,
+  Confirm = 5
+}
+```
+
+**Usage:**
+
+```ts
+import { QuestionType } from '@atomicloud/cyan-sdk';
+
+const name = await i.text({
+  type: QuestionType.Text,
+  id: 'project.name',
+  message: 'Project name?',
+  desc: 'Enter project name'
+});
+```
+
+---
+
+## Interfaces
+
+### ICyanConfig
+
+Main configuration object returned by templates.
+
+```ts
+interface ICyanConfig {
+  processors: IProcessor[];
+  plugins?: IPlugin[];
+}
+```
+
+---
+
+### IProcessor
+
+Processor definition.
+
+```ts
+interface IProcessor {
+  name: string;
+  files: IFileGroup[];
+  config: Record<string, any>;
+}
+```
+
+---
+
+### IFileGroup
+
+File group for processing.
+
+```ts
+interface IFileGroup {
+  root: string;       // Source directory
+  glob: string;       // Glob pattern
+  exclude: string[];  // Exclude patterns
+  type: GlobType;     // Processing type
+}
+```
+
+---
+
+### IPlugin
+
+Plugin definition.
+
+```ts
+interface IPlugin {
+  name: string;
+  config: Record<string, any>;
+}
+```
+
+---
+
+### IInquirer
+
+Question asking interface.
+
+```ts
+interface IInquirer {
+  // Shorthand forms
+  text(message: string, id: string, desc?: string): Promise<string>;
+  select(message: string, options: string[], id: string, desc?: string): Promise<string>;
+  confirm(message: string, id: string, desc?: string): Promise<boolean>;
+  checkbox(message: string, options: string[], id: string, desc?: string): Promise<string[]>;
+  password(message: string, id: string, desc?: string): Promise<string>;
+  dateSelect(message: string, id: string, desc?: string): Promise<Date>;
+
+  // Object forms
+  text(config: ITextQuestion): Promise<string>;
+  select(config: ISelectQuestion): Promise<string>;
+  confirm(config: IConfirmQuestion): Promise<boolean>;
+  checkbox(config: ICheckboxQuestion): Promise<string[]>;
+  password(config: IPasswordQuestion): Promise<string>;
+  dateSelect(config: IDateQuestion): Promise<Date>;
+}
+```
+
+---
+
+### IDefine
+
+Deterministic value generation.
+
+```ts
+interface IDefine {
+  uuid(): string;
+  timestamp(): number;
+  seq(namespace: string): number;
+}
+```
+
+---
+
+### Question Interfaces
+
+#### ITextQuestion
+
+```ts
+interface ITextQuestion {
+  type: QuestionType.Text;
+  id: string;
+  message: string;
+  desc?: string;
+  default?: string;
+  validate?: (input: string) => string | null;
+}
+```
+
+#### ISelectQuestion
+
+```ts
+interface ISelectQuestion {
+  type: QuestionType.Select;
+  id: string;
+  message: string;
+  desc?: string;
+  options: string[];
+  default?: string;
+  validate?: (selected: string) => string | null;
+}
+```
+
+#### IConfirmQuestion
+
+```ts
+interface IConfirmQuestion {
+  type: QuestionType.Confirm;
+  id: string;
+  message: string;
+  desc?: string;
+  default?: boolean;
+}
+```
+
+#### ICheckboxQuestion
+
+```ts
+interface ICheckboxQuestion {
+  type: QuestionType.Checkbox;
+  id: string;
+  message: string;
+  desc?: string;
+  options: string[];
+  default?: string[];
+  validate?: (selected: string[]) => string | null;
+}
+```
+
+#### IPasswordQuestion
+
+```ts
+interface IPasswordQuestion {
+  type: QuestionType.Password;
+  id: string;
+  message: string;
+  desc?: string;
+  validate?: (input: string) => string | null;
+}
+```
+
+#### IDateQuestion
+
+```ts
+interface IDateQuestion {
+  type: QuestionType.DateSelect;
+  id: string;
+  message: string;
+  desc?: string;
+  default?: Date;
+  validate?: (date: Date) => string | null;
+}
+```
+
+---
+
+## Type Aliases
+
+### ValidateFunction
+
+```ts
+type ValidateFunction<T> = (input: T) => string | null;
+```
+
+Returns `null` for valid input, or an error message string for invalid input.
+
+---
+
+## Related
+
+- [IInquirer Reference](/developer/templates/reference/sdk/inquirer) - Question API details
+- [Cyan Config Reference](/developer/templates/reference/sdk/cyan-config) - Configuration structure
+- [Globbing Reference](/developer/templates/reference/sdk/globbing) - File patterns

@@ -1,0 +1,111 @@
+---
+title: SDK Overview
+description: CyanPrint SDK for template development
+---
+
+# SDK Overview
+
+The CyanPrint SDK (`@atomicloud/cyan-sdk`) provides the APIs for creating templates, processors, and plugins.
+
+## Installation
+
+```bash
+npm install @atomicloud/cyan-sdk
+```
+
+## Core Exports
+
+### Entry Points
+
+| Export | Purpose |
+|--------|---------|
+| `StartTemplateWithLambda` | Entry point for templates |
+| `StartProcessorWithLambda` | Entry point for processors |
+| `StartPluginWithLambda` | Entry point for plugins |
+
+### Interfaces
+
+| Interface | Description |
+|-----------|-------------|
+| `IInquirer` | Ask user questions |
+| `IDefine` | Generate deterministic values |
+| `ICyanConfig` | Template configuration structure |
+| `IProcessor` | Processor definition |
+
+### Types
+
+| Type | Description |
+|------|-------------|
+| `GlobType` | File processing types |
+| `QuestionType` | Question type enum |
+| `FileGroup` | File group configuration |
+
+## Quick Start
+
+### Template Entry Point
+
+```ts
+import { StartTemplateWithLambda, GlobType } from '@atomicloud/cyan-sdk';
+
+StartTemplateWithLambda(async (i, d) => {
+  // i: IInquirer - ask questions
+  // d: IDefine - get deterministic values
+
+  return {
+    processors: [{
+      name: 'cyan/default',
+      files: [{ root: 'templates', glob: '**/*', exclude: [], type: GlobType.Template }],
+      config: { vars: {} }
+    }]
+  };
+});
+```
+
+### Using IInquirer
+
+```ts
+// Text input
+const name = await i.text('Project name?', 'project.name', 'Enter name');
+
+// Selection
+const license = await i.select('License?', ['MIT', 'Apache-2.0'], 'project.license', 'Choose');
+
+// Confirmation
+const typescript = await i.confirm('Use TypeScript?', 'project.typescript', 'Add TS config');
+
+// Checkbox (multi-select)
+const features = await i.checkbox('Features?', ['ESLint', 'Prettier'], 'project.features', 'Select');
+```
+
+### Using IDefine
+
+```ts
+// Deterministic UUID
+const projectId = d.uuid();
+
+// Deterministic timestamp
+const createdAt = d.timestamp();
+
+// Sequential numbers
+const userId = d.seq('users');
+```
+
+## SDK Reference Sections
+
+- [IInquirer](/developer/templates/reference/sdk/inquirer) - Question asking API
+- [Cyan Config](/developer/templates/reference/sdk/cyan-config) - Configuration structure
+- [Globbing](/developer/templates/reference/sdk/globbing) - File pattern matching
+- [Types](/developer/templates/reference/sdk/types) - Type definitions
+
+## Version Compatibility
+
+| SDK Version | CyanPrint CLI | Node.js |
+|-------------|---------------|---------|
+| 1.x | 1.x | 18+ |
+| 2.x | 2.x | 20+ |
+
+## Related
+
+- [Tutorials](/developer/templates/tutorials) - Step-by-step guides
+- [How-to Guides](/developer/templates/how-to) - Task-oriented guides
+- [Explanation](/developer/templates/explanation) - Conceptual deep dives

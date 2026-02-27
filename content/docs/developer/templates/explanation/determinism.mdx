@@ -1,0 +1,178 @@
+---
+title: Determinism
+description: How reproducible template generation works
+---
+
+import { Callout } from 'fumadocs-ui/components/callout';
+
+# Determinism
+
+Determinism ensures that running the same template with the same inputs produces identical outputs.
+
+## Why Determinism Matters
+
+### Reproducible Builds
+
+Generate the same project multiple times with identical results:
+
+```bash
+# First generation
+cyanprint create myorg/template:1.0.0 ./project-a
+
+# Second generation with same answers
+cyanprint create myorg/template:1.0.0 ./project-b
+
+# project-a and project-b are identical
+```
+
+### Safe Updates
+
+Update templates without breaking existing projects:
+
+```bash
+# Initial generation
+cyanprint create myorg/template:1.0.0 ./my-project
+
+# Later, update to new version
+cyanprint update ./my-project myorg/template:2.0.0
+
+# IDs and references remain consistent
+```
+
+## How It Works
+
+### Pin System
+
+Every generation has a **pin** - a unique identifier that seeds deterministic value generation:
+
+```ts
+// The pin is stored in .cyan/generation.json
+{
+  "template": "myorg/template:1.0.0",
+  "pin": "abc123def456",
+  "answers": { /* user answers */ }
+}
+```
+
+### IDefine Interface
+
+The `d` parameter provides deterministic value generation:
+
+```ts
+StartTemplateWithLambda(async (i, d) => {
+  // d.uuid() returns the same UUID for the same pin
+  const projectId = d.uuid();
+
+  // d.timestamp() returns a fixed timestamp
+  const createdAt = d.timestamp();
+
+  // d.seq() returns sequential numbers
+  const userId1 = d.seq('users');
+  const userId2 = d.seq('users');
+
+  return { /* ... */ };
+});
+```
+
+## Deterministic Methods
+
+### uuid()
+
+Generate a deterministic UUID:
+
+```ts
+const id = d.uuid(); // "550e8400-e29b-41d4-a716-446655440000"
+```
+
+Same pin always produces the same UUID.
+
+### timestamp()
+
+Generate a deterministic timestamp:
+
+```ts
+const ts = d.timestamp(); // 1704067200000
+const date = new Date(ts); // Consistent date
+```
+
+### seq()
+
+Generate sequential numbers per namespace:
+
+```ts
+const user1 = d.seq('users'); // 1
+const user2 = d.seq('users'); // 2
+const order1 = d.seq('orders'); // 1 (separate sequence)
+```
+
+<Callout type="warn">
+Never use `Date.now()`, `Math.random()`, or `crypto.randomUUID()` - these break determinism.
+</Callout>
+
+## Pin Lifecycle
+
+```mermaid
+graph LR
+    A[First Generation] --> B[Create Pin]
+    B --> C[Store in .cyan/]
+    C --> D[Generate Files]
+    D --> E[Update Request]
+    E --> F[Read Pin]
+    F --> G[Same Deterministic Values]
+    G --> H[Merge Changes]
+```
+
+## Deterministic Values in Templates
+
+Use deterministic values for:
+
+- **IDs**: Database IDs, entity identifiers
+- **Keys**: API keys (non-sensitive), tokens
+- **Timestamps**: Creation dates, version dates
+- **References**: Cross-reference identifiers
+
+```ts
+StartTemplateWithLambda(async (i, d) => {
+  const projectId = d.uuid();
+  const apiKey = d.uuid(); // Deterministic API key
+  const createdAt = new Date(d.timestamp()).toISOString();
+
+  return {
+    processors: [{
+      name: 'cyan/default',
+      files: [/* ... */],
+      config: {
+        vars: { projectId, apiKey, createdAt }
+      }
+    }]
+  };
+});
+```
+
+## Non-Deterministic Values
+
+Some values should NOT be deterministic:
+
+- **User input** - Varies per generation
+- **Current time** - Use `d.timestamp()` if you need consistency
+- **External data** - Fetch at generation time, cache if needed
+
+## Verification
+
+Verify determinism by generating twice:
+
+```bash
+# Generate twice with same answers
+cyanprint create myorg/template:1.0.0 ./test1
+cyanprint create myorg/template:1.0.0 ./test2
+
+# Compare outputs
+diff -r ./test1 ./test2
+# Should show no differences
+```
+
+## Related
+
+- [Pin Determinism](/developer/templates/how-to/pin-determinism) - How-to guide
+- [3-Way Merge](/developer/templates/explanation/3-way-merge) - Update mechanics
+- [Client State](/developer/templates/explanation/client-state) - State management

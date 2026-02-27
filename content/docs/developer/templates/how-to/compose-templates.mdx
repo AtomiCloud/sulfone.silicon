@@ -1,0 +1,163 @@
+---
+title: Compose Templates
+description: How to combine multiple templates into one
+---
+
+import { Callout } from 'fumadocs-ui/components/callout';
+
+# How to Compose Templates
+
+Compose multiple templates to create powerful combinations while maintaining separation of concerns.
+
+## What is Composition?
+
+Template composition allows one template to include and use other templates:
+
+```yaml
+# cyan.yaml
+compose:
+  - name: my-org/base-setup
+    version: "1.0.0"
+  - name: my-org/docker-config
+    version: "2.0.0"
+```
+
+## Composition Patterns
+
+### Layered Architecture
+
+Build templates in layers:
+
+1. **Base template** - Core project structure
+2. **Feature templates** - Optional features (Docker, CI/CD)
+3. **Platform templates** - Deployment targets
+
+```yaml
+# Full-stack web app template
+compose:
+  - name: shared/node-base        # Node.js project structure
+  - name: shared/typescript       # TypeScript configuration
+  - name: shared/eslint           # Linting setup
+  - name: frontend/react          # React frontend
+  - name: backend/express         # Express backend
+  - name: deploy/docker           # Docker configuration
+```
+
+### Feature Composition
+
+Let users compose features they need:
+
+```yaml
+# cyan.yaml - user selects features
+compose:
+  - name: base/project
+  - name: features/typescript
+    condition: ${usesTypescript}
+  - name: features/docker
+    condition: ${usesDocker}
+  - name: features/ci-github
+    condition: ${usesCI}
+```
+
+## Key Considerations
+
+### Namespaced Keys
+
+<Callout type="warn">
+When composing templates, key collisions cause unexpected behavior. Always namespace your keys.
+</Callout>
+
+```ts
+// Template A
+const name = await i.text('Name?', 'template-a.project.name', '...');
+
+// Template B (composed)
+const name = await i.text('Name?', 'template-b.project.name', '...');
+
+// Both get their own answers
+```
+
+### Intentional Key Sharing
+
+Share values intentionally via common key names:
+
+```ts
+// Both templates use the same project name
+// Template A
+const projectName = await i.text('Project name?', 'global.project.name', '...');
+
+// Template B (composed) - gets the same answer
+const projectName = await i.text('Project name?', 'global.project.name', '...');
+```
+
+### File Conflicts
+
+Handle file conflicts in composition:
+
+1. **Override** - Later templates override earlier ones
+2. **Merge** - For configs, merge content
+3. **Fail** - Error on conflict (requires handling)
+
+## Composition in Code
+
+Access composed templates in your logic:
+
+```ts
+import { StartTemplateWithLambda, GlobType } from '@atomicloud/cyan-sdk';
+
+StartTemplateWithLambda(async (i, d) => {
+  // Get answer from a composed template
+  const baseName = await i.text(
+    'Project name from base?',
+    'base-template.project.name',
+    '...'
+  );
+
+  // Add your own files
+  return {
+    processors: [{
+      name: 'cyan/default',
+      files: [
+        { root: 'templates', glob: '**/*', exclude: [], type: GlobType.Template }
+      ],
+      config: {
+        vars: {
+          name: baseName  // Use value from base template
+        }
+      }
+    }]
+  };
+});
+```
+
+## Best Practices
+
+1. **Single responsibility** - Each template does one thing well
+2. **Namespace keys** - Avoid accidental collisions
+3. **Document dependencies** - List required composed templates
+4. **Version pin** - Specify exact versions in composition
+
+## Example: Microservice Template
+
+```yaml
+# cyan.yaml for microservice template
+name: company/microservice
+version: 1.0.0
+compose:
+  - name: company/node-base
+    version: "2.0.0"
+  - name: company/typescript
+    version: "1.5.0"
+  - name: company/docker
+    version: "3.0.0"
+  - name: company/grpc
+    version: "1.0.0"
+  - name: company/observability
+    version: "2.0.0"
+```
+
+## Related
+
+- [Use Keys](/developer/templates/how-to/use-keys) - Keys and namespacing
+- [3-Way Merge](/developer/templates/explanation/3-way-merge) - Update mechanics
+- [Template Registry](/developer/templates/explanation/docker-vs-cyan-registry) - Publishing templates

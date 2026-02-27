@@ -1,0 +1,178 @@
+---
+title: Use a Custom Processor
+description: How to use custom processors in your templates
+---
+
+import { Callout } from 'fumadocs-ui/components/callout';
+
+# How to Use a Custom Processor
+
+Use custom processors for advanced file processing beyond the default Eta templating.
+
+## What is a Processor?
+
+Processors handle file transformation. The default processor (`cyan/default`) uses Eta templating with `var__name__` syntax. Custom processors can:
+
+- Use different template engines (Mustache, Handlebars, EJS)
+- Perform code transformations (AST manipulation)
+- Generate files programmatically
+- Run custom build steps
+
+## Using a Custom Processor
+
+### In Template Configuration
+
+Specify the processor name:
+
+```ts
+return {
+  processors: [
+    {
+      name: 'myorg/mustache-processor',  // Custom processor
+      files: [{ root: 'templates', glob: '**/*', exclude: [], type: GlobType.Template }],
+      config: {
+        // Processor-specific configuration
+        delimiters: ['{{', '}}'],
+        escapeDelimiter: '{{{'
+      }
+    }
+  ]
+};
+```
+
+### Multiple Processors
+
+Combine multiple processors for different file types:
+
+```ts
+return {
+  processors: [
+    // Default processor for most files
+    {
+      name: 'cyan/default',
+      files: [
+        { root: 'templates', glob: '**/*.md', exclude: [], type: GlobType.Template },
+        { root: 'templates', glob: '**/*.json', exclude: [], type: GlobType.Template }
+      ],
+      config: { vars: { name: 'my-project' } }
+    },
+
+    // Custom processor for special files
+    {
+      name: 'myorg/codegen-processor',
+      files: [
+        { root: 'templates', glob: '**/*.graphql', exclude: [], type: GlobType.Template }
+      ],
+      config: {
+        generateTypes: true,
+        outputDir: 'src/generated'
+      }
+    }
+  ]
+};
+```
+
+## Processor Configuration
+
+Pass configuration to your processor:
+
+```ts
+{
+  name: 'myorg/custom-processor',
+  files: [/* ... */],
+  config: {
+    // Variables to use in templates
+    vars: {
+      name: 'my-project',
+      version: '1.0.0'
+    },
+
+    // Processor-specific options
+    options: {
+      strict: true,
+      formatOutput: true
+    }
+  }
+}
+```
+
+## Available Processors
+
+| Processor | Purpose | Template Syntax |
+|-----------|---------|-----------------|
+| `cyan/default` | Eta templating | `var__name__` |
+| Custom | Any engine | Depends on implementation |
+
+<Callout type="info">
+See [Processor Development](/developer/processors) for creating your own processors.
+</Callout>
+
+## Example: Handlebars Processor
+
+```ts
+return {
+  processors: [{
+    name: 'myorg/handlebars-processor',
+    files: [
+      { root: 'templates', glob: '**/*.hbs', exclude: [], type: GlobType.Template }
+    ],
+    config: {
+      vars: {
+        name: 'my-project',
+        features: ['auth', 'api', 'ui']
+      },
+      helpers: {
+        uppercase: (str) => str.toUpperCase(),
+        capitalize: (str) => str.charAt(0).toUpperCase() + str.slice(1)
+      }
+    }
+  }]
+};
+```
+
+Template file with Handlebars syntax:
+
+```handlebars
+# {{name}}
+
+## Features
+
+{{#each features}}
+- {{capitalize this}}
+{{/each}}
+```
+
+## Example: Code Generation Processor
+
+```ts
+return {
+  processors: [{
+    name: 'myorg/prisma-processor',
+    files: [
+      { root: 'schema', glob: '**/*.prisma', exclude: [], type: GlobType.Template }
+    ],
+    config: {
+      generateClient: true,
+      outputDir: 'src/db',
+      previewFeatures: ['fullTextSearch']
+    }
+  }]
+};
+```
+
+## Creating Custom Processors
+
+If you need specialized processing:
+
+1. Create a processor package
+2. Implement the processor interface
+3. Publish to a registry
+4. Reference in your templates
+
+See [Processor Development](/developer/processors) for detailed instructions.
+
+## Related
+
+- [Processor Development](/developer/processors) - Create custom processors
+- [Default Processor](/developer/templates/explanation/default-processor) - How cyan/default works
+- [Processors vs Plugins](/developer/templates/explanation/processors-vs-plugins) - When to use each

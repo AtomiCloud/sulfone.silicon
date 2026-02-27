@@ -1,0 +1,195 @@
+---
+title: Globbing Reference
+description: File pattern matching for templates
+---
+
+import { Callout } from 'fumadocs-ui/components/callout';
+
+# Globbing Reference
+
+Glob patterns control which files are included, excluded, and how they're processed.
+
+## Basic Patterns
+
+### Match All
+
+```ts
+glob: '**/*'
+```
+
+- `**` - Match any number of directories
+- `*` - Match any number of characters (except `/`)
+
+### Match by Extension
+
+```ts
+glob: '**/*.md'      // All markdown files
+glob: '**/*.ts'      // All TypeScript files
+glob: '**/*.json'    // All JSON files
+```
+
+### Match Specific Directory
+
+```ts
+glob: 'src/**/*'     // Everything under src/
+glob: 'docs/**/*.md' // Markdown files under docs/
+```
+
+## Pattern Syntax
+
+| Pattern | Description | Example Match |
+|---------|-------------|---------------|
+| `*` | Any characters (no `/`) | `file.ts`, `component.tsx` |
+| `**` | Any directories | `src/`, `src/lib/`, `src/lib/utils/` |
+| `**/*` | Any file in any directory | `src/index.ts`, `lib/utils.ts` |
+| `*.ext` | Files with extension | `file.md`, `readme.md` |
+| `**/*.ext` | All files with extension in any directory | `src/file.ts`, `lib/utils.ts` |
+| `?` | Single character | `file1.ts`, `file2.ts` |
+| `[abc]` | Character set | `file-a.ts`, `file-b.ts` |
+| `[!abc]` | Negated set | `file-x.ts` (not a, b, or c) |
+
+## Multiple Patterns
+
+### Multiple File Groups
+
+Use multiple file groups for different processing:
+
+```ts
+files: [
+  { root: 'templates', glob: '**/*.md', exclude: [], type: GlobType.Template },
+  { root: 'templates', glob: '**/*.json', exclude: [], type: GlobType.Template },
+  { root: 'templates', glob: '**/*.png', exclude: [], type: GlobType.Copy },
+  { root: 'templates', glob: '**/*.jpg', exclude: [], type: GlobType.Copy }
+]
+```
+
+### Multiple Extensions in One Pattern
+
+```ts
+// Match .ts and .tsx files
+glob: '**/*.ts?(x)'
+
+// Match .js, .jsx, .ts, .tsx
+glob: '**/*.@(js|ts)?(x)'
+```
+
+<Callout type="info">
+Some glob features like `?(x)` and `@(a|b)` may not be supported in all versions. Test your patterns.
+</Callout>
+
+## Exclude Patterns
+
+Exclude files from processing:
+
+```ts
+files: [{
+  root: 'templates',
+  glob: '**/*',
+  exclude: [
+    '**/node_modules/**',     // Exclude node_modules
+    '**/test/**',             // Exclude test directories
+    '**/*.test.*',            // Exclude test files
+    '**/*.spec.*',            // Exclude spec files
+    '**/.DS_Store',           // Exclude macOS files
+    '**/dist/**',             // Exclude build output
+    '**/.git/**'              // Exclude git directory
+  ],
+  type: GlobType.Template
+}]
+```
+
+## Common Patterns
+
+### Source Code Only
+
+```ts
+glob: 'src/**/*.{ts,tsx,js,jsx}'
+```
+
+### Documentation
+
+```ts
+glob: 'docs/**/*.md'
+```
+
+### Configuration Files
+
+```ts
+glob: '*.{json,yaml,yml,toml}'
+```
+
+### Assets
+
+```ts
+glob: 'assets/**/*.{png,jpg,svg,ico}'
+```
+
+### Ignore Hidden Files
+
+```ts
+exclude: ['**/.*']  // Files starting with dot
+```
+
+## GlobType Reference
+
+| Type | Use Case |
+|------|----------|
+| `GlobType.Template` | Text files needing variable substitution |
+| `GlobType.Copy` | Binary files and files without variables |
+| `GlobType.Ignore` | Files to skip entirely |
+
+## Best Practices
+
+### 1. Be Explicit
+
+```ts
+// Good: Explicit file types
+glob: '**/*.{md,json,ts,tsx}'
+
+// Bad: Too broad, might catch unwanted files
+glob: '**/*'
+```
+
+### 2. Separate by Processing Type
+
+```ts
+files: [
+  // Template files
+  { root: 'templates', glob: '**/*.md', exclude: [], type: GlobType.Template },
+  { root: 'templates', glob: '**/*.json', exclude: [], type: GlobType.Template },
+
+  // Binary files (never template!)
+  { root: 'templates', glob: '**/*.png', exclude: [], type: GlobType.Copy },
+  { root: 'templates', glob: '**/*.woff2', exclude: [], type: GlobType.Copy }
+]
+```
+
+### 3. Use Meaningful Excludes
+
+```ts
+exclude: [
+  '**/node_modules/**',   // Dependencies
+  '**/dist/**',           // Build output
+  '**/.cache/**',         // Cache directories
+  '**/*.log',             // Log files
+  '**/.env*'              // Environment files
+]
+```
+
+## Testing Patterns
+
+Test your glob patterns to ensure they match expected files:
+
+```bash
+# Using find (approximate)
+find templates -name "**/*.md"
+
+# Using glob CLI tools
+glob "**/*.md" templates/
+```
+
+## Related
+
+- [Tutorial: Changing Glob](/developer/templates/tutorials/03-changing-glob) - Glob patterns tutorial
+- [Pass Images and Binaries](/developer/templates/how-to/pass-images-binaries) - Handling binary files
+- [Conditional Files](/developer/templates/how-to/conditional-files) - Conditional file inclusion

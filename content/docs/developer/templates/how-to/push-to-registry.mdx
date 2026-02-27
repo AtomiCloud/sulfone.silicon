@@ -1,0 +1,186 @@
+---
+title: Push to Registry
+description: How to build and publish templates to a registry
+---
+
+import { Steps } from 'fumadocs-ui/components/steps';
+import { Callout } from 'fumadocs-ui/components/callout';
+
+# How to Push to Registry
+
+Build and publish your template to make it available for others to use.
+
+## Prerequisites
+
+- Docker with buildx support
+- Access to a Docker registry (Docker Hub, GHCR, or private)
+- CyanPrint CLI for registration
+
+<Steps>
+
+## 1. Build Template Image
+
+Build the template image for multiple architectures:
+
+```bash
+docker buildx build --platform linux/amd64,linux/arm64 \
+  -f cyan/template.Dockerfile \
+  -t myorg/my-template:1.0.0 \
+  --push .
+```
+
+The `--push` flag pushes immediately after build.
+
+## 2. Build Blob Image
+
+Build the blob image containing your template files:
+
+```bash
+docker buildx build --platform linux/amd64,linux/arm64 \
+  -f cyan/blob.Dockerfile \
+  -t myorg/my-template-blob:1.0.0 \
+  --push .
+```
+
+## 3. Register with CyanPrint
+
+Register your template with the CyanPrint registry:
+
+```bash
+cyanprint push template --token $CYAN_TOKEN \
+  myorg/my-template-blob 1.0.0 \
+  myorg/my-template 1.0.0
+```
+
+</Steps>
+
+## Build Options
+
+### Multi-Architecture Builds
+
+Build for multiple platforms:
+
+```bash
+docker buildx build --platform linux/amd64,linux/arm64,linux/arm/v7 \
+  -f cyan/template.Dockerfile \
+  -t myorg/my-template:1.0.0 \
+  --push .
+```
+
+### Build Without Push
+
+Build locally for testing:
+
+```bash
+docker buildx build --platform linux/amd64 \
+  -f cyan/template.Dockerfile \
+  -t myorg/my-template:dev \
+  --load .
+```
+
+The `--load` flag loads the image into Docker for local use.
+
+### Version Tagging
+
+Use semantic versioning:
+
+```bash
+# Tag with version
+docker buildx build -t myorg/my-template:1.0.0 --push .
+
+# Also tag latest
+docker buildx build -t myorg/my-template:latest --push .
+```
+
+## Registry Options
+
+### Docker Hub
+
+```bash
+docker login
+docker buildx build -t docker.io/myorg/my-template:1.0.0 --push .
+```
+
+### GitHub Container Registry
+
+```bash
+echo $GITHUB_TOKEN | docker login ghcr.io -u USERNAME --password-stdin
+docker buildx build -t ghcr.io/myorg/my-template:1.0.0 --push .
+```
+
+### Private Registry
+
+```bash
+docker login registry.example.com
+docker buildx build -t registry.example.com/myorg/my-template:1.0.0 --push .
+```
+
+## Verification
+
+Verify your template is published:
+
+```bash
+# List templates
+cyanprint list myorg/
+
+# Get template info
+cyanprint info myorg/my-template:1.0.0
+```
+
+## CI/CD Integration
+
+### GitHub Actions
+
+```yaml
+name: Publish Template
+
+on:
+  release:
+    types: [published]
+
+jobs:
+  publish:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Set up Docker Buildx
+        uses: docker/setup-buildx-action@v3
+
+      - name: Login to GitHub Container Registry
+        uses: docker/login-action@v3
+        with:
+          registry: ghcr.io
+          username: ${{ github.actor }}
+          password: ${{ secrets.GITHUB_TOKEN }}
+
+      - name: Build and Push Template
+        run: |
+          docker buildx build --platform linux/amd64,linux/arm64 \
+            -f cyan/template.Dockerfile \
+            -t ghcr.io/${{ github.repository_owner }}/my-template:${{ github.event.release.tag_name }} \
+            --push .
+
+      - name: Build and Push Blob
+        run: |
+          docker buildx build --platform linux/amd64,linux/arm64 \
+            -f cyan/blob.Dockerfile \
+            -t ghcr.io/${{ github.repository_owner }}/my-template-blob:${{ github.event.release.tag_name }} \
+            --push .
+
+      - name: Register with CyanPrint
+        run: |
+          cyanprint push template --token ${{ secrets.CYAN_TOKEN }} \
+            ghcr.io/${{ github.repository_owner }}/my-template-blob ${{ github.event.release.tag_name }} \
+            ghcr.io/${{ github.repository_owner }}/my-template ${{ github.event.release.tag_name }}
+```
+
+<Callout type="info">
+See [Docker vs Cyan Registry](/developer/templates/explanation/docker-vs-cyan-registry) for the differences between Docker registries and CyanPrint's internal registry.
+</Callout>
+
+## Related
+
+- [Docker vs Cyan Registry](/developer/templates/explanation/docker-vs-cyan-registry) - Registry comparison
+- [Project Structure](/developer/templates/reference/project-structure) - Template project structure
+- [Dockerfiles Reference](/developer/templates/reference/dockerfiles) - Dockerfile configuration

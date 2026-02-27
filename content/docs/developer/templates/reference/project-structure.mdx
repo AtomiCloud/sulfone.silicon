@@ -1,0 +1,190 @@
+---
+title: Template Project Structure
+description: Understanding the structure of a CyanPrint template project
+---
+
+# Template Project Structure
+
+A CyanPrint template is organized as a structured project with specific files and directories.
+
+## Standard Structure
+
+```
+my-template/
+├── cyan/
+│   ├── index.ts              # Template logic entry point
+│   ├── template.Dockerfile   # Template container definition
+│   ├── blob.Dockerfile       # Blob container for file storage
+│   └── templates/            # Source template files
+│       ├── README.md
+│       └── package.json
+├── cyan.yaml                 # Template metadata and configuration
+└── package.json              # Node.js dependencies
+```
+
+## Directory Details
+
+### `cyan/`
+
+Contains all template logic and source files.
+
+```
+cyan/
+├── index.ts              # Main template logic
+├── template.Dockerfile   # Docker image for template execution
+├── blob.Dockerfile       # Docker image for file storage
+└── templates/            # Source files to process
+    ├── README.md
+    ├── package.json
+    └── src/
+        └── index.ts
+```
+
+### `cyan/index.ts`
+
+The entry point for template logic:
+
+```ts
+import { StartTemplateWithLambda, GlobType } from '@atomicloud/cyan-sdk';
+
+StartTemplateWithLambda(async (i, d) => {
+  // i: IInquirer - ask questions
+  // d: IDefine - get deterministic values
+
+  return {
+    processors: [/* ... */],
+    plugins: [/* ... */]
+  };
+});
+```
+
+### `cyan/templates/`
+
+Source files that will be processed and output to the user's project:
+
+```
+cyan/templates/
+├── README.md           # Template with var__name__ placeholders
+├── package.json        # Package configuration template
+├── src/
+│   ├── index.ts        # Source code template
+│   └── config.ts
+└── assets/
+    └── logo.png        # Binary files (use GlobType.Copy)
+```
+
+### `cyan.yaml`
+
+Template metadata:
+
+```yaml
+name: myorg/my-template
+version: 1.0.0
+description: A description of the template
+author: Your Organization
+
+# Optional: Compose with other templates
+compose:
+  - name: shared/base-setup
+    version: "1.0.0"
+```
+
+### `package.json`
+
+SDK dependencies:
+
+```json
+{
+  "name": "my-template",
+  "version": "1.0.0",
+  "dependencies": {
+    "@atomicloud/cyan-sdk": "^1.0.0"
+  }
+}
+```
+
+## Dockerfiles
+
+### `template.Dockerfile`
+
+Builds the template execution environment:
+
+```dockerfile
+FROM node:20-alpine
+
+WORKDIR /workspace
+
+# Install dependencies
+COPY cyan/package.json ./
+RUN npm install
+
+# Copy template code
+COPY cyan/ ./
+
+# Run template
+CMD ["node", "index.ts"]
+```
+
+### `blob.Dockerfile`
+
+Stores template files for efficient transfer:
+
+```dockerfile
+FROM alpine:latest
+
+COPY cyan/templates/ /templates/
+```
+
+## File Organization Patterns
+
+### By Type
+
+Organize by file type:
+
+```
+cyan/templates/
+├── docs/           # Markdown documentation
+├── src/            # Source code
+├── config/         # Configuration files
+└── static/         # Binary assets
+```
+
+### By Feature
+
+Organize by feature for conditional inclusion:
+
+```
+cyan/templates/
+├── base/           # Always included
+├── typescript/     # TypeScript support
+├── docker/         # Docker configuration
+├── testing/        # Test setup
+└── ci/             # CI/CD configurations
+    ├── github/
+    └── gitlab/
+```
+
+## Generated Output
+
+When users run `cyanprint create`, the output directory contains:
+
+```
+my-project/
+├── .cyan/
+│   └── generation.json    # Metadata for updates
+├── README.md
+├── package.json
+└── src/
+    └── index.ts
+```
+
+The `.cyan/generation.json` file stores:
+- Template version used
+- Pin for deterministic updates
+- User answers for reproducibility
+
+## Related
+
+- [cyan.yaml Reference](/developer/templates/reference/cyan-yaml) - Configuration format
+- [Dockerfiles Reference](/developer/templates/reference/dockerfiles) - Docker configuration
+- [SDK Overview](/developer/templates/reference/sdk) - SDK documentation

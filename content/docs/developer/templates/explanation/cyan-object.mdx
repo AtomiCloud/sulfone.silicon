@@ -1,0 +1,200 @@
+---
+title: The Cyan Configuration Object
+description: Understanding the structure returned by templates
+---
+
+# The Cyan Configuration Object
+
+The configuration object returned by `StartTemplateWithLambda` is the heart of every template. It defines processors, files, and plugins.
+
+## Overview
+
+```ts
+StartTemplateWithLambda(async (i, d) => {
+  return {
+    processors: [/* ... */],
+    plugins: [/* ... */]
+  };
+});
+```
+
+This object tells CyanPrint:
+1. **Which processors** to use for file transformation
+2. **Which files** to process and how
+3. **Which plugins** to run after generation
+
+## Structure
+
+### Top Level
+
+```ts
+interface ICyanConfig {
+  processors: IProcessor[];  // Required
+  plugins?: IPlugin[];       // Optional
+}
+```
+
+### Processor
+
+```ts
+interface IProcessor {
+  name: string;              // Processor identifier
+  files: IFileGroup[];       // Files to process
+  config: Record<string, any>; // Processor configuration
+}
+```
+
+### File Group
+
+```ts
+interface IFileGroup {
+  root: string;      // Source directory
+  glob: string;      // Pattern to match
+  exclude: string[]; // Patterns to exclude
+  type: GlobType;    // How to process
+}
+```
+
+### Plugin
+
+```ts
+interface IPlugin {
+  name: string;              // Plugin identifier
+  config: Record<string, any>; // Plugin configuration
+}
+```
+
+## Execution Flow
+
+```mermaid
+graph TD
+    A[Start] --> B[Template Code]
+    B --> C[Return ICyanConfig]
+    C --> D[For each Processor]
+    D --> E[For each FileGroup]
+    E --> F{GlobType?}
+    F -->|Template| G[Process with vars]
+    F -->|Copy| H[Copy as-is]
+    F -->|Ignore| I[Skip]
+    G --> J[Output Files]
+    H --> J
+    I --> E
+    J --> D
+    D --> K[For each Plugin]
+    K --> L[Run Plugin]
+    L --> M[Complete]
+```
+
+## Processor Selection
+
+### Default Processor
+
+The `cyan/default` processor uses Eta templating:
+
+```ts
+{
+  name: 'cyan/default',
+  files: [/* ... */],
+  config: {
+    vars: { name: 'project' },
+    parser: { varSyntax: [['var__', '__']] }
+  }
+}
+```
+
+### Custom Processor
+
+Use custom processors for specialized needs:
+
+```ts
+{
+  name: 'myorg/handlebars-processor',
+  files: [/* ... */],
+  config: {
+    vars: { name: 'project' },
+    delimiters: ['{{', '}}']
+  }
+}
+```
+
+## File Processing
+
+### File Groups
+
+Each file group specifies a set of files and how to process them:
+
+```ts
+files: [
+  // Markdown files - template processing
+  { root: 'templates', glob: '**/*.md', exclude: [], type: GlobType.Template },
+
+  // JSON files - template processing
+  { root: 'templates', glob: '**/*.json', exclude: [], type: GlobType.Template },
+
+  // Images - copy only
+  { root: 'templates', glob: '**/*.png', exclude: [], type: GlobType.Copy },
+
+  // Test files - skip
+  { root: 'templates', glob: '**/*.test.*', exclude: [], type: GlobType.Ignore }
+]
+```
+
+### Processing Order
+
+Files are processed in the order they appear in the array. Later entries can override earlier ones.
+
+## Variable Passing
+
+Variables flow from questions to processors:
+
+```ts
+const name = await i.text('Name?', 'project.name', '...');
+
+return {
+  processors: [{
+    name: 'cyan/default',
+    files: [/* ... */],
+    config: {
+      vars: {
+        name,  // Passed to template files
+        date: new Date().toISOString()
+      }
+    }
+  }]
+};
+```
+
+In template files:
+
+```markdown
+# var__name__
+
+Generated on: var__date__
+```
+
+## Plugin Execution
+
+Plugins run after all processors complete:
+
+```ts
+return {
+  processors: [/* ... */],
+  plugins: [
+    { name: 'cyan/init-git', config: { commitMessage: 'Initial commit' } },
+    { name: 'cyan/npm-install', config: { packageManager: 'pnpm' } }
+  ]
+};
+```
+
+## Best Practices
+
+1. **Keep it simple** - Use the default processor unless you need something custom
+2. **Be explicit with files** - Specify each file type separately
+3. **Namespace variables** - Prevent collisions in composed templates
+4. **Document your config** - Comment complex configurations
+
+## Related
+
+- [Default Processor](/developer/templates/explanation/default-processor) - How cyan/default works
+- [Processors vs Plugins](/developer/templates/explanation/processors-vs-plugins) - When to use each
+- [Cyan Config Reference](/developer/templates/reference/sdk/cyan-config) - API documentation

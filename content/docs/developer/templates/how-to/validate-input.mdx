@@ -1,0 +1,203 @@
+---
+title: Validate User Input
+description: How to validate user input with custom rules
+---
+
+# How to Validate User Input
+
+Validation ensures users provide correct and usable input before template generation.
+
+## Basic Validation
+
+Use the `validate` function in the object form:
+
+```ts
+const name = await i.text({
+  type: QuestionType.Text,
+  id: 'project.name',
+  message: 'Project name?',
+  desc: 'Enter name',
+  validate: (input) => {
+    if (!input) return 'Name is required';
+    return null;  // null means valid
+  }
+});
+```
+
+## Validation Patterns
+
+### Required Field
+
+```ts
+const name = await i.text({
+  type: QuestionType.Text,
+  id: 'project.name',
+  message: 'Project name?',
+  desc: 'Enter name',
+  validate: (input) => {
+    if (!input || input.trim() === '') {
+      return 'This field is required';
+    }
+    return null;
+  }
+});
+```
+
+### Length Constraints
+
+```ts
+const username = await i.text({
+  type: QuestionType.Text,
+  id: 'user.name',
+  message: 'Username?',
+  desc: '3-20 characters',
+  validate: (input) => {
+    if (input.length < 3) return 'Minimum 3 characters';
+    if (input.length > 20) return 'Maximum 20 characters';
+    return null;
+  }
+});
+```
+
+### Pattern Matching
+
+```ts
+const projectName = await i.text({
+  type: QuestionType.Text,
+  id: 'project.name',
+  message: 'Project name?',
+  desc: 'Lowercase, numbers, hyphens only',
+  validate: (input) => {
+    if (!/^[a-z][a-z0-9-]*$/.test(input)) {
+      return 'Use lowercase letters, numbers, and hyphens. Must start with a letter.';
+    }
+    return null;
+  },
+  default: 'my-project'
+});
+```
+
+### Email Validation
+
+```ts
+const email = await i.text({
+  type: QuestionType.Text,
+  id: 'user.email',
+  message: 'Email?',
+  desc: 'Your email address',
+  validate: (input) => {
+    const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+    if (!emailRegex.test(input)) {
+      return 'Please enter a valid email address';
+    }
+    return null;
+  }
+});
+```
+
+### URL Validation
+
+```ts
+const website = await i.text({
+  type: QuestionType.Text,
+  id: 'project.website',
+  message: 'Website URL?',
+  desc: 'Optional website',
+  validate: (input) => {
+    if (!input) return null;  // Optional field
+    try {
+      new URL(input);
+      return null;
+    } catch {
+      return 'Please enter a valid URL (including https://)';
+    }
+  }
+});
+```
+
+### Number Range
+
+```ts
+const port = await i.text({
+  type: QuestionType.Text,
+  id: 'server.port',
+  message: 'Port number?',
+  desc: '1024-65535',
+  default: '3000',
+  validate: (input) => {
+    const num = parseInt(input, 10);
+    if (isNaN(num)) return 'Please enter a number';
+    if (num < 1024 || num > 65535) return 'Port must be between 1024 and 65535';
+    return null;
+  }
+});
+```
+
+### Password Strength
+
+```ts
+const password = await i.password({
+  type: QuestionType.Password,
+  id: 'user.password',
+  message: 'Password?',
+  desc: 'Strong password required',
+  validate: (input) => {
+    if (input.length < 8) return 'Minimum 8 characters';
+    if (!/[A-Z]/.test(input)) return 'Include an uppercase letter';
+    if (!/[a-z]/.test(input)) return 'Include a lowercase letter';
+    if (!/[0-9]/.test(input)) return 'Include a number';
+    if (!/[^A-Za-z0-9]/.test(input)) return 'Include a special character';
+    return null;
+  }
+});
+```
+
+### Checkbox Validation
+
+```ts
+const features = await i.checkbox({
+  type: QuestionType.Checkbox,
+  id: 'project.features',
+  message: 'Select features',
+  desc: 'Choose at least one',
+  options: ['ESLint', 'Prettier', 'Jest', 'Docker'],
+  validate: (selected) => {
+    if (selected.length === 0) return 'Select at least one feature';
+    if (selected.length > 3) return 'Maximum 3 features allowed';
+    return null;
+  }
+});
+```
+
+## Combining Validation with Defaults
+
+```ts
+const projectName = await i.text({
+  type: QuestionType.Text,
+  id: 'project.name',
+  message: 'Project name?',
+  desc: 'Lowercase, hyphens allowed',
+  default: 'my-project',
+  validate: (input) => {
+    if (!input) return 'Name is required';
+    if (!/^[a-z][a-z0-9-]*$/.test(input)) {
+      return 'Use lowercase letters, numbers, and hyphens. Start with a letter.';
+    }
+    if (input.length > 50) return 'Name too long (max 50 chars)';
+    return null;
+  }
+});
+```
+
+## Best Practices
+
+1. **Clear messages** - Tell users exactly what's wrong
+2. **Fail fast** - Check the most common issues first
+3. **Be helpful** - Suggest the correct format
+4. **Allow optional** - Use early return for optional fields
+
+## Related
+
+- [IInquirer Reference](/developer/templates/reference/sdk/inquirer) - Complete API documentation
+- [Default Values](/developer/templates/how-to/default-values) - Setting defaults
+- [Ask Password](/developer/templates/how-to/ask-password) - Password questions

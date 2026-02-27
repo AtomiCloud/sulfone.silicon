@@ -1,0 +1,119 @@
+---
+title: Ask Confirm Questions
+description: How to ask yes/no confirmation questions
+---
+
+# How to Ask Confirm Questions
+
+Use confirm questions for boolean yes/no choices.
+
+## Shorthand Form
+
+```ts
+const useTypescript = await i.confirm(
+  'Use TypeScript?',     // Message
+  'project.typescript',  // Key
+  'Add TypeScript config' // Description
+);
+// Returns: boolean - true or false
+```
+
+## Object Form (with default)
+
+```ts
+const useTypescript = await i.confirm({
+  type: QuestionType.Confirm,
+  id: 'project.typescript',
+  message: 'Use TypeScript?',
+  desc: 'Add TypeScript configuration',
+  default: true  // Default to yes
+});
+```
+
+## Using Results
+
+### In Template Logic
+
+```ts
+const docker = await i.confirm('Add Docker?', 'project.docker', 'Include Docker support');
+
+// Use directly in conditionals
+if (docker) {
+  files.push({ root: 'templates/docker', glob: '**/*', exclude: [], type: GlobType.Template });
+}
+
+// Convert to string for template vars
+config: {
+  vars: {
+    hasDocker: docker ? 'yes' : 'no',
+    docker: docker ? 'true' : 'false'
+  }
+}
+```
+
+### Multiple Related Confirms
+
+```ts
+const typescript = await i.confirm('Use TypeScript?', 'project.typescript', 'Add TS config');
+const eslint = await i.confirm('Add ESLint?', 'project.eslint', 'Add ESLint config');
+const prettier = await i.confirm('Add Prettier?', 'project.prettier', 'Add Prettier config');
+const docker = await i.confirm('Add Docker?', 'project.docker', 'Add Docker support');
+
+return {
+  processors: [{
+    name: 'cyan/default',
+    files: [
+      { root: 'templates/base', glob: '**/*', exclude: [], type: GlobType.Template },
+      ...(typescript ? [{ root: 'templates/typescript', glob: '**/*', exclude: [], type: GlobType.Template }] : []),
+      ...(eslint ? [{ root: 'templates/eslint', glob: '**/*', exclude: [], type: GlobType.Copy }] : []),
+      ...(docker ? [{ root: 'templates/docker', glob: '**/*', exclude: [], type: GlobType.Template }] : [])
+    ],
+    config: {
+      vars: {
+        typescript: typescript ? 'true' : 'false',
+        eslint: eslint ? 'true' : 'false',
+        docker: docker ? 'true' : 'false'
+      }
+    }
+  }]
+};
+```
+
+## Common Patterns
+
+### Conditional Questions
+
+Ask follow-up questions based on confirm response:
+
+```ts
+const useDatabase = await i.confirm('Use a database?', 'project.db', 'Add database config');
+
+let dbType = null;
+if (useDatabase) {
+  dbType = await i.select(
+    'Which database?',
+    ['PostgreSQL', 'MySQL', 'MongoDB'],
+    'project.db.type',
+    'Choose database'
+  );
+}
+```
+
+### With Default True
+
+```ts
+// Default to yes for common choices
+const addReadme = await i.confirm({
+  type: QuestionType.Confirm,
+  id: 'project.readme',
+  message: 'Add README?',
+  desc: 'Include README.md',
+  default: true
+});
+```
+
+## Related
+
+- [IInquirer Reference](/developer/templates/reference/sdk/inquirer) - Complete API documentation
+- [Ask Checkbox](/developer/templates/how-to/ask-checkbox) - Multi-select questions
+- [Ask Select](/developer/templates/reference/sdk/inquirer#select) - Single-choice questions

@@ -1,0 +1,339 @@
+---
+title: Full Template Example
+description: A complete template demonstrating all features
+---
+
+import { Callout } from 'fumadocs-ui/components/callout';
+
+# Full Template Example
+
+This example demonstrates all major features of CyanPrint templates in a realistic project scaffold.
+
+## Project Overview
+
+We'll create a template that scaffolds a Node.js project with:
+
+- Configurable project name and description
+- License selection
+- Optional TypeScript support
+- Optional Docker setup
+- Feature selection (ESLint, Prettier, Testing)
+
+## Project Structure
+
+```
+node-template/
+├── cyan/
+│   ├── index.ts              # Template logic
+│   ├── template.Dockerfile   # Template container
+│   ├── blob.Dockerfile       # Blob container
+│   └── templates/            # Source templates
+│       ├── README.md
+│       ├── package.json
+│       ├── tsconfig.json
+│       ├── Dockerfile
+│       ├── .eslintrc.json
+│       └── .prettierrc
+├── cyan.yaml                 # Metadata
+└── package.json              # Dependencies
+```
+
+## Template Logic (index.ts)
+
+```ts
+import { StartTemplateWithLambda, GlobType, QuestionType } from '@atomicloud/cyan-sdk';
+
+StartTemplateWithLambda(async (i, d) => {
+  // ===== Collect User Input =====
+
+  // Basic project info
+  const name = await i.text({
+    type: QuestionType.Text,
+    id: 'node-template.name',
+    message: 'Project name?',
+    desc: 'Enter project name (lowercase, no spaces)',
+    validate: (input) => {
+      if (!input) return 'Name is required';
+      if (!/^[a-z0-9-]+$/.test(input)) return 'Use lowercase letters, numbers, and hyphens only';
+      return null;
+    },
+    default: 'my-project'
+  });
+
+  const description = await i.text(
+    'Description?',
+    'node-template.description',
+    'Brief project description'
+  );
+
+  const author = await i.text(
+    'Author?',
+    'node-template.author',
+    'Your name or organization'
+  );
+
+  // License selection
+  const license = await i.select(
+    'License?',
+    ['MIT', 'Apache-2.0', 'GPL-3.0', 'ISC', 'Unlicense'],
+    'node-template.license',
+    'Choose a license'
+  );
+
+  // Technology choices
+  const typescript = await i.confirm(
+    'Use TypeScript?',
+    'node-template.typescript',
+    'Add TypeScript configuration'
+  );
+
+  const docker = await i.confirm(
+    'Add Docker support?',
+    'node-template.docker',
+    'Include Dockerfile and docker-compose'
+  );
+
+  // Feature selection
+  const features = await i.checkbox(
+    'Select features',
+    ['ESLint', 'Prettier', 'Jest', 'GitHub Actions CI'],
+    'node-template.features',
+    'Choose additional tooling'
+  );
+
+  // ===== Generate Deterministic Values =====
+
+  const projectId = d.uuid();
+
+  // ===== Build Configuration =====
+
+  // Determine which files to include
+  const templateFiles = [
+    { root: 'templates/base', glob: '**/*.md', exclude: [], type: GlobType.Template },
+    { root: 'templates/base', glob: '**/*.json', exclude: [], type: GlobType.Template },
+    { root: 'templates/base', glob: '**/*.js', exclude: [], type: GlobType.Template }
+  ];
+
+  // Add TypeScript files if selected
+  if (typescript) {
+    templateFiles.push({
+      root: 'templates/typescript',
+      glob: '**/*.ts',
+      exclude: [],
+      type: GlobType.Template
+    });
+    templateFiles.push({
+      root: 'templates/typescript',
+      glob: '**/*.json',
+      exclude: [],
+      type: GlobType.Template
+    });
+  }
+
+  // Add Docker files if selected
+  if (docker) {
+    templateFiles.push({
+      root: 'templates/docker',
+      glob: '**/*',
+      exclude: [],
+      type: GlobType.Template
+    });
+  }
+
+  // Add feature-specific files
+  if (features.includes('ESLint')) {
+    templateFiles.push({
+      root: 'templates/eslint',
+      glob: '**/*',
+      exclude: [],
+      type: GlobType.Template
+    });
+  }
+
+  if (features.includes('Prettier')) {
+    templateFiles.push({
+      root: 'templates/prettier',
+      glob: '**/*',
+      exclude: [],
+      type: GlobType.Template
+    });
+  }
+
+  if (features.includes('Jest')) {
+    templateFiles.push({
+      root: 'templates/jest',
+      glob: '**/*',
+      exclude: [],
+      type: GlobType.Template
+    });
+  }
+
+  if (features.includes('GitHub Actions CI')) {
+    templateFiles.push({
+      root: 'templates/github-actions',
+      glob: '**/*',
+      exclude: [],
+      type: GlobType.Template
+    });
+  }
+
+  // ===== Return Configuration =====
+
+  return {
+    processors: [{
+      name: 'cyan/default',
+      files: templateFiles,
+      config: {
+        vars: {
+          // Basic info
+          name,
+          description,
+          author,
+          license,
+
+          // Feature flags
+          typescript: typescript ? 'true' : 'false',
+          docker: docker ? 'true' : 'false',
+
+          // Feature lists
+          features: features.join(', '),
+          hasEslint: features.includes('ESLint') ? 'true' : 'false',
+          hasPrettier: features.includes('Prettier') ? 'true' : 'false',
+          hasJest: features.includes('Jest') ? 'true' : 'false',
+          hasCi: features.includes('GitHub Actions CI') ? 'true' : 'false',
+
+          // Deterministic values
+          projectId
+        }
+      }
+    }],
+
+    // Add plugins for post-processing
+    plugins: [
+      {
+        name: 'cyan/init-git',
+        config: {
+          commitMessage: `Initial commit from template: ${name}`
+        }
+      }
+    ]
+  };
+});
+```
+
+## Template Files
+
+### README.md
+
+```markdown
+# var__name__
+
+var__description__
+
+## Getting Started
+
+```bash
+npm install
+npm run dev
+```
+
+## Features
+
+- **License:** var__license__
+- **Author:** var__author__
+- **TypeScript:** var__typescript__
+- **Docker:** var__docker__
+- **Tooling:** var__features__
+
+## Project ID
+
+var__projectId__
+```
+
+### package.json
+
+```json
+{
+  "name": "var__name__",
+  "version": "1.0.0",
+  "description": "var__description__",
+  "author": "var__author__",
+  "license": "var__license__",
+  "main": "src/index.js",
+  "scripts": {
+    "dev": "node src/index.js",
+    "build": "echo 'Build script'"
+  }
+}
+```
+
+## Metadata (cyan.yaml)
+
+```yaml
+name: node-template
+version: 1.0.0
+description: A modern Node.js project template
+author: Your Organization
+```
+
+## Dockerfiles
+
+### template.Dockerfile
+
+```dockerfile
+FROM node:20-alpine
+
+WORKDIR /workspace
+
+COPY cyan/package.json ./
+RUN npm install
+
+COPY cyan/ ./
+
+CMD ["node", "index.js"]
+```
+
+### blob.Dockerfile
+
+```dockerfile
+FROM alpine:latest
+
+COPY cyan/templates/ /templates/
+```
+
+## Key Features Demonstrated
+
+| Feature | Implementation |
+|---------|----------------|
+| Input validation | `validate` function on text input |
+| Default values | `default` property on questions |
+| Conditional files | `if` statements to add file groups |
+| Namespaced keys | All keys prefixed with `node-template.` |
+| Deterministic UUID | `d.uuid()` for reproducible IDs |
+| Plugins | `init-git` plugin for automatic git init |
+| Multiple file groups | Array of file configurations |
+
+## Testing the Template
+
+```bash
+# Build the template
+docker buildx build --platform linux/amd64,linux/arm64 \
+  -f cyan/template.Dockerfile \
+  -t myorg/node-template:1.0.0 \
+  --push .
+
+# Build the blob
+docker buildx build --platform linux/amd64,linux/arm64 \
+  -f cyan/blob.Dockerfile \
+  -t myorg/node-template-blob:1.0.0 \
+  --push .
+
+# Test locally
+cyanprint create myorg/node-template:1.0.0 ./test-project
+```
+
+## Next Steps
+
+- Explore [How-to Guides](/developer/templates/how-to) for specific patterns
+- Read the [SDK Reference](/developer/templates/reference/sdk) for complete API docs
+- Learn about [Processors](/developer/processors) for custom file processing

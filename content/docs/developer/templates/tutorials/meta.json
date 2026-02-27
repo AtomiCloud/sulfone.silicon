@@ -1,4 +1,5 @@
 {
   "title": "Tutorials",
-  "icon": "GraduationCap"
+  "icon": "GraduationCap",
+  "pages": ["01-blank-template", "02-adding-variables", "03-changing-glob", "04-asking-questions", "full-example"]
 }

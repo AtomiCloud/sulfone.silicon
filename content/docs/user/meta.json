@@ -1,6 +1,6 @@
 {
-  "title": "User",
+  "title": "Users",
   "description": "Use CyanPrint",
   "icon": "User",
-  "root": true
+  "pages": ["index", "tutorials/index", "how-to/index", "reference/index", "explanation/index"]
 }

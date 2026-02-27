@@ -1,0 +1,5 @@
+{
+  "title": "Templates",
+  "icon": "Copy",
+  "pages": ["tutorials/index", "how-to/index", "reference/index", "explanation/index"]
+}

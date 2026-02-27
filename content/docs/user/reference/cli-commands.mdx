@@ -1,8 +1,84 @@
 ---
-title: CLI Commands
-description: Reference for CyanPrint CLI commands
+title: CLI Commands Reference
+description: Complete reference for all CyanPrint CLI commands
 ---
 
-# CLI Commands
+# CLI Commands Reference
 
-Reference for CyanPrint CLI commands.
+## Global Options
+
+| Flag                   | Description         |
+| ---------------------- | ------------------- |
+| `-r, --registry <URL>` | Registry endpoint   |
+| `-d, --debug`          | Enable debug output |
+| `-V, --version`        | Print version       |
+
+## `cyanprint create`
+
+Create a new project from a template.
+
+```bash
+cyanprint create <TEMPLATE_REF> [PATH]
+```
+
+### Arguments
+
+| Argument         | Required | Description                               |
+| ---------------- | -------- | ----------------------------------------- |
+| `<TEMPLATE_REF>` | Yes      | Template reference (e.g., atomi/nix-init) |
+| `[PATH]`         | No       | Output directory (default: .)             |
+
+### Options
+
+| Option                       | Default                         | Description     |
+| ---------------------------- | ------------------------------- | --------------- |
+| `-c, --coordinator-endpoint` | http://coord.cyanprint.dev:9000 | Coordinator URL |
+
+## `cyanprint update`
+
+Update an existing project to the latest template version.
+
+```bash
+cyanprint update [PATH]
+```
+
+### Options
+
+| Option                       | Description                   |
+| ---------------------------- | ----------------------------- |
+| `-i, --interactive`          | Select versions interactively |
+| `-c, --coordinator-endpoint` | Coordinator URL               |
+
+## `cyanprint daemon`
+
+Start the CyanPrint daemon for local development.
+
+```bash
+cyanprint daemon [VERSION]
+```
+
+### Options
+
+| Option       | Default | Description         |
+| ------------ | ------- | ------------------- |
+| `-p, --port` | 9000    | Port to host daemon |
+
+## `cyanprint push`
+
+Push templates, processors, or plugins to the registry.
+
+```bash
+# Push template
+cyanprint push template --token <TOKEN> <BLOB_IMG> <BLOB_TAG> <TEMPLATE_IMG> <TEMPLATE_TAG>
+
+# Push processor
+cyanprint push processor --token <TOKEN> <IMAGE> <TAG>
+
+# Push plugin
+cyanprint push plugin --token <TOKEN> <IMAGE> <TAG>
+```
+
+## Related
+
+- [Installation Guide](/user/how-to/install)
+- [Create a Project](/user/how-to/create-project)

@@ -1,8 +1,22 @@
 ---
 title: Update a Project
-description: How to update a project with CyanPrint
+description: Update existing projects with the latest template version
 ---
 
 # Update a Project
 
-How to update a project with CyanPrint.
+```bash
+# Update to latest versions
+cyanprint update
+
+# Interactive version selection
+cyanprint update -i
+```
+
+## How Updates Work
+
+CyanPrint uses a 3-way merge to preserve your customizations when updating. See [3-Way Merge](/user/explanation/3-way-merge) to understand how updates preserve your changes.
+
+## CLI Reference
+
+See [CLI Commands](/user/reference/cli-commands) for full command options.

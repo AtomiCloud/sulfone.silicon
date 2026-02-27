@@ -1,8 +1,29 @@
 ---
 title: Template Lifecycle
-description: Understanding the template lifecycle in CyanPrint
+description: Understanding template versions, updates, and deprecation
 ---
 
 # Template Lifecycle
 
-Understanding the template lifecycle in CyanPrint.
+## Versioning
+
+Templates use semantic versioning (MAJOR.MINOR.PATCH).
+
+- **MAJOR**: Breaking changes
+- **MINOR**: New features, backward compatible
+- **PATCH**: Bug fixes
+
+## Updates
+
+When a template is updated, you can use the `cyanprint update` command to bring your project up to date while preserving your customizations.
+
+See [Update a Project](/user/how-to/update-project) for the how-to guide.
+
+## Deprecation
+
+Templates may be deprecated by their maintainers. Deprecated templates remain available but show a warning when used.
+
+## Related
+
+- [3-Way Merge](/user/explanation/3-way-merge)
+- [Update a Project](/user/how-to/update-project)

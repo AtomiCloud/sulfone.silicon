@@ -1,8 +1,30 @@
 ---
 title: 3-Way Merge
-description: Understanding 3-way merge in CyanPrint
+description: How CyanPrint updates preserve your local changes
 ---
 
 # 3-Way Merge
 
-Understanding 3-way merge in CyanPrint.
+When updating a project, CyanPrint uses a 3-way merge to preserve your customizations.
+
+## How It Works
+
+The merge considers three versions:
+
+1. **Base**: Original template version you used
+2. **Yours**: Your modified project files
+3. **Theirs**: New template version
+
+The merge combines your changes with template updates automatically.
+
+## Conflict Resolution
+
+If conflicts occur, you'll be prompted to resolve them manually. This happens when:
+
+- You and the template both modified the same line
+- Structural changes conflict
+
+## Related
+
+- [Update a Project](/user/how-to/update-project)
+- [Template Lifecycle](/user/explanation/template-lifecycle)

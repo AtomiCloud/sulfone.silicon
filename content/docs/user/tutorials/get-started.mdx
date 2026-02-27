@@ -1,8 +1,71 @@
 ---
 title: Get Started
-description: Get started with CyanPrint
+description: Create your first CyanPrint project in under a minute
 ---
+
+import { Tab, Tabs } from 'fumadocs-ui/components/tabs';
 
 # Get Started
 
-Get started with CyanPrint.
+Create your first CyanPrint project in under a minute.
+
+## 1. Install CLI
+
+<Tabs groupId="installer" items={['Nix', 'Brew', 'Scoop', 'APT', 'YUM']} persist>
+<Tab value="Nix">
+
+```bash
+nix shell github:AtomiCloud/sulfone.iridium
+```
+
+</Tab>
+<Tab value="Brew">
+
+```bash
+brew install AtomiCloud/tap/cyanprint
+```
+
+</Tab>
+<Tab value="Scoop">
+
+```bash
+scoop bucket add atomi https://github.com/AtomiCloud/scoop-bucket.git
+scoop install atomi/cyanprint
+```
+
+</Tab>
+<Tab value="APT">
+
+```bash
+sudo apt-add-repository "deb [trusted=yes] https://apt.fury.io/AtomiCloud/ /"
+sudo apt update && sudo apt install cyanprint
+```
+
+</Tab>
+<Tab value="YUM">
+
+```bash
+sudo sh -c 'echo "[fury]
+name=AtomiCloud Repo
+baseurl=https://yum.fury.io/atomicloud/
+enabled=1
+gpgcheck=0" > /etc/yum.repos.d/fury.repo'
+yum install cyanprint
+```
+
+</Tab>
+</Tabs>
+
+## 2. Create Project
+
+```bash
+cyanprint create atomi/nix-init my-project
+```
+
+Answer the prompts, and your project is ready!
+
+## Next Steps
+
+- [Full installation guide](/user/how-to/install) (pinning versions, more options)
+- [Create more projects](/user/how-to/create-project)
+- [Browse templates](/user/how-to/browse-templates)

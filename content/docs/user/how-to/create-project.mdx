@@ -1,8 +1,33 @@
 ---
 title: Create a Project
-description: How to create a project with CyanPrint
+description: Create projects from templates with CyanPrint
 ---
 
 # Create a Project
 
-How to create a project with CyanPrint.
+```bash
+cyanprint create <TEMPLATE_REF> [PATH]
+```
+
+## Examples
+
+```bash
+# Create in current directory
+cyanprint create atomi/nix-init
+
+# Create in specific directory
+cyanprint create atomi/nix-init my-project
+```
+
+## What Happens
+
+1. CLI fetches template from registry
+2. Coordinator runs the template
+3. You answer questions interactively
+4. Project files are generated
+
+## Next Steps
+
+- [Update your project](/user/how-to/update-project)
+- [Browse available templates](/user/how-to/browse-templates)
+- [CLI Commands Reference](/user/reference/cli-commands)

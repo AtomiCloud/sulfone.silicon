@@ -60,46 +60,47 @@ StartPluginWithLambda(async (input) => {
 
 ## Template Configuration
 
-Configure the plugin in your template's `cyan.yaml` or `index.ts`:
-
-### Using cyan.yaml
-
-```yaml
-plugins:
-  - name: myorg/setup-plugin
-    config:
-      git: true
-      installDeps: true
-      packageManager: bun
-      formatter: biome
-      runBuild: false
-```
-
-### Using index.ts
+Configure the plugin in your template's `index.ts` file. The plugin configuration is defined programmatically in the return statement of your template's main function:
 
 ```ts
-return {
-  processors: [
-    // ... processors
-  ],
-  plugins: [{
-    name: 'myorg/setup-plugin',
-    config: {
-      git: true,
-      installDeps: answers.installDeps,
-      packageManager: answers.packageManager,
-      formatter: 'prettier',
-      runBuild: false
-    }
-  }]
-};
+import type { Cyan } from '@atomicloud/cyan-sdk';
+
+// In your template's index.ts, obtain answers from inquirer prompts
+export default async function (input: CyanPluginInput): Promise<Cyan> {
+  // ... prompt users for answers using inquirer ...
+
+  return {
+    processors: [
+      // ... processors
+    ],
+    plugins: [{
+      name: 'myorg/setup-plugin',
+      config: {
+        git: true,
+        installDeps: true,           // or use answers.installDeps from prompts
+        packageManager: 'bun',       // or use answers.packageManager from prompts
+        formatter: 'biome',
+        runBuild: false
+      }
+    }]
+  };
+}
 ```
 
 ## Advanced Patterns
 
+<Callout type="info">
+The code examples below use Bun's shell template syntax (`await $`command``) which requires the Bun runtime. Import it with `import { $ } from 'bun';`. When using fs and path operations, import them with `import fs from 'node:fs';` and `import path from 'node:path';`.
+</Callout>
+
 ### Feature Flags
 
 ```ts
+import fs from 'node:fs';
+import path from 'node:path';
+import { StartPluginWithLambda } from '@atomicloud/cyan-sdk';
+import { $ } from 'bun';
+
 StartPluginWithLambda(async (input) => {
   const { directory, config } = input;
 
@@ -148,6 +149,9 @@ StartPluginWithLambda(async (input) => {
 ### Conditional Based on Project Type
 
 ```ts
+import { StartPluginWithLambda } from '@atomicloud/cyan-sdk';
+import { $ } from 'bun';
+
 StartPluginWithLambda(async (input) => {
   const { directory, config } = input;
 
@@ -177,6 +181,9 @@ StartPluginWithLambda(async (input) => {
 ### Using Defaults
 
 ```ts
+import { StartPluginWithLambda } from '@atomicloud/cyan-sdk';
+import { $ } from 'bun';
+
 StartPluginWithLambda(async (input) => {
   const { directory, config } = input;
 
@@ -205,4 +212,4 @@ Always provide sensible defaults for optional configuration. Templates should wo
 
 - [Run Shell Commands](/developer/plugins/how-to/run-commands) - Execute commands
 - [Modify Generated Files](/developer/plugins/how-to/modify-files) - Edit files
-- [Plugin Input/Output](/developer/plugins/reference/sdk/input-output) - API reference
+- [Plugin Input/Output (CyanPluginInput)](/developer/plugins/reference/sdk/input-output) - API reference for the `CyanPluginInput` type

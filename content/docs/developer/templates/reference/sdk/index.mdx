@@ -22,23 +22,22 @@ npm install @atomicloud/cyan-sdk
 | `StartTemplateWithLambda` | Entry point for templates |
 | `StartProcessorWithLambda` | Entry point for processors |
 | `StartPluginWithLambda` | Entry point for plugins |
+| `StartResolverWithLambda` | Entry point for resolvers |
 
 ### Interfaces
 
 | Interface | Description |
 |-----------|-------------|
 | `IInquirer` | Ask user questions |
-| `IDefine` | Generate deterministic values |
-| `ICyanConfig` | Template configuration structure |
-| `IProcessor` | Processor definition |
+| `IDeterminism` | Get deterministic values via `get(key, origin)` |
 
 ### Types
 
 | Type | Description |
 |------|-------------|
-| `GlobType` | File processing types |
-| `QuestionType` | Question type enum |
-| `FileGroup` | File group configuration |
+| `GlobType` | File processing types (`Template = 0`, `Copy = 1`) |
+| `CyanGlob` | File glob configuration |
+| `Cyan` | Template configuration structure (processors and plugins) |
 
 ## Quick Start
 
@@ -49,14 +48,15 @@ import { StartTemplateWithLambda, GlobType } from '@atomicloud/cyan-sdk';
 
 StartTemplateWithLambda(async (i, d) => {
   // i: IInquirer - ask questions
-  // d: IDefine - get deterministic values
+  // d: IDeterminism - get deterministic values
 
   return {
     processors: [{
       name: 'cyan/default',
-      files: [{ root: 'templates', glob: '**/*', exclude: [], type: GlobType.Template }],
+      files: [{ glob: '**/*', exclude: [], type: GlobType.Template }],
       config: { vars: {} }
-    }]
+    }],
+    plugins: []
   };
 });
 ```
@@ -75,19 +75,23 @@ const typescript = await i.confirm('Use TypeScript?', 'project.typescript', 'Add
 
 // Checkbox (multi-select)
 const features = await i.checkbox('Features?', ['ESLint', 'Prettier'], 'project.features', 'Select');
+
+// Date selection (returns string in ISO format)
+const startDate = await i.dateSelect('Start date?', 'project.startDate', 'Select date');
 ```
 
-### Using IDefine
+### Using IDeterminism
 
 ```ts
-// Deterministic UUID
-const projectId = d.uuid();
+// Get deterministic value with key and origin function
+// The key identifies the value, origin provides a default if not cached
+const projectId = d.get('project.id', () => crypto.randomUUID());
 
-// Deterministic timestamp
-const createdAt = d.timestamp();
+// Get deterministic timestamp
+const createdAt = d.get('created.at', () => new Date().toISOString());
 
-// Sequential numbers
-const userId = d.seq('users');
+// Get sequential-style value for a category
+const userId = d.get('user.id', () => `user-${Date.now()}`);
 ```
 
 ## SDK Reference Sections

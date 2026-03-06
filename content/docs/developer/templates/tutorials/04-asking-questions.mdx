@@ -77,7 +77,7 @@ StartTemplateWithLambda(async (i, d) => {
 | `confirm()` | `boolean` | Yes/no decisions |
 | `checkbox()` | `string[]` | Feature selection |
 | `password()` | `string` | Secrets, API keys |
-| `dateSelect()` | `Date` | Dates, deadlines |
+| `dateSelect()` | `string` | Dates, deadlines |
 
 ## Keys Concept
 
@@ -187,9 +187,6 @@ StartTemplateWithLambda(async (i, d) => {
     'Select'
   );
 
-  // Generate deterministic values
-  const uuid = d.uuid();
-
   return {
     processors: [{
       name: 'cyan/default',
@@ -205,8 +202,7 @@ StartTemplateWithLambda(async (i, d) => {
           description,
           license,
           typescript: typescript ? 'true' : 'false',
-          features: features.join(', '),
-          uuid
+          features: features.join(', ')
         }
       }
     }]
@@ -216,7 +212,7 @@ StartTemplateWithLambda(async (i, d) => {
 
 ## What You Learned
 
-- How to use all question types: text, select, confirm, checkbox
+- How to use basic question types: text, select, confirm, checkbox
 - What keys are and how they enable answer reuse
 - Why namespacing keys is important
 - How to use answers in template files

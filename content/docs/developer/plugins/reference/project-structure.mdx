@@ -11,9 +11,11 @@ A typical plugin project has a simple structure:
 my-plugin/
 ├── index.ts           # Entry point with plugin logic
 ├── package.json       # Dependencies
-├── bun.lockb          # Lock file
+├── bun.lockb          # Lock file (commit for reproducible builds)
+├── tsconfig.json      # TypeScript configuration
 ├── Dockerfile         # Container definition
 ├── .dockerignore      # Files to exclude from image
+├── .gitignore         # Files to exclude from git
 ├── cyan.yaml          # Plugin metadata (optional)
 └── README.md          # Documentation
 ```
@@ -43,10 +45,16 @@ Dependencies for the plugin:
 ```json
 {
   "name": "my-plugin",
-  "version": "1.0.0",
+  "module": "index.ts",
   "type": "module",
+  "devDependencies": {
+    "bun-types": "latest"
+  },
+  "peerDependencies": {
+    "typescript": "^5.0.0"
+  },
   "dependencies": {
-    "@atomicloud/cyan-sdk": "^1.0.0"
+    "@atomicloud/cyan-sdk": "latest"
   }
 }
 ```
@@ -56,18 +64,19 @@ Dependencies for the plugin:
 Container definition:
 
 ```dockerfile
-FROM oven/bun:1.1.31
+FROM oven/bun:1.0.11
 
 WORKDIR /app
 
 LABEL cyanprint.dev=true
 
-COPY package.json bun.lockb* ./
+COPY package.json .
+COPY bun.lockb .
 RUN bun install
 
 COPY . .
 
-CMD ["bun", "run", "index.ts"]
+CMD [ "bun", "run", "index.ts" ]
 ```
 
 ## Optional Files
@@ -78,12 +87,8 @@ Exclude unnecessary files from the Docker build:
 
 ```text
 node_modules
-.git
-.gitignore
-*.md
-.env
-.env.*
-.DS_Store
+.idea
+.vscode
 ```
 
 ### README.md
@@ -114,10 +119,14 @@ plugins:
 Plugin metadata file:
 
 ```yaml
-name: org/my-plugin
-version: 1.0.0
+username: your-username
+name: my-plugin
 description: A plugin that does something
-author: Your Name
+project: https://example.com
+source: https://example.com
+email: your-email@example.com
+tags: []
+readme: README.md
 ```
 
 ## Multiple Files
@@ -134,6 +143,8 @@ my-plugin/
 ├── types/
 │   └── config.ts      # Config types
 ├── package.json
+├── bun.lockb
+├── tsconfig.json
 └── Dockerfile
 ```
 

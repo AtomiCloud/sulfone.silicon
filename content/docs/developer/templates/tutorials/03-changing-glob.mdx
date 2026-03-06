@@ -44,7 +44,7 @@ files: [
 ```ts
 import { StartTemplateWithLambda, GlobType } from '@atomicloud/cyan-sdk';
 
-StartTemplateWithLambda(async (i, d) => {
+StartTemplateWithLambda(async (inquirer, determinism) => {
   return {
     processors: [{
       name: 'cyan/default',
@@ -67,7 +67,8 @@ StartTemplateWithLambda(async (i, d) => {
           author: 'Developer'
         }
       }
-    }]
+    }],
+    plugins: []
   };
 });
 ```
@@ -97,7 +98,6 @@ files: [
 |------|----------|----------|
 | `GlobType.Template` | Process with variable substitution | Text files, configs |
 | `GlobType.Copy` | Copy without processing | Images, binaries |
-| `GlobType.Ignore` | Skip entirely | Temporary files |
 
 ## Project Structure Example
 

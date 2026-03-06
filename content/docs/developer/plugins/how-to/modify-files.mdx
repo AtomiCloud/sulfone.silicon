@@ -14,11 +14,11 @@ Read and modify files in the generated project directory. Plugins have full file
 ### Read a File
 
 ```ts
-import { StartPluginWithLambda } from '@atomicloud/cyan-sdk';
+import { StartPluginWithLambda, PluginOutput } from '@atomicloud/cyan-sdk';
 import * as fs from 'fs/promises';
 import * as path from 'path';
 
-StartPluginWithLambda(async (input) => {
+StartPluginWithLambda(async (input): Promise<PluginOutput> => {
   const { directory } = input;
 
   // Read file
@@ -197,7 +197,7 @@ StartPluginWithLambda(async (input) => {
 
 ## Using Glob Patterns
 
-Process multiple files matching a pattern:
+Process multiple files matching a pattern using the [`glob`](https://www.npmjs.com/package/glob) npm package (install separately: `npm install glob`):
 
 ```ts
 import { glob } from 'glob';

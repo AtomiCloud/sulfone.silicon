@@ -9,22 +9,42 @@ description: Create projects from templates with CyanPrint
 cyanprint create <TEMPLATE_REF> [PATH]
 ```
 
+## Template Reference Format
+
+`<TEMPLATE_REF>` uses the format: `<username>/<template-name>[:<version>]`
+
+- `username` - The template author or organization
+- `template-name` - The name of the template
+- `version` - (Optional) An integer version number. If omitted, the latest version is used
+
 ## Examples
 
 ```bash
-# Create in current directory
-cyanprint create atomi/nix-init
+# Create in current directory (latest version)
+cyanprint create atomicloud/starter
 
 # Create in specific directory
-cyanprint create atomi/nix-init my-project
+cyanprint create atomicloud/starter my-project
+
+# Create a specific version
+cyanprint create atomicloud/starter:1 my-project
 ```
+
+## Options
+
+| Option | Default | Description |
+|--------|---------|-------------|
+| `-c, --coordinator-endpoint` | `http://coord.cyanprint.dev:9000` | Coordinator service URL |
+
+You can also set the coordinator endpoint via the `CYANPRINT_COORDINATOR` environment variable.
 
 ## What Happens
 
 1. CLI fetches template from registry
-2. Coordinator runs the template
-3. You answer questions interactively
-4. Project files are generated
+2. Target directory is created if needed
+3. Coordinator runs the template (handles compositions automatically)
+4. You answer questions interactively
+5. Project files are generated
 
 ## Next Steps
 

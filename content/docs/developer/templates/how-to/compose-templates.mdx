@@ -15,11 +15,9 @@ Template composition allows one template to include and use other templates:
 
 ```yaml
 # cyan.yaml
-compose:
-  - name: my-org/base-setup
-    version: "1.0.0"
-  - name: my-org/docker-config
-    version: "2.0.0"
+templates:
+  - my-org/base-setup:1
+  - my-org/docker-config:2
 ```
 
 ## Composition Patterns
@@ -34,29 +32,26 @@ Build templates in layers:
 
 ```yaml
 # Full-stack web app template
-compose:
-  - name: shared/node-base        # Node.js project structure
-  - name: shared/typescript       # TypeScript configuration
-  - name: shared/eslint           # Linting setup
-  - name: frontend/react          # React frontend
-  - name: backend/express         # Express backend
-  - name: deploy/docker           # Docker configuration
+templates:
+  - shared/node-base:1        # Node.js project structure
+  - shared/typescript:2       # TypeScript configuration
+  - shared/eslint:1           # Linting setup
+  - frontend/react:3          # React frontend
+  - backend/express:2         # Express backend
+  - deploy/docker:1           # Docker configuration
 ```
 
 ### Feature Composition
 
-Let users compose features they need:
+Let users compose features they need by specifying which templates to include:
 
 ```yaml
 # cyan.yaml - user selects features
-compose:
-  - name: base/project
-  - name: features/typescript
-    condition: ${usesTypescript}
-  - name: features/docker
-    condition: ${usesDocker}
-  - name: features/ci-github
-    condition: ${usesCI}
+templates:
+  - base/project:1
+  - features/typescript:2
+  - features/docker:1
+  - features/ci-github:3
 ```
 
 ## Key Considerations
@@ -142,18 +137,13 @@ StartTemplateWithLambda(async (i, d) => {
 ```yaml
 # cyan.yaml for microservice template
 name: company/microservice
-version: 1.0.0
-compose:
-  - name: company/node-base
-    version: "2.0.0"
-  - name: company/typescript
-    version: "1.5.0"
-  - name: company/docker
-    version: "3.0.0"
-  - name: company/grpc
-    version: "1.0.0"
-  - name: company/observability
-    version: "2.0.0"
+version: 1
+templates:
+  - company/node-base:2
+  - company/typescript:1
+  - company/docker:3
+  - company/grpc:1
+  - company/observability:2
 ```
 
 ## Related

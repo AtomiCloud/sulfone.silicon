@@ -78,17 +78,17 @@ StartProcessorWithLambda(async (input, fileHelper) => {
 
   files.forEach(file => {
     if (config.features.includes('docker')) {
-      file.content = addDockerConfig(file.content);
+      // Modify file.content as needed for docker feature
     }
 
     if (config.outputFormat === 'yaml') {
-      file.content = convertToYaml(file.content);
+      // Convert file.content to YAML format
     }
 
     file.writeFile();
   });
 
-  return { directory: input.writeDirectory };
+  return { directory: input.writeDir };
 });
 ```
 
@@ -118,17 +118,17 @@ StartProcessorWithLambda(async (input, fileHelper) => {
     const indent = ' '.repeat(config.indentSize);
 
     if (config.generateTypes) {
-      file.content = generateTypes(file.content);
+      // Generate types from file.content
     }
 
     if (!config.includeComments) {
-      file.content = removeComments(file.content);
+      // Remove comments from file.content
     }
 
     file.writeFile();
   });
 
-  return { directory: input.writeDirectory };
+  return { directory: input.writeDir };
 });
 ```
 
@@ -172,18 +172,19 @@ StartProcessorWithLambda(async (input, fileHelper) => {
   const files = fileHelper.resolveAll();
 
   files.forEach(file => {
+    // Parse schema from file.content
     const schema = parseSchema(file.content);
 
     if (config.generateClient) {
       const clientCode = generateClient(schema, config.clientOptions);
-      // Write to additional output location
-      writeFileTo(config.clientOptions.outputDir, clientCode);
+      // Note: To write additional files, use fileHelper to create new VirtualFile instances
+      // and write them to the appropriate output location within input.writeDir
     }
 
     file.writeFile();
   });
 
-  return { directory: input.writeDirectory };
+  return { directory: input.writeDir };
 });
 ```
 

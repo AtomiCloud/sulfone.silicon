@@ -7,28 +7,71 @@ description: Documentation for the CyanPrint Registry web interface
 
 The CyanPrint Registry is available at [registry.cyanprint.dev](https://registry.cyanprint.dev).
 
+## Resource Types
+
+The Registry supports browsing and searching four types of resources:
+
+- **Templates** - Project templates for generating new projects
+- **Plugins** - Extensions that add functionality during project generation
+- **Processors** - Custom file processing logic for templates
+- **Resolvers** - Dependency resolution configurations
+
+Use the resource type selector dropdown to filter your search to a specific type.
+
 ## Features
 
 ### Search
 
-Search for templates by:
+The search bar performs a unified full-text search across multiple fields at once:
 
-- Template name
-- Author/username
+- Resource name
+- Description
+- Author username
 - Tags
+
+Simply type your search query and results will match across all these fields.
 
 ### Template Details
 
 View detailed information about each template:
 
-- Description and readme
-- Available versions
-- Usage statistics
-- Author information
+- Description and readme (Documentation tab)
+- Project URL (link icon)
+- Source URL (code icon)
+- Stars count
+- Download count
+- Tags (displayed as badges)
+- Author username and email
+
+The template details page has three tabs:
+
+- **Documentation** - View the template's readme and usage instructions
+- **Versions** - Browse all available versions of the template
+- **Dependencies** - View the resolvers, plugins, and processors used by the template
 
 ### Version History
 
-Browse all available versions of a template to find the one you need.
+Browse all available versions of a template. Each version displays:
+
+- Version number
+- Description
+- Created timestamp
+
+Use the search box to filter versions by version number or description.
+
+### Plugin, Processor, and Resolver Details
+
+Similar detail pages are available for plugins, processors, and resolvers, showing their documentation, versions, and metadata.
+
+## URL Patterns
+
+The Registry uses the following URL patterns:
+
+- Registry search: `/registry`
+- Template details: `/templates/{user_id}/{template_id}`
+- Plugin details: `/plugins/{user_id}/{plugin_id}`
+- Processor details: `/processors/{user_id}/{processor_id}`
+- Resolver details: `/resolvers/{user_id}/{resolver_id}`
 
 ## Related
 

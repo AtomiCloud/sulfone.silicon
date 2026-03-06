@@ -182,29 +182,13 @@ Note: This requires changing delimiters to avoid `var__`.
 <% }) %>
 ```
 
-### Filters
-
-```ts
-config: {
-  vars: { name: 'my project' },
-  parser: {
-    varSyntax: [['<%', '%>']],
-    filters: {
-      uppercase: (str) => str.toUpperCase(),
-      slug: (str) => str.toLowerCase().replace(/\s+/g, '-')
-    }
-  }
-}
-```
-
-```markdown
-# <% name | uppercase %>
-Slug: <% name | slug %>
-```
+<Callout type="warn">
+Advanced Eta features like conditionals and loops require custom delimiters and may need adjustments to work correctly with the default processor's configuration. For complex templating needs, consider creating a custom processor.
+</Callout>
 
 ## Processor Configuration
 
-Full configuration options:
+The default processor supports the following configuration options:
 
 ```ts
 {
@@ -219,19 +203,16 @@ Full configuration options:
 
     // Parser configuration
     parser: {
-      // Custom tag pairs
-      varSyntax: [['var__', '__']],
-
-      // Custom filters
-      filters: {},
-
-      // Other Eta options
-      autoEscape: false,
-      autoTrim: false
+      // Custom tag pairs (default is ['var__', '__'])
+      varSyntax: [['var__', '__']]
     }
   }
 }
 ```
+
+<Callout type="info">
+The `cyan/default` processor is a specific implementation provided as the reference processor. Other registries or organizations may provide their own default processors with different capabilities. Options like `autoEscape`, `autoTrim`, and `filters` are hardcoded in the processor implementation and cannot be configured by template authors.
+</Callout>
 
 ## When to Use Default vs Custom
 

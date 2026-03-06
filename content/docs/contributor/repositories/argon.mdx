@@ -1,11 +1,11 @@
 ---
-title: Argon
+title: Argon (Carbon)
 description: The CyanPrint registry web UI
 ---
 
-# sulfone.argon
+# sulfone.argon (carbon)
 
-Argon is the web-based user interface for browsing, searching, and managing CyanPrint templates. It provides a visual interface to the Zinc registry.
+Argon (internally named "carbon") is the web-based user interface for browsing, searching, and managing CyanPrint templates. It provides a visual interface to the Zinc registry.
 
 ## Repository
 
@@ -16,36 +16,35 @@ Argon is the web-based user interface for browsing, searching, and managing Cyan
 | Technology | Purpose |
 | ---------- | ------- |
 | TypeScript | Primary language |
-| React | UI framework |
-| Next.js | Full-stack framework |
+| Svelte | UI framework |
+| SvelteKit | Full-stack framework |
 | Tailwind CSS | Styling |
-| tRPC | Type-safe API client |
+| swagger-typescript-api | Type-safe HTTP client (generated) |
 
 ## Key Files
 
 | Path | Description |
 | ---- | ----------- |
-| `src/app/` | Next.js App Router pages |
-| `src/components/` | React components |
+| `src/routes/` | SvelteKit routing pages |
+| `src/lib/components/` | Svelte components |
 | `src/lib/` | Utilities and helpers |
-| `src/server/` | Server-side code |
-| `prisma/` | Database schema |
+| `src/hooks.server.ts` | Server hooks (authentication) |
+| `src/config/` | Configuration files |
 
 ## Architecture
 
 <Mermaid chart={`flowchart TB
     subgraph "Argon Web App"
-        PAGES[Next.js Pages] --> COMPS[React Components]
-        COMPS --> TRPC[tRPC Client]
+        PAGES[SvelteKit Pages] --> COMPS[Svelte Components]
+        COMPS --> HTTP[Swagger HTTP Client]
     end
 
     subgraph "Server"
-        TRPC --> ROUTERS[tRPC Routers]
-        ROUTERS --> ZINC[Zinc API Client]
+        HTTP --> API[API Endpoints]
     end
 
     subgraph "External"
-        ZINC --> API[Zinc REST API]
+        API --> ZINC[Zinc REST API]
     end
 
     BROWSER[Browser] --> PAGES
@@ -62,7 +61,7 @@ Argon is the web-based user interface for browsing, searching, and managing Cyan
 
 ### User Management
 
-- GitHub OAuth authentication
+- Descope OIDC authentication
 - User profiles
 - Template ownership and permissions
 
@@ -75,42 +74,45 @@ Argon is the web-based user interface for browsing, searching, and managing Cyan
 ## Page Structure
 
 ```
-/                    # Home page with featured templates
-/templates           # Browse all templates
-/templates/[id]      # Template details
-/templates/[id]/v/[version]  # Specific version
-/search              # Search templates
-/user/login          # Login page
-/user/profile        # User profile
+/                         # Home page with featured templates
+/templates                # Browse all templates
+/templates/[user_id]/[template_id]  # Template details
+/registry                 # Search templates (with search functionality)
+/profile                  # User profile
+/plugins/                 # Plugins management
+/processors/              # Processors management
+/resolvers/               # Resolvers management
+/tokens/                  # Token management
+/register/                # Registration page
 ```
 
 ## Building
 
 ```bash
 # Install dependencies
-bun install
+npm install
 
 # Development server
-bun run dev
+npm run dev
 
 # Build for production
-bun run build
+npm run build
 
 # Run tests
-bun run test
+npm run test:integration && npm run test:unit
 
 # Type checking
-bun run typecheck
+npm run check
 ```
 
 ## Configuration
 
 ```env
-# .env.local
-NEXT_PUBLIC_API_URL=https://api.cyanprint.dev
-ZINC_API_URL=https://zinc.cyanprint.dev/internal
-GITHUB_CLIENT_ID=your-github-client-id
-GITHUB_CLIENT_SECRET=your-github-client-secret
+# .env
+DESCOPE_ID=your-descope-project-id
+DESCOPE_SECRET=your-descope-secret
+AUTH_SECRET=your-auth-secret
+PUBLIC_LANDSCAPE=raichu  # Options: pichu, pikachu, raichu, lapras
 ```
 
 ## Key Components
@@ -119,26 +121,27 @@ GITHUB_CLIENT_SECRET=your-github-client-secret
 
 Displays template information in a card format:
 
-```tsx
+```svelte
 <TemplateCard
   template={{
     name: "react-app",
     description: "React application template",
-    author: "cyanprint",
-    downloads: 1500,
+    userId: "user-123",
+    email: "user@example.com",
     tags: ["react", "typescript"]
   }}
 />
 ```
 
-### Search Bar
+### Search
 
-Full-text search with autocomplete:
+Full-text search with autocomplete on the registry page:
 
-```tsx
-<SearchBar
+```svelte
+<input
+  type="text"
   placeholder="Search templates..."
-  onSearch={(query) => router.push(`/search?q=${query}`)}
+  bind:value={searchTerm}
 />
 ```
 
@@ -146,8 +149,7 @@ Full-text search with autocomplete:
 
 When contributing to Argon:
 
-1. Follow React best practices and hooks patterns
+1. Follow Svelte best practices and reactivity patterns
 2. Use Tailwind CSS for styling
 3. Ensure responsive design works on mobile
-4. Add Storybook stories for new components
-5. Test accessibility with screen readers
+4. Test accessibility with screen readers

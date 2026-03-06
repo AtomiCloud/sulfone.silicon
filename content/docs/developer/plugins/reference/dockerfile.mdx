@@ -12,7 +12,7 @@ Every plugin runs in a Docker container. The Dockerfile defines the runtime envi
 ## Basic Dockerfile
 
 ```dockerfile
-FROM oven/bun:1.1.31
+FROM oven/bun:1.0.11
 
 WORKDIR /app
 
@@ -20,7 +20,8 @@ WORKDIR /app
 LABEL cyanprint.dev=true
 
 # Install dependencies
-COPY package.json bun.lockb* ./
+COPY package.json .
+COPY bun.lockb .
 RUN bun install
 
 # Copy plugin code
@@ -38,18 +39,18 @@ Use a Bun or Node.js base image:
 
 ```dockerfile
 # Bun (recommended)
-FROM oven/bun:1.1.31
+FROM oven/bun:1.0.11
 
 # Node.js
 FROM node:20-alpine
 
-# With specific Bun version
-FROM oven/bun:1.1.31-alpine
+# With Alpine variant (smaller image)
+FROM oven/bun:1.0.11-alpine
 ```
 
 ### CyanPrint Label
 
-The `cyanprint.dev=true` label identifies the image as a CyanPrint component:
+The `cyanprint.dev=true` label identifies the image as a CyanPrint component. The executor uses this label to filter and discover CyanPrint plugin images via the Docker API:
 
 ```dockerfile
 LABEL cyanprint.dev=true
@@ -82,44 +83,58 @@ CMD ["npx", "tsx", "index.ts"]
 
 ### Multi-stage Build
 
+Multi-stage builds can reduce final image size by copying only the necessary artifacts:
+
 ```dockerfile
 # Build stage
-FROM oven/bun:1.1.31 AS builder
+FROM oven/bun:1.0.11 AS builder
 
 WORKDIR /app
 
-COPY package.json bun.lockb* ./
-RUN bun install --frozen-lockfile
+COPY package.json .
+COPY bun.lockb .
+RUN bun install
 
 COPY . .
+RUN bun build ./index.ts --outdir ./dist --target bun
 
 # Runtime stage
-FROM oven/bun:1.1.31-slim
+FROM oven/bun:1.0.11-alpine
 
 WORKDIR /app
 
 LABEL cyanprint.dev=true
 
-COPY --from=builder /app /app
+COPY --from=builder /app/dist ./dist
+COPY --from=builder /app/node_modules ./node_modules
 
-CMD ["bun", "run", "index.ts"]
+CMD ["bun", "run", "dist/index.js"]
 ```
+
+<Callout type="info">
+Multi-stage builds add complexity. For most plugins, a simple single-stage build is sufficient and easier to maintain.
+</Callout>
 
 ### With Additional Tools
 
+<Callout type="info">
+The `apt-get` command works with Debian-based images. For Alpine images, use `apk add` instead.
+</Callout>
+
 ```dockerfile
-FROM oven/bun:1.1.31
+FROM oven/bun:1.0.11
 
 WORKDIR /app
 
 LABEL cyanprint.dev=true
 
-# Install additional tools if needed
+# Install additional tools if needed (Debian-based)
 RUN apt-get update && apt-get install -y \
     git \
     && rm -rf /var/lib/apt/lists/*
 
-COPY package.json bun.lockb* ./
+COPY package.json .
+COPY bun.lockb .
 RUN bun install
 
 COPY . .
@@ -130,14 +145,15 @@ CMD ["bun", "run", "index.ts"]
 ### Minimal Image
 
 ```dockerfile
-FROM oven/bun:1.1.31-alpine
+FROM oven/bun:1.0.11-alpine
 
 WORKDIR /app
 
 LABEL cyanprint.dev=true
 
-COPY package.json bun.lockb* ./
-RUN bun install --production
+COPY package.json .
+COPY bun.lockb .
+RUN bun install
 
 COPY index.ts .
 
@@ -146,24 +162,23 @@ CMD ["bun", "run", "index.ts"]
 
 ## Dockerignore
 
-Create a `.dockerignore` file to exclude unnecessary files:
+Create a `.dockerignore` file to exclude unnecessary files. Here is a comprehensive template:
 
 ```text
-# Dependencies
+# Dependencies (must include to exclude)
 node_modules
-bun.lockb
 
 # Git
 .git
 .gitignore
 
+# IDE
+.idea
+.vscode
+
 # Documentation
 *.md
 docs/
-
-# IDE
-.vscode
-.idea
 
 # OS files
 .DS_Store
@@ -179,17 +194,20 @@ Thumbs.db
 __tests__/
 ```
 
+<Callout type="info">
+A minimal `.dockerignore` with just `node_modules`, `.idea`, and `.vscode` is often sufficient for simple plugins. Exclude `bun.lockb` only if you want fresh dependency resolution.
+</Callout>
+
 ## Size Optimization
 
-| Technique | Savings | Trade-off |
-|-----------|---------|-----------|
-| Alpine base | ~100MB | May need musl compatibility |
-| `--production` flag | ~20% | No dev dependencies |
-| Multi-stage | ~30% | More complex build |
+| Technique | Approximate Savings | Trade-off |
+|-----------|---------------------|-----------|
+| Alpine base | ~100MB (estimated) | May need musl compatibility |
 | Minimal copy | Varies | Manual optimization |
+| Multi-stage | ~30% (estimated) | More complex build |
 
 <Callout type="info">
-Keep images small for faster pulls. Plugins are downloaded on every generation.
+Keep images small for faster pulls. Plugins are downloaded on every generation. Savings are approximate and vary based on dependencies.
 </Callout>
 
 ## Environment Variables
@@ -197,7 +215,7 @@ Keep images small for faster pulls. Plugins are downloaded on every generation.
 Pass environment variables to the plugin:
 
 ```dockerfile
-FROM oven/bun:1.1.31
+FROM oven/bun:1.0.11
 
 WORKDIR /app
 
@@ -205,9 +223,9 @@ LABEL cyanprint.dev=true
 
 # Set environment variables
 ENV NODE_ENV=production
-ENV PLUGIN_TIMEOUT=300
 
-COPY package.json bun.lockb* ./
+COPY package.json .
+COPY bun.lockb .
 RUN bun install
 
 COPY . .
@@ -217,7 +235,7 @@ CMD ["bun", "run", "index.ts"]
 
 ## Port Configuration
 
-Plugins communicate on port 5552:
+Plugins communicate on port 5552 and serve the `POST /api/plug` endpoint:
 
 ```dockerfile
 # Expose plugin port (informational)
@@ -225,7 +243,7 @@ EXPOSE 5552
 ```
 
 <Callout type="warn">
-Port 5552 is the standard plugin port. Don't change it unless you have a specific reason.
+Port 5552 is the standard plugin port with the `/api/plug` endpoint. Don't change it unless you have a specific reason.
 </Callout>
 
 ## Related

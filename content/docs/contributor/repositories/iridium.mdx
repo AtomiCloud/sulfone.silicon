@@ -11,6 +11,17 @@ The CyanPrint command-line interface (CLI) is the primary way users interact wit
 
 [github.com/AtomiCloud/sulfone.iridium](https://github.com/AtomiCloud/sulfone.iridium)
 
+## Workspace Structure
+
+Iridium is a Rust workspace containing 4 crates:
+
+| Crate | Purpose |
+| ----- | ------- |
+| cyanprint | Main CLI binary with commands |
+| cyanprompt | Interactive prompt handling |
+| cyanregistry | Registry client for Zinc API |
+| cyancoordinator | Coordinator client for Boron communication |
+
 ## Tech Stack
 
 | Technology | Purpose |
@@ -19,36 +30,51 @@ The CyanPrint command-line interface (CLI) is the primary way users interact wit
 | Clap | CLI argument parsing framework |
 | Tokio | Async runtime |
 | Reqwest | HTTP client for API calls |
+| Bollard | Docker client for container management |
+| Inquire | Interactive CLI prompts |
 
 ## Key Files
 
 | Path | Description |
 | ---- | ----------- |
-| `src/main.rs` | Application entry point |
-| `src/commands/` | CLI command implementations |
-| `src/config/` | Configuration management |
-| `src/api/` | API client for Zinc registry |
-| `src/executor/` | Communication with Boron executor |
+| `cyanprint/src/main.rs` | Application entry point |
+| `cyanprint/src/commands.rs` | CLI command definitions |
+| `cyanprint/src/run.rs` | Template execution logic |
+| `cyanprint/src/update.rs` | Update command implementation |
+| `cyanprint/src/coord.rs` | Coordinator client communication |
+| `cyanprint/src/update/` | Update logic submodules |
+| `cyanregistry/src/` | Registry client for Zinc API |
+| `cyancoordinator/src/` | Coordinator client for Boron |
 
 ## Commands
 
 The CLI provides the following main commands:
 
 ```bash
-# Initialize a new project from a template
-cyan print init <project-name> --template <template-id>
+# Create a new project from a template
+cyanprint create <template-ref> [path]
+
+# Create with custom coordinator endpoint
+cyanprint create <template-ref> --coordinator-endpoint <url>
 
 # Update an existing project
-cyan print update <project-name>
+cyanprint update [path]
 
-# List available templates
-cyan print search <query>
+# Update interactively (select specific versions)
+cyanprint update --interactive
 
-# Configure CyanPrint
-cyan print config set <key> <value>
+# Push artifacts to the registry
+cyanprint push template <path>
+cyanprint push group <path>
+cyanprint push plugin <path>
+cyanprint push processor <path>
 
-# Login to the registry
-cyan print auth login
+# Run the daemon locally
+cyanprint daemon
+
+# Enable debug output (available on all commands)
+cyanprint -d create <template-ref>
+cyanprint --debug update
 ```
 
 ## Architecture
@@ -56,13 +82,15 @@ cyan print auth login
 <Mermaid chart={`flowchart LR
     A[User] --> B[CLI Parser]
     B --> C{Command}
-    C -->|init| D[Template Resolver]
+    C -->|create| D[Template Resolver]
     C -->|update| E[Update Handler]
-    C -->|search| F[Registry Client]
-    D --> G[Executor Client]
-    E --> G
-    G --> H[Boron]
-    F --> I[Zinc API]
+    C -->|push| F[Registry Client]
+    C -->|daemon| G[Docker Manager]
+    D --> H[Coordinator Client]
+    E --> H
+    H --> I[Boron Containers]
+    F --> J[Zinc API]
+    G --> I
 `} />
 
 ## Building
@@ -78,23 +106,30 @@ cargo build --release
 cargo test
 
 # Run with logging
-RUST_LOG=debug cargo run -- init my-project
+RUST_LOG=debug cargo run -- create <template-ref>
 ```
 
 ## Configuration
 
-Iridium stores configuration in `~/.config/cyan-print/config.toml`:
+Iridium is configured via environment variables and command-line flags:
 
-```toml
-[registry]
-url = "https://registry.cyanprint.dev"
+| Environment Variable | Description | Default |
+| ------------------- | ----------- | ------- |
+| `CYANPRINT_REGISTRY` | Zinc registry URL | `https://api.zinc.sulfone.raichu.cluster.atomi.cloud` |
+| `CYANPRINT_COORDINATOR` | Coordinator endpoint | `http://coord.cyanprint.dev:9000` |
+| `CYAN_TOKEN` | Authentication token | (none) |
 
-[executor]
-url = "https://executor.cyanprint.dev"
-timeout = "5m"
+Example usage:
 
-[auth]
-token_file = "~/.config/cyan-print/auth/token"
+```bash
+# Set custom registry
+export CYANPRINT_REGISTRY=https://custom-registry.example.com
+
+# Set authentication token
+export CYAN_TOKEN=your-auth-token
+
+# Use custom coordinator for create command
+cyanprint create <template-ref> --coordinator-endpoint http://localhost:9000
 ```
 
 ## Contributing

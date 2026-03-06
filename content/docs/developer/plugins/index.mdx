@@ -38,7 +38,7 @@ Plugins are the final step in the generation pipeline - they run after all proce
 | Component | Purpose | Examples |
 |-----------|---------|----------|
 | **Entry Point** | Plugin logic | `StartPluginWithLambda` |
-| **PluginInput** | Input from system | Directory, config |
+| **CyanPluginInput** | Input from system | Directory, config |
 | **PluginOutput** | Return value | Directory path |
 | **Shell/Bun** | Command execution | `$` from bun, exec |
 
@@ -84,7 +84,7 @@ Task-oriented guides for common scenarios:
 Technical documentation for the SDK:
 
 - [StartPluginWithLambda](/developer/plugins/reference/sdk/start-plugin) - Entry point
-- [PluginInput/Output](/developer/plugins/reference/sdk/input-output) - Interfaces
+- [CyanPluginInput/PluginOutput](/developer/plugins/reference/sdk/input-output) - Interfaces
 - [Type Definitions](/developer/plugins/reference/sdk/types) - Full type reference
 - [Plugin Dockerfile](/developer/plugins/reference/dockerfile) - Container setup
 

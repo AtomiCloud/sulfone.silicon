@@ -32,7 +32,8 @@ return {
     name: 'cyan/default',
     files,
     config: { vars: { /* ... */ } }
-  }]
+  }],
+  plugins: []
 };
 ```
 
@@ -113,14 +114,15 @@ StartTemplateWithLambda(async (i, d) => {
           ci
         }
       }
-    }]
+    }],
+    plugins: []
   };
 });
 ```
 
 ## Conditional Directory Structure
 
-Organize templates by feature:
+Organize templates by feature. Note that `root` paths are relative to the `cyan/` directory in your template package:
 
 ```
 cyan/templates/
@@ -150,7 +152,7 @@ cyan/templates/
 
 ## Using Array Spread
 
-Clean syntax for conditional additions:
+Clean syntax for conditional additions. Use array spread for a functional style, or the `push` method shown earlier for an imperative approach:
 
 ```ts
 const files = [
@@ -174,7 +176,7 @@ const files = [
 
 ## Exclude Patterns
 
-Conditionally exclude files:
+Conditionally exclude files. This is an alternative approach to adding separate file groups — instead of including different directories, you include everything and exclude unwanted files:
 
 ```ts
 const exclude = [];
@@ -194,6 +196,15 @@ files.push({
   type: GlobType.Template
 });
 ```
+
+## GlobType: Template vs Copy
+
+The `type` property determines how files are processed:
+
+- **`GlobType.Template`** — Files are processed through the template engine, enabling variable substitution (e.g., `{{projectName}}` in your files will be replaced with actual values)
+- **`GlobType.Copy`** — Files are copied as-is without any processing
+
+Use `GlobType.Copy` for binary files, static assets, or any files that shouldn't be modified.
 
 ## Related
 

@@ -9,7 +9,7 @@ This document explains how CyanPrint executes templates, processors, and plugins
 
 ## Overview
 
-When a user runs a command like `cyan print init my-project`, the following high-level flow occurs:
+When a user runs a command like `cyanprint create <template_ref> [path]`, the following high-level flow occurs:
 
 <Mermaid chart={`flowchart TD
     A[User runs CLI command] --> B[CLI resolves template from registry]
@@ -34,8 +34,8 @@ The CLI first resolves the requested template:
     participant CLI as Iridium CLI
     participant Registry as Zinc Registry
 
-    User->>CLI: cyan print init my-project
-    CLI->>Registry: GET /templates/my-template
+    User->>CLI: cyanprint create template-ref
+    CLI->>Registry: GET api/v1/template/{template-ref}
     Registry-->>CLI: Template metadata + version info
     CLI->>CLI: Validate template exists
     CLI->>CLI: Resolve dependencies
@@ -61,11 +61,7 @@ Once the template is resolved, inputs are collected:
     F --> D
 `} />
 
-Input sources (in order of priority):
-1. Command-line flags (`--input key=value`)
-2. Input files (`--input-file inputs.yaml`)
-3. Environment variables (`CYAN_INPUT_KEY`)
-4. Interactive prompts
+Inputs are collected through interactive prompts driven by the template's inquirer schema. The template defines the questions and validation rules, and the SDK handles user interaction.
 
 ### Phase 3: Container Scheduling
 
@@ -74,24 +70,10 @@ Boron manages container execution:
 <Mermaid chart={`flowchart TD
     subgraph "Boron Coordinator"
         A[Receive Execution Request] --> B[Create Job Record]
-        B --> C[Select Executor Node]
-        C --> D[Schedule Container]
-        D --> E[Mount Volumes]
-        E --> F[Set Resource Limits]
-        F --> G[Start Execution]
+        B --> C[Create Container]
+        C --> D[Mount Volumes]
+        D --> E[Start Execution]
     end
-
-    subgraph "Resource Limits"
-        H[CPU: 1 core default]
-        I[Memory: 512MB default]
-        J[Timeout: 5 minutes]
-        K[Network: Restricted]
-    end
-
-    F --> H
-    F --> I
-    F --> J
-    F --> K
 `} />
 
 ### Phase 4: Template Execution
@@ -101,7 +83,7 @@ Inside the container, the template executes:
 <Mermaid chart={`flowchart TD
     A[Container Starts] --> B[Initialize SDK Runtime]
     B --> C[Load Template Module]
-    C --> D[Call generate function]
+    C --> D[Call template(inquirer, determinism)]
     D --> E[Process Input Schema]
     E --> F[Execute Template Logic]
     F --> G[Return File Tree]
@@ -116,19 +98,22 @@ The template uses the Helium SDK to:
 
 ### Phase 5: Processor Pipeline
 
-Processors transform the template output:
+Processors transform the template output in parallel:
 
-<Mermaid chart={`flowchart LR
-    A[Template Output] --> B[Processor 1]
-    B --> C[Processor 2]
-    C --> D[Processor N]
-    D --> E[Final Output]
+<Mermaid chart={`flowchart TD
+    A[Template Output] --> B[Semaphore-Based Concurrency]
+    B --> C[Processor 1]
+    B --> D[Processor 2]
+    B --> E[Processor N]
+    C --> F[Final Output]
+    D --> F
+    E --> F
 
-    subgraph "Example Processors"
-        F[Linter]
-        G[Formatter]
-        H[Template Variables]
+    subgraph "Parallelism Limit"
+        G[Based on runtime.NumCPU]
     end
+
+    B --> G
 `} />
 
 Common processor types:
@@ -142,12 +127,12 @@ Common processor types:
 Plugins can modify the final output:
 
 <Mermaid chart={`flowchart TD
-    A[Processor Output] --> B[Plugin Hook: pre-write]
+    A[Processor Output] --> B[Load Plugins]
     B --> C{Plugin Type}
     C -->|File Modifier| D[Apply Transformations]
     C -->|Content Generator| E[Generate Additional Files]
     C -->|Validator| F[Validate Output]
-    D --> G[Plugin Hook: post-write]
+    D --> G[plug method called with directory and config]
     E --> G
     F --> G
     G --> H[Final File Tree]
@@ -163,8 +148,8 @@ Results are streamed back to the client:
     participant CLI as Iridium CLI
     participant FS as File System
 
-    Container->>Boron: Stream file chunks
-    Boron->>CLI: Forward chunks via gRPC stream
+    Container->>Boron: Generate tar.gz output
+    Boron->>CLI: Stream via HTTP REST (io.Copy)
     CLI->>FS: Write files incrementally
     CLI->>CLI: Display progress
     Container->>Boron: Execution complete
@@ -176,14 +161,11 @@ Results are streamed back to the client:
 
 <Mermaid chart={`stateDiagram-v2
     [*] --> Pending: Job Created
-    Pending --> Scheduled: Node Selected
-    Scheduled --> Running: Container Started
+    Pending --> Running: Container Started
     Running --> Succeeded: Exit 0
     Running --> Failed: Exit NonZero
-    Running --> Timeout: Time Limit Exceeded
     Succeeded --> [*]: Cleanup
     Failed --> [*]: Cleanup
-    Timeout --> [*]: Cleanup
 `} />
 
 ## Error Handling
@@ -193,31 +175,8 @@ Results are streamed back to the client:
 | Resolution | Template not found | Return error with suggestions |
 | Resolution | Version conflict | Show dependency tree, suggest resolution |
 | Input | Validation failed | Display errors, prompt for correction |
-| Execution | Container OOM | Increase limits, retry with larger container |
-| Execution | Timeout | Show partial output, suggest optimization |
 | Processing | Processor failed | Continue with remaining processors, warn user |
 | Output | Write failure | Retry with elevated permissions, suggest manual path |
-
-## Resource Management
-
-Default resource limits can be configured:
-
-```yaml
-# boron-config.yaml
-execution:
-  defaults:
-    cpu_limit: "1"
-    memory_limit: "512Mi"
-    timeout: "5m"
-    network_enabled: false
-
-  # Per-template overrides
-  templates:
-    heavy-template:
-      cpu_limit: "2"
-      memory_limit: "2Gi"
-      timeout: "15m"
-```
 
 ## Next Steps
 

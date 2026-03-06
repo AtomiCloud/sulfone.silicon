@@ -9,6 +9,12 @@ import { Callout } from 'fumadocs-ui/components/callout';
 
 The `IInquirer` interface provides methods for collecting user input during template generation.
 
+## Import
+
+```ts
+import { StartTemplateWithLambda, IInquirer, QuestionType } from '@atomicloud/cyan-sdk';
+```
+
 ## Overview
 
 The `i` parameter in `StartTemplateWithLambda` is an `IInquirer` instance:
@@ -21,6 +27,10 @@ StartTemplateWithLambda(async (i, d) => {
 ```
 
 ## Methods
+
+<Callout type="info">
+In shorthand forms, the third parameter is a help/description string. In object forms, use `desc` for the same purpose.
+</Callout>
 
 ### text()
 
@@ -80,12 +90,7 @@ const license = await i.select({
   id: 'project.license',
   message: 'License?',
   desc: 'Choose a license',
-  options: ['MIT', 'Apache-2.0', 'GPL-3.0'],
-  default: 'MIT',
-  validate: (selected) => {
-    if (!selected) return 'Please select a license';
-    return null;
-  }
+  options: ['MIT', 'Apache-2.0', 'GPL-3.0']
 });
 ```
 
@@ -144,13 +149,7 @@ const features = await i.checkbox({
   id: 'project.features',
   message: 'Select features?',
   desc: 'Choose features to include',
-  options: ['ESLint', 'Prettier', 'Jest', 'Docker'],
-  default: ['ESLint'],
-  validate: (selected) => {
-    if (selected.length === 0) return 'Select at least one feature';
-    if (selected.length > 3) return 'Maximum 3 features';
-    return null;
-  }
+  options: ['ESLint', 'Prettier', 'Jest', 'Docker']
 });
 ```
 
@@ -205,7 +204,7 @@ const deadline = await i.dateSelect(
   'project.deadline',   // id
   'Select target date'  // description
 );
-// Returns: Date
+// Returns: string (ISO date format)
 ```
 
 #### Object Form
@@ -216,13 +215,17 @@ const deadline = await i.dateSelect({
   id: 'project.deadline',
   message: 'Project deadline?',
   desc: 'Select target date',
-  default: new Date(),
-  validate: (date) => {
+  validate: (dateString) => {
+    const date = new Date(dateString);
     if (date < new Date()) return 'Deadline must be in the future';
     return null;
   }
 });
 ```
+
+<Callout type="info">
+`dateSelect()` returns a string in ISO date format, not a Date object. Convert with `new Date(dateString)` if needed.
+</Callout>
 
 ---
 
@@ -239,7 +242,9 @@ const deadline = await i.dateSelect({
 
 ## Object Form Properties
 
-All object forms support these properties:
+Properties vary by question type:
+
+### Common Properties
 
 | Property | Type | Required | Description |
 |----------|------|----------|-------------|
@@ -247,9 +252,24 @@ All object forms support these properties:
 | `id` | `string` | Yes | Unique key for answer storage |
 | `message` | `string` | Yes | Question displayed to user |
 | `desc` | `string` | No | Help text / description |
-| `default` | varies | No | Default value |
-| `validate` | `(input) => string \| null` | No | Validation function |
-| `options` | `string[]` | For select/checkbox | Available choices |
+
+### Type-Specific Properties
+
+| Property | Type | Available For | Description |
+|----------|------|---------------|-------------|
+| `default` | `string` | Text, Date | Default value |
+| `default` | `boolean` | Confirm | Default value |
+| `initial` | `string` | Text | Initial input value |
+| `validate` | `(input) => string \| null` | Text, Password, Date | Validation function |
+| `options` | `string[]` | Select, Checkbox | Available choices |
+| `errorMessage` | `string` | Confirm | Custom error message |
+| `confirmation` | `string` | Password | Confirmation prompt text |
+| `minDate` | `Date` | Date | Minimum selectable date |
+| `maxDate` | `Date` | Date | Maximum selectable date |
+
+<Callout type="info">
+Note: `validate` and `default` are only available for certain question types. Select, Checkbox, and Confirm do not support custom validation functions. Select and Checkbox also do not support default values.
+</Callout>
 
 ## Keys and Namespacing
 

@@ -14,11 +14,15 @@ Execute shell commands in the generated project directory. This is one of the mo
 
 Bun provides a convenient shell API using template literals:
 
+<Callout type="info">
+Bun Shell is specific to the Bun runtime. If you're using Node.js, skip to the [Node.js child_process](#using-nodejs-child_process) section.
+</Callout>
+
 ```ts
-import { StartPluginWithLambda } from '@atomicloud/cyan-sdk';
+import { PluginOutput, StartPluginWithLambda } from '@atomicloud/cyan-sdk';
 import { $ } from 'bun';
 
-StartPluginWithLambda(async (input) => {
+StartPluginWithLambda(async (input): Promise<PluginOutput> => {
   const { directory } = input;
 
   // Initialize git
@@ -47,7 +51,10 @@ StartPluginWithLambda(async (input) => {
 ### Capturing Output
 
 ```ts
-StartPluginWithLambda(async (input) => {
+import { PluginOutput, StartPluginWithLambda } from '@atomicloud/cyan-sdk';
+import { $ } from 'bun';
+
+StartPluginWithLambda(async (input): Promise<PluginOutput> => {
   const { directory } = input;
 
   // Capture command output
@@ -63,7 +70,10 @@ StartPluginWithLambda(async (input) => {
 ### Handling Errors
 
 ```ts
-StartPluginWithLambda(async (input) => {
+import { PluginOutput, StartPluginWithLambda } from '@atomicloud/cyan-sdk';
+import { $ } from 'bun';
+
+StartPluginWithLambda(async (input): Promise<PluginOutput> => {
   const { directory } = input;
 
   try {
@@ -86,10 +96,11 @@ For more control or compatibility, use Node.js APIs:
 ```ts
 import { exec } from 'child_process';
 import { promisify } from 'util';
+import { PluginOutput, StartPluginWithLambda } from '@atomicloud/cyan-sdk';
 
 const execAsync = promisify(exec);
 
-StartPluginWithLambda(async (input) => {
+StartPluginWithLambda(async (input): Promise<PluginOutput> => {
   const { directory } = input;
 
   // Execute command
@@ -107,8 +118,9 @@ StartPluginWithLambda(async (input) => {
 
 ```ts
 import { spawn } from 'child_process';
+import { PluginOutput, StartPluginWithLambda } from '@atomicloud/cyan-sdk';
 
-StartPluginWithLambda(async (input) => {
+StartPluginWithLambda(async (input): Promise<PluginOutput> => {
   const { directory } = input;
 
   return new Promise((resolve) => {
@@ -128,11 +140,13 @@ StartPluginWithLambda(async (input) => {
 });
 ```
 
-```ts
+```tsx
 // Install: bun add execa
+// Note: execa is not included in the SDK and must be installed separately
 import { execa } from 'execa';
+import { PluginOutput, StartPluginWithLambda } from '@atomicloud/cyan-sdk';
 
-StartPluginWithLambda(async (input) => {
+StartPluginWithLambda(async (input): Promise<PluginOutput> => {
   const { directory } = input;
 
   // execa provides better DX
@@ -152,7 +166,10 @@ StartPluginWithLambda(async (input) => {
 ### Package Manager Commands
 
 ```ts
-StartPluginWithLambda(async (input) => {
+import { PluginOutput, StartPluginWithLambda } from '@atomicloud/cyan-sdk';
+import { $ } from 'bun';
+
+StartPluginWithLambda(async (input): Promise<PluginOutput> => {
   const { directory, config } = input;
   const cfg = config as { packageManager?: string };
   const pm = cfg.packageManager || 'npm';
@@ -173,7 +190,10 @@ StartPluginWithLambda(async (input) => {
 ### Git Operations
 
 ```ts
-StartPluginWithLambda(async (input) => {
+import { PluginOutput, StartPluginWithLambda } from '@atomicloud/cyan-sdk';
+import { $ } from 'bun';
+
+StartPluginWithLambda(async (input): Promise<PluginOutput> => {
   const { directory } = input;
 
   // Initialize
@@ -194,10 +214,13 @@ StartPluginWithLambda(async (input) => {
 ### Running Build Tools
 
 ```ts
-StartPluginWithLambda(async (input) => {
+import { PluginOutput, StartPluginWithLambda } from '@atomicloud/cyan-sdk';
+import { $ } from 'bun';
+
+StartPluginWithLambda(async (input): Promise<PluginOutput> => {
   const { directory } = input;
 
-  // Run linter
+  // Run linter (npm run --if-present requires npm 7+)
   await $`cd ${directory} && npm run lint --if-present`;
 
   // Run tests (optional)
@@ -213,6 +236,10 @@ StartPluginWithLambda(async (input) => {
   return { directory };
 });
 ```
+
+<Callout type="info">
+The `--if-present` flag for npm scripts requires npm version 7 or later. For older npm versions, you'll need to check if the script exists before running it.
+</Callout>
 
 <Callout type="warn">
 Be careful with long-running commands. The plugin timeout is configurable but has limits. For heavy operations, consider making them optional.

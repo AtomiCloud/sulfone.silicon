@@ -1,19 +1,20 @@
 ---
 title: Introduction
-description: Introduction to CyanPrint development and the three artifacts
+description: Introduction to CyanPrint development and the four artifacts
 ---
 
 # Introduction to CyanPrint Development
 
-CyanPrint is a template-based project generator with three extensible components called **artifacts**.
+CyanPrint is a template-based project generator with four extensible components called **artifacts**.
 
-## The Three Artifacts
+## The Four Artifacts
 
-| Artifact       | Purpose                                         | SDK Port |
-| -------------- | ----------------------------------------------- | -------- |
-| **Templates**  | Define questions and file processing rules      | 5550     |
-| **Processors** | Transform files (templating, syntax conversion) | 5551     |
-| **Plugins**    | Post-processing (run commands, file operations) | 5552     |
+| Artifact      | Purpose                                               | SDK Port |
+| ------------- | ----------------------------------------------------- | -------- |
+| **Templates** | Define questions and file processing rules            | 5550     |
+| **Processors**| Transform files based on configuration                | 5551     |
+| **Resolvers** | Resolve file conflicts from layered templates         | 5553     |
+| **Plugins**   | Post-processing (run commands, file operations)       | 5552     |
 
 ### Templates
 
@@ -28,34 +29,45 @@ Templates are the primary artifact that users interact with. They:
 Processors handle file transformation. They:
 
 - Read files from the template
-- Apply transformations (e.g., Mustache templating, syntax conversion)
+- Apply custom file transformations based on configuration
 - Write processed files to the output directory
+
+### Resolvers
+
+Resolvers handle file conflicts when composing multiple templates. They:
+
+- Receive multiple versions of the same file from different template layers
+- Merge or resolve conflicting content
+- Return a single unified output for each file
 
 ### Plugins
 
-Plugins run after files are generated. They:
+Plugins run after files are generated. The SDK provides the interface contract - common implementation examples include:
 
-- Execute shell commands
-- Modify file permissions
-- Initialize git repositories
-- Install dependencies
+- Executing shell commands
+- Modifying file permissions
+- Initializing git repositories
+- Installing dependencies
 
 ## How They Work Together
 
 <Mermaid chart={`graph LR
     A[User] --> B[Template]
     B --> C[Processor]
-    C --> D[Files]
-    D --> E[Plugin]
-    E --> F[Final Project]
+    C --> D[Resolver]
+    D --> E[Files]
+    E --> F[Plugin]
+    F --> G[Final Project]
 `} />
 
-1. **Template** collects user input and generates a Cyan config
-2. **Processor** transforms template files using the config
-3. **Plugin** applies final touches to the generated project
+1. **Template** collects user input and generates a Cyan configuration
+2. **Processor** transforms template files using the configuration
+3. **Resolver** merges conflicting files from layered templates (optional)
+4. **Plugin** applies final touches to the generated project
 
 ## Choose Your Path
 
 - [Create a Template](/developer/templates) - Build project scaffolds
 - [Create a Processor](/developer/processors) - Build file transformers
+- [Create a Resolver](/developer/resolvers) - Build conflict resolvers
 - [Create a Plugin](/developer/plugins) - Build post-processors

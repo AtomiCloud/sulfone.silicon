@@ -9,6 +9,15 @@ import { Callout } from 'fumadocs-ui/components/callout';
 
 The `CyanFileHelper` provides all file operations for processors. It manages reading from the source directory and writing to the output directory.
 
+## Properties
+
+| Property | Type | Description |
+|----------|------|-------------|
+| `readDir` | `string` | Absolute path to the source directory |
+| `writeDir` | `string` | Absolute path to the output directory |
+
+---
+
 ## Methods Overview
 
 | Method | Memory Usage | Use Case |
@@ -73,12 +82,22 @@ read(glob: CyanGlob): VirtualFile[];
 ### CyanGlob
 
 ```ts
+enum GlobType {
+  Template = 0,  // Files to process
+  Copy = 1,      // Files to copy directly
+}
+
 interface CyanGlob {
-  root: string;      // Base directory
-  glob: string;      // Glob pattern (e.g., '**/*.md')
-  exclude?: string[]; // Patterns to exclude
+  root?: string | null;  // Base directory (optional, defaults to '.')
+  glob: string;          // Glob pattern (e.g., '**/*.md')
+  exclude: string[];     // Patterns to exclude (required, can be empty array)
+  type: GlobType;        // How to handle matched files
 }
 ```
+
+The `type` property determines how files are handled:
+- `GlobType.Template` (0) - Files are read and processed
+- `GlobType.Copy` (1) - Files are copied directly without processing
 
 ### Returns
 
@@ -87,17 +106,21 @@ interface CyanGlob {
 ### Usage
 
 ```ts
+import { GlobType } from '@atomicloud/cyan-sdk';
+
 // Load markdown files
 const mdFiles = fileHelper.read({
-  root: 'templates',
-  glob: '**/*.md'
+  glob: '**/*.md',
+  exclude: [],
+  type: GlobType.Template,
 });
 
 // Load with exclusions
 const files = fileHelper.read({
   root: 'src',
   glob: '**/*.ts',
-  exclude: ['**/*.test.ts', '**/*.spec.ts']
+  exclude: ['**/*.test.ts', '**/*.spec.ts'],
+  type: GlobType.Template,
 });
 ```
 
@@ -124,25 +147,38 @@ Same as `read(glob)`.
 ### Usage
 
 ```ts
-const refs = fileHelper.get({ root: 'templates', glob: '**/*' });
+import { GlobType } from '@atomicloud/cyan-sdk';
+
+const refs = fileHelper.get({
+  glob: '**/*',
+  exclude: [],
+  type: GlobType.Template,
+});
 
 for (const ref of refs) {
   console.log(ref.relative); // Path available
 
   if (shouldProcess(ref.relative)) {
-    const content = await ref.load(); // Load only when needed
-    ref.writeFile(transform(content));
-  } else {
-    ref.copy(); // Copy without loading
+    const file = ref.readFile(); // Load content synchronously
+    file.content = transform(file.content);
+    file.writeFile();
   }
 }
 ```
+
+<Callout type="info">
+Use `get()` when you need to conditionally process files. The `readFile()` method loads content only when called.
+</Callout>
 
 ---
 
 ## readAsStream(glob)
 
 Stream files for memory-efficient processing of large files.
+
+<Callout type="info">
+**SDK Availability:** This method is available in Node.js and .NET SDKs only. Python SDK does not support streaming.
+</Callout>
 
 ### Signature
 
@@ -161,16 +197,30 @@ Same as `read(glob)`.
 ### Usage
 
 ```ts
-const streams = fileHelper.readAsStream({ root: 'assets', glob: '**/*' });
+import { GlobType } from '@atomicloud/cyan-sdk';
 
-for await (const stream of streams) {
+const streams = fileHelper.readAsStream({
+  glob: '**/*',
+  exclude: [],
+  type: GlobType.Template,
+});
+
+for (const stream of streams) {
+  // stream.reader is a Node.js ReadStream
+  // stream.writer is a Node.js WriteStream
+
   let content = '';
+  stream.reader.setEncoding('utf-8');
 
-  for await (const chunk of stream.read()) {
-    content += chunk.toString();
-  }
+  stream.reader.on('data', (chunk) => {
+    content += chunk;
+  });
 
-  stream.writeFile(transform(content));
+  stream.reader.on('end', () => {
+    const transformed = transform(content);
+    stream.writer.write(transformed);
+    stream.writer.end();
+  });
 }
 ```
 
@@ -193,14 +243,21 @@ Same as `read(glob)`.
 ### Usage
 
 ```ts
+import { GlobType } from '@atomicloud/cyan-sdk';
+
 // Copy static assets
-fileHelper.copy({ root: 'images', glob: '**/*' });
+fileHelper.copy({
+  glob: '**/*',
+  exclude: [],
+  type: GlobType.Copy,
+});
 
 // Copy with exclusions
 fileHelper.copy({
   root: 'public',
   glob: '**/*',
-  exclude: ['**/*.tmp']
+  exclude: ['**/*.tmp'],
+  type: GlobType.Copy,
 });
 ```
 
@@ -216,12 +273,14 @@ File object returned by `resolveAll()` and `read()`.
 |----------|------|-------------|
 | `content` | `string` | File contents |
 | `relative` | `string` | Path relative to read directory |
+| `read` | `string` | Full path to source file (getter) |
+| `write` | `string` | Full path to output file (getter) |
 
 ### Methods
 
 | Method | Return | Description |
 |--------|--------|-------------|
-| `writeFile()` | `void` | Write file to output directory |
+| `writeFile()` | `void` | Write file to output directory (uses `content` property) |
 
 ---
 
@@ -234,33 +293,31 @@ Reference object returned by `get()`.
 | Property | Type | Description |
 |----------|------|-------------|
 | `relative` | `string` | Path relative to read directory |
+| `read` | `string` | Full path to source file (getter) |
+| `write` | `string` | Full path to output file (getter) |
 
 ### Methods
 
 | Method | Return | Description |
 |--------|--------|-------------|
-| `load()` | `Promise<string>` | Load file content |
-| `writeFile(content)` | `void` | Write content to output |
-| `copy()` | `void` | Copy file without loading |
+| `readFile()` | `VirtualFile` | Load file content synchronously, returns VirtualFile |
 
 ---
 
 ## VirtualFileStream
 
-Stream object returned by `readAsStream()`.
+Stream object returned by `readAsStream()` (Node.js and .NET SDKs only).
 
 ### Properties
 
 | Property | Type | Description |
 |----------|------|-------------|
-| `relative` | `string` | Path relative to read directory |
+| `reader` | `fs.ReadStream` | Node.js read stream for source file |
+| `writer` | `fs.WriteStream` | Node.js write stream for output file |
 
-### Methods
-
-| Method | Return | Description |
-|--------|--------|-------------|
-| `read()` | `AsyncIterable<Buffer>` | Read file as chunks |
-| `writeFile(content)` | `void` | Write content to output |
+<Callout type="info">
+`VirtualFileStream` provides direct access to Node.js streams. Use `reader` to read chunks and `writer` to write transformed output.
+</Callout>
 
 ---
 
@@ -279,25 +336,40 @@ Stream object returned by `readAsStream()`.
 ### Memory Efficiency
 
 ```ts
+import { GlobType } from '@atomicloud/cyan-sdk';
+
 StartProcessorWithLambda(async (input, fileHelper) => {
   // Process text files (small)
-  const textFiles = fileHelper.read({ root: 'docs', glob: '**/*.md' });
+  const textFiles = fileHelper.read({
+    glob: '**/*.md',
+    exclude: [],
+    type: GlobType.Template,
+  });
+
   textFiles.forEach(f => {
     f.content = transform(f.content);
     f.writeFile();
   });
 
   // Copy binaries (large)
-  fileHelper.copy({ root: 'images', glob: '**/*' });
+  fileHelper.copy({
+    glob: 'images/**/*',
+    exclude: [],
+    type: GlobType.Copy,
+  });
 
   // Lazy load when needed
-  const refs = fileHelper.get({ root: 'data', glob: '**/*' });
+  const refs = fileHelper.get({
+    glob: 'data/**/*',
+    exclude: [],
+    type: GlobType.Template,
+  });
+
   for (const ref of refs) {
     if (needsProcessing(ref.relative)) {
-      const content = await ref.load();
-      ref.writeFile(transform(content));
-    } else {
-      ref.copy();
+      const file = ref.readFile();
+      file.content = transform(file.content);
+      file.writeFile();
     }
   }
 

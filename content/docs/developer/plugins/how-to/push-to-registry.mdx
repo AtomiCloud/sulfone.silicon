@@ -16,6 +16,7 @@ Publish your plugin to a container registry so others can use it.
 - Docker installed and logged in
 - Access to a container registry (Docker Hub, GitHub GHCR, etc.)
 - Plugin code ready to publish
+- Dockerfile includes `LABEL cyanprint.dev=true` (see [Plugin Dockerfile](/developer/plugins/reference/dockerfile))
 
 ## Build and Push
 
@@ -27,13 +28,13 @@ Choose a naming convention for your plugin:
 
 ```bash
 # Docker Hub
-docker tag my-plugin:dev username/cyan-plugin-my-plugin:latest
+docker tag my-plugin:dev username/my-plugin:latest
 
 # GitHub Container Registry
-docker tag my-plugin:dev ghcr.io/orgname/cyan-plugin-my-plugin:latest
+docker tag my-plugin:dev ghcr.io/orgname/my-plugin:latest
 
 # Private registry
-docker tag my-plugin:dev registry.company.com/cyan-plugins/my-plugin:latest
+docker tag my-plugin:dev registry.company.com/plugins/my-plugin:latest
 ```
 
 ### Push to Registry
@@ -45,10 +46,10 @@ docker tag my-plugin:dev registry.company.com/cyan-plugins/my-plugin:latest
 docker login
 
 # Push
-docker push username/cyan-plugin-my-plugin:latest
+docker push username/my-plugin:latest
 
 # Also push a versioned tag
-docker push username/cyan-plugin-my-plugin:1.0.0
+docker push username/my-plugin:1.0.0
 ```
 
 ```bash
@@ -56,8 +57,8 @@ docker push username/cyan-plugin-my-plugin:1.0.0
 echo $GITHUB_TOKEN | docker login ghcr.io -u USERNAME --password-stdin
 
 # Push
-docker push ghcr.io/orgname/cyan-plugin-my-plugin:latest
-docker push ghcr.io/orgname/cyan-plugin-my-plugin:1.0.0
+docker push ghcr.io/orgname/my-plugin:latest
+docker push ghcr.io/orgname/my-plugin:1.0.0
 ```
 
 ```bash
@@ -65,7 +66,7 @@ docker push ghcr.io/orgname/cyan-plugin-my-plugin:1.0.0
 docker login registry.company.com
 
 # Push
-docker push registry.company.com/cyan-plugins/my-plugin:latest
+docker push registry.company.com/plugins/my-plugin:latest
 ```
 
 </Tabs>
@@ -74,26 +75,30 @@ docker push registry.company.com/cyan-plugins/my-plugin:latest
 
 ```bash
 # Pull the image to verify
-docker pull username/cyan-plugin-my-plugin:latest
+docker pull username/my-plugin:latest
 
 # Run a test
-docker run --rm username/cyan-plugin-my-plugin:latest
+docker run --rm username/my-plugin:latest
 ```
 
 </Steps>
 
+<Callout type="warn">
+Pushing to a container registry is only part of the process. You must also register your plugin with the CyanPrint registry (Zinc) for the system to discover and use it. See [Register Your Plugin](#register-your-plugin) below.
+</Callout>
+
 ## Naming Convention
 
-Follow a consistent naming pattern:
+Use the `username/plugin-name` or `org/plugin-name` format for your Docker images:
 
 | Pattern | Example | Description |
 |---------|---------|-------------|
 | `org/plugin-name` | `atomi/setup-plugin` | Organization namespace |
-| `username/cyan-plugin-name` | `johndoe/cyan-plugin-git-init` | User namespace |
+| `username/plugin-name` | `johndoe/git-init` | User namespace |
 | `registry/org/plugin-name` | `ghcr.io/atomi/plugins/setup` | Full registry path |
 
 <Callout type="info">
-Use `cyan-plugin-` prefix or similar to distinguish plugins from other Docker images.
+The system uses the `username/name[:version]` format to reference plugins in templates. Container names are auto-generated internally by the system.
 </Callout>
 
 ## Versioning
@@ -128,10 +133,11 @@ plugins:
 
   - name: org/my-plugin:latest  # Always latest
     config: {}
-
-  - name: org/my-plugin:1       # Latest 1.x.x
-    config: {}
 ```
+
+<Callout type="info">
+Version references are exact matches or `latest`. The system does not perform semantic version range matching (e.g., `org/plugin:1` will not resolve to the latest 1.x.x).
+</Callout>
 
 ## Automation
 
@@ -176,6 +182,10 @@ jobs:
             ghcr.io/${{ github.repository_owner }}/my-plugin:${{ steps.version.outputs.VERSION }}
 ```
 
+<Callout type="warn">
+This workflow pushes the Docker image to GHCR only. You must also register the plugin with the CyanPrint registry for the system to discover it.
+</Callout>
+
 ### CI/CD Pipeline
 
 ```yaml
@@ -200,6 +210,28 @@ publish:
     - docker push registry.company.com/plugins/my-plugin:$CI_COMMIT_TAG
 ```
 
+## Register Your Plugin
+
+After pushing your Docker image to a container registry, you must register the plugin with the CyanPrint registry (Zinc) for the system to discover and use it.
+
+The CyanPrint registry stores plugin metadata including:
+
+- **Docker Reference**: The full Docker image path (e.g., `ghcr.io/org/my-plugin`)
+- **Docker Tag**: The version tag (e.g., `1.0.0`, `latest`)
+- **Plugin metadata**: Information from your plugin's `cyan.yaml`
+
+<Callout type="info">
+For details on registering your plugin with the CyanPrint registry, refer to the [Plugin Registry](/developer/plugins/reference/registry) documentation.
+</Callout>
+
+### Verify Registration
+
+To verify your plugin is properly registered:
+
+1. Ensure the Docker image is accessible from the container registry
+2. Confirm the plugin metadata is registered in the CyanPrint registry
+3. Test by using the plugin in a template generation
+
 ## Documentation
 
 Include usage documentation with your plugin:
@@ -211,6 +243,13 @@ Include usage documentation with your plugin:
 
 A CyanPrint plugin that [description].
 
+## Configuration
+
+| Option | Type | Default | Description |
+|--------|------|---------|-------------|
+| `option1` | `string` | `""` | Description of option1 |
+| `option2` | `boolean` | `false` | Description of option2 |
+
 ## Usage
 
 Add to your template's `cyan.yaml`:
@@ -220,15 +259,8 @@ plugins:
   - name: org/my-plugin:1.0.0
     config:
       option1: value1
-      option2: value2
+      option2: true
 \`\`\`
-
-## Configuration
-
-| Option | Type | Default | Description |
-|--------|------|---------|-------------|
-| `option1` | `string` | `""` | Description |
-| `option2` | `boolean` | `false` | Description |
 ```
 
 ## Related

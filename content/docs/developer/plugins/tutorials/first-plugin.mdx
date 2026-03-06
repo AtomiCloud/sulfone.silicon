@@ -36,10 +36,10 @@ bun add @atomicloud/cyan-sdk
 Create `index.ts`:
 
 ```ts
-import { StartPluginWithLambda } from '@atomicloud/cyan-sdk';
+import { StartPluginWithLambda, PluginOutput } from '@atomicloud/cyan-sdk';
 import { $ } from 'bun';
 
-StartPluginWithLambda(async (input) => {
+StartPluginWithLambda(async (input): Promise<PluginOutput> => {
   const { directory, config } = input;
 
   // Cast config to expected type
@@ -79,7 +79,7 @@ StartPluginWithLambda(async (input) => {
 Create `Dockerfile`:
 
 ```dockerfile
-FROM oven/bun:1.1.31
+FROM oven/bun:1.0.11
 
 WORKDIR /app
 
@@ -87,7 +87,8 @@ WORKDIR /app
 LABEL cyanprint.dev=true
 
 # Install dependencies
-COPY package.json bun.lockb* ./
+COPY package.json .
+COPY bun.lockb .
 RUN bun install
 
 # Copy plugin code
@@ -107,11 +108,11 @@ Entry point for plugin logic. Receives one argument:
 
 | Argument | Type | Purpose |
 |----------|------|---------|
-| `input` | `PluginInput` | Contains directory and config |
+| `input` | `CyanPluginInput` | Contains directory and config |
 
 Unlike processors, plugins don't receive a file helper - they work directly with the filesystem.
 
-### PluginInput
+### CyanPluginInput
 
 | Property | Type | Description |
 |----------|------|-------------|

@@ -11,7 +11,7 @@ Register a plugin function that handles post-processing after file generation.
 
 ```ts
 function StartPluginWithLambda(
-  handler: (input: PluginInput) => Promise<PluginOutput>
+  handler: (input: CyanPluginInput) => Promise<PluginOutput>
 ): void;
 ```
 
@@ -19,7 +19,7 @@ function StartPluginWithLambda(
 
 | Parameter | Type | Description |
 |-----------|------|-------------|
-| `handler` | `(input: PluginInput) => Promise<PluginOutput>` | Async function that processes the generated files |
+| `handler` | `(input: CyanPluginInput) => Promise<PluginOutput>` | Async function that processes the generated files |
 
 ## Usage
 

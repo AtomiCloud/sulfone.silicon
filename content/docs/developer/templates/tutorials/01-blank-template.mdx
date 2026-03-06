@@ -15,6 +15,7 @@ Create a template using the meta template. This is the starting point for all te
 - Docker installed and running
 - CyanPrint CLI installed
 - Node.js 18+ (for local development)
+- Bun (runtime used in Docker containers)
 
 ## Create Project
 
@@ -42,6 +43,7 @@ The generated project includes:
 my-first-template/
 ├── cyan/
 │   ├── index.ts          # Template logic
+│   ├── package.json      # SDK dependencies
 │   ├── template.Dockerfile
 │   └── blob.Dockerfile
 ├── cyan.yaml             # Template metadata
@@ -74,13 +76,13 @@ StartTemplateWithLambda(async (i, d) => {
 |------|-------------|
 | `StartTemplateWithLambda` | Entry point for template logic |
 | `i` | IInquirer - ask questions |
-| `d` | IDefine - access deterministic values |
+| `d` | IDeterminism - access deterministic values via `get(key, origin)` |
 | `processors` | List of file processors to run |
 | `GlobType.Copy` | Copy files without processing |
 
 ## Template Files
 
-Create your template files in `cyan/templates`:
+Create your template files in `cyan/templates` (the directory name is configurable via the `root` property in your processor config):
 
 ```bash
 mkdir -p cyan/templates

@@ -7,16 +7,16 @@ description: Type definitions for processor interfaces
 
 Type definitions for the data structures passed to and returned from processors.
 
-## ProcessorInput
+## CyanProcessorInput
 
 The input object passed to the processor handler.
 
 ### Definition
 
 ```ts
-interface ProcessorInput {
-  readDirectory: string;
-  writeDirectory: string;
+interface CyanProcessorInput {
+  readDir: string;
+  writeDir: string;
   globs: CyanGlob[];
   config: unknown;
 }
@@ -26,8 +26,8 @@ interface ProcessorInput {
 
 | Property | Type | Description |
 |----------|------|-------------|
-| `readDirectory` | `string` | Path to source files |
-| `writeDirectory` | `string` | Path for output files |
+| `readDir` | `string` | Path to source files |
+| `writeDir` | `string` | Path for output files |
 | `globs` | `CyanGlob[]` | File patterns from template |
 | `config` | `unknown` | Configuration from template |
 
@@ -35,20 +35,20 @@ interface ProcessorInput {
 
 | Property | Typical Value |
 |----------|--------------|
-| `readDirectory` | `/workspace/cyanprint/` |
-| `writeDirectory` | `/workspace/output/` |
+| `readDir` | `/workspace/cyanprint/` |
+| `writeDir` | `/workspace/output/` |
 
 ### Usage
 
 ```ts
 StartProcessorWithLambda(async (input, fileHelper) => {
-  console.log('Reading from:', input.readDirectory);
-  console.log('Writing to:', input.writeDirectory);
+  console.log('Reading from:', input.readDir);
+  console.log('Writing to:', input.writeDir);
   console.log('Globs:', input.globs);
   console.log('Config:', input.config);
 
-  // Always return writeDirectory
-  return { directory: input.writeDirectory };
+  // Always return writeDir
+  return { directory: input.writeDir };
 });
 ```
 
@@ -79,7 +79,7 @@ StartProcessorWithLambda(async (input, fileHelper) => {
   // ... processing ...
 
   // Must return the write directory
-  return { directory: input.writeDirectory };
+  return { directory: input.writeDir };
 });
 ```
 
@@ -93,9 +93,10 @@ Defines which files to process.
 
 ```ts
 interface CyanGlob {
-  root: string;
+  root?: string | null;
   glob: string;
-  exclude?: string[];
+  exclude: string[];
+  type: GlobType;
 }
 ```
 
@@ -103,32 +104,56 @@ interface CyanGlob {
 
 | Property | Type | Required | Description |
 |----------|------|----------|-------------|
-| `root` | `string` | Yes | Base directory for glob |
+| `root` | `string \| null` | No | Base directory for glob |
 | `glob` | `string` | Yes | Glob pattern |
-| `exclude` | `string[]` | No | Patterns to exclude |
+| `exclude` | `string[]` | Yes | Patterns to exclude (can be empty array) |
+| `type` | `GlobType` | Yes | Type of glob operation |
 
 ### Examples
 
 ```ts
 // All files in templates directory
-{ root: 'templates', glob: '**/*' }
+{ root: 'templates', glob: '**/*', exclude: [], type: GlobType.Template }
 
 // Only markdown files
-{ root: 'docs', glob: '**/*.md' }
+{ root: 'docs', glob: '**/*.md', exclude: [], type: GlobType.Template }
 
 // TypeScript files excluding tests
 {
   root: 'src',
   glob: '**/*.ts',
-  exclude: ['**/*.test.ts', '**/*.spec.ts']
+  exclude: ['**/*.test.ts', '**/*.spec.ts'],
+  type: GlobType.Template
 }
 
 // Multiple patterns (as array element)
 [
-  { root: 'src', glob: '**/*.ts' },
-  { root: 'styles', glob: '**/*.css' }
+  { root: 'src', glob: '**/*.ts', exclude: [], type: GlobType.Template },
+  { root: 'styles', glob: '**/*.css', exclude: [], type: GlobType.Template }
 ]
 ```
+
+---
+
+## GlobType
+
+Enum defining the type of glob operation.
+
+### Definition
+
+```ts
+enum GlobType {
+  Template = 0,
+  Copy = 1
+}
+```
+
+### Values
+
+| Value | Number | Description |
+|-------|--------|-------------|
+| `Template` | `0` | Files are processed as templates |
+| `Copy` | `1` | Files are copied without processing |
 
 ### Glob Syntax
 
@@ -147,7 +172,7 @@ interface CyanGlob {
 
 The `config` property is typed as `unknown`. Cast to your expected type:
 
-### Definition
+### Definitions
 
 ```ts
 // In your processor
@@ -218,8 +243,8 @@ StartProcessorWithLambda(async (input, fileHelper) => {
 
   // Log input information
   console.log('Processor Input:');
-  console.log('  Read directory:', input.readDirectory);
-  console.log('  Write directory:', input.writeDirectory);
+  console.log('  Read directory:', input.readDir);
+  console.log('  Write directory:', input.writeDir);
   console.log('  Globs:', JSON.stringify(input.globs, null, 2));
   console.log('  Config:', JSON.stringify(config, null, 2));
 
@@ -240,7 +265,7 @@ StartProcessorWithLambda(async (input, fileHelper) => {
   });
 
   // Return output
-  return { directory: input.writeDirectory };
+  return { directory: input.writeDir };
 });
 ```
 

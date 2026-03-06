@@ -7,21 +7,19 @@ description: Understanding template versions, updates, and deprecation
 
 ## Versioning
 
-Templates use semantic versioning (MAJOR.MINOR.PATCH).
+Templates use auto-incrementing integer versions (1, 2, 3, ...).
 
-- **MAJOR**: Breaking changes
-- **MINOR**: New features, backward compatible
-- **PATCH**: Bug fixes
+Each time you publish a template with `cyanprint push`, a new version is automatically created with the next integer. Version numbers have no semantic meaning - they simply track the order of publication.
 
 ## Updates
 
-When a template is updated, you can use the `cyanprint update` command to bring your project up to date while preserving your customizations.
+When a template is updated, you can use the `cyanprint update` command to bring your project up to date while preserving your customizations. The "latest" version refers to the highest integer version number available in the registry.
 
 See [Update a Project](/user/how-to/update-project) for the how-to guide.
 
 ## Deprecation
 
-Templates may be deprecated by their maintainers. Deprecated templates remain available but show a warning when used.
+Template deprecation is not currently supported. To indicate a template is no longer maintained, update the template description or readme to note this.
 
 ## Related
 

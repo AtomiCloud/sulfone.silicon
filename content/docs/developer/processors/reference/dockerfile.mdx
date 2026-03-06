@@ -7,12 +7,12 @@ import { Callout } from 'fumadocs-ui/components/callout';
 
 # Processor Dockerfile
 
-Processors run as Docker containers. The Dockerfile defines the container environment.
+Processors run as Docker containers. The Dockerfile defines the container environment. The examples below show recommended patterns for Bun/TypeScript processors. Python and .NET have different patterns documented in their respective sections.
 
 ## Minimal Dockerfile
 
 ```dockerfile
-FROM oven/bun:1.1.31
+FROM oven/bun:1.3.8
 
 WORKDIR /app
 
@@ -20,8 +20,9 @@ WORKDIR /app
 LABEL cyanprint.dev=true
 
 # Install dependencies
-COPY package.json bun.lockb* ./
-RUN bun install --frozen-lockfile
+COPY package.json .
+COPY bun.lockb .
+RUN bun install
 
 # Copy processor code
 COPY . .
@@ -58,6 +59,12 @@ CMD ["bun", "run", "index.ts"]
 
 # Node.js
 CMD ["node", "index.js"]
+
+# Python
+CMD ["python", "-u", "main.py"]
+
+# .NET (use ENTRYPOINT instead)
+ENTRYPOINT ["dotnet", "Processor.dll"]
 ```
 
 ## Using Node.js
@@ -81,24 +88,74 @@ COPY . .
 CMD ["node", "index.js"]
 ```
 
+## Using Python
+
+Python processors use a different pattern:
+
+```dockerfile
+FROM python:3.12.12
+
+WORKDIR /app
+
+LABEL cyanprint.dev=true
+
+# Install dependencies
+COPY requirements.txt .
+RUN pip install --no-cache-dir -r requirements.txt
+
+# Copy processor code
+COPY . .
+
+CMD ["python", "-u", "main.py"]
+```
+
+## Using .NET
+
+.NET processors use multi-stage builds and require explicit port configuration:
+
+```dockerfile
+FROM mcr.microsoft.com/dotnet/aspnet:8.0 AS base
+WORKDIR /app
+
+FROM --platform=$BUILDPLATFORM mcr.microsoft.com/dotnet/sdk:8.0 AS build
+ARG TARGETARCH
+WORKDIR /src
+COPY ["Processor.csproj", "./"]
+RUN dotnet restore -a $TARGETARCH "Processor.csproj"
+COPY . .
+WORKDIR "/src/"
+RUN dotnet build "Processor.csproj" -a $TARGETARCH -c Release -o /app/build
+
+FROM build AS publish
+RUN dotnet publish "Processor.csproj" -a "$TARGETARCH" -c Release -o /app/publish /p:UseAppHost=false
+
+FROM base AS final
+LABEL cyanprint.dev=true
+ENV ASPNETCORE_URLS=http://+:5551
+WORKDIR /app
+COPY --from=publish /app/publish .
+ENTRYPOINT ["dotnet", "Processor.dll"]
+```
+
 ## Multi-Stage Build
 
 For smaller images with compiled code:
 
 ```dockerfile
 # Build stage
-FROM oven/bun:1.1.31 AS builder
+FROM oven/bun:1.3.8-alpine AS builder
 
 WORKDIR /app
 
-COPY package.json bun.lockb* ./
-RUN bun install --frozen-lockfile
+COPY package.json .
+COPY bun.lockb .
+RUN bun install
 
 COPY . .
 RUN bun build index.ts --outdir=dist --target=bun
 
 # Runtime stage
-FROM oven/bun:1.1.31-slim
+FROM oven/bun:1.3.8-alpine
 
 WORKDIR /app
 
@@ -148,11 +205,13 @@ ENV PROCESSOR_DEBUG=false
 
 ```dockerfile
 # Good: Specific version
-FROM oven/bun:1.1.31
+FROM oven/bun:1.3.8
 
 # Avoid: Latest (unpredictable)
 FROM oven/bun:latest
 ```
+
+Choose a version that matches your development environment. Current stable versions include `1.3.8` and later.
 
 ### 2. Minimize Layers
 
@@ -183,19 +242,29 @@ tests/
 .env*
 ```
 
-### 4. Lock Dependencies
+### 4. Copy Lockfile Separately
 
 ```dockerfile
-# Good: Frozen lockfile
-RUN bun install --frozen-lockfile
-
-# Avoid: May change versions
+# Good: Separate COPY commands
+COPY package.json .
+COPY bun.lockb .
 RUN bun install
+
+# Avoid: Glob pattern (may silently skip lockfile)
+COPY package.json bun.lockb* ./
 ```
 
 <Callout type="info">
-Processors should be deterministic. Always use locked dependencies to ensure consistent behavior.
+Processors should be deterministic. Always include your lockfile to ensure consistent dependency versions across builds.
 </Callout>
+
+## Port Configuration
+
+Processors communicate over port 5551 by default. The SDKs handle this automatically for Bun and Python:
+
+- **Bun/Node.js SDK**: Listens on port 5551 automatically
+- **Python SDK**: Listens on port 5551 automatically
+- **.NET SDK**: Requires explicit configuration: `ENV ASPNETCORE_URLS=http://+:5551`
 
 ## Full Example
 
@@ -203,13 +272,14 @@ Processors should be deterministic. Always use locked dependencies to ensure con
 #syntax=docker/dockerfile:1
 
 # Build stage
-FROM oven/bun:1.1.31-alpine AS builder
+FROM oven/bun:1.3.8-alpine AS builder
 
 WORKDIR /app
 
 # Install build dependencies
-COPY package.json bun.lockb* ./
-RUN bun install --frozen-lockfile
+COPY package.json .
+COPY bun.lockb .
+RUN bun install
 
 # Build
 COPY tsconfig.json ./
@@ -218,7 +288,7 @@ COPY index.ts ./
 RUN bun build index.ts --outdir=dist --target=bun --minify
 
 # Runtime stage
-FROM oven/bun:1.1.31-alpine
+FROM oven/bun:1.3.8-alpine
 
 WORKDIR /app
 
@@ -231,16 +301,13 @@ LABEL org.opencontainers.image.description="My custom processor"
 COPY --from=builder /app/dist/index.js ./
 
 # Production dependencies only
-COPY package.json bun.lockb* ./
-RUN bun install --frozen-lockfile --production
+COPY package.json .
+COPY bun.lockb .
+RUN bun install --production
 
 # Set environment
 ENV NODE_ENV=production
 ENV LOG_LEVEL=info
-
-# Health check (optional)
-HEALTHCHECK --interval=30s --timeout=3s \
-  CMD bun -e "process.exit(0)"
 
 CMD ["bun", "run", "index.js"]
 ```

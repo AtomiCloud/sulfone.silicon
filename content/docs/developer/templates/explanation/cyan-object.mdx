@@ -10,6 +10,8 @@ The configuration object returned by `StartTemplateWithLambda` is the heart of e
 ## Overview
 
 ```ts
+import { StartTemplateWithLambda } from '@atomicloud/cyan-sdk';
+
 StartTemplateWithLambda(async (i, d) => {
   return {
     processors: [/* ... */],
@@ -28,39 +30,39 @@ This object tells CyanPrint:
 ### Top Level
 
 ```ts
-interface ICyanConfig {
-  processors: IProcessor[];  // Required
-  plugins?: IPlugin[];       // Optional
+interface Cyan {
+  processors: CyanProcessor[];  // Required
+  plugins: CyanPlugin[];        // Required
 }
 ```
 
 ### Processor
 
 ```ts
-interface IProcessor {
+interface CyanProcessor {
   name: string;              // Processor identifier
-  files: IFileGroup[];       // Files to process
-  config: Record<string, any>; // Processor configuration
+  files: CyanGlob[];         // Files to process
+  config: unknown;           // Processor configuration
 }
 ```
 
 ### File Group
 
 ```ts
-interface IFileGroup {
-  root: string;      // Source directory
-  glob: string;      // Pattern to match
-  exclude: string[]; // Patterns to exclude
-  type: GlobType;    // How to process
+interface CyanGlob {
+  root?: string | null;  // Source directory (optional)
+  glob: string;          // Pattern to match
+  exclude: string[];     // Patterns to exclude
+  type: GlobType;        // How to process
 }
 ```
 
 ### Plugin
 
 ```ts
-interface IPlugin {
-  name: string;              // Plugin identifier
-  config: Record<string, any>; // Plugin configuration
+interface CyanPlugin {
+  name: string;        // Plugin identifier
+  config: unknown;     // Plugin configuration
 }
 ```
 
@@ -68,20 +70,18 @@ interface IPlugin {
 
 <Mermaid chart={`graph TD
     A[Start] --> B[Template Code]
-    B --> C[Return ICyanConfig]
+    B --> C[Return Cyan]
     C --> D[For each Processor]
-    D --> E[For each FileGroup]
+    D --> E[For each CyanGlob]
     E --> F{GlobType?}
     F -->|Template| G[Process with vars]
     F -->|Copy| H[Copy as-is]
-    F -->|Ignore| I[Skip]
-    G --> J[Output Files]
-    H --> J
-    I --> E
-    J --> D
-    D --> K[For each Plugin]
-    K --> L[Run Plugin]
-    L --> M[Complete]
+    G --> I[Output Files]
+    H --> I
+    I --> D
+    D --> J[For each Plugin]
+    J --> K[Run Plugin]
+    K --> L[Complete]
 `} />
 
 ## Processor Selection
@@ -91,6 +91,8 @@ interface IPlugin {
 The `cyan/default` processor uses Eta templating:
 
 ```ts
+import { GlobType } from '@atomicloud/cyan-sdk';
+
 {
   name: 'cyan/default',
   files: [/* ... */],
@@ -123,6 +125,8 @@ Use custom processors for specialized needs:
 Each file group specifies a set of files and how to process them:
 
 ```ts
+import { GlobType } from '@atomicloud/cyan-sdk';
+
 files: [
   // Markdown files - template processing
   { root: 'templates', glob: '**/*.md', exclude: [], type: GlobType.Template },
@@ -133,10 +137,14 @@ files: [
   // Images - copy only
   { root: 'templates', glob: '**/*.png', exclude: [], type: GlobType.Copy },
 
-  // Test files - skip
-  { root: 'templates', glob: '**/*.test.*', exclude: [], type: GlobType.Ignore }
+  // Test files - exclude from processing
+  { root: 'templates', glob: '**/*', exclude: ['**/*.test.*'], type: GlobType.Template }
 ]
 ```
+
+:::note
+To skip files, use the `exclude` array in your file group rather than a separate ignore type. The `GlobType` enum only has `Template` (0) and `Copy` (1) values.
+:::
 
 ### Processing Order
 
@@ -147,6 +155,8 @@ Files are processed in the order they appear in the array. Later entries can ove
 Variables flow from questions to processors:
 
 ```ts
+import { StartTemplateWithLambda, GlobType } from '@atomicloud/cyan-sdk';
+
 const name = await i.text('Name?', 'project.name', '...');
 
 return {
@@ -159,7 +169,8 @@ return {
         date: new Date().toISOString()
       }
     }
-  }]
+  }],
+  plugins: []  // Required field, can be empty
 };
 ```
 
@@ -176,6 +187,8 @@ Generated on: var__date__
 Plugins run after all processors complete:
 
 ```ts
+import { StartTemplateWithLambda } from '@atomicloud/cyan-sdk';
+
 return {
   processors: [/* ... */],
   plugins: [

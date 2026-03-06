@@ -37,7 +37,7 @@ StartProcessorWithLambda(async (input, fileHelper) => {
   // Copy images without loading
   fileHelper.copy({ root: 'assets', glob: '**/*.{png,jpg,svg}' });
 
-  return { directory: input.writeDirectory };
+  return { directory: input.writeDir };
 });
 ```
 
@@ -58,7 +58,7 @@ StartProcessorWithLambda(async (input, fileHelper) => {
     exclude: ['**/*.tmp', '**/*.bak']
   });
 
-  return { directory: input.writeDirectory };
+  return { directory: input.writeDir };
 });
 ```
 
@@ -90,7 +90,7 @@ StartProcessorWithLambda(async (input, fileHelper) => {
   fileHelper.copy({ root: 'images', glob: '**/*' });
   fileHelper.copy({ root: 'styles', glob: '**/*.css' });
 
-  return { directory: input.writeDirectory };
+  return { directory: input.writeDir };
 });
 ```
 
@@ -111,7 +111,7 @@ StartProcessorWithLambda(async (input, fileHelper) => {
   fileHelper.copy({ root: 'binaries', glob: '**/*' });
   fileHelper.copy({ root: 'node_modules', glob: '**/*' });
 
-  return { directory: input.writeDirectory };
+  return { directory: input.writeDir };
 });
 ```
 

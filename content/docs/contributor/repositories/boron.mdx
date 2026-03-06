@@ -5,7 +5,7 @@ description: The CyanPrint execution coordinator
 
 # sulfone.boron
 
-Boron is the execution coordinator that manages container-based template execution. It handles job scheduling, resource management, and container lifecycle.
+Boron is the execution coordinator that manages container-based template execution. It handles container lifecycle, template warming, processor/plugin execution, and file operations.
 
 ## Repository
 
@@ -15,138 +15,133 @@ Boron is the execution coordinator that manages container-based template executi
 
 | Technology | Purpose |
 | ---------- | ------- |
-| Rust | Primary language for performance |
-| Tokio | Async runtime |
-| Tonic | gRPC server and client |
-| Docker/bollard | Container management |
-| SQLx | Database access |
+| Go 1.24 | Primary language |
+| Gin | HTTP/REST framework |
+| urfave/cli | CLI framework |
+| Docker | Container management |
+| google/uuid | UUID generation |
 
 ## Key Files
 
 | Path | Description |
 | ---- | ----------- |
-| `src/main.rs` | Application entry point |
-| `src/scheduler/` | Job scheduling logic |
-| `src/executor/` | Container execution management |
-| `src/api/` | gRPC API definitions |
-| `src/resources/` | Resource limit management |
+| `main.go` | Application entry point with CLI configuration |
+| `server.go` | Gin HTTP server and route definitions |
+| `model.go` | Data models |
+| `docker_executor/` | Docker container execution management |
 
 ## Architecture
 
-<Mermaid chart={`flowchart TB
+<Mermaid chart={`
+flowchart TB
     subgraph "Boron Service"
-        API[gRPC API] --> QUEUE[Job Queue]
-        QUEUE --> SCHED[Scheduler]
-        SCHED --> EXEC[Executor Pool]
+        API[REST HTTP API<br/>Gin :9000] --> EXEC[Executor Pool]
+        EXEC --> WARM[Warm Container Pool]
+        EXEC --> RUN[Run Containers]
     end
 
-    subgraph "Executor Nodes"
-        EXEC --> NODE1[Node 1]
-        EXEC --> NODE2[Node 2]
-        EXEC --> NODEN[Node N]
+    subgraph "Container Types"
+        RUN --> TPL[Template Container]
+        RUN --> PROC[Processor Container]
+        RUN --> PLUG[Plugin Container]
+        RUN --> MERGE[Merger Container]
     end
 
-    subgraph "Containers"
-        NODE1 --> C1[Template Container]
-        NODE2 --> C2[Processor Container]
-        NODEN --> C3[Plugin Container]
+    subgraph "Docker Network"
+        TPL --> NET[cyanprint network]
+        PROC --> NET
+        PLUG --> NET
+        MERGE --> NET
     end
 
-    DB[(PostgreSQL)] --> QUEUE
+    REG[Zinc Registry] --> EXEC
 `} />
 
 ## API
 
-Boron exposes a gRPC API for job management:
+Boron exposes a REST HTTP API on port 9000:
 
-```protobuf
-service Executor {
-    rpc SubmitJob(JobRequest) returns (JobResponse);
-    rpc GetJobStatus(JobStatusRequest) returns (JobStatus);
-    rpc StreamJobOutput(JobStreamRequest) returns (stream FileChunk);
-    rpc CancelJob(CancelRequest) returns (CancelResponse);
-}
-```
+| Method | Endpoint | Description |
+| ------ | -------- | ----------- |
+| GET | `/` | Health check |
+| POST | `/executor` | Start a new execution session |
+| DELETE | `/executor/:sessionId` | Stop and remove execution session |
+| POST | `/executor/:sessionId` | Execute in existing session |
+| POST | `/executor/:sessionId/warm` | Warm executor for session |
+| POST | `/template/warm` | Warm template containers |
+| POST | `/merge/:sessionId` | Merge execution results |
+| POST | `/zip` | Create ZIP archive |
+| POST | `/proxy/template/:cyanId/api/template/init` | Proxy template initialization |
+| POST | `/proxy/template/:cyanId/api/template/validate` | Proxy template validation |
 
-## Job Lifecycle
+## Container Lifecycle
 
-<Mermaid chart={`stateDiagram-v2
-    [*] --> Queued: Submit
-    Queued --> Scheduled: Assign Node
-    Scheduled --> Running: Start Container
-    Running --> Streaming: Generate Output
-    Streaming --> Completed: Success
-    Running --> Failed: Error
-    Running --> Timeout: Exceed Limit
-    Completed --> [*]
-    Failed --> [*]
-    Timeout --> [*]
+<Mermaid chart={`
+stateDiagram-v2
+    [*] --> Warm: Pre-warm container
+    Warm --> Start: Execute request
+    Start --> Execute: Run container
+    Execute --> Clean: Completion
+    Clean --> [*]
+    Execute --> Error: Failure
+    Error --> Clean
 `} />
 
 ## Resource Management
 
-Boron enforces resource limits on containers:
+Boron uses CPU-based parallelism for execution:
 
-```yaml
-# Default limits
-resources:
-  cpu: "1"
-  memory: "512Mi"
-  timeout: "5m"
-
-# Per-template overrides can be specified
-template_overrides:
-  heavy-template:
-    cpu: "4"
-    memory: "4Gi"
-    timeout: "30m"
+```go
+// Parallelism is based on available CPUs
+cpu := runtime.NumCPU()
 ```
+
+Execution is managed through a `ParallelismLimit` mechanism rather than explicit resource limits per container.
 
 ## Building
 
 ```bash
-# Debug build
-cargo build
-
-# Release build
-cargo build --release
+# Build
+go build
 
 # Run tests
-cargo test
+go test ./...
 
 # Run locally (requires Docker)
-cargo run -- --config config/local.yaml
+go run . --registry <registry-endpoint>
 ```
 
 ## Configuration
 
-```yaml
-# boron-config.yaml
-server:
-  grpc_addr: "0.0.0.0:50051"
+Boron uses CLI flags for configuration:
 
-database:
-  url: "postgresql://localhost/boron"
-
-container_runtime:
-  socket: "/var/run/docker.sock"
-  network: "cyan-bridge"
-
-scheduler:
-  max_concurrent_jobs: 100
-  job_timeout_default: "5m"
-
-resources:
-  default_cpu: "1"
-  default_memory: "512Mi"
+```bash
+boron --registry <zinc-registry-endpoint>
 ```
+
+The `--registry` flag specifies the Zinc registry endpoint for container image resolution.
+
+## Container Types
+
+Boron manages several container types:
+
+| Type | Purpose |
+| ---- | ------- |
+| Template | Main template execution |
+| Processor | Post-processing operations |
+| Plugin | Plugin extensions |
+| Merger | Result merging operations |
+
+## Volume Management
+
+Boron manages Docker volumes for workspace isolation between execution sessions using a `DockerVolumeReference` system.
 
 ## Contributing
 
 When contributing to Boron:
 
-1. Ensure all async code is properly handled with Tokio
-2. Test container isolation thoroughly
+1. Follow Go best practices for goroutine handling
+2. Test container isolation thoroughly using the Gin framework
 3. Handle resource cleanup in error paths
-4. Add metrics for new features
-5. Document API changes in protobuf files
+4. Add appropriate logging for new features
+5. Document API changes in the REST endpoint definitions

@@ -18,9 +18,10 @@ Before you begin, ensure you have the following installed:
 | Git | 2.40+ | Version control |
 | Docker | 24.0+ | Container runtime for testing |
 | Node.js | 20+ | For Argon and Silicon |
-| Rust | 1.75+ | For Iridium, Boron, Zinc |
+| Rust | 1.75+ | For Iridium |
+| Go | 1.24+ | For Boron |
+| .NET SDK | 8.0+ | For Zinc and Helium C# SDK |
 | Python | 3.11+ | For Helium Python SDK |
-| .NET SDK | 8.0+ | For Helium C# SDK |
 
 ## Quick Start
 
@@ -34,8 +35,8 @@ cd sulfone.REPO_NAME
 
 ### 2. Install Dependencies
 
-<Tabs groupId="repo" items={['Rust (Iridium/Boron/Zinc)', 'TypeScript (Argon/Silicon)', 'Python (Helium)', '.NET (Helium)']} persist>
-<Tab value="Rust (Iridium/Boron/Zinc)">
+<Tabs groupId="repo" items={['Rust (Iridium)', 'Go (Boron)', '.NET (Zinc)', 'TypeScript (Argon/Silicon)', 'Python (Helium)']} persist>
+<Tab value="Rust (Iridium)">
 
 ```bash
 # Install Rust if not already installed
@@ -46,6 +47,40 @@ cargo build
 
 # Run tests
 cargo test
+```
+
+</Tab>
+<Tab value="Go (Boron)">
+
+```bash
+# Install Go if not already installed
+# See: https://go.dev/doc/install
+
+# Download dependencies
+go mod tidy
+
+# Build the project
+go build ./...
+
+# Run tests
+go test ./...
+```
+
+</Tab>
+<Tab value=".NET (Zinc)">
+
+```bash
+# Install .NET SDK if not already installed
+# See: https://dotnet.microsoft.com/download
+
+# Restore dependencies
+dotnet restore
+
+# Build the project
+dotnet build
+
+# Run tests
+dotnet test
 ```
 
 </Tab>
@@ -70,11 +105,11 @@ bun run dev
 python -m venv .venv
 source .venv/bin/activate  # On Windows: .venv\Scripts\activate
 
-# Install dependencies
-pip install -e ".[dev]"
+# Install dependencies using poetry
+poetry install
 
 # Run tests
-pytest
+poetry run python template_test.py
 ```
 
 </Tab>
@@ -102,12 +137,8 @@ dotnet test
 # Additional setup for Iridium
 cd sulfone.iridium
 
-# Install cargo-make for task running
-cargo install cargo-make
-
-# Setup development configuration
-mkdir -p ~/.config/cyan-print
-cp config/dev.toml ~/.config/cyan-print/config.toml
+# Setup using go-task (Taskfile.yaml)
+task setup
 
 # Run CLI in development mode
 cargo run -- init test-project
@@ -119,14 +150,14 @@ cargo run -- init test-project
 # Additional setup for Boron
 cd sulfone.boron
 
-# Start local dependencies (requires Docker)
-docker-compose up -d postgres
+# Setup using go-task (Taskfile.yaml)
+task setup
 
-# Run database migrations
-sqlx migrate run
+# Build the project
+go build ./...
 
-# Start the executor
-cargo run -- --config config/local.yaml
+# Run the executor
+go run . --config config/local.yaml
 ```
 
 ### Zinc (Registry API)
@@ -135,17 +166,14 @@ cargo run -- --config config/local.yaml
 # Additional setup for Zinc
 cd sulfone.zinc
 
-# Start local dependencies
-docker-compose up -d postgres elasticsearch
+# Setup using go-task (Taskfile.yml)
+task setup
 
-# Run database migrations
-sqlx migrate run
-
-# Seed development data
-cargo run --bin seed
+# Run database migrations using Entity Framework
+dotnet ef migrations add InitialCreate --project App
 
 # Start the API server
-cargo run
+dotnet run --project App
 ```
 
 ### Argon (Web UI)
@@ -154,11 +182,11 @@ cargo run
 # Additional setup for Argon
 cd sulfone.argon
 
-# Copy environment variables
-cp .env.example .env.local
+# Create local environment file with required variables
+# Required: AUTH_SECRET, DESCOPE_ID, DESCOPE_SECRET, PUBLIC_LANDSCAPE
+cp .env .env.local
 
 # Edit .env.local with your settings
-# NEXT_PUBLIC_API_URL=http://localhost:8080
 
 # Start development server
 bun run dev
@@ -171,13 +199,13 @@ bun run dev
 cd sulfone.helium
 
 # TypeScript SDK
-cd packages/typescript
+cd sdks/node
 bun install
 bun run build
 
 # Python SDK
 cd ../python
-pip install -e ".[dev]"
+poetry install
 
 # .NET SDK
 cd ../dotnet
@@ -230,6 +258,26 @@ cargo fmt
 cargo clippy -- -D warnings
 ```
 
+### Go Projects
+
+```bash
+# Format code
+go fmt ./...
+
+# Run linter
+golangci-lint run
+```
+
+### .NET Projects
+
+```bash
+# Format code
+dotnet format
+
+# Build with warnings as errors
+dotnet build /warnaserror
+```
+
 ### TypeScript Projects
 
 ```bash
@@ -261,17 +309,20 @@ Each repository has its own test command:
 | Repository | Command |
 | ---------- | ------- |
 | Iridium | `cargo test` |
-| Boron | `cargo test` |
-| Zinc | `cargo test` |
+| Boron | `go test ./...` |
+| Zinc | `dotnet test` |
 | Argon | `bun run test` |
 | Helium (TS) | `bun run test` |
-| Helium (Python) | `pytest` |
+| Helium (Python) | `poetry run python template_test.py` |
 | Helium (.NET) | `dotnet test` |
-| Silicon | `bun run test` |
+| Silicon | N/A (no tests configured) |
 
 ### Integration Tests
 
 Some repositories have integration tests that require Docker:
+
+<Tabs groupId="repo" items={['Rust (Iridium)', 'Go (Boron)', '.NET (Zinc)']} persist>
+<Tab value="Rust (Iridium)">
 
 ```bash
 # Start test infrastructure
@@ -284,6 +335,37 @@ cargo test --features integration
 docker-compose -f docker-compose.test.yml down
 ```
 
+</Tab>
+<Tab value="Go (Boron)">
+
+```bash
+# Start test infrastructure
+docker-compose -f docker-compose.test.yml up -d
+
+# Run integration tests
+go test -tags=integration ./...
+
+# Cleanup
+docker-compose -f docker-compose.test.yml down
+```
+
+</Tab>
+<Tab value=".NET (Zinc)">
+
+```bash
+# Start test infrastructure
+docker-compose -f docker-compose.test.yml up -d
+
+# Run integration tests
+dotnet test --filter "Category=Integration"
+
+# Cleanup
+docker-compose -f docker-compose.test.yml down
+```
+
+</Tab>
+</Tabs>
+
 ## IDE Setup
 
 ### VS Code
@@ -294,10 +376,11 @@ Recommended extensions:
 {
   "recommendations": [
     "rust-lang.rust-analyzer",
+    "golang.go",
+    "ms-dotnettools.csharp",
     "bradlc.vscode-tailwindcss",
     "esbenp.prettier-vscode",
     "ms-python.python",
-    "ms-dotnettools.csharp",
     "biomejs.biome"
   ]
 }

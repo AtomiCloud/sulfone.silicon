@@ -13,31 +13,27 @@ A CyanPrint template is organized as a structured project with specific files an
 my-template/
 ├── cyan/
 │   ├── index.ts              # Template logic entry point
-│   ├── template.Dockerfile   # Template container definition
-│   ├── blob.Dockerfile       # Blob container for file storage
-│   └── templates/            # Source template files
-│       ├── README.md
-│       └── package.json
-├── cyan.yaml                 # Template metadata and configuration
-└── package.json              # Node.js dependencies
+│   ├── Dockerfile            # Template container definition
+│   └── package.json          # SDK dependencies
+├── template/                 # Source template files
+│   ├── README.md
+│   └── src/
+│       └── index.ts
+├── blob.Dockerfile           # Blob container for file storage
+└── cyan.yaml                 # Template metadata and configuration
 ```
 
 ## Directory Details
 
 ### `cyan/`
 
-Contains all template logic and source files.
+Contains all template logic and SDK dependencies.
 
 ```
 cyan/
 ├── index.ts              # Main template logic
-├── template.Dockerfile   # Docker image for template execution
-├── blob.Dockerfile       # Docker image for file storage
-└── templates/            # Source files to process
-    ├── README.md
-    ├── package.json
-    └── src/
-        └── index.ts
+├── Dockerfile            # Docker image for template execution
+└── package.json          # SDK dependencies
 ```
 
 ### `cyan/index.ts`
@@ -45,11 +41,11 @@ cyan/
 The entry point for template logic:
 
 ```ts
-import { StartTemplateWithLambda, GlobType } from '@atomicloud/cyan-sdk';
+import { StartTemplateWithLambda, IInquirer, IDeterminism, GlobType } from '@atomicloud/cyan-sdk';
 
-StartTemplateWithLambda(async (i, d) => {
+StartTemplateWithLambda(async (i: IInquirer, d: IDeterminism) => {
   // i: IInquirer - ask questions
-  // d: IDefine - get deterministic values
+  // d: IDeterminism - get deterministic values
 
   return {
     processors: [/* ... */],
@@ -58,14 +54,13 @@ StartTemplateWithLambda(async (i, d) => {
 });
 ```
 
-### `cyan/templates/`
+### `template/`
 
-Source files that will be processed and output to the user's project:
+Source files that will be processed and output to the user's project (located at root level, sibling to `cyan/`):
 
 ```
-cyan/templates/
+template/
 ├── README.md           # Template with var__name__ placeholders
-├── package.json        # Package configuration template
 ├── src/
 │   ├── index.ts        # Source code template
 │   └── config.ts
@@ -73,76 +68,102 @@ cyan/templates/
     └── logo.png        # Binary files (use GlobType.Copy)
 ```
 
+Use `GlobType.Template` for text files with variable substitution, and `GlobType.Copy` for binary files that should be copied as-is.
+
 ### `cyan.yaml`
 
 Template metadata:
 
 ```yaml
-name: myorg/my-template
-version: 1.0.0
+username: myorg
+name: my-template
 description: A description of the template
-author: Your Organization
-
-# Optional: Compose with other templates
-compose:
-  - name: shared/base-setup
-    version: "1.0.0"
+project: https://github.com/myorg/my-template
+source: https://github.com/myorg/my-template
+email: contact@myorg.com
+tags: []
+readme: cyan/README.md
+processors: []
+plugins: []
+templates: []
 ```
 
-### `package.json`
+### `cyan/package.json`
 
-SDK dependencies:
+SDK dependencies (located inside `cyan/` directory):
 
 ```json
 {
-  "name": "my-template",
-  "version": "1.0.0",
+  "name": "template",
+  "module": "index.ts",
+  "type": "module",
+  "devDependencies": {
+    "bun-types": "latest"
+  },
+  "peerDependencies": {
+    "typescript": "^5.0.0"
+  },
   "dependencies": {
-    "@atomicloud/cyan-sdk": "^1.0.0"
+    "@atomicloud/cyan-sdk": "latest"
   }
 }
 ```
 
 ## Dockerfiles
 
-### `template.Dockerfile`
+### `cyan/Dockerfile`
 
-Builds the template execution environment:
+Builds the template execution environment (located inside `cyan/` directory):
 
 ```dockerfile
-FROM node:20-alpine
+FROM oven/bun:1.1.31
+LABEL cyanprint.dev=true
 
-WORKDIR /workspace
+WORKDIR /app
 
 # Install dependencies
-COPY cyan/package.json ./
-RUN npm install
+COPY package.json .
+COPY bun.lockb .
+RUN bun install
 
 # Copy template code
-COPY cyan/ ./
+COPY . .
 
 # Run template
-CMD ["node", "index.ts"]
+CMD ["bun", "run", "index.ts"]
 ```
 
 ### `blob.Dockerfile`
 
-Stores template files for efficient transfer:
+Stores template files for efficient transfer (located at root level). Uses a multi-stage build to create a compressed archive:
 
 ```dockerfile
-FROM alpine:latest
+FROM alpine:3.21 as base
+# hadolint ignore=DL3018,DL3019
+RUN apk add tar
 
-COPY cyan/templates/ /templates/
+FROM base as build
+WORKDIR /src
+COPY . .
+RUN rm -rf cyan && mkdir -p /cyanprint/artifact && tar -czvf /cyanprint/artifact/cyan.tar.gz /src/
+
+FROM base
+LABEL cyanprint.dev=true
+COPY --from=build /cyanprint/artifact/cyan.tar.gz /cyanprint/artifact/cyan.tar.gz
+WORKDIR /workspace
+CMD ["tar", "-xzf", "/cyanprint/artifact/cyan.tar.gz", "-C", "/workspace/cyanprint", "--strip-components=1"]
 ```
 
 ## File Organization Patterns
+
+These are recommended patterns for organizing template files.
 
 ### By Type
 
 Organize by file type:
 
 ```
-cyan/templates/
+template/
 ├── docs/           # Markdown documentation
 ├── src/            # Source code
 ├── config/         # Configuration files
@@ -154,7 +175,7 @@ cyan/templates/
 Organize by feature for conditional inclusion:
 
 ```
-cyan/templates/
+template/
 ├── base/           # Always included
 ├── typescript/     # TypeScript support
 ├── docker/         # Docker configuration
@@ -170,18 +191,18 @@ When users run `cyanprint create`, the output directory contains:
 
 ```
 my-project/
-├── .cyan/
-│   └── generation.json    # Metadata for updates
+├── .cyan_state.yaml        # Metadata for updates
 ├── README.md
 ├── package.json
 └── src/
     └── index.ts
 ```
 
-The `.cyan/generation.json` file stores:
-- Template version used
-- Pin for deterministic updates
+The `.cyan_state.yaml` file stores:
+- Active template configuration
+- History of template applications
 - User answers for reproducibility
+- Deterministic states for consistent regeneration
 
 ## Related
 

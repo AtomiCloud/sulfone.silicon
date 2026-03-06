@@ -17,7 +17,7 @@ A processor is essentially a pure function:
 
 ```ts
 // Conceptual model
-output = processor(input, files)
+output = processor(input, fileHelper)
 // Same input always = same output
 ```
 
@@ -80,13 +80,15 @@ Stateless processors can be:
 ### What You CAN Do
 
 ```ts
+import { StartProcessorWithLambda } from '@atomicloud/cyan-sdk';
+
 StartProcessorWithLambda(async (input, fileHelper) => {
   // ✅ Read files through fileHelper
   const files = fileHelper.resolveAll();
 
-  // ✅ Transform content
+  // ✅ Transform content (example transformation)
   files.forEach(file => {
-    file.content = transform(file.content);
+    file.content = file.content.toUpperCase(); // or any transform
   });
 
   // ✅ Use config from template
@@ -95,13 +97,15 @@ StartProcessorWithLambda(async (input, fileHelper) => {
   // ✅ Write output files
   files.forEach(file => file.writeFile());
 
-  return { directory: input.writeDirectory };
+  return { directory: input.writeDir };
 });
 ```
 
 ### What You CAN'T Do
 
 ```ts
+import { StartProcessorWithLambda } from '@atomicloud/cyan-sdk';
+
 StartProcessorWithLambda(async (input, fileHelper) => {
   // ❌ Don't access filesystem directly
   // fs.readFileSync('/etc/passwd')
@@ -171,30 +175,53 @@ file.content = content + config.timestamp;
 
 ## Testing Stateless Processors
 
-Stateless processors are easy to test:
+Stateless processors are easy to test. Since they're pure functions of their inputs, you can test by providing mock inputs and verifying outputs:
 
 ```ts
-// Processor test
-import { processFiles } from './processor';
+import { StartProcessorWithLambda } from '@atomicloud/cyan-sdk';
+
+// Test helper to capture processor behavior
+async function runProcessorWithMocks(config: MyConfig, mockFiles: MockFile[]) {
+  const mockFileHelper = createMockFileHelper(mockFiles);
+  const mockInput = {
+    readDir: '/input',
+    writeDir: '/output',
+    globs: [],
+    config
+  };
+
+  // Execute processor with mocks
+  const processor = StartProcessorWithLambda(async (input, fileHelper) => {
+    const files = fileHelper.resolveAll();
+    files.forEach(file => {
+      file.content = file.content.replace(/{{name}}/g, (input.config as MyConfig).name);
+      file.writeFile();
+    });
+    return { directory: input.writeDir };
+  });
+
+  // Same input always produces same output
+  return processor(mockInput, mockFileHelper);
+}
 
 describe('my-processor', () => {
-  it('transforms content consistently', () => {
-    const input = {
-      content: 'Hello {{name}}',
-      relative: 'test.txt'
-    };
-
+  it('transforms content consistently', async () => {
     const config = { name: 'World' };
+    const mockFiles = [{ path: 'test.txt', content: 'Hello {{name}}' }];
 
-    // Same input always produces same output
-    const result1 = processFiles(input, config);
-    const result2 = processFiles(input, config);
+    const result1 = await runProcessorWithMocks(config, mockFiles);
+    const result2 = await runProcessorWithMocks(config, mockFiles);
 
-    expect(result1).toBe(result2);
-    expect(result1).toBe('Hello World');
+    expect(result1.directory).toBe(result2.directory);
+    // Verify transformed content
+    expect(mockFiles[0].content).toBe('Hello World');
   });
 });
 ```
+
+<Callout type="info">
+For integration testing, consider using the actual SDK with temporary directories to verify end-to-end behavior.
+</Callout>
 
 ## Benefits Summary
 

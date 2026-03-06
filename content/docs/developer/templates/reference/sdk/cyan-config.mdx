@@ -3,6 +3,8 @@ title: Cyan Config Reference
 description: Configuration structure for templates
 ---
 
+import { Callout } from 'fumadocs-ui/components/callout';
+
 # Cyan Config Reference
 
 The configuration object returned by `StartTemplateWithLambda` defines how templates are processed.
@@ -10,9 +12,9 @@ The configuration object returned by `StartTemplateWithLambda` defines how templ
 ## Structure Overview
 
 ```ts
-interface ICyanConfig {
-  processors: IProcessor[];
-  plugins?: IPlugin[];
+interface Cyan {
+  processors: CyanProcessor[];
+  plugins: CyanPlugin[];
 }
 ```
 
@@ -64,21 +66,21 @@ return {
 
 ## Processor Configuration
 
-### IProcessor Interface
+### CyanProcessor Interface
 
 ```ts
-interface IProcessor {
+interface CyanProcessor {
   name: string;           // Processor identifier
-  files: IFileGroup[];    // File groups to process
-  config: Record<string, any>;  // Processor-specific config
+  files: CyanGlob[];      // File groups to process
+  config: unknown;        // Processor-specific config
 }
 ```
 
 ### File Groups
 
 ```ts
-interface IFileGroup {
-  root: string;           // Source directory
+interface CyanGlob {
+  root?: string | null;   // Source directory (optional)
   glob: string;           // Glob pattern
   exclude: string[];      // Exclude patterns
   type: GlobType;         // Processing type
@@ -91,7 +93,6 @@ interface IFileGroup {
 |-------|----------|
 | `GlobType.Template` | Process with variable substitution |
 | `GlobType.Copy` | Copy without processing |
-| `GlobType.Ignore` | Skip entirely |
 
 ### Default Processor Config
 
@@ -99,16 +100,24 @@ The `cyan/default` processor accepts:
 
 ```ts
 config: {
-  vars: Record<string, any>,     // Variables for substitution
+  vars: Record<string, unknown>,  // Variables for substitution
   parser: {
     varSyntax: [[string, string]] // Custom tag pairs
   }
 }
 ```
 
+<Callout type="info">
+The `cyan/default` processor is the standard processor included with Cyan. The exact configuration options may vary based on the processor implementation. The `vars` type shown here is an example; the actual config type is `unknown`.
+</Callout>
+
 ## Plugins
 
 Plugins run after file generation for post-processing.
+
+<Callout type="info">
+The plugin names shown below (e.g., `cyan/init-git`, `cyan/npm-install`) are examples. Actual plugin names depend on your Cyan registry configuration.
+</Callout>
 
 ### Basic Plugin
 
@@ -169,9 +178,24 @@ import { StartTemplateWithLambda, GlobType, QuestionType } from '@atomicloud/cya
 
 StartTemplateWithLambda(async (i, d) => {
   // Collect input
-  const name = await i.text('Project name?', 'template.name', '...');
-  const typescript = await i.confirm('TypeScript?', 'template.typescript', '...');
-  const docker = await i.confirm('Docker?', 'template.docker', '...');
+  const name = await i.text({
+    type: QuestionType.Text,
+    id: 'template.name',
+    message: 'Project name?',
+    default: 'my-project'
+  });
+  const typescript = await i.confirm({
+    type: QuestionType.Confirm,
+    id: 'template.typescript',
+    message: 'TypeScript?',
+    default: true
+  });
+  const docker = await i.confirm({
+    type: QuestionType.Confirm,
+    id: 'template.docker',
+    message: 'Docker?',
+    default: false
+  });
 
   // Build file groups
   const files = [

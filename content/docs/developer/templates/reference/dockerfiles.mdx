@@ -11,105 +11,128 @@ CyanPrint templates use two Docker images: one for template execution and one fo
 
 ## Overview
 
-| Dockerfile | Purpose | Built As |
+| Dockerfile | Purpose | Location |
 |------------|---------|----------|
-| `template.Dockerfile` | Executes template logic | Template image |
-| `blob.Dockerfile` | Stores source files | Blob image |
+| `Dockerfile` | Executes template logic | `cyan/Dockerfile` |
+| `blob.Dockerfile` | Stores source files | Project root |
 
-## template.Dockerfile
+## Template Dockerfile
 
 Defines the environment where template logic runs.
 
 ### Basic Template
 
 ```dockerfile
-FROM node:20-alpine
+FROM oven/bun:1.1.31-alpine
 
-WORKDIR /workspace
+WORKDIR /app
+
+LABEL cyanprint.dev=true
 
 # Copy and install dependencies
-COPY cyan/package.json ./
-RUN npm install
+COPY package.json ./
+COPY bun.lockb ./
+RUN bun install
 
 # Copy template source
-COPY cyan/ ./
+COPY . .
 
 # Run template
-CMD ["node", "index.ts"]
+CMD ["bun", "run", "index.ts"]
 ```
 
 ### With Additional Tools
 
 ```dockerfile
-FROM node:20-alpine
+FROM oven/bun:1.1.31-alpine
+
+LABEL cyanprint.dev=true
 
 # Install additional tools
 RUN apk add --no-cache git curl
 
-WORKDIR /workspace
+WORKDIR /app
 
 # Dependencies
-COPY cyan/package.json ./
-RUN npm install
+COPY package.json ./
+COPY bun.lockb ./
+RUN bun install
 
 # Source
-COPY cyan/ ./
+COPY . .
 
-CMD ["node", "index.ts"]
+CMD ["bun", "run", "index.ts"]
 ```
 
-### Multi-Stage Build
+### Multi-Stage Build (.NET Example)
+
+For SDKs that require compilation, use multi-stage builds:
 
 ```dockerfile
 # Build stage
-FROM node:20-alpine AS builder
+FROM mcr.microsoft.com/dotnet/sdk:8.0 AS builder
 
 WORKDIR /build
-COPY cyan/package.json ./
-RUN npm install
-COPY cyan/ ./
-RUN npm run build
+COPY *.csproj ./
+RUN dotnet restore
+COPY . ./
+RUN dotnet publish -c Release -o out
 
 # Runtime stage
-FROM node:20-alpine
+FROM mcr.microsoft.com/dotnet/runtime:8.0
 
-WORKDIR /workspace
-COPY --from=builder /build/dist/ ./
-COPY cyan/templates/ ./templates/
+WORKDIR /app
+LABEL cyanprint.dev=true
 
-CMD ["node", "index.js"]
+COPY --from=builder /build/out/ ./
+
+CMD ["dotnet", "Template.dll"]
 ```
+
+<Callout type="info">
+Template Dockerfiles are built from within the `cyan/` directory. This means `COPY` paths are relative to `cyan/`, not the repository root. The SDK hosts its API on port 5550 for `/init` and `/validate` endpoints.
+</Callout>
 
 ## blob.Dockerfile
 
-Stores template files for efficient transfer to the client.
+Stores template files for efficient transfer to the client. The blob image packages template files and extracts them to `/workspace/cyanprint/` on the client.
 
-### Basic Blob
+### Production Blob (Recommended)
 
-```dockerfile
-FROM alpine:latest
-
-COPY cyan/templates/ /templates/
-```
-
-### With Multiple Directories
+Uses tar archival for efficient transfer:
 
 ```dockerfile
-FROM alpine:latest
+FROM alpine:3.21 AS base
 
-COPY cyan/templates/ /templates/
-COPY cyan/static/ /static/
-COPY cyan/configs/ /configs/
+WORKDIR /src
+
+# Copy the cyan directory contents
+COPY . ./
+
+# Remove unnecessary files and create archive
+RUN rm -rf cyan && \
+    mkdir -p /cyanprint/artifact && \
+    tar -czvf /cyanprint/artifact/cyan.tar.gz /src/
+
+# Runtime stage - extracts archive to workspace
+FROM alpine:3.21
+
+# On container start, extract files to the expected path
+CMD [ "tar", "-xzf", "/cyanprint/artifact/cyan.tar.gz", "-C", "/workspace/cyanprint", "--strip-components=1" ]
 ```
+
+<Callout type="info">
+The blob image must extract files to `/workspace/cyanprint/` for the CyanPrint runtime to access them correctly.
+</Callout>
 
 ### Minimal Blob
 
-For templates with few files:
+For simple templates with few files:
 
 ```dockerfile
-FROM scratch
+FROM alpine:3.21
 
-COPY cyan/templates/ /templates/
+COPY . /cyanprint/
 ```
 
 ## Best Practices
@@ -120,10 +143,10 @@ COPY cyan/templates/ /templates/
 
 ```dockerfile
 # Good: Specific version
-FROM node:20.11.0-alpine
+FROM oven/bun:1.1.31-alpine
 
 # Bad: Latest (unpredictable)
-FROM node:alpine
+FROM oven/bun:alpine
 ```
 
 2. **Minimize layers**
@@ -131,15 +154,22 @@ FROM node:alpine
 ```dockerfile
 # Good: Combined commands
 RUN apk add --no-cache git curl && \
-    npm install -g pnpm
+    bun install -g typescript
 
 # Bad: Multiple layers
 RUN apk add --no-cache git
 RUN apk add --no-cache curl
-RUN npm install -g pnpm
+RUN bun install -g typescript
 ```
 
-3. **Use .dockerignore**
+3. **Always include the required label**
+
+```dockerfile
+# Required for CyanPrint to identify template images
+LABEL cyanprint.dev=true
+```
+
+4. **Use .dockerignore**
 
 Create `.dockerignore` to exclude unnecessary files:
 
@@ -148,6 +178,13 @@ node_modules
 .git
 *.log
 .env
+nix
+.direnv
+flake.nix
+flake.lock
+*.md
+.vscode
+.idea
 ```
 
 ### Blob Dockerfile
@@ -155,44 +192,50 @@ node_modules
 1. **Keep it minimal**
 
 ```dockerfile
-# Good: Minimal image
-FROM alpine:latest
-COPY cyan/templates/ /templates/
+# Good: Minimal image with tar archive
+FROM alpine:3.21 AS base
+WORKDIR /src
+COPY . ./
+RUN mkdir -p /cyanprint/artifact && \
+    tar -czvf /cyanprint/artifact/cyan.tar.gz /src/
 
-# Bad: Unnecessary bloat
-FROM node:20-alpine
-RUN npm install
-COPY cyan/templates/ /templates/
+# Bad: Unnecessary bloat with runtime
+FROM oven/bun:1.1.31-alpine
+RUN bun install
+COPY . ./
 ```
 
-2. **Use consistent paths**
+2. **Use consistent extraction paths**
 
-Always copy to `/templates/` for consistency.
+Always extract to `/workspace/cyanprint/` for consistency with the CyanPrint runtime.
 
 ## Building Images
+
+<Callout type="info">
+The template Dockerfile is named `Dockerfile` and located in the `cyan/` directory. The blob Dockerfile is named `blob.Dockerfile` and located at the project root. Template images are built from within the `cyan/` directory context.
+</Callout>
 
 ### Development Build
 
 ```bash
-# Build template locally
-docker build -f cyan/template.Dockerfile -t my-template:dev .
+# Build template locally (from within cyan/ directory)
+cd cyan && docker build -t my-template:dev .
 
-# Build blob locally
-docker build -f cyan/blob.Dockerfile -t my-template-blob:dev .
+# Build blob locally (from project root)
+docker build -f blob.Dockerfile -t my-template-blob:dev .
 ```
 
 ### Production Build (Multi-Arch)
 
 ```bash
-# Build and push template
-docker buildx build --platform linux/amd64,linux/arm64 \
-  -f cyan/template.Dockerfile \
+# Build and push template (from within cyan/ directory)
+cd cyan && docker buildx build --platform linux/amd64,linux/arm64 \
   -t myorg/my-template:1.0.0 \
   --push .
 
-# Build and push blob
+# Build and push blob (from project root)
 docker buildx build --platform linux/amd64,linux/arm64 \
-  -f cyan/blob.Dockerfile \
+  -f blob.Dockerfile \
   -t myorg/my-template-blob:1.0.0 \
   --push .
 ```
@@ -208,11 +251,32 @@ Optimize for smaller images:
 | Base Image | Size | Use Case |
 |------------|------|----------|
 | `alpine` | ~5MB | Blob images |
-| `node:alpine` | ~170MB | Template execution |
-| `node:slim` | ~240MB | Need glibc |
+| `oven/bun:alpine` | ~100MB | Template execution (Bun SDK) |
+| `oven/bun:slim` | ~150MB | Template execution (need glibc) |
+| `python:slim` | ~150MB | Template execution (Python SDK) |
+| `mcr.microsoft.com/dotnet/runtime` | ~80MB | Template execution (.NET SDK) |
 
 ## Related
 
 - [Push to Registry](/developer/templates/how-to/push-to-registry) - Publishing templates
 - [Project Structure](/developer/templates/reference/project-structure) - Template organization
 - [cyan.yaml Reference](/developer/templates/reference/cyan-yaml) - Metadata configuration
+
+## Debugging
+
+To debug Dockerfile issues locally:
+
+```bash
+# Run template container interactively
+docker run -it --rm -p 5550:5550 my-template:dev sh
+
+# Verify working directory and files
+ls -la /app
+
+# Test the SDK endpoints
+curl http://localhost:5550/init
+
+# Run blob container and verify extraction paths
+docker run -it --rm my-template-blob:dev sh
+ls -la /cyanprint/
+```

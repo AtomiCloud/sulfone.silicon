@@ -47,6 +47,7 @@ StartTemplateWithLambda(async (i, d) => {
   // ===== Collect User Input =====
 
   // Basic project info
+  // Use object form when you need validation or default values
   const name = await i.text({
     type: QuestionType.Text,
     id: 'node-template.name',
@@ -60,6 +61,7 @@ StartTemplateWithLambda(async (i, d) => {
     default: 'my-project'
   });
 
+  // Use shorthand form for simple inputs without validation
   const description = await i.text(
     'Description?',
     'node-template.description',
@@ -181,7 +183,7 @@ StartTemplateWithLambda(async (i, d) => {
 
   return {
     processors: [{
-      name: 'cyan/default',
+      name: 'cyan/default',  // Uses the default processor for variable substitution
       files: templateFiles,
       config: {
         vars: {
@@ -209,6 +211,8 @@ StartTemplateWithLambda(async (i, d) => {
     }],
 
     // Add plugins for post-processing
+    // Note: Plugin availability depends on your CyanPrint installation
+    // This example uses the init-git plugin to initialize a git repository
     plugins: [
       {
         name: 'cyan/init-git',

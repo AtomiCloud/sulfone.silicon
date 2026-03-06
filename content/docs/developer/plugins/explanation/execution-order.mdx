@@ -12,29 +12,44 @@ Understanding the execution order helps you decide where to place your logic - i
 ## Pipeline Overview
 
 <Mermaid chart={`graph LR
-    A[Template] --> B[Processor 1]
-    B --> C[Processor 2]
-    C --> D[Processor N]
-    D --> E[Plugin 1]
-    E --> F[Plugin 2]
-    F --> G[Plugin N]
-    G --> H[Output]
+    A[Template] --> B[Processors<br/>Parallel]
+    B --> C[Merger]
+    C --> D[Plugin 1]
+    D --> E[Plugin 2]
+    E --> F[Plugin N]
+    F --> G[Output]
 `} />
+
+<Callout type="info">
+Processors execute **in parallel** (subject to parallelism limits), then their outputs are merged. Plugins execute **sequentially** in the order defined.
+</Callout>
 
 ## Detailed Sequence
 
 ### Phase 1: Template Collection
 
 1. User invokes template
-2. Template asks questions via `IInquirer`
+2. Template asks questions via `IInquirer` and receives `IDeterminism` for deterministic behavior
 3. Template returns `CyanConfig` with processors and plugins
 
 ```ts
-// Template index.ts
-return {
-  processors: [...],  // File transformers
-  plugins: [...]      // Post-processors
-};
+// Template index.ts - the template function signature
+import { IInquirer, IDeterminism } from '@atomicloud/cyan-sdk';
+
+export default async function(i: IInquirer, d: IDeterminism) {
+  return {
+    processors: [
+      {
+        name: 'my-processor',
+        files: { /* CyanGlob configuration */ },
+        config: { /* processor-specific config */ }
+      }
+    ],
+    plugins: [
+      { name: 'my-plugin', config: { /* plugin config */ } }
+    ]
+  };
+}
 ```
 
 ### Phase 2: Processing (Processors)
@@ -43,49 +58,74 @@ return {
     participant T as Template
     participant P1 as Processor 1
     participant P2 as Processor 2
+    participant M as Merger
     participant FS as Filesystem
 
-    T->>P1: Files + Config
-    P1->>P1: Transform content
-    P1->>P2: Transformed files
-    P2->>P2: Transform content
-    P2->>FS: Write files
+    par Parallel Execution
+        T->>P1: readDir, writeDir, globs, config
+        P1->>P1: Transform content
+        P1->>FS: Write to output dir
+    and
+        T->>P2: readDir, writeDir, globs, config
+        P2->>P2: Transform content
+        P2->>FS: Write to output dir
+    end
+    FS->>M: Collect processor outputs
+    M->>FS: Merge into final directory
 `} />
 
-For each processor in order:
+For each processor (executed in parallel):
 
-1. Processor receives input (files, config, directories)
-2. Processor reads files using `CyanFileHelper`
+1. Processor receives `ProcessorInput` with:
+   - `readDir` - Directory to read files from
+   - `writeDir` - Directory to write transformed files to
+   - `globs` - File patterns to process
+   - `config` - Processor-specific configuration
+2. Processor reads files using `CyanFileHelper` methods:
+   - `resolveAll()` - Resolve all matching files
+   - `read()` - Read file contents
+   - `get()` - Get file metadata
+   - `copy()` - Copy files directly
+   - `readAsStream()` - Read files as streams
 3. Processor transforms file content
-4. Processor writes files to output directory
-5. Output directory becomes input for next processor
+4. Processor writes files to its output directory
+5. After all processors complete, outputs are merged into final directory
 
-### Phase 3: Writing
+### Phase 3: Merge
 
-1. All transformed files are written to the output directory
-2. Directory structure is finalized
-3. No more content transformations
+After all processors complete, the Merger combines their outputs:
+
+1. Each processor's output directory is collected
+2. All outputs are merged into a single directory
+3. Conflicts are resolved according to merge rules
+4. Final merged directory is prepared for plugins
 
 ### Phase 4: Post-Processing (Plugins)
 
 <Mermaid chart={`sequenceDiagram
-    participant FS as Filesystem
+    participant M as Merged Output
     participant PL1 as Plugin 1
     participant PL2 as Plugin 2
 
-    FS->>PL1: Directory path + Config
-    PL1->>FS: Run commands/Modify files
-    PL1->>PL2: Directory path
-    PL2->>FS: Run commands/Modify files
-    PL2->>FS: Return directory
+    M->>PL1: directory + config
+    PL1->>PL1: Run commands/Modify files
+    PL1->>PL2: directory
+    PL2->>PL2: Run commands/Modify files
+    PL2->>M: Return directory
 `} />
 
-For each plugin in order:
+For each plugin (executed sequentially):
 
-1. Plugin receives directory path and config
+1. Plugin receives `PluginInput` with:
+   - `directory` - Path to the merged output directory
+   - `config` - Plugin-specific configuration
 2. Plugin runs operations (commands, file modifications)
-3. Plugin returns directory path
+3. Plugin returns `PluginOutput` with the directory path
 4. Directory passed to next plugin
+
+<Callout type="info">
+Plugins receive the **merged output** of all processors, not individual processor outputs. This means plugins work with the complete, combined result of all transformations.
+</Callout>
 
 ### Phase 5: Output
 
@@ -98,36 +138,43 @@ For each plugin in order:
 // Template configuration
 return {
   processors: [
-    { name: 'cyan/default', ... },      // Step 1: Eta templating
-    { name: 'custom/formatter', ... },  // Step 2: Format code
+    {
+      name: 'cyan/default',
+      files: { include: ['**/*'], exclude: ['node_modules/**'] },
+      config: { }
+    },
+    {
+      name: 'custom/formatter',
+      files: { include: ['**/*.ts', '**/*.tsx'] },
+      config: { formatter: 'prettier' }
+    },
   ],
   plugins: [
-    { name: 'atomi/git-init', ... },    // Step 3: Initialize git
-    { name: 'atomi/npm-install', ... }, // Step 4: Install deps
+    { name: 'my-org/git-init', config: {} },
+    { name: 'my-org/npm-install', config: {} },
   ]
 };
 ```
 
 <Mermaid chart={`graph TD
-    A[Template Files] --> B[cyan/default]
-    B --> C[var__name__ → MyProject]
-    C --> D[custom/formatter]
-    D --> E[Prettier formatting]
-    E --> F[Write to disk]
-    F --> G[atomi/git-init]
-    G --> H[git init]
-    H --> I[atomi/npm-install]
-    I --> J[npm install]
-    J --> K[Final Project]
+    A[Template Files] --> B[Processors Run in Parallel]
+    B --> C[cyan/default + custom/formatter]
+    C --> D[Merger Combines Outputs]
+    D --> E[Write Merged Files]
+    E --> F[my-org/git-init]
+    F --> G[git init]
+    G --> H[my-org/npm-install]
+    H --> I[npm install]
+    I --> J[Final Project]
 `} />
 
 ## Timing Considerations
 
 | Phase | Duration | Bottleneck |
 |-------|----------|------------|
-| Processing | Fast | File size |
-| Writing | Fast | File count |
-| Post-Processing | Variable | Network (npm install) |
+| Processing (parallel) | Fast | File size, parallelism limit |
+| Merging | Fast | File count |
+| Post-Processing (sequential) | Variable | Network (npm install) |
 
 <Callout type="info">
 Plugins can be slow (especially `npm install`). Consider making heavy operations optional via config.
@@ -137,15 +184,17 @@ Plugins can be slow (especially `npm install`). Consider making heavy operations
 
 ### During Processing
 
-- If any processor fails, the pipeline stops
-- No files are written to output
-- Error is reported to user
+- Processors execute in parallel; if one fails, others continue running
+- After parallel execution completes, the pipeline returns any errors and stops
+- Individual processor outputs may be partially written before failure is detected
+- The merge phase may not complete if errors occurred
 
 ### During Post-Processing
 
-- If a plugin fails, the pipeline stops
-- Partial files may exist
-- User may need to clean up
+- Plugins execute sequentially; if one fails, subsequent plugins do not run
+- The merged processor output already exists at this point
+- Partial plugin changes may have been applied
+- User may need to clean up manually
 
 ## Multiple Plugins
 
@@ -166,13 +215,13 @@ Consider dependencies when ordering plugins:
 ```ts
 plugins: [
   // Git must be initialized before hooks
-  { name: 'atomi/git-init', config: {} },
+  { name: 'my-org/git-init', config: {} },
   // Hooks require git
-  { name: 'atomi/husky-setup', config: {} },
+  { name: 'my-org/husky-setup', config: {} },
   // Dependencies must be installed before build
-  { name: 'atomi/npm-install', config: {} },
+  { name: 'my-org/npm-install', config: {} },
   // Build requires dependencies
-  { name: 'atomi/npm-build', config: {} },
+  { name: 'my-org/npm-build', config: {} },
 ]
 ```
 

@@ -100,29 +100,31 @@ Deep dives into concepts and architecture:
 Here's a minimal template that asks for a project name and generates a README:
 
 ```ts
-import { StartTemplateWithLambda, GlobType } from '@atomicloud/cyan-sdk';
+import { StartTemplateWithLambda, GlobType, IInquirer, IDeterminism } from '@atomicloud/cyan-sdk';
 
-StartTemplateWithLambda(async (i, d) => {
+StartTemplateWithLambda(async (i: IInquirer, d: IDeterminism) => {
   // Ask user for project name
   const name = await i.text('Project name?', 'project.name', 'Enter project name');
 
   return {
     processors: [{
       name: 'cyan/default',
-      files: [{ root: 'templates', glob: '**/*', exclude: [], type: GlobType.Template }],
+      files: [{ root: 'template', glob: '**/*', exclude: [], type: GlobType.Template }],
       config: { vars: { name } }
     }]
   };
 });
 ```
 
-Template file (`templates/README.md`):
+Template file (`template/README.md`):
 
 ```markdown
 # var__name__
 
 Welcome to your new project!
 ```
+
+The `var__name__` syntax is used by the default processor for variable substitution. Variables defined in `config.vars` are accessible using the `var__<variableName>__` pattern. See the [Default Processor](/developer/templates/explanation/default-processor) explanation for more details.
 
 ## Next Steps
 

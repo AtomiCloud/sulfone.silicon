@@ -1,6 +1,6 @@
 ---
 title: Push to Registry
-description: Build and publish your processor to a registry
+description: Build and publish your processor to a container registry and register with Zinc
 ---
 
 import { Steps } from 'fumadocs-ui/components/steps';
@@ -8,13 +8,14 @@ import { Callout } from 'fumadocs-ui/components/callout';
 
 # Push to Registry
 
-Publish your processor to a Docker registry so others can use it in their templates.
+Publish your processor to a container registry and register it with the CyanPrint registry (Zinc) so others can use it in their templates.
 
 ## Prerequisites
 
 - Docker installed and logged in
-- Access to a Docker registry (Docker Hub, GitHub Container Registry, etc.)
+- Access to a container registry (Docker Hub, GitHub GHCR, etc.)
 - Completed processor code
+- Dockerfile includes `LABEL cyanprint.dev=true` (see [Dockerfile Reference](/developer/processors/reference/dockerfile))
 
 ## Publish Process
 
@@ -52,98 +53,114 @@ docker push ghcr.io/org/my-processor:1.0.0
 docker push registry.company.com/processors/my-processor:latest
 ```
 
-### Use in Templates
+### Verify the Push
 
-Reference the published processor in your templates:
+```bash
+# Pull the image to verify
+docker pull username/my-processor:latest
+
+# Run a test
+docker run --rm username/my-processor:latest
+```
+
+</Steps>
+
+<Callout type="warn">
+Pushing to a container registry is only part of the process. You must also register your processor with the CyanPrint registry (Zinc) for the system to discover and use it. See [Register Your Processor](#register-your-processor) below.
+</Callout>
+
+## Naming Convention
+
+Use the `username/processor-name` or `org/processor-name` format for your Docker images:
+
+| Pattern | Example | Description |
+|---------|---------|-------------|
+| `org/processor-name` | `atomi/handlebars-processor` | Organization namespace |
+| `username/processor-name` | `johndoe/custom-processor` | User namespace |
+| `registry/org/processor-name` | `ghcr.io/atomi/processors/custom` | Full registry path |
+
+<Callout type="info">
+The system uses the `username/name[:version]` format to reference processors in templates. Container names are auto-generated internally by the system.
+</Callout>
+
+## Versioning
+
+### Semantic Versioning for Docker Tags
+
+Use semantic versioning for Docker image tags:
+
+```bash
+# Major version (breaking changes)
+docker tag my-processor:dev org/my-processor:2.0.0
+
+# Minor version (new features)
+docker tag my-processor:dev org/my-processor:1.1.0
+
+# Patch version (bug fixes)
+docker tag my-processor:dev org/my-processor:1.0.1
+
+# Latest tag (current stable)
+docker tag my-processor:dev org/my-processor:latest
+```
+
+### Registry Version Numbers
+
+<Callout type="info">
+The CyanPrint registry (Zinc) uses auto-incremented integer version numbers (1, 2, 3, etc.) for tracking processor versions internally. When you register a new version of your processor, the registry assigns the next integer version. These integer versions are separate from your Docker image tags.
+</Callout>
+
+### Using in Templates
+
+Templates reference processors by name with an optional version tag:
 
 ```ts
 return {
   processors: [{
-    name: 'username/my-processor:1.0.0',  // Full image reference
+    name: 'username/my-processor:1.0.0',  // Pinned Docker tag
     files: [{ root: 'templates', glob: '**/*', exclude: [], type: GlobType.Template }],
     config: { /* ... */ }
   }]
 };
 ```
 
-</Steps>
+<Callout type="info">
+Version references in templates are exact matches or `latest`. The system does not perform semantic version range matching (e.g., `org/processor:1` will not resolve to the latest 1.x.x).
+</Callout>
 
-## Naming Conventions
+## Register Your Processor
 
-### Registry Names
+After pushing your Docker image to a container registry, you must register the processor with the CyanPrint registry (Zinc) for the system to discover and use it.
 
-Follow Docker naming conventions:
+The CyanPrint registry stores processor metadata including:
 
-| Registry | Format | Example |
-|----------|--------|---------|
-| Docker Hub | `username/name` | `atomicloud/mustache-processor` |
-| GHCR | `ghcr.io/org/name` | `ghcr.io/myorg/custom-processor` |
-| Private | `registry.host/path/name` | `registry.io/team/processor` |
+- **Docker Reference**: The full Docker image path (e.g., `ghcr.io/org/my-processor`)
+- **Docker Tag**: The version tag (e.g., `1.0.0`, `latest`)
+- **Processor metadata**: Information from your processor's documentation
 
-### Version Tags
+<Callout type="info">
+For details on registering your processor with the CyanPrint registry, refer to the [Zinc Registry API](/contributor/repositories/zinc) documentation. Use the `POST /api/v1/processor/push/{username}` endpoint to register your processor.
+</Callout>
 
-Use semantic versioning:
+### Verify Registration
 
-```bash
-# Latest (development)
-username/my-processor:latest
+To verify your processor is properly registered:
 
-# Major version
-username/my-processor:1
-
-# Minor version
-username/my-processor:1.2
-
-# Patch version (recommended for production)
-username/my-processor:1.2.3
-```
-
-## Creating cyan.yaml
-
-Document your processor with a `cyan.yaml` file:
-
-```yaml
-name: myorg/my-processor
-version: 1.0.0
-description: Custom processor for XYZ transformations
-author: Your Name
-license: MIT
-
-# Processor-specific metadata
-processor:
-  inputs:
-    - name: transformType
-      type: string
-      default: "uppercase"
-      description: Type of transformation to apply
-    - name: includeMetadata
-      type: boolean
-      default: false
-      description: Add metadata header to files
-
-  # Expected config schema
-  configSchema:
-    type: object
-    properties:
-      transformType:
-        type: string
-        enum: [uppercase, lowercase, capitalize]
-      includeMetadata:
-        type: boolean
-```
+1. Ensure the Docker image is accessible from the container registry
+2. Confirm the processor metadata is registered in the CyanPrint registry
+3. Test by using the processor in a template generation
 
 ## CI/CD Integration
 
 ### GitHub Actions
 
+Create `.github/workflows/publish.yml`:
+
 ```yaml
-# .github/workflows/publish.yml
 name: Publish Processor
 
 on:
-  push:
-    tags:
-      - 'v*'
+  release:
+    types: [published]
 
 jobs:
   publish:
@@ -154,7 +171,7 @@ jobs:
       - name: Set up Docker Buildx
         uses: docker/setup-buildx-action@v3
 
-      - name: Login to GitHub Container Registry
+      - name: Login to GHCR
         uses: docker/login-action@v3
         with:
           registry: ghcr.io
@@ -163,7 +180,7 @@ jobs:
 
       - name: Extract version
         id: version
-        run: echo "VERSION=${GITHUB_REF#refs/tags/v}" >> $GITHUB_OUTPUT
+        run: echo "VERSION=${GITHUB_REF#refs/tags/}" >> $GITHUB_OUTPUT
 
       - name: Build and push
         uses: docker/build-push-action@v5
@@ -171,21 +188,21 @@ jobs:
           context: .
           push: true
           tags: |
-            ghcr.io/${{ github.repository }}:latest
-            ghcr.io/${{ github.repository }}:${{ steps.version.outputs.VERSION }}
+            ghcr.io/${{ github.repository_owner }}/my-processor:latest
+            ghcr.io/${{ github.repository_owner }}/my-processor:${{ steps.version.outputs.VERSION }}
 ```
 
-<Callout type="info">
-Always use specific version tags in production templates. Avoid `:latest` to ensure reproducible builds.
+<Callout type="warn">
+This workflow pushes the Docker image to GHCR only. You must also register the processor with the CyanPrint registry for the system to discover it.
 </Callout>
 
 ## Best Practices
 
-1. **Version your processors** - Use semantic versioning
-2. **Document config schema** - Help users understand available options
-3. **Provide examples** - Include usage examples in README
-4. **Test before publishing** - Verify processor works correctly
-5. **Keep images small** - Use minimal base images
+1. **Use semantic versioning for Docker tags** - Tag images with `1.0.0`, `1.1.0`, etc.
+2. **Register with Zinc after pushing** - Docker push alone is not sufficient
+3. **Document config options** - Help users understand available configuration
+4. **Test locally before publishing** - Verify processor works with `:dev` tag first
+5. **Keep images small** - Use minimal base images for faster pulls
 
 ## Related
 

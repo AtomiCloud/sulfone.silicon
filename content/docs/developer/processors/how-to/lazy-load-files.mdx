@@ -13,8 +13,12 @@ Use `get()` to get file references without loading content. Load content only wh
 
 **Best for:**
 - Conditional processing where you may not need all files
-- Checking file metadata before loading
+- Checking file paths/extensions before loading
 - Reducing initial memory footprint
+
+<Callout type="info">
+"Lazy" here means deferred loading by you, the developer. The actual file read uses synchronous I/O. For truly memory-efficient large file handling, use `fileHelper.readAsStream()` instead.
+</Callout>
 
 ## Usage
 
@@ -31,13 +35,15 @@ StartProcessorWithLambda(async (input, fileHelper) => {
 
     // Only load content when needed
     if (shouldProcess(ref.relative)) {
-      const content = await ref.load();
-      // Now transform and write
-      const transformed = processContent(content);
-      ref.writeFile(transformed);
+      // readFile() returns a VirtualFile with content property
+      const file = ref.readFile();
+      const transformed = processContent(file.content);
+      // Update content and write
+      file.content = transformed;
+      file.writeFile();
     } else {
-      // Copy without loading
-      ref.copy();
+      // Copy without loading - use fileHelper.copy()
+      fileHelper.copy({ root: 'templates', glob: ref.relative });
     }
   }
 
@@ -50,14 +56,33 @@ StartProcessorWithLambda(async (input, fileHelper) => {
 | Property | Type | Description |
 |----------|------|-------------|
 | `relative` | `string` | Path relative to read directory |
+| `baseRead` | `string` | Base read directory path |
+| `baseWrite` | `string` | Base write directory path |
+| `read` | `string` | Full path to read from (getter) |
+| `write` | `string` | Full path to write to (getter) |
 
 ## VirtualFileReference Methods
 
 | Method | Return | Description |
 |--------|--------|-------------|
-| `load()` | `Promise<string>` | Load file content |
-| `writeFile(content)` | `void` | Write content to output |
-| `copy()` | `void` | Copy file without loading |
+| `readFile()` | `VirtualFile` | Load file content synchronously |
+
+## VirtualFile Properties
+
+Returned by `readFile()`, this class holds the loaded content:
+
+| Property | Type | Description |
+|----------|------|-------------|
+| `relative` | `string` | Path relative to read directory |
+| `content` | `string` | File content (read/write) |
+| `read` | `string` | Full path to read from (getter) |
+| `write` | `string` | Full path to write to (getter) |
+
+## VirtualFile Methods
+
+| Method | Return | Description |
+|--------|--------|-------------|
+| `writeFile()` | `void` | Write content to output |
 
 ## Example: Conditional Processing
 
@@ -69,12 +94,12 @@ StartProcessorWithLambda(async (input, fileHelper) => {
   for (const ref of refs) {
     // Only process markdown files if enabled
     if (config.processMarkdown && ref.relative.endsWith('.md')) {
-      const content = await ref.load();
-      const processed = transformMarkdown(content);
-      ref.writeFile(processed);
+      const file = ref.readFile();
+      file.content = transformMarkdown(file.content);
+      file.writeFile();
     } else {
-      // Copy other files directly
-      ref.copy();
+      // Copy other files directly using fileHelper.copy()
+      fileHelper.copy({ root: 'templates', glob: ref.relative });
     }
   }
 
@@ -82,25 +107,24 @@ StartProcessorWithLambda(async (input, fileHelper) => {
 });
 ```
 
-## Example: Skip Large Files
+## Example: Process by Extension
 
 ```ts
 StartProcessorWithLambda(async (input, fileHelper) => {
   const refs = fileHelper.get({ root: 'assets', glob: '**/*' });
-  const MAX_SIZE = 1024 * 1024; // 1MB
 
   for (const ref of refs) {
-    const size = await ref.getSize();
-
-    if (size > MAX_SIZE) {
-      // Copy large files without processing
-      console.log(`Skipping large file: ${ref.relative}`);
-      ref.copy();
+    // Process based on file extension
+    if (ref.relative.endsWith('.json')) {
+      const file = ref.readFile();
+      const data = JSON.parse(file.content);
+      // Transform and write back
+      data.processed = true;
+      file.content = JSON.stringify(data, null, 2);
+      file.writeFile();
     } else {
-      // Load and process small files
-      const content = await ref.load();
-      const processed = transform(content);
-      ref.writeFile(processed);
+      // Copy non-JSON files directly
+      fileHelper.copy({ root: 'assets', glob: ref.relative });
     }
   }
 
@@ -109,7 +133,7 @@ StartProcessorWithLambda(async (input, fileHelper) => {
 ```
 
 <Callout type="info">
-Lazy loading is memory-efficient because you only load content for files you actually need to process. Files that don't need transformation can be copied directly.
+Lazy loading is memory-efficient because you only load content for files you actually need to process. Files that don't need transformation can be copied directly using `fileHelper.copy()`.
 </Callout>
 
 ## Related

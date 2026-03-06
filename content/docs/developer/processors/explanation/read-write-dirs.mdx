@@ -7,15 +7,15 @@ import { Callout } from 'fumadocs-ui/components/callout';
 
 # Read and Write Directories
 
-Processors work with two directories: `readDirectory` for input and `writeDirectory` for output. Understanding these is key to correct processor implementation.
+Processors work with two directories: `readDir` for input and `writeDir` for output. Understanding these is key to correct processor implementation.
 
 ## Directory Overview
 
 <Mermaid chart={`graph LR
     subgraph Container
-        A[/workspace/cyanprint/<br/>readDirectory]
+        A[/workspace/cyanprint/<br/>readDir]
         B[Processor]
-        C[/workspace/output/<br/>writeDirectory]
+        C[/workspace/output/<br/>writeDir]
     end
 
     A --> B
@@ -27,10 +27,14 @@ Processors work with two directories: `readDirectory` for input and `writeDirect
 
 | Directory | Path | Purpose | Access |
 |-----------|------|---------|--------|
-| `readDirectory` | `/workspace/cyanprint/` | Source files | Read-only |
-| `writeDirectory` | `/workspace/output/` | Generated files | Write-only |
+| `readDir` | `/workspace/cyanprint/` | Source files | Read-only |
+| `writeDir` | `/workspace/output/` | Generated files | Write-only |
 
-## readDirectory
+<Callout type="info">
+The paths shown above are typical examples. Actual values depend on your container or deployment configuration.
+</Callout>
+
+## readDir
 
 Contains files from the template's blob image. This is your **source material**.
 
@@ -65,17 +69,17 @@ StartProcessorWithLambda(async (input, fileHelper) => {
   const files = fileHelper.resolveAll();
 
   // ❌ Wrong: Direct filesystem access
-  // const content = fs.readFileSync(`${input.readDirectory}/README.md`);
+  // const content = fs.readFileSync(`${input.readDir}/README.md`);
 
-  return { directory: input.writeDirectory };
+  return { directory: input.writeDir };
 });
 ```
 
 <Callout type="warn">
-Never access `readDirectory` directly with `fs` operations. Always use `CyanFileHelper` APIs.
+Never access `readDir` directly with `fs` operations. Always use `CyanFileHelper` APIs.
 </Callout>
 
-## writeDirectory
+## writeDir
 
 Where processed files are written. This is your **output location**.
 
@@ -97,11 +101,11 @@ StartProcessorWithLambda(async (input, fileHelper) => {
     // Transform content
     file.content = transform(file.content);
 
-    // Write to writeDirectory
+    // Write to writeDir
     file.writeFile();
   });
 
-  return { directory: input.writeDirectory };
+  return { directory: input.writeDir };
 });
 ```
 
@@ -128,11 +132,11 @@ The `relative` property is the path **between** read and write:
 
 ```ts
 // Full input path
-const inputPath = `${input.readDirectory}/${file.relative}`;
+const inputPath = `${input.readDir}/${file.relative}`;
 // Example: /workspace/cyanprint/templates/README.md
 
 // Full output path
-const outputPath = `${input.writeDirectory}/${file.relative}`;
+const outputPath = `${input.writeDir}/${file.relative}`;
 // Example: /workspace/output/templates/README.md
 ```
 
@@ -157,17 +161,17 @@ StartProcessorWithLambda(async (input, fileHelper) => {
     file.writeFile();
   });
 
-  return { directory: input.writeDirectory };
+  return { directory: input.writeDir };
 });
 ```
 
 ## Important Rules
 
-### Rule 1: Always Return writeDirectory
+### Rule 1: Always Return writeDir
 
 ```ts
 // ✅ Correct
-return { directory: input.writeDirectory };
+return { directory: input.writeDir };
 
 // ❌ Wrong - never change this
 // return { directory: '/some/other/path' };
@@ -181,8 +185,8 @@ const files = fileHelper.resolveAll();
 files.forEach(f => f.writeFile());
 
 // ❌ Wrong
-// fs.readdirSync(input.readDirectory);
-// fs.writeFileSync(`${input.writeDirectory}/file.txt`, content);
+// fs.readdirSync(input.readDir);
+// fs.writeFileSync(`${input.writeDir}/file.txt`, content);
 ```
 
 ### Rule 3: Preserve Directory Structure (Usually)
@@ -201,12 +205,17 @@ files.forEach(file => {
 
 Files not written are not included in output:
 
+<Callout type="info">
+**Copy-type files** (matched by `copy` globs in cyan.yaml) are automatically written during `resolveAll()`. **Template-type files** require explicit `writeFile()` calls. If you don't call `writeFile()` on a template file, it won't be included in the output.
+</Callout>
+
 ```ts
 files.forEach(file => {
   if (shouldInclude(file)) {
     file.writeFile(); // Included
   }
-  // Files without writeFile() are excluded
+  // Template files without writeFile() are excluded
+  // Copy-type files are already handled by resolveAll()
 });
 ```
 
@@ -214,12 +223,13 @@ files.forEach(file => {
 
 ```ts
 StartProcessorWithLambda(async (input, fileHelper) => {
-  console.log('Reading from:', input.readDirectory);
+  console.log('Reading from:', input.readDir);
   // /workspace/cyanprint/
 
-  console.log('Writing to:', input.writeDirectory);
+  console.log('Writing to:', input.writeDir);
   // /workspace/output/
 
+  // resolveAll() copies Copy-type files automatically, returns Template-type files
   const files = fileHelper.resolveAll();
 
   files.forEach(file => {
@@ -234,7 +244,7 @@ StartProcessorWithLambda(async (input, fileHelper) => {
     file.writeFile();
   });
 
-  return { directory: input.writeDirectory };
+  return { directory: input.writeDir };
 });
 ```
 

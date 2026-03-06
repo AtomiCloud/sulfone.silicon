@@ -7,11 +7,26 @@ description: Complete reference for all CyanPrint CLI commands
 
 ## Global Options
 
-| Flag                   | Description         |
-| ---------------------- | ------------------- |
-| `-r, --registry <URL>` | Registry endpoint   |
-| `-d, --debug`          | Enable debug output |
-| `-V, --version`        | Print version       |
+| Flag                   | Default                                                    | Description              |
+| ---------------------- | ---------------------------------------------------------- | ------------------------ |
+| `-r, --registry <URL>` | `https://api.zinc.sulfone.raichu.cluster.atomi.cloud`      | Registry endpoint        |
+| `-d, --debug`          | —                                                          | Enable debug output      |
+| `--version`            | —                                                          | Print version            |
+
+### Environment Variables
+
+| Variable              | Corresponding Flag        |
+| --------------------- | ------------------------- |
+| `CYANPRINT_REGISTRY`  | `-r, --registry`          |
+
+### Command Aliases
+
+| Command      | Alias |
+| ------------ | ----- |
+| `create`     | `c`   |
+| `update`     | `u`   |
+| `daemon`     | `d`   |
+| `push`       | `p`   |
 
 ## `cyanprint create`
 
@@ -23,20 +38,26 @@ cyanprint create <TEMPLATE_REF> [PATH]
 
 ### Arguments
 
-| Argument         | Required | Description                               |
-| ---------------- | -------- | ----------------------------------------- |
-| `<TEMPLATE_REF>` | Yes      | Template reference (e.g., atomi/nix-init) |
-| `[PATH]`         | No       | Output directory (default: .)             |
+| Argument         | Required | Description                                                   |
+| ---------------- | -------- | ------------------------------------------------------------- |
+| `<TEMPLATE_REF>` | Yes      | Template reference (format: `<username>/<name>:<version>`)    |
+| `[PATH]`         | No       | Output directory (default: .)                                 |
 
 ### Options
 
-| Option                       | Default                         | Description     |
-| ---------------------------- | ------------------------------- | --------------- |
-| `-c, --coordinator-endpoint` | http://coord.cyanprint.dev:9000 | Coordinator URL |
+| Option                       | Default                                                    | Description     |
+| ---------------------------- | ---------------------------------------------------------- | --------------- |
+| `-c, --coordinator-endpoint` | `http://coord.cyanprint.dev:9000`                          | Coordinator URL |
+
+### Environment Variables
+
+| Variable               | Corresponding Flag           |
+| ---------------------- | ---------------------------- |
+| `CYANPRINT_COORDINATOR`| `-c, --coordinator-endpoint` |
 
 ## `cyanprint update`
 
-Update an existing project to the latest template version.
+Update an existing project to the latest template version. This command uses the `.cyan_state.yaml` file to perform a 3-way merge between your local changes and the upstream template.
 
 ```bash
 cyanprint update [PATH]
@@ -49,9 +70,15 @@ cyanprint update [PATH]
 | `-i, --interactive`          | Select versions interactively |
 | `-c, --coordinator-endpoint` | Coordinator URL               |
 
+### Environment Variables
+
+| Variable               | Corresponding Flag           |
+| ---------------------- | ---------------------------- |
+| `CYANPRINT_COORDINATOR`| `-c, --coordinator-endpoint` |
+
 ## `cyanprint daemon`
 
-Start the CyanPrint daemon for local development.
+Start the CyanPrint daemon for local development. **Requires Docker to be running.**
 
 ```bash
 cyanprint daemon [VERSION]
@@ -59,23 +86,75 @@ cyanprint daemon [VERSION]
 
 ### Options
 
-| Option       | Default | Description         |
-| ------------ | ------- | ------------------- |
-| `-p, --port` | 9000    | Port to host daemon |
+| Option          | Default                                               | Description         |
+| --------------- | ----------------------------------------------------- | ------------------- |
+| `-p, --port`    | 9000                                                  | Port to host daemon |
+| `--registry`    | `https://api.zinc.sulfone.raichu.cluster.atomi.cloud` | Registry endpoint   |
+
+### Prerequisites
+
+- Docker must be installed and running
+
+### Environment Variables
+
+| Variable              | Corresponding Flag |
+| --------------------- | ------------------ |
+| `CYANPRINT_REGISTRY`  | `--registry`       |
 
 ## `cyanprint push`
 
-Push templates, processors, or plugins to the registry.
+Push templates, processors, plugins, or groups to the registry.
 
 ```bash
-# Push template
-cyanprint push template --token <TOKEN> <BLOB_IMG> <BLOB_TAG> <TEMPLATE_IMG> <TEMPLATE_TAG>
+cyanprint push [OPTIONS] <COMMAND>
+```
 
-# Push processor
-cyanprint push processor --token <TOKEN> <IMAGE> <TAG>
+### Options
 
-# Push plugin
-cyanprint push plugin --token <TOKEN> <IMAGE> <TAG>
+| Option                       | Default       | Description           |
+| ---------------------------- | ------------- | --------------------- |
+| `-t, --token <TOKEN>`        | —             | Authentication token  |
+| `-c, --config <CONFIG_PATH>` | `cyan.yaml`   | Path to config file   |
+| `-m, --message <MESSAGE>`    | `No description` | Publish message    |
+
+### Environment Variables
+
+| Variable      | Corresponding Flag |
+| ------------- | ------------------ |
+| `CYAN_TOKEN`  | `-t, --token`      |
+
+### Subcommands
+
+#### `push template`
+
+Push a template to the registry.
+
+```bash
+cyanprint push --token <TOKEN> template <BLOB_IMAGE> <BLOB_TAG> <TEMPLATE_IMAGE> <TEMPLATE_TAG>
+```
+
+#### `push processor`
+
+Push a processor to the registry.
+
+```bash
+cyanprint push --token <TOKEN> processor <IMAGE> <TAG>
+```
+
+#### `push plugin`
+
+Push a plugin to the registry.
+
+```bash
+cyanprint push --token <TOKEN> plugin <IMAGE> <TAG>
+```
+
+#### `push group`
+
+Push a template group (meta-templates with no Docker artifacts) to the registry.
+
+```bash
+cyanprint push --token <TOKEN> group <NAME> <TAG>
 ```
 
 ## Related

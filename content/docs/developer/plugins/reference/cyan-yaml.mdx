@@ -3,136 +3,97 @@ title: Plugin cyan.yaml
 description: Configuration file for plugin metadata
 ---
 
+import { Callout } from 'fumadocs-ui/components/callout';
+
 # Plugin cyan.yaml
 
-The `cyan.yaml` file provides metadata about your plugin. While optional, it's recommended for documentation and discovery.
+The `cyan.yaml` file provides metadata about your plugin for the Cyan registry. This file is required for publishing your plugin.
+
+<Callout type="info">
+This page describes the **plugin** cyan.yaml schema. Template cyan.yaml files have different fields like `processors`, `plugins`, and `templates` arrays. See the [Template cyan.yaml](/developer/templates/reference/cyan-yaml) documentation for that schema.
+</Callout>
 
 ## Basic Structure
 
 ```yaml
-name: org/my-plugin
-version: 1.0.0
+username: atomi
+name: my-plugin
 description: A plugin that performs post-processing operations
-author: Your Name
-license: MIT
+project: https://github.com/atomi/my-plugin
+source: https://github.com/atomi/my-plugin.git
+email: admin@atomi.cloud
+tags: [formatting, post-process]
+readme: README.MD
 ```
 
 ## Properties
 
 | Property | Type | Required | Description |
 |----------|------|----------|-------------|
-| `name` | `string` | Yes | Plugin identifier (org/name format) |
-| `version` | `string` | Yes | Semantic version |
-| `description` | `string` | No | Brief description |
-| `author` | `string` | No | Author name or org |
-| `license` | `string` | No | License identifier |
-| `repository` | `string` | No | Source repository URL |
-| `keywords` | `string[]` | No | Search keywords |
-| `config` | `object` | No | Config schema definition |
+| `username` | `string` | Yes | Owner username (who publishes the plugin) |
+| `name` | `string` | Yes | Plugin name (alphanumeric, dashes allowed) |
+| `description` | `string` | Yes | Brief description of what the plugin does |
+| `project` | `string` | Yes | Project homepage URL |
+| `source` | `string` | Yes | Source repository URL |
+| `email` | `string` | Yes | Contact email for the plugin maintainer |
+| `tags` | `string[]` | Yes | Search tags for discovery |
+| `readme` | `string` | Yes | Path to README file (usually `README.MD`) |
 
 ## Full Example
 
 ```yaml
-name: atomi/setup-plugin
-version: 1.2.0
+username: atomi
+name: setup-plugin
 description: Plugin that sets up git, installs dependencies, and configures the project
-author: Atomi
-license: MIT
-repository: https://github.com/atomi/cyan-plugin-setup
-keywords:
+project: https://github.com/atomi/cyan-plugin-setup
+source: https://github.com/atomi/cyan-plugin-setup.git
+email: admin@atomi.cloud
+tags:
   - setup
   - git
   - npm
   - initialization
-
-config:
-  properties:
-    git:
-      type: boolean
-      description: Initialize git repository
-      default: true
-    installDeps:
-      type: boolean
-      description: Install dependencies
-      default: true
-    packageManager:
-      type: string
-      enum: [npm, bun, yarn, pnpm]
-      description: Package manager to use
-      default: npm
-    formatter:
-      type: string
-      enum: [prettier, biome, none]
-      description: Code formatter to run
-      default: none
+readme: README.MD
 ```
 
-## Config Schema
+## Plugin vs Template cyan.yaml
 
-Define expected configuration options:
+Plugins and templates use different cyan.yaml schemas:
 
-```yaml
-config:
-  properties:
-    option1:
-      type: boolean
-      description: Enable feature
-      default: true
+- **Plugin cyan.yaml**: Contains only metadata (`username`, `name`, `description`, `project`, `source`, `email`, `tags`, `readme`)
+- **Template cyan.yaml**: Contains additional fields like `processors`, `plugins`, and `templates` arrays to define the template's dependencies
 
-    option2:
-      type: string
-      description: A string option
-      default: ""
-
-    option3:
-      type: number
-      description: A numeric option
-
-    option4:
-      type: string
-      enum: [choice1, choice2, choice3]
-      description: An enum option
-
-    nested:
-      type: object
-      properties:
-        subOption:
-          type: boolean
-          default: false
-```
+<Callout type="info">
+Plugin cyan.yaml does not define a `config` schema. Configuration is passed at runtime by the template when invoking the plugin. See [Conditional Execution](/developer/plugins/how-to/conditional-execution) for how templates pass config to plugins.
+</Callout>
 
 ## Usage in Templates
 
-Templates reference plugins by name:
+Templates reference plugins using the `username/name` format with an optional version:
 
 ```yaml
 # In template's cyan.yaml
 plugins:
-  - name: atomi/setup-plugin:1.2.0
-    config:
-      git: true
-      installDeps: true
-      packageManager: bun
-      formatter: biome
+  - atomi/setup-plugin:1
+  - atomi/formatter
 ```
 
-## Versioning Best Practices
+## Versioning
+
+Versions are managed by the Cyan registry, not declared in the plugin's cyan.yaml. When referencing a plugin in a template:
 
 ```yaml
-# Latest stable
-name: org/plugin:latest
+# Reference without version (uses latest)
+plugins:
+  - atomi/setup-plugin
 
-# Specific version
-name: org/plugin:1.2.0
-
-# Major version range (latest 1.x.x)
-name: org/plugin:1
-
-# Pre-release
-name: org/plugin:2.0.0-beta.1
+# Reference with specific version (integer)
+plugins:
+  - atomi/setup-plugin:3
 ```
 
 ## Related
 
 - [Project Structure](/developer/plugins/reference/project-structure) - Directory layout
-- [Conditional Execution](/developer/plugins/how-to/conditional-execution) - Using config
+- [Push to Registry](/developer/plugins/how-to/push-to-registry) - Publishing your plugin
+- [Conditional Execution](/developer/plugins/how-to/conditional-execution) - Using config at runtime

@@ -7,7 +7,7 @@ import { Callout } from 'fumadocs-ui/components/callout';
 
 # Globbing Reference
 
-Glob patterns control which files are included, excluded, and how they're processed.
+Glob patterns control which files are included, excluded, and how they're processed. These patterns are configured within `CyanGlob` objects as part of the `Cyan` configuration structure's `files` array.
 
 ## Basic Patterns
 
@@ -47,8 +47,15 @@ glob: 'docs/**/*.md' // Markdown files under docs/
 | `?` | Single character | `file1.ts`, `file2.ts` |
 | `[abc]` | Character set | `file-a.ts`, `file-b.ts` |
 | `[!abc]` | Negated set | `file-x.ts` (not a, b, or c) |
+| `{a,b,c}` | Brace expansion | `*.{ts,tsx}` matches TypeScript files |
 
 ## Multiple Patterns
+
+### Import
+
+```ts
+import { GlobType } from '@atomicloud/cyan-sdk';
+```
 
 ### Multiple File Groups
 
@@ -74,7 +81,7 @@ glob: '**/*.@(js|ts)?(x)'
 ```
 
 <Callout type="info">
-Some glob features like `?(x)` and `@(a|b)` may not be supported in all versions. Test your patterns.
+Extglob patterns like `?(x)` and `@(a|b)` use bash extended glob syntax. The Node SDK uses `minimatch` which supports these by default. Test your patterns if using other SDKs.
 </Callout>
 
 ## Exclude Patterns
@@ -83,7 +90,7 @@ Exclude files from processing:
 
 ```ts
 files: [{
-  root: 'templates',
+  root: 'templates',  // Defaults to '.' (current directory) if omitted
   glob: '**/*',
   exclude: [
     '**/node_modules/**',     // Exclude node_modules
@@ -132,11 +139,16 @@ exclude: ['**/.*']  // Files starting with dot
 
 ## GlobType Reference
 
+The `GlobType` enum controls how files are processed:
+
 | Type | Use Case |
 |------|----------|
 | `GlobType.Template` | Text files needing variable substitution |
 | `GlobType.Copy` | Binary files and files without variables |
-| `GlobType.Ignore` | Files to skip entirely |
+
+<Callout type="warn">
+**Python SDK Note:** The Python SDK uses different enum values: `GlobType.Template = 1` and `GlobType.Copy = 2` (instead of 0 and 1 in Node/.NET). Always use the symbolic names rather than numeric values for cross-SDK compatibility.
+</Callout>
 
 ## Best Practices
 
@@ -181,10 +193,13 @@ exclude: [
 Test your glob patterns to ensure they match expected files:
 
 ```bash
-# Using find (approximate)
-find templates -name "**/*.md"
+# Using find (note: use single * for -name, not **)
+find templates -name "*.md"
 
-# Using glob CLI tools
+# Using shell globbing (zsh/bash with globstar enabled)
+ls templates/**/*.md
+
+# Using the glob CLI tool
 glob "**/*.md" templates/
 ```
 

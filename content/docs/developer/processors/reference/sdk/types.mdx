@@ -9,21 +9,23 @@ Complete type reference for the processor SDK.
 
 ## Core Types
 
-### ProcessorInput
+### CyanProcessorInput
+
+The input type received by processor handlers.
 
 ```ts
-interface ProcessorInput {
+interface CyanProcessorInput {
   /**
    * Path to source files from blob image
    * @example "/workspace/cyanprint/"
    */
-  readDirectory: string;
+  readDir: string;
 
   /**
    * Path where processed files should be written
    * @example "/workspace/output/"
    */
-  writeDirectory: string;
+  writeDir: string;
 
   /**
    * File patterns passed from template configuration
@@ -43,9 +45,27 @@ interface ProcessorInput {
 ```ts
 interface ProcessorOutput {
   /**
-   * Output directory - must be input.writeDirectory
+   * Output directory - must be input.writeDir
    */
-  directory: string;
+  readonly directory: string;
+}
+```
+
+### GlobType Enum
+
+Specifies the type of file matching for a glob pattern.
+
+```ts
+enum GlobType {
+  /**
+   * Files will be processed through the processor
+   */
+  Template = 0,
+
+  /**
+   * Files will be copied directly without processing
+   */
+  Copy = 1,
 }
 ```
 
@@ -55,9 +75,10 @@ interface ProcessorOutput {
 interface CyanGlob {
   /**
    * Base directory for glob matching
+   * @optional Defaults to root of read directory
    * @example "templates"
    */
-  root: string;
+  root?: string | null;
 
   /**
    * Glob pattern to match files
@@ -67,10 +88,14 @@ interface CyanGlob {
 
   /**
    * Patterns to exclude from matching
-   * @optional
    * @example ["**/*.test.ts"]
    */
-  exclude?: string[];
+  exclude: string[];
+
+  /**
+   * Type of glob - determines how files are handled
+   */
+  type: GlobType;
 }
 ```
 
@@ -78,22 +103,41 @@ interface CyanGlob {
 
 ## VirtualFile Types
 
+All VirtualFile types are **classes**, not interfaces.
+
 ### VirtualFile
 
 File with loaded content (from `resolveAll()` or `read()`).
 
 ```ts
-interface VirtualFile {
+class VirtualFile {
+  constructor(
+    public baseRead: string,
+    public baseWrite: string,
+    public relative: string,
+    public content: string,
+  ) {}
+
   /**
-   * File contents as string
+   * Full path to source file
    */
-  content: string;
+  get read(): string;
+
+  /**
+   * Full path to output file
+   */
+  get write(): string;
 
   /**
    * Path relative to read directory
    * @example "docs/readme.md"
    */
   relative: string;
+
+  /**
+   * File contents as string
+   */
+  content: string;
 
   /**
    * Write file to output directory
@@ -107,53 +151,46 @@ interface VirtualFile {
 Lazy-loaded file reference (from `get()`).
 
 ```ts
-interface VirtualFileReference {
+class VirtualFileReference {
+  constructor(
+    public baseRead: string,
+    public baseWrite: string,
+    public relative: string,
+  ) {}
+
+  /**
+   * Full path to source file
+   */
+  get read(): string;
+
+  /**
+   * Full path to output file
+   */
+  get write(): string;
+
   /**
    * Path relative to read directory
    */
   relative: string;
 
   /**
-   * Load file content
-   * @returns Promise resolving to file content
+   * Load file content and return VirtualFile
+   * @returns VirtualFile with loaded content
    */
-  load(): Promise<string>;
-
-  /**
-   * Write content to output directory
-   * @param content - Content to write
-   */
-  writeFile(content: string): void;
-
-  /**
-   * Copy file to output without loading
-   */
-  copy(): void;
+  readFile(): VirtualFile;
 }
 ```
 
 ### VirtualFileStream
 
-Streaming file access (from `readAsStream()`).
+Streaming file access (from `readAsStream()`). Wraps Node.js streams directly.
 
 ```ts
-interface VirtualFileStream {
-  /**
-   * Path relative to read directory
-   */
-  relative: string;
-
-  /**
-   * Read file as async iterable of chunks
-   * @returns Async iterable of Buffer chunks
-   */
-  read(): AsyncIterable<Buffer>;
-
-  /**
-   * Write content to output directory
-   * @param content - Content to write
-   */
-  writeFile(content: string): void;
+class VirtualFileStream {
+  constructor(
+    public reader: fs.ReadStream,
+    public writer: fs.WriteStream,
+  ) {}
 }
 ```
 
@@ -161,10 +198,30 @@ interface VirtualFileStream {
 
 ## CyanFileHelper
 
+Class providing file operations for processors.
+
 ```ts
-interface CyanFileHelper {
+class CyanFileHelper {
+  constructor(
+    private readonly _readDir: string,
+    private readonly _writeDir: string,
+    private readonly globs: CyanGlob[],
+  ) {}
+
+  /**
+   * Resolved read directory path
+   */
+  get readDir(): string;
+
+  /**
+   * Resolved write directory path
+   */
+  get writeDir(): string;
+
   /**
    * Load all files matching processor globs into memory
+   * Files with GlobType.Copy are copied directly
+   * Files with GlobType.Template are loaded and returned
    * @returns Array of files with content
    */
   resolveAll(): VirtualFile[];
@@ -172,7 +229,7 @@ interface CyanFileHelper {
   /**
    * Load specific files matching glob pattern
    * @param glob - Pattern to match
-   * @returns Array of matching files
+   * @returns Array of matching files with content
    */
   read(glob: CyanGlob): VirtualFile[];
 
@@ -209,8 +266,8 @@ interface CyanFileHelper {
  * @param fileHelper - File operations API
  * @returns Promise resolving to processor output
  */
-type ProcessorHandler = (
-  input: ProcessorInput,
+type LambdaProcessorFn = (
+  input: CyanProcessorInput,
   fileHelper: CyanFileHelper
 ) => Promise<ProcessorOutput>;
 ```
@@ -227,13 +284,15 @@ type ProcessorHandler = (
  * @param handler - Async function implementing processor logic
  */
 function StartProcessorWithLambda(
-  handler: ProcessorHandler
+  handler: LambdaProcessorFn
 ): void;
 ```
 
 ---
 
-## Utility Types
+## Example Patterns
+
+The following sections show common patterns you can use in your processors. These are not SDK types, but examples of how to structure your code.
 
 ### Common Config Patterns
 
@@ -262,10 +321,10 @@ interface ProcessorConfig extends FeatureConfig, FormatConfig {
 }
 ```
 
-### Error Types
+### Error Handling Patterns
 
 ```ts
-// Common errors processors may throw
+// Suggested error classes for custom error handling
 class ProcessorError extends Error {
   constructor(message: string, public readonly file?: string) {
     super(message);
@@ -290,10 +349,12 @@ class TransformError extends ProcessorError {
 
 ---
 
-## Type Guards
+## Type Guard Pattern
+
+Example pattern for safely casting the config:
 
 ```ts
-// Type guard for checking config shape
+// Example type guard for checking config shape
 function isVariableConfig(config: unknown): config is VariableConfig {
   return typeof config === 'object' && config !== null && 'vars' in config;
 }
@@ -304,6 +365,10 @@ StartProcessorWithLambda(async (input, fileHelper) => {
     const vars = input.config.vars;
     // ...
   }
+
+  return {
+    directory: input.writeDir,
+  };
 });
 ```
 

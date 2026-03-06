@@ -16,8 +16,7 @@ File processing types.
 ```ts
 enum GlobType {
   Template = 0,  // Process with variable substitution
-  Copy = 1,      // Copy without processing
-  Ignore = 2     // Skip entirely
+  Copy = 1       // Copy without processing
 }
 ```
 
@@ -66,56 +65,56 @@ const name = await i.text({
 
 ## Interfaces
 
-### ICyanConfig
+### Cyan
 
 Main configuration object returned by templates.
 
 ```ts
-interface ICyanConfig {
-  processors: IProcessor[];
-  plugins?: IPlugin[];
+interface Cyan {
+  processors: CyanProcessor[];
+  plugins: CyanPlugin[];
 }
 ```
 
 ---
 
-### IProcessor
+### CyanProcessor
 
 Processor definition.
 
 ```ts
-interface IProcessor {
+interface CyanProcessor {
   name: string;
-  files: IFileGroup[];
-  config: Record<string, any>;
+  files: CyanGlob[];
+  config: unknown;
 }
 ```
 
 ---
 
-### IFileGroup
+### CyanGlob
 
 File group for processing.
 
 ```ts
-interface IFileGroup {
-  root: string;       // Source directory
-  glob: string;       // Glob pattern
-  exclude: string[];  // Exclude patterns
-  type: GlobType;     // Processing type
+interface CyanGlob {
+  root?: string | null;  // Source directory (optional)
+  glob: string;          // Glob pattern
+  exclude: string[];     // Exclude patterns
+  type: GlobType;        // Processing type
 }
 ```
 
 ---
 
-### IPlugin
+### CyanPlugin
 
 Plugin definition.
 
 ```ts
-interface IPlugin {
+interface CyanPlugin {
   name: string;
-  config: Record<string, any>;
+  config: unknown;
 }
 ```
 
@@ -128,34 +127,32 @@ Question asking interface.
 ```ts
 interface IInquirer {
   // Shorthand forms
-  text(message: string, id: string, desc?: string): Promise<string>;
-  select(message: string, options: string[], id: string, desc?: string): Promise<string>;
-  confirm(message: string, id: string, desc?: string): Promise<boolean>;
-  checkbox(message: string, options: string[], id: string, desc?: string): Promise<string[]>;
-  password(message: string, id: string, desc?: string): Promise<string>;
-  dateSelect(message: string, id: string, desc?: string): Promise<Date>;
+  text(q: string, id: string, help?: string | null): Promise<string>;
+  select(q: string, options: string[], id: string, help?: string | null): Promise<string>;
+  confirm(q: string, id: string, help?: string | null): Promise<boolean>;
+  checkbox(q: string, options: string[], id: string, help?: string | null): Promise<string[]>;
+  password(q: string, id: string, help?: string | null): Promise<string>;
+  dateSelect(q: string, id: string, help?: string | null): Promise<string>;
 
   // Object forms
-  text(config: ITextQuestion): Promise<string>;
-  select(config: ISelectQuestion): Promise<string>;
-  confirm(config: IConfirmQuestion): Promise<boolean>;
-  checkbox(config: ICheckboxQuestion): Promise<string[]>;
-  password(config: IPasswordQuestion): Promise<string>;
-  dateSelect(config: IDateQuestion): Promise<Date>;
+  text(config: TextQ): Promise<string>;
+  select(config: SelectQ): Promise<string>;
+  confirm(config: ConfirmQ): Promise<boolean>;
+  checkbox(config: CheckboxQ): Promise<string[]>;
+  password(config: PasswordQ): Promise<string>;
+  dateSelect(config: DateQ): Promise<string>;
 }
 ```
 
 ---
 
-### IDefine
+### IDeterminism
 
 Deterministic value generation.
 
 ```ts
-interface IDefine {
-  uuid(): string;
-  timestamp(): number;
-  seq(namespace: string): number;
+interface IDeterminism {
+  get(key: string, origin: () => string): string;
 }
 ```
 
@@ -163,95 +160,86 @@ interface IDefine {
 
 ### Question Interfaces
 
-#### ITextQuestion
+#### TextQ
 
 ```ts
-interface ITextQuestion {
+interface TextQ {
   type: QuestionType.Text;
   id: string;
   message: string;
-  desc?: string;
-  default?: string;
+  desc?: string | null;
+  default?: string | null;
+  initial?: string | null;
   validate?: (input: string) => string | null;
 }
 ```
 
-#### ISelectQuestion
+#### SelectQ
 
 ```ts
-interface ISelectQuestion {
+interface SelectQ {
   type: QuestionType.Select;
   id: string;
   message: string;
-  desc?: string;
+  desc?: string | null;
   options: string[];
-  default?: string;
-  validate?: (selected: string) => string | null;
+  validate?: null;
 }
 ```
 
-#### IConfirmQuestion
+#### ConfirmQ
 
 ```ts
-interface IConfirmQuestion {
+interface ConfirmQ {
   type: QuestionType.Confirm;
   id: string;
   message: string;
-  desc?: string;
-  default?: boolean;
+  desc?: string | null;
+  default?: boolean | null;
+  errorMessage?: string | null;
 }
 ```
 
-#### ICheckboxQuestion
+#### CheckboxQ
 
 ```ts
-interface ICheckboxQuestion {
+interface CheckboxQ {
   type: QuestionType.Checkbox;
   id: string;
   message: string;
-  desc?: string;
+  desc?: string | null;
   options: string[];
-  default?: string[];
-  validate?: (selected: string[]) => string | null;
+  validate?: null;
 }
 ```
 
-#### IPasswordQuestion
+#### PasswordQ
 
 ```ts
-interface IPasswordQuestion {
+interface PasswordQ {
   type: QuestionType.Password;
   id: string;
   message: string;
-  desc?: string;
+  desc?: string | null;
+  confirmation?: boolean | null;
   validate?: (input: string) => string | null;
 }
 ```
 
-#### IDateQuestion
+#### DateQ
 
 ```ts
-interface IDateQuestion {
+interface DateQ {
   type: QuestionType.DateSelect;
   id: string;
   message: string;
-  desc?: string;
-  default?: Date;
-  validate?: (date: Date) => string | null;
+  desc?: string | null;
+  default?: Date | null;
+  minDate?: Date | null;
+  maxDate?: Date | null;
+  validate?: (input: string) => string | null;
 }
 ```
-
----
-
-## Type Aliases
-
-### ValidateFunction
-
-```ts
-type ValidateFunction<T> = (input: T) => string | null;
-```
-
-Returns `null` for valid input, or an error message string for invalid input.
 
 ---
 

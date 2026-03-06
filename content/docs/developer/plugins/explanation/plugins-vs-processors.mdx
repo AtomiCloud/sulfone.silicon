@@ -15,7 +15,7 @@ Both plugins and processors extend CyanPrint's capabilities, but they serve diff
 |--------|-----------|--------|
 | **Role** | Transform file content | Execute operations |
 | **When** | During file generation | After generation completes |
-| **Access** | File content via helper | Full directory + shell |
+| **Access** | File content via helper | Full directory access |
 | **State** | Pure function | Can have side effects |
 | **API** | `CyanFileHelper` | Direct fs access |
 
@@ -44,7 +44,7 @@ StartProcessorWithLambda(async (input, fileHelper) => {
     file.writeFile();
   });
 
-  return { directory: input.writeDirectory };
+  return { directory: input.writeDir };
 });
 ```
 
@@ -70,14 +70,22 @@ Plugins run operations after all files are generated. They have full access to t
 
 ```ts
 import { StartPluginWithLambda } from '@atomicloud/cyan-sdk';
-import { $ } from 'bun';
+import fs from 'node:fs';
+import path from 'node:path';
 
 StartPluginWithLambda(async (input) => {
   const { directory } = input;
 
-  // Execute shell commands
-  await $`git -C ${directory} init`.quiet();
-  await $`cd ${directory} && npm install`.quiet();
+  // Create files or modify the generated output
+  const gitDir = path.join(directory, '.git');
+  if (!fs.existsSync(gitDir)) {
+    fs.mkdirSync(gitDir, { recursive: true });
+    // Initialize git structure...
+  }
+
+  // Write configuration files
+  const configPath = path.join(directory, 'config.json');
+  fs.writeFileSync(configPath, JSON.stringify({ initialized: true }));
 
   return { directory };
 });
@@ -87,7 +95,7 @@ StartPluginWithLambda(async (input) => {
 
 - No file helper - direct filesystem access
 - Runs after all processors complete
-- Can execute any shell command
+- Can execute shell commands (via child_process or bun shell)
 - Can have side effects (installing packages, etc.)
 
 ## Execution Order

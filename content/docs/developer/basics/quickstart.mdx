@@ -5,4 +5,38 @@ description: Quickstart guide for CyanPrint development
 
 # Quickstart
 
-Quickstart guide for CyanPrint development.
+Get started with CyanPrint development in minutes. Choose your path based on what you want to build.
+
+## Prerequisites
+
+Before you begin, ensure you have:
+
+- **Docker** installed and running
+- **CyanPrint CLI** installed
+- **Node.js 18+** for local development
+
+## What Do You Want to Build?
+
+CyanPrint has three extensible components called **artifacts**:
+
+| Artifact | Purpose | Start Here |
+|----------|---------|------------|
+| **Templates** | Define questions and file processing rules | [Template Tutorials](/developer/templates/tutorials/01-blank-template) |
+| **Processors** | Transform files (templating, syntax) | [Processor Tutorial](/developer/processors/tutorials/first-processor) |
+| **Plugins** | Post-processing (run commands, file ops) | [Plugin Tutorial](/developer/plugins/tutorials/first-plugin) |
+
+## Quick Start: Create a Template
+
+The most common starting point is creating a template. Run this command:
+
+```bash
+cyanprint create cyan/new my-first-template
+```
+
+This scaffolds a complete template project using the meta template.
+
+## Next Steps
+
+- Learn about [the four artifacts](/developer/basics/introduction)
+- Understand the [system architecture](/developer/basics/architecture)
+- Follow the [template tutorials](/developer/templates/tutorials/01-blank-template)

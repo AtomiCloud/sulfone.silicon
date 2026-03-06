@@ -27,6 +27,8 @@ import { StartProcessorWithLambda } from '@atomicloud/cyan-sdk';
 
 StartProcessorWithLambda(async (input, fileHelper) => {
   // Load ALL files with their content
+  // Returns: VirtualFile[] with content already loaded
+  // Note: Copy-type globs are automatically handled - files are copied directly
   const files = fileHelper.resolveAll();
 
   files.forEach(file => {
@@ -38,7 +40,7 @@ StartProcessorWithLambda(async (input, fileHelper) => {
     file.writeFile();
   });
 
-  return { directory: input.writeDirectory };
+  return { directory: input.writeDir };
 });
 ```
 
@@ -48,6 +50,10 @@ StartProcessorWithLambda(async (input, fileHelper) => {
 |----------|------|-------------|
 | `content` | `string` | Full file contents |
 | `relative` | `string` | Path relative to read directory |
+| `baseRead` | `string` | Base read directory path |
+| `baseWrite` | `string` | Base write directory path |
+| `read` | `string` | Full read path (getter: baseRead + relative) |
+| `write` | `string` | Full write path (getter: baseWrite + relative) |
 
 ## VirtualFile Methods
 
@@ -70,7 +76,7 @@ StartProcessorWithLambda(async (input, fileHelper) => {
     file.writeFile();
   });
 
-  return { directory: input.writeDirectory };
+  return { directory: input.writeDir };
 });
 ```
 
@@ -90,12 +96,12 @@ StartProcessorWithLambda(async (input, fileHelper) => {
     file.writeFile();
   });
 
-  return { directory: input.writeDirectory };
+  return { directory: input.writeDir };
 });
 ```
 
 <Callout type="warn">
-`resolveAll()` loads all matched files into memory. For large templates, consider using `get()` for lazy loading or `readAsStream()` for memory efficiency.
+`resolveAll()` loads all matched files into memory. For large templates, consider using `get()` for lazy loading or `readAsStream()` for memory efficiency. Note: `get()` returns `VirtualFileReference[]` which requires calling `readFile()` to load the content.
 </Callout>
 
 ## Related

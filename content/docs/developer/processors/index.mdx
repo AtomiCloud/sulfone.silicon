@@ -42,7 +42,7 @@ Processors are stateless file transformers - they receive input files and produc
 |-----------|---------|----------|
 | **Entry Point** | Processor logic | `StartProcessorWithLambda` |
 | **CyanFileHelper** | File operations | `resolveAll()`, `read()`, `copy()` |
-| **ProcessorInput** | Input from template | Config, globs, directories |
+| **CyanProcessorInput** | Input from template | Config, globs, directories |
 | **ProcessorOutput** | Return value | Output directory path |
 
 ## Why Create a Custom Processor?
@@ -129,7 +129,7 @@ StartProcessorWithLambda(async (input, fileHelper) => {
     file.writeFile();
   });
 
-  return { directory: input.writeDirectory };
+  return { directory: input.writeDir };
 });
 ```
 

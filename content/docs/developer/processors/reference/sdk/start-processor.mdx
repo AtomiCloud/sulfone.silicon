@@ -11,7 +11,7 @@ The entry point for processor logic. Wrap your processor function with this to c
 
 ```ts
 function StartProcessorWithLambda(
-  handler: (input: ProcessorInput, fileHelper: CyanFileHelper) => Promise<ProcessorOutput>
+  handler: (input: CyanProcessorInput, fileHelper: CyanFileHelper) => Promise<ProcessorOutput>
 ): void;
 ```
 
@@ -23,7 +23,7 @@ The async function that implements processor logic.
 
 | Parameter | Type | Description |
 |-----------|------|-------------|
-| `input` | `ProcessorInput` | Contains directories, globs, and config |
+| `input` | `CyanProcessorInput` | Contains directories, globs, and config |
 | `fileHelper` | `CyanFileHelper` | File operations API |
 
 **Returns:** `Promise<ProcessorOutput>`
@@ -48,16 +48,16 @@ StartProcessorWithLambda(async (input, fileHelper) => {
   });
 
   // 4. Return output directory
-  return { directory: input.writeDirectory };
+  return { directory: input.writeDir };
 });
 ```
 
-## ProcessorInput
+## CyanProcessorInput
 
 | Property | Type | Description |
 |----------|------|-------------|
-| `readDirectory` | `string` | Path to source files (`/workspace/cyanprint/`) |
-| `writeDirectory` | `string` | Path for output files (`/workspace/output/`) |
+| `readDir` | `string` | Path to source files (set by CLI, typically `/workspace/cyanprint/`) |
+| `writeDir` | `string` | Path for output files (set by CLI, typically `/workspace/output/`) |
 | `globs` | `CyanGlob[]` | File patterns from template |
 | `config` | `unknown` | Configuration from template |
 
@@ -65,7 +65,7 @@ StartProcessorWithLambda(async (input, fileHelper) => {
 
 | Property | Type | Description |
 |----------|------|-------------|
-| `directory` | `string` | Must be `input.writeDirectory` |
+| `directory` | `string` | Must be `input.writeDir` |
 
 ## Example: Simple Transform
 
@@ -87,7 +87,7 @@ StartProcessorWithLambda(async (input, fileHelper) => {
     file.writeFile();
   }
 
-  return { directory: input.writeDirectory };
+  return { directory: input.writeDir };
 });
 ```
 
@@ -108,7 +108,7 @@ StartProcessorWithLambda(async (input, fileHelper) => {
     file.writeFile();
   });
 
-  return { directory: input.writeDirectory };
+  return { directory: input.writeDir };
 });
 ```
 
@@ -127,7 +127,7 @@ StartProcessorWithLambda(async (input, fileHelper) => {
   // Copy other files without loading
   fileHelper.copy({ root: 'templates', glob: '**/*', exclude: ['**/*.md'] });
 
-  return { directory: input.writeDirectory };
+  return { directory: input.writeDir };
 });
 ```
 
@@ -152,7 +152,7 @@ StartProcessorWithLambda(async (input, fileHelper) => {
       }
     }
 
-    return { directory: input.writeDirectory };
+    return { directory: input.writeDir };
   } catch (err) {
     console.error('Processor failed:', err);
     throw err;
@@ -162,6 +162,6 @@ StartProcessorWithLambda(async (input, fileHelper) => {
 
 ## Related
 
-- [ProcessorInput/Output](/developer/processors/reference/sdk/input-output) - Type definitions
+- [CyanProcessorInput/Output](/developer/processors/reference/sdk/input-output) - Type definitions
 - [CyanFileHelper](/developer/processors/reference/sdk/file-helper) - File operations
 - [First Processor](/developer/processors/tutorials/first-processor) - Tutorial

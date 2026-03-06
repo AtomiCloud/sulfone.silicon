@@ -1,6 +1,6 @@
 ---
 title: Installation
-description: Install CyanPrint CLI on 6 platforms with version pinning
+description: Install CyanPrint CLI on Linux and macOS with version pinning
 ---
 
 import { Tab, Tabs } from 'fumadocs-ui/components/tabs';
@@ -9,17 +9,14 @@ import { Tab, Tabs } from 'fumadocs-ui/components/tabs';
 
 ## Install Latest
 
-<Tabs groupId="installer" items={['Nix Shell', 'Nix Profile', 'Brew', 'Scoop', 'APT', 'YUM']} persist>
-<Tab value="Nix Shell">
+<Tabs groupId="installer" items={['Nix', 'Brew', 'APT', 'YUM']} persist>
+<Tab value="Nix">
 
 ```bash
+# Run directly without installing
 nix shell github:AtomiCloud/sulfone.iridium
-```
 
-</Tab>
-<Tab value="Nix Profile">
-
-```bash
+# Or install permanently
 nix profile install github:AtomiCloud/sulfone.iridium
 ```
 
@@ -28,14 +25,6 @@ nix profile install github:AtomiCloud/sulfone.iridium
 
 ```bash
 brew install AtomiCloud/tap/cyanprint
-```
-
-</Tab>
-<Tab value="Scoop">
-
-```bash
-scoop bucket add atomi https://github.com/AtomiCloud/scoop-bucket.git
-scoop install atomi/cyanprint
 ```
 
 </Tab>
@@ -65,15 +54,15 @@ yum install cyanprint
 
 ## Pin to Specific Version
 
-<Tabs groupId="installer" items={['Nix', 'Brew', 'Scoop', 'APT', 'YUM']} persist>
+<Tabs groupId="installer" items={['Nix', 'Brew', 'APT', 'YUM']} persist>
 <Tab value="Nix">
 
 ```bash
 # Pin to specific tag/commit
-nix shell github:AtomiCloud/sulfone.iridium/0.2.0
+nix shell github:AtomiCloud/sulfone.iridium/2.6.0
 
 # Or with flake reference
-nix profile install github:AtomiCloud/sulfone.iridium/0.2.0
+nix profile install github:AtomiCloud/sulfone.iridium/2.6.0
 ```
 
 </Tab>
@@ -84,18 +73,7 @@ nix profile install github:AtomiCloud/sulfone.iridium/0.2.0
 brew info AtomiCloud/tap/cyanprint
 
 # Install specific version (if available)
-brew install AtomiCloud/tap/cyanprint@0.2.0
-```
-
-</Tab>
-<Tab value="Scoop">
-
-```bash
-# Check versions in bucket
-scoop info atomi/cyanprint
-
-# Install specific version
-scoop install atomi/cyanprint@0.2.0
+brew install AtomiCloud/tap/cyanprint@2.6.0
 ```
 
 </Tab>
@@ -106,7 +84,7 @@ scoop install atomi/cyanprint@0.2.0
 apt-cache madison cyanprint
 
 # Install specific version
-sudo apt install cyanprint=0.2.0
+sudo apt install cyanprint=2.6.0
 ```
 
 </Tab>
@@ -117,7 +95,7 @@ sudo apt install cyanprint=0.2.0
 yum --showduplicates list cyanprint
 
 # Install specific version
-yum install cyanprint-0.2.0
+yum install cyanprint-2.6.0
 ```
 
 </Tab>

@@ -1,6 +1,6 @@
 ---
 title: Developer Overview
-description: Extend CyanPrint with custom templates, processors, and plugins
+description: Extend CyanPrint with custom templates, processors, plugins, and resolvers
 ---
 
 # Developer Documentation
@@ -9,19 +9,20 @@ Welcome to the CyanPrint developer documentation. Learn how to extend CyanPrint 
 
 ## What You Can Build
 
-CyanPrint has three extensible components called **artifacts**:
+CyanPrint has four extensible components called **artifacts**:
 
-| Artifact       | Purpose                                      |
-| -------------- | -------------------------------------------- |
-| **Templates**  | Define questions and file processing rules   |
-| **Processors** | Transform files (templating, syntax)         |
-| **Plugins**    | Post-processing (run commands, file ops)     |
+| Artifact       | Purpose                                              |
+| -------------- | ---------------------------------------------------- |
+| **Templates**  | Define questions and file processing rules           |
+| **Processors** | Transform files (templating, syntax)                 |
+| **Resolvers**  | Resolve file conflicts from layered templates        |
+| **Plugins**    | Post-processing (run commands, file operations)      |
 
 ## Getting Started
 
 Start with the basics to understand how CyanPrint works:
 
-- [Introduction](/developer/basics/introduction) - Learn about the three artifacts
+- [Introduction](/developer/basics/introduction) - Learn about the four artifacts
 - [Architecture](/developer/basics/architecture) - Understand the system design
 
 ## Build Your Artifact

@@ -9,10 +9,10 @@ Complete type reference for the CyanPrint plugin SDK.
 
 ## Core Types
 
-### PluginInput
+### CyanPluginInput
 
 ```ts
-interface PluginInput {
+interface CyanPluginInput {
   /**
    * Path to the generated project files.
    * Plugin should operate on files within this directory.
@@ -39,13 +39,13 @@ interface PluginOutput {
 }
 ```
 
-### PluginHandler
+### LambdaPluginFn
 
 ```ts
 /**
  * Function signature for plugin handler
  */
-type PluginHandler = (input: PluginInput) => Promise<PluginOutput>;
+type LambdaPluginFn = (input: CyanPluginInput) => Promise<PluginOutput>;
 ```
 
 ## Entry Point
@@ -59,7 +59,7 @@ type PluginHandler = (input: PluginInput) => Promise<PluginOutput>;
  *
  * @param handler - Async function that processes the directory
  */
-function StartPluginWithLambda(handler: PluginHandler): void;
+function StartPluginWithLambda(handler: LambdaPluginFn): void;
 ```
 
 ## Usage Example
@@ -67,7 +67,7 @@ function StartPluginWithLambda(handler: PluginHandler): void;
 ### Complete Plugin with Types
 
 ```ts
-import { StartPluginWithLambda, type PluginInput, type PluginOutput } from '@atomicloud/cyan-sdk';
+import { StartPluginWithLambda, type CyanPluginInput, type PluginOutput } from '@atomicloud/cyan-sdk';
 import { $ } from 'bun';
 
 // Define your config interface
@@ -80,7 +80,7 @@ interface GitSetupConfig {
 }
 
 // Define your plugin function with proper typing
-async function setupGit(input: PluginInput): Promise<PluginOutput> {
+async function setupGit(input: CyanPluginInput): Promise<PluginOutput> {
   const { directory } = input;
 
   // Type-safe config with defaults
@@ -137,7 +137,7 @@ function isMyConfig(config: unknown): config is MyConfig {
   );
 }
 
-StartPluginWithLambda(async (input) => {
+StartPluginWithLambda(async (input: CyanPluginInput) => {
   if (!isMyConfig(input.config)) {
     throw new Error('Invalid config');
   }

@@ -26,21 +26,23 @@ StartProcessorWithLambda(async (input, fileHelper) => {
   // Get streams for large files
   const streams = fileHelper.readAsStream({ root: 'assets', glob: '**/*' });
 
-  for await (const stream of streams) {
-    console.log(stream.relative); // File path
+  for (const stream of streams) {
+    // Access raw Node.js streams
+    const { reader, writer } = stream;
 
-    // Process chunk by chunk
+    // Process chunk by chunk using reader
     let content = '';
-    for await (const chunk of stream.read()) {
+    for await (const chunk of reader) {
       content += chunk.toString();
     }
 
-    // Transform and write
+    // Transform and write using writer
     const processed = transformContent(content);
-    stream.writeFile(processed);
+    writer.write(processed);
+    writer.end();
   }
 
-  return { directory: input.writeDirectory };
+  return { directory: input.writeDir };
 });
 ```
 
@@ -48,14 +50,12 @@ StartProcessorWithLambda(async (input, fileHelper) => {
 
 | Property | Type | Description |
 |----------|------|-------------|
-| `relative` | `string` | Path relative to read directory |
+| `reader` | `fs.ReadStream` | Node.js read stream for input |
+| `writer` | `fs.WriteStream` | Node.js write stream for output |
 
-## VirtualFileStream Methods
-
-| Method | Return | Description |
-|--------|--------|-------------|
-| `read()` | `AsyncIterable<Buffer>` | Read file as chunks |
-| `writeFile(content)` | `void` | Write content to output |
+<Callout type="info">
+VirtualFileStream exposes raw Node.js streams. Use standard Node.js stream APIs to read from `reader` and write to `writer`.
+</Callout>
 
 ## Example: Line-by-Line Processing
 
@@ -63,11 +63,12 @@ StartProcessorWithLambda(async (input, fileHelper) => {
 StartProcessorWithLambda(async (input, fileHelper) => {
   const streams = fileHelper.readAsStream({ root: 'data', glob: '**/*.csv' });
 
-  for await (const stream of streams) {
+  for (const stream of streams) {
+    const { reader, writer } = stream;
     const lines: string[] = [];
 
     // Process line by line
-    for await (const chunk of stream.read()) {
+    for await (const chunk of reader) {
       const text = chunk.toString();
       const newLines = text.split('\n');
 
@@ -78,10 +79,11 @@ StartProcessorWithLambda(async (input, fileHelper) => {
       }
     }
 
-    stream.writeFile(lines.join('\n'));
+    writer.write(lines.join('\n'));
+    writer.end();
   }
 
-  return { directory: input.writeDirectory };
+  return { directory: input.writeDir };
 });
 ```
 
@@ -91,11 +93,13 @@ StartProcessorWithLambda(async (input, fileHelper) => {
 StartProcessorWithLambda(async (input, fileHelper) => {
   const streams = fileHelper.readAsStream({ root: 'images', glob: '**/*' });
 
-  for await (const stream of streams) {
+  for (const stream of streams) {
+    const { reader, writer } = stream;
+
     // Collect all chunks for binary processing
     const chunks: Buffer[] = [];
 
-    for await (const chunk of stream.read()) {
+    for await (const chunk of reader) {
       chunks.push(chunk);
     }
 
@@ -103,10 +107,11 @@ StartProcessorWithLambda(async (input, fileHelper) => {
     const buffer = Buffer.concat(chunks);
     const processed = transformImage(buffer);
 
-    stream.writeFile(processed.toString('base64'));
+    writer.write(processed.toString('base64'));
+    writer.end();
   }
 
-  return { directory: input.writeDirectory };
+  return { directory: input.writeDir };
 });
 ```
 
@@ -118,11 +123,12 @@ import { Transform } from 'stream';
 StartProcessorWithLambda(async (input, fileHelper) => {
   const streams = fileHelper.readAsStream({ root: 'logs', glob: '*.log' });
 
-  for await (const stream of streams) {
+  for (const stream of streams) {
+    const { reader, writer } = stream;
     let result = '';
 
     // Process chunks as they arrive
-    for await (const chunk of stream.read()) {
+    for await (const chunk of reader) {
       const transformed = chunk
         .toString()
         .replace(/ERROR/g, 'ERR')
@@ -131,15 +137,16 @@ StartProcessorWithLambda(async (input, fileHelper) => {
       result += transformed;
     }
 
-    stream.writeFile(result);
+    writer.write(result);
+    writer.end();
   }
 
-  return { directory: input.writeDirectory };
+  return { directory: input.writeDir };
 });
 ```
 
 <Callout type="warn">
-Streaming requires accumulating content before writing. For truly massive files that don't fit in memory, consider using `copy()` to pass them through unchanged.
+Streaming requires accumulating content before writing. For truly massive files that don't fit in memory, consider using `fileHelper.copy()` to pass them through unchanged.
 </Callout>
 
 ## Related

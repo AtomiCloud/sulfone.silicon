@@ -1,11 +1,11 @@
 ---
 title: Zinc
-description: The CyanPrint registry API
+description: "Sulfone-Zinc: Registry API for CyanPrint"
 ---
 
 # sulfone.zinc
 
-Zinc is the registry API that stores template metadata, handles authentication, and serves template information to CLI users and the web UI.
+Zinc is the registry API that stores template metadata, delegates authentication to Descope, and serves template, plugin, processor, and resolver information to CLI users and the web UI.
 
 ## Repository
 
@@ -15,21 +15,20 @@ Zinc is the registry API that stores template metadata, handles authentication, 
 
 | Technology | Purpose |
 | ---------- | ------- |
-| Rust | Primary language |
-| Axum | Web framework |
-| SQLx | Database access (PostgreSQL) |
-| Tower | Middleware and service utilities |
-| JWT | Authentication tokens |
+| F#/.NET 8 | Primary language and runtime |
+| ASP.NET Core with Kestrel | Web framework |
+| Entity Framework Core | Database access (PostgreSQL) |
+| Descope | Authentication service |
 
 ## Key Files
 
 | Path | Description |
 | ---- | ----------- |
-| `src/main.rs` | Application entry point |
-| `src/api/` | REST API routes and handlers |
-| `src/models/` | Database models |
-| `src/auth/` | Authentication and authorization |
-| `src/storage/` | Template storage backend |
+| `App/Program.cs` | Application entry point |
+| `App/Modules/Cyan/API/V1/Controllers/` | REST API routes and handlers |
+| `Domain/Model/` | Domain models |
+| `App/Modules/Users/API/Auth/` | Authentication (API key, Descope integration) |
+| `App/Modules/Cyan/Data/Repositories/` | Database repositories |
 
 ## Architecture
 
@@ -38,13 +37,21 @@ Zinc is the registry API that stores template metadata, handles authentication, 
         AUTH[Auth Middleware] --> ROUTES[API Routes]
         ROUTES --> TEMPLATES[Template Service]
         ROUTES --> USERS[User Service]
-        ROUTES --> SEARCH[Search Service]
+        ROUTES --> PLUGINS[Plugin Service]
+        ROUTES --> PROCESSORS[Processor Service]
+        ROUTES --> RESOLVERS[Resolver Service]
     end
 
     subgraph "Storage"
         TEMPLATES --> DB[(PostgreSQL)]
         USERS --> DB
-        SEARCH --> ES[(Elasticsearch)]
+        PLUGINS --> DB
+        PROCESSORS --> DB
+        RESOLVERS --> DB
+    end
+
+    subgraph "External Auth"
+        AUTH --> DESCOPE[(Descope)]
     end
 
     subgraph "Clients"
@@ -61,108 +68,218 @@ Zinc is the registry API that stores template metadata, handles authentication, 
 ### Templates
 
 ```bash
-# List templates
-GET /api/v1/templates
+# Search templates
+GET /api/v{version}/template
 
 # Get template by ID
-GET /api/v1/templates/{id}
+GET /api/v{version}/template/id/{userId}/{templateId}
 
-# Search templates
-GET /api/v1/templates/search?q={query}
+# Get template by slug
+GET /api/v{version}/template/slug/{username}/{name}
 
 # Get template versions
-GET /api/v1/templates/{id}/versions
+GET /api/v{version}/template/slug/{username}/{templateName}/versions
+
+# Push (create or update) template
+POST /api/v{version}/template/push/{username}
 ```
 
-### Authentication
+### Plugins
 
 ```bash
-# Login
-POST /api/v1/auth/login
+# Search plugins
+GET /api/v{version}/plugin
 
-# Refresh token
-POST /api/v1/auth/refresh
+# Get plugin by ID
+GET /api/v{version}/plugin/id/{userId}/{pluginId}
 
-# Logout
-POST /api/v1/auth/logout
+# Get plugin by slug
+GET /api/v{version}/plugin/slug/{username}/{name}
+
+# Get plugin versions
+GET /api/v{version}/plugin/slug/{username}/{pluginName}/versions
+
+# Push (create or update) plugin
+POST /api/v{version}/plugin/push/{username}
+```
+
+### Processors
+
+```bash
+# Search processors
+GET /api/v{version}/processor
+
+# Get processor by ID
+GET /api/v{version}/processor/id/{userId}/{processorId}
+
+# Get processor by slug
+GET /api/v{version}/processor/slug/{username}/{name}
+
+# Get processor versions
+GET /api/v{version}/processor/slug/{username}/{processorName}/versions
+
+# Push (create or update) processor
+POST /api/v{version}/processor/push/{username}
+```
+
+### Resolvers
+
+```bash
+# Search resolvers
+GET /api/v{version}/resolver
+
+# Get resolver by ID
+GET /api/v{version}/resolver/id/{userId}/{resolverId}
+
+# Get resolver by slug
+GET /api/v{version}/resolver/slug/{username}/{name}
+
+# Get resolver versions
+GET /api/v{version}/resolver/slug/{username}/{resolverName}/versions
+
+# Push (create or update) resolver
+POST /api/v{version}/resolver/push/{username}
 ```
 
 ### Users
 
 ```bash
 # Get current user
-GET /api/v1/users/me
+GET /api/v{version}/user/Me
 
 # Update user
-PATCH /api/v1/users/me
+PUT /api/v{version}/user/{id}
+```
+
+### Token Management
+
+```bash
+# List user tokens
+GET /api/v{version}/user/{userId}/tokens
+
+# Create token
+POST /api/v{version}/user/{userId}/tokens
+
+# Get token by ID
+GET /api/v{version}/user/{userId}/tokens/{tokenId}
+
+# Update token
+PUT /api/v{version}/user/{userId}/tokens/{tokenId}
+
+# Delete token
+DELETE /api/v{version}/user/{userId}/tokens/{tokenId}
+```
+
+### Likes (Social Features)
+
+```bash
+# Like/unlike templates, plugins, processors, resolvers
+POST /api/v{version}/{entityType}/like/{username}/{name}
 ```
 
 ## Data Model
 
 <Mermaid chart={`erDiagram
     USERS ||--o{ TEMPLATES : creates
+    USERS ||--o{ PLUGINS : creates
+    USERS ||--o{ PROCESSORS : creates
+    USERS ||--o{ RESOLVERS : creates
     TEMPLATES ||--o{ VERSIONS : has
+    PLUGINS ||--o{ VERSIONS : has
+    PROCESSORS ||--o{ VERSIONS : has
+    RESOLVERS ||--o{ VERSIONS : has
     TEMPLATES ||--o{ TAGS : has
     USERS {
-        uuid id PK
-        string email
-        string password_hash
-        timestamp created_at
+        string Id PK
+        string Username
     }
     TEMPLATES {
-        uuid id PK
-        string name
-        string description
-        uuid author_id FK
-        jsonb input_schema
-        timestamp created_at
+        guid Id PK
+        string UserId FK
+        string Name
+        TemplateMetadata Metadata
+        TemplateInfo Info
+    }
+    PLUGINS {
+        guid Id PK
+        string UserId FK
+        string Name
+        PluginMetadata Metadata
+        PluginInfo Info
+    }
+    PROCESSORS {
+        guid Id PK
+        string UserId FK
+        string Name
+        ProcessorMetadata Metadata
+        ProcessorInfo Info
+    }
+    RESOLVERS {
+        guid Id PK
+        string UserId FK
+        string Name
+        ResolverMetadata Metadata
+        ResolverInfo Info
     }
     VERSIONS {
-        uuid id PK
-        uuid template_id FK
-        string version
-        string container_image
-        timestamp created_at
+        guid Id PK
+        guid EntityId FK
+        ulong Version
+        string Description
+        datetime CreatedAt
+        string BlobDockerReference
+        string BlobDockerTag
+        string TemplateDockerReference
+        string TemplateDockerTag
     }
 `} />
+
+**Note:** Versions use numeric versioning (ulong), not semantic versioning.
 
 ## Building
 
 ```bash
-# Debug build
-cargo build
+# Setup dependencies
+pls setup
 
-# Release build
-cargo build --release
+# Start the service
+pls start
+
+# Build
+dotnet build
 
 # Run tests
-cargo test
+dotnet test
 
-# Run database migrations
-sqlx migrate run
-
-# Run locally
-cargo run -- --config config/local.yaml
+# Run Entity Framework migrations (if applicable)
+dotnet ef migrations add <MigrationName>
+dotnet ef database update
 ```
 
 ## Configuration
 
 ```yaml
-# zinc-config.yaml
-server:
-  http_addr: "0.0.0.0:8080"
+# settings.yaml
+Kestrel:
+  Endpoints:
+    Http:
+      Url: "http://0.0.0.0:8080"
 
-database:
-  url: "postgresql://localhost/zinc"
+Database:
+  MAIN:
+    Host: "localhost"
+    Port: 5432
+    Database: "zinc"
+    UserId: "postgres"
+    Password: "password"
 
-auth:
-  jwt_secret: "your-secret-key"
-  token_expiry: "24h"
+Auth:
+  Settings:
+    Domain: "api.descope.com/YOUR_PROJECT_ID"
+    # Authentication is delegated to Descope
 
-storage:
-  type: "s3"
-  bucket: "cyan-templates"
-  region: "us-east-1"
+EFCore:
+  Enabled: true
 ```
 
 ## Contributing
@@ -171,6 +288,7 @@ When contributing to Zinc:
 
 1. Follow RESTful API conventions
 2. Validate all inputs with schemas
-3. Use database transactions for data consistency
+3. Use Entity Framework Core for database operations
 4. Write integration tests for API endpoints
 5. Update API documentation for new endpoints
+6. Use push endpoints for CI/CD workflows (atomic create-or-update operations)

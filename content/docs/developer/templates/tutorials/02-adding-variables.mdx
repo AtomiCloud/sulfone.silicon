@@ -15,7 +15,7 @@ Add variable substitution using the default processor. This enables dynamic cont
 First, update your file configuration to use `GlobType.Template` instead of `GlobType.Copy`:
 
 ```ts
-files: [{ root: 'templates', glob: '**/*', exclude: [], type: GlobType.Template }]
+files: [{ root: 'template', glob: '**/*', exclude: [], type: GlobType.Template }]
 ```
 
 <Callout type="warn">
@@ -40,7 +40,7 @@ config: {
 
 The default processor uses `var__name__` syntax for variable substitution:
 
-`cyan/templates/README.md`:
+`cyan/template/README.md`:
 
 ```markdown
 # var__name__
@@ -63,7 +63,7 @@ StartTemplateWithLambda(async (i, d) => {
     processors: [{
       name: 'cyan/default',
       files: [
-        { root: 'templates', glob: '**/*', exclude: [], type: GlobType.Template }
+        { root: 'template', glob: '**/*', exclude: [], type: GlobType.Template }
       ],
       config: {
         vars: {
@@ -84,7 +84,7 @@ The default processor uses Eta templating with custom delimiters:
 | Syntax | Description |
 |--------|-------------|
 | `var__name__` | Variable substitution |
-| `var__author__` | Nested variable access |
+| `var__user.name__` | Nested variable access |
 
 <Callout type="info">
 The default delimiter `var__` and `__` is chosen to avoid conflicts with common template syntaxes like `${}` or `{{}}`.
@@ -94,7 +94,7 @@ The default delimiter `var__` and `__` is chosen to avoid conflicts with common 
 
 ```bash
 # Build
-docker build -f cyan/template.Dockerfile -t my-first-template:dev .
+docker build -f cyan/Dockerfile -t my-first-template:dev .
 
 # Test
 cyanprint create my-first-template:dev ../test-output

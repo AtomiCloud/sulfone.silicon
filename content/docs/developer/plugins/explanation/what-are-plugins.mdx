@@ -45,7 +45,7 @@ Plugins are the only component with shell access. Processors are isolated and ca
 
 ### Input
 
-Plugins receive:
+Plugins receive a `CyanPluginInput` object with:
 - `directory` - Path to all generated files
 - `config` - Configuration from the template
 
@@ -67,8 +67,8 @@ Plugins receive:
 
 ### Output
 
-Plugins return:
-- `directory` - Same path (for pipeline continuity)
+Plugins return a `PluginOutput` object:
+- `directory` - Same path (returned for pipeline continuity when multiple plugins run in sequence)
 
 ## When to Use Plugins
 
@@ -106,7 +106,11 @@ Read more in [Plugins vs Processors](/developer/plugins/explanation/plugins-vs-p
 Initialize the project environment:
 
 ```ts
-StartPluginWithLambda(async (input) => {
+import { $ } from 'bun';
+import { StartPluginWithLambda } from '@atomicloud/cyan-sdk';
+import type { CyanPluginInput, PluginOutput } from '@atomicloud/cyan-sdk';
+
+StartPluginWithLambda(async (input: CyanPluginInput): Promise<PluginOutput> => {
   const { directory } = input;
 
   await $`git -C ${directory} init`.quiet();
@@ -121,7 +125,11 @@ StartPluginWithLambda(async (input) => {
 Run code formatters:
 
 ```ts
-StartPluginWithLambda(async (input) => {
+import { $ } from 'bun';
+import { StartPluginWithLambda } from '@atomicloud/cyan-sdk';
+import type { CyanPluginInput, PluginOutput } from '@atomicloud/cyan-sdk';
+
+StartPluginWithLambda(async (input: CyanPluginInput): Promise<PluginOutput> => {
   const { directory, config } = input;
   const cfg = config as { formatter?: string };
 
@@ -138,7 +146,11 @@ StartPluginWithLambda(async (input) => {
 Run build steps:
 
 ```ts
-StartPluginWithLambda(async (input) => {
+import { $ } from 'bun';
+import { StartPluginWithLambda } from '@atomicloud/cyan-sdk';
+import type { CyanPluginInput, PluginOutput } from '@atomicloud/cyan-sdk';
+
+StartPluginWithLambda(async (input: CyanPluginInput): Promise<PluginOutput> => {
   const { directory, config } = input;
   const cfg = config as { build?: boolean };
 

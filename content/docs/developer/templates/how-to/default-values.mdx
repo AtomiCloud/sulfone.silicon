@@ -29,26 +29,30 @@ const name = await i.text({
 
 ### Text
 
+The `text()` question type supports two ways to set initial values:
+
+- `default`: A fallback value used when no user input is provided
+- `initial`: A pre-filled value that appears in the input field (user can edit)
+
 ```ts
 const name = await i.text({
   type: QuestionType.Text,
   id: 'project.name',
   message: 'Project name?',
   desc: 'Enter name',
-  default: 'my-project'
+  default: 'my-project'  // Fallback if user provides no input
 });
 ```
 
-### Select
+Using `initial` for pre-filled input:
 
 ```ts
-const license = await i.select({
-  type: QuestionType.Select,
-  id: 'project.license',
-  message: 'License?',
-  desc: 'Choose license',
-  options: ['MIT', 'Apache-2.0', 'GPL-3.0'],
-  default: 'MIT'  // Must match an option
+const name = await i.text({
+  type: QuestionType.Text,
+  id: 'project.name',
+  message: 'Project name?',
+  desc: 'Enter name',
+  initial: 'my-project'  // Pre-filled in input field, user can edit
 });
 ```
 
@@ -64,20 +68,9 @@ const typescript = await i.confirm({
 });
 ```
 
-### Checkbox
-
-```ts
-const features = await i.checkbox({
-  type: QuestionType.Checkbox,
-  id: 'project.features',
-  message: 'Features?',
-  desc: 'Select features',
-  options: ['ESLint', 'Prettier', 'Jest', 'Docker'],
-  default: ['ESLint', 'Prettier']  // Array of pre-selected options
-});
-```
-
 ### Date
+
+The `dateSelect()` method accepts a `Date` object for the `default` property, but returns the selected date as a **string** (ISO format):
 
 ```ts
 const startDate = await i.dateSelect({
@@ -85,9 +78,14 @@ const startDate = await i.dateSelect({
   id: 'project.start',
   message: 'Start date?',
   desc: 'Project start',
-  default: new Date()  // Date object
+  default: new Date()  // Date object as input
 });
+// startDate is a string, e.g., "2024-01-15"
 ```
+
+:::caution
+`select()` and `checkbox()` question types do **not** support the `default` property. Users must make an active selection for these question types.
+:::
 
 ## Computed Defaults
 
@@ -115,11 +113,33 @@ const deadline = await i.dateSelect({
   desc: 'Target date',
   default: defaultDeadline
 });
+// deadline is returned as a string (ISO format)
 ```
 
 ## Conditional Defaults
 
-Set defaults based on previous answers:
+Set defaults based on previous answers. Note that `confirm()` and `text()` support defaults, but `select()` and `checkbox()` do not:
+
+```ts
+const typescript = await i.confirm({
+  type: QuestionType.Confirm,
+  id: 'project.typescript',
+  message: 'Use TypeScript?',
+  desc: 'Add TypeScript config',
+  default: true
+});
+
+// Conditional default for a text question based on previous answer
+const configExt = await i.text({
+  type: QuestionType.Text,
+  id: 'project.configExt',
+  message: 'Config file extension?',
+  desc: 'Enter extension',
+  default: typescript ? '.ts' : '.js'  // Conditional default
+});
+```
+
+For `select()` and `checkbox()` questions, users must make an active selection since these types do not support defaults:
 
 ```ts
 const framework = await i.select({
@@ -127,18 +147,18 @@ const framework = await i.select({
   id: 'project.framework',
   message: 'Framework?',
   desc: 'Choose framework',
-  options: ['React', 'Vue', 'Svelte'],
-  default: 'React'
+  options: ['React', 'Vue', 'Svelte']
+  // Note: No default - user must select
 });
 
-// Default test framework based on main framework
+// Based on framework choice, suggest but don't pre-select testing tool
 const testFramework = await i.select({
   type: QuestionType.Select,
   id: 'project.testing',
   message: 'Test framework?',
   desc: 'Choose testing tool',
-  options: ['Jest', 'Vitest', 'Mocha'],
-  default: framework === 'Vue' ? 'Vitest' : 'Jest'  // Conditional default
+  options: framework === 'Vue' ? ['Vitest', 'Jest', 'Mocha'] : ['Jest', 'Vitest', 'Mocha']
+  // Note: No default - user must select
 });
 ```
 
@@ -148,6 +168,7 @@ const testFramework = await i.select({
 2. **Document defaults** - Make it clear what the default is
 3. **Consider context** - Defaults should match the project type
 4. **Allow override** - Users should always be able to change the default
+5. **Know the limits** - Only `text()`, `confirm()`, and `dateSelect()` support defaults; `select()` and `checkbox()` do not
 
 ## Related
 

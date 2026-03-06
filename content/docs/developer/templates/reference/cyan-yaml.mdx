@@ -5,188 +5,194 @@ description: Configuration format for template metadata
 
 # cyan.yaml Reference
 
-The `cyan.yaml` file defines template metadata, dependencies, and configuration.
+The `cyan.yaml` file defines template metadata and declares dependencies on processors, plugins, and other templates.
 
 ## Basic Structure
 
 ```yaml
-name: myorg/my-template
-version: 1.0.0
+username: myorg
+name: my-template
 description: A template description
-author: Your Organization
-license: MIT
+project: https://example.com/my-project
+source: https://github.com/myorg/my-template
+email: contact@myorg.com
+tags: []
+readme: README.md
+processors: []
+plugins: []
+templates: []
 ```
 
 ## Fields Reference
 
-### `name`
+### `username`
 
-**Required.** The template identifier.
+**Required.** The organization or user name that owns this template.
 
 ```yaml
-name: myorg/my-template
+username: myorg
 ```
 
-Format: `{organization}/{template-name}`
+- Use lowercase letters
+- Use hyphens for separation
+- Must match the registry user/organization
+
+### `name`
+
+**Required.** The template identifier within the organization.
+
+```yaml
+name: my-template
+```
 
 - Use lowercase letters
 - Use hyphens for separation
 - Must be unique within the organization
 
-### `version`
-
-**Required.** Semantic version of the template.
-
-```yaml
-version: 1.0.0
-```
-
-Follow [Semantic Versioning](https://semver.org/):
-- MAJOR: Breaking changes
-- MINOR: New features, backward compatible
-- PATCH: Bug fixes
-
 ### `description`
 
-**Optional.** Brief description of what the template provides.
+**Required.** Brief description of what the template provides.
 
 ```yaml
 description: A modern Node.js project template with TypeScript support
 ```
 
-### `author`
+### `project`
 
-**Optional.** The template author or organization.
+**Required.** URL to the project documentation or website.
 
 ```yaml
-author: Your Organization
+project: https://docs.myorg.io/templates/node-service
 ```
 
-### `license`
+### `source`
 
-**Optional.** License for the template itself.
+**Required.** URL to the source code repository.
 
 ```yaml
-license: MIT
+source: https://github.com/myorg/my-template
 ```
 
-### `keywords`
+### `email`
 
-**Optional.** Tags for template discovery.
+**Required.** Contact email for the template maintainer.
 
 ```yaml
-keywords:
+email: team@myorg.com
+```
+
+### `tags`
+
+**Required.** Tags for template discovery. Can be an empty array.
+
+```yaml
+tags:
   - nodejs
   - typescript
   - react
   - starter
 ```
 
-### `homepage`
+### `readme`
 
-**Optional.** URL to template documentation or repository.
-
-```yaml
-homepage: https://github.com/myorg/my-template
-```
-
-### `repository`
-
-**Optional.** Source code repository.
+**Required.** Path to the template's README file.
 
 ```yaml
-repository:
-  type: git
-  url: https://github.com/myorg/my-template.git
+readme: README.md
 ```
 
-## Composition
+### `processors`
 
-### `compose`
-
-**Optional.** Other templates to include.
+**Required.** Array of processor dependencies. Can be empty.
 
 ```yaml
-compose:
-  - name: shared/base-setup
-    version: "1.0.0"
-  - name: shared/typescript
-    version: "^2.0.0"
-  - name: shared/eslint
-    version: ">=1.5.0"
+processors:
+  - myorg/my-processor
+  - atomi/typescript:3
 ```
 
-Version constraints:
-- Exact: `"1.0.0"`
-- Compatible: `"^1.0.0"` (1.x.x)
-- Range: `">=1.0.0 <2.0.0"`
+Format: `username/processor-name[:version]`
 
-### Conditional Composition
-
-```yaml
-compose:
-  - name: shared/docker
-    version: "1.0.0"
-    condition: ${usesDocker}
-```
-
-## Plugins
+- Version is optional: `myorg/processor` (latest) or `myorg/processor:3` (specific version)
+- Versions are auto-incrementing integers managed by the registry (not semantic versions)
 
 ### `plugins`
 
-**Optional.** Default plugins for this template.
+**Required.** Array of plugin dependencies. Can be empty.
 
 ```yaml
 plugins:
-  - name: cyan/init-git
-    config:
-      commitMessage: "Initial commit"
+  - cyan/init-git
+  - atomi/npm-install:2
 ```
 
-Users can override plugin configuration when using the template.
+Format: `username/plugin-name[:version]`
+
+- Version is optional: `cyan/init-git` (latest) or `cyan/init-git:1` (specific version)
+- Versions are auto-incrementing integers managed by the registry (not semantic versions)
+
+### `templates`
+
+**Required.** Array of other templates to compose with. Can be empty.
+
+```yaml
+templates:
+  - myorg/base-node
+  - myorg/typescript:2
+  - myorg/docker:1
+```
+
+Format: `username/template-name[:version]`
+
+- Version is optional: `myorg/base-node` (latest) or `myorg/base-node:3` (specific version)
+- Versions are auto-incrementing integers managed by the registry (not semantic versions)
+
+## Version Management
+
+Template versions are **auto-incrementing integers** managed by the registry, not semantic versions. When you push a template to the registry, it automatically receives the next available version number (1, 2, 3, ...).
+
+This means:
+
+- No `version` field exists in `cyan.yaml`
+- Versions are tracked internally by the registry
+- Reference specific versions using the `:version` suffix (e.g., `myorg/template:3`)
 
 ## Complete Example
 
 ```yaml
-# Basic metadata
-name: myorg/node-service
-version: 2.1.0
+# Organization and identity
+username: myorg
+name: node-service
 description: Production-ready Node.js microservice template
-author: MyOrg Team
-license: MIT
+email: team@myorg.com
+
+# Links
+project: https://docs.myorg.io/templates/node-service
+source: https://github.com/myorg/node-service-template
+readme: README.md
 
 # Discovery
-keywords:
+tags:
   - nodejs
   - microservice
   - typescript
   - grpc
-homepage: https://docs.myorg.io/templates/node-service
-repository:
-  type: git
-  url: https://github.com/myorg/node-service-template.git
+
+# Processor dependencies
+processors:
+  - myorg/base-processor
+
+# Plugin dependencies
+plugins:
+  - cyan/init-git
+  - cyan/npm-install
 
 # Compose with other templates
-compose:
-  - name: myorg/base-node
-    version: "^3.0.0"
-  - name: myorg/typescript
-    version: "^2.0.0"
-  - name: myorg/docker
-    version: "^1.0.0"
-  - name: myorg/grpc
-    version: "^1.0.0"
-  - name: myorg/observability
-    version: "^2.0.0"
-
-# Default plugins
-plugins:
-  - name: cyan/init-git
-    config:
-      commitMessage: "Initial commit from node-service template"
-  - name: cyan/npm-install
-    config:
-      packageManager: pnpm
+templates:
+  - myorg/base-node:3
+  - myorg/typescript:2
+  - myorg/docker:1
+  - myorg/grpc:1
 ```
 
 ## Related

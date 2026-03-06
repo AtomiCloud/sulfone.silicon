@@ -15,14 +15,14 @@ bun add @atomicloud/cyan-sdk
 
 ## Overview
 
-The plugin SDK is minimal by design. Plugins receive a directory and config, perform operations, and return the directory path.
+The plugin SDK is minimal by design. Plugins receive a directory containing generated template output (after all processors complete) and config, perform operations, and return the directory path.
 
 ### Key Components
 
 | Component | Purpose |
 |-----------|---------|
 | `StartPluginWithLambda` | Entry point for plugin logic |
-| `PluginInput` | Input data passed to plugin |
+| `CyanPluginInput` | Input data passed to plugin (alias: `PluginInput`) |
 | `PluginOutput` | Return value from plugin |
 
 ### Quick Example
@@ -53,10 +53,12 @@ StartPluginWithLambda(async (input) => {
 | Feature | Plugin SDK | Processor SDK |
 |---------|------------|---------------|
 | Entry point | `StartPluginWithLambda` | `StartProcessorWithLambda` |
-| Input | `PluginInput` | `ProcessorInput` |
-| Output | `PluginOutput` | `ProcessorOutput` |
-| File helper | None (direct fs access) | `CyanFileHelper` |
-| Primary use | Post-processing | File transformation |
+| Input type | `CyanPluginInput` | `CyanProcessorInput` |
+| Output type | `PluginOutput` | `ProcessorOutput` |
+| Handler params | 1 (`input`) | 2 (`input`, `fileHelper`) |
+| Input fields | `directory`, `config` | `readDirectory`, `writeDirectory`, `globs`, `config` |
+| File helper | Direct filesystem access | `CyanFileHelper` API |
+| Primary use | Post-processing tasks | File transformation |
 
 ## Related
 

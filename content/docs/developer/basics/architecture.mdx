@@ -3,6 +3,8 @@ title: Architecture
 description: CyanPrint system architecture and container communication
 ---
 
+import { Callout } from 'fumadocs-ui/components/callout';
+
 # Architecture Overview
 
 CyanPrint uses a containerized architecture where each artifact runs in its own isolated environment.
@@ -40,11 +42,13 @@ CyanPrint uses a containerized architecture where each artifact runs in its own 
 | ------------ | ---------------------------------------- |
 | Iridium CLI  | User interface for running templates     |
 | Zinc API     | Registry for discovering artifacts       |
-| Argon Web UI | Web interface for browsing templates     |
+| Argon Web UI | SvelteKit web interface for browsing templates |
 | Coordinator  | Orchestrates artifact execution          |
 | Containers   | Isolated environments for each artifact  |
 
 ## Execution Flow
+
+<Callout type="info">This is a simplified view of the execution flow. The actual process includes additional phases such as container warming, session management, and zipping.</Callout>
 
 <Mermaid chart={`sequenceDiagram
     participant User
@@ -55,7 +59,7 @@ CyanPrint uses a containerized architecture where each artifact runs in its own 
     participant Processor:5551
 
     User->>CLI: cyanprint create atomi/template
-    CLI->>Registry: GET /templates/atomi/template
+    CLI->>Registry: GET /api/v1/Template/slug/atomi/template/versions/latest
     Registry-->>CLI: Image references
     CLI->>Coordinator: Start execution
     Coordinator->>Template: POST /api/template/init
@@ -80,22 +84,25 @@ CyanPrint uses a containerized architecture where each artifact runs in its own 
 | Template   | Collects user input, returns Cyan config | POST /api/template/init, /api/template/validate |
 | Processor  | Reads files, transforms, writes output   | POST /api/process                               |
 | Plugin     | Post-processing on generated files       | POST /api/plug                                  |
+| Merger     | Merges processor outputs into final result | POST /merge/:sessionId, POST /zip              |
 
 ## Container Path Mechanics
 
 <Mermaid chart={`graph LR
     A[Blob Image] -->|Extracts to| B[/workspace/cyanprint/]
     B -->|read_dir| C[Processor]
-    C -->|write_dir| D[/workspace/output/]
+    C -->|write_dir| D[/workspace/area/&lt;uuid&gt;/]
+    D -->|merge| E[/workspace/area/&lt;merge-uuid&gt;/]
 `} />
 
 ### Critical Paths
 
-| Path                   | Owner       | Warning                                         |
-| ---------------------- | ----------- | ----------------------------------------------- |
-| `/workspace`           | Coordinator | **WILL BE OVERRIDDEN** - never store files here |
-| `/workspace/cyanprint` | Blob        | Extraction target; becomes processor's read_dir |
-| `/workspace/output`    | Coordinator | Final output before delivery to CLI             |
+| Path                        | Owner       | Warning                                         |
+| --------------------------- | ----------- | ----------------------------------------------- |
+| `/workspace`                | Coordinator | **WILL BE OVERRIDDEN** - never store files here |
+| `/workspace/cyanprint`      | Blob        | Extraction target; becomes processor's read_dir |
+| `/workspace/area/<uuid>`    | Processor   | Individual processor output directory           |
+| `/workspace/area/<merge-uuid>` | Merger   | Merged output before delivery to CLI            |
 
 ## SDK Port Assignments
 
@@ -104,5 +111,7 @@ CyanPrint uses a containerized architecture where each artifact runs in its own 
 | Template  | 5550 | POST /api/template/init, /api/template/validate |
 | Processor | 5551 | POST /api/process                               |
 | Plugin    | 5552 | POST /api/plug                                  |
+| Merger    | 9000 | POST /merge/:sessionId, POST /zip               |
+| Coordinator | 9000 | Internal orchestration                         |
 
 Each artifact SDK starts an HTTP server on its assigned port. The Coordinator communicates with containers via these endpoints.

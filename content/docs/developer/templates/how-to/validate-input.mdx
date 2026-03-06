@@ -152,22 +152,20 @@ const password = await i.password({
 });
 ```
 
-### Checkbox Validation
+## Supported Question Types
 
-```ts
-const features = await i.checkbox({
-  type: QuestionType.Checkbox,
-  id: 'project.features',
-  message: 'Select features',
-  desc: 'Choose at least one',
-  options: ['ESLint', 'Prettier', 'Jest', 'Docker'],
-  validate: (selected) => {
-    if (selected.length === 0) return 'Select at least one feature';
-    if (selected.length > 3) return 'Maximum 3 features allowed';
-    return null;
-  }
-});
-```
+Validation is only supported on question types that accept text input:
+
+| Question Type | Validation Support |
+|---------------|-------------------|
+| `text` | Yes |
+| `password` | Yes |
+| `dateSelect` | Yes |
+| `select` | No |
+| `checkbox` | No |
+| `confirm` | No |
+
+For `select`, `checkbox`, and `confirm` questions, validation is not needed since users can only choose from predefined options.
 
 ## Combining Validation with Defaults
 
@@ -188,13 +186,6 @@ const projectName = await i.text({
   }
 });
 ```
-
-## Best Practices
-
-1. **Clear messages** - Tell users exactly what's wrong
-2. **Fail fast** - Check the most common issues first
-3. **Be helpful** - Suggest the correct format
-4. **Allow optional** - Use early return for optional fields
 
 ## Related
 

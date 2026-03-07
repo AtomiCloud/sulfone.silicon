@@ -3,25 +3,19 @@ title: Development Setup
 description: Setting up your development environment for contributing to CyanPrint
 ---
 
-import { Tab, Tabs } from 'fumadocs-ui/components/tabs';
-
 # Development Setup
 
 This guide will help you set up your development environment for contributing to CyanPrint.
 
 ## Prerequisites
 
-Before you begin, ensure you have the following installed:
+CyanPrint uses **Nix** for reproducible development environments. All dependencies are managed through Nix flakes.
 
-| Tool | Version | Purpose |
-| ---- | ------- | ------- |
-| Git | 2.40+ | Version control |
-| Docker | 24.0+ | Container runtime for testing |
-| Node.js | 20+ | For Argon and Silicon |
-| Rust | 1.75+ | For Iridium |
-| Go | 1.24+ | For Boron |
-| .NET SDK | 8.0+ | For Zinc and Helium C# SDK |
-| Python | 3.11+ | For Helium Python SDK |
+| Tool | Purpose |
+| ---- | ------- |
+| Nix | Package manager and dev environment |
+| Direnv | Auto-loads Nix environment |
+| Git | Version control |
 
 ## Quick Start
 
@@ -33,396 +27,51 @@ git clone https://github.com/YOUR_USERNAME/sulfone.REPO_NAME.git
 cd sulfone.REPO_NAME
 ```
 
-### 2. Install Dependencies
-
-<Tabs groupId="repo" items={['Rust (Iridium)', 'Go (Boron)', '.NET (Zinc)', 'TypeScript (Argon/Silicon)', 'Python (Helium)']} persist>
-<Tab value="Rust (Iridium)">
+### 2. Enter Development Environment
 
 ```bash
-# Install Rust if not already installed
-curl --proto '=https' --tlsv1.2 -sSf https://sh.rustup.rs | sh
+# Allow direnv to load the environment
+direnv allow
 
-# Build the project
-cargo build
-
-# Run tests
-cargo test
+# Nix will automatically install all required dependencies
 ```
 
-</Tab>
-<Tab value="Go (Boron)">
+### 3. Setup and Run
 
 ```bash
-# Install Go if not already installed
-# See: https://go.dev/doc/install
+# Setup dependencies
+pls setup
 
-# Download dependencies
-go mod tidy
-
-# Build the project
-go build ./...
-
-# Run tests
-go test ./...
+# Start development
+pls dev
 ```
 
-</Tab>
-<Tab value=".NET (Zinc)">
+## Common Commands
+
+All repositories use `pls` (Taskfile) for common operations:
+
+| Command | Description |
+| ------- | ----------- |
+| `pls setup` | Install dependencies |
+| `pls dev` | Start development server |
+| `pls build` | Build for production |
+| `pls test` | Run tests (if available) |
+
+## Pre-commit Hooks
+
+Pre-commit hooks run automatically on commit and handle:
+- Code formatting (Biome, treefmt)
+- Linting
+- Secrets scanning
+- Shellcheck
+
+To run all checks manually:
 
 ```bash
-# Install .NET SDK if not already installed
-# See: https://dotnet.microsoft.com/download
-
-# Restore dependencies
-dotnet restore
-
-# Build the project
-dotnet build
-
-# Run tests
-dotnet test
-```
-
-</Tab>
-<Tab value="TypeScript (Argon/Silicon)">
-
-```bash
-# Install bun (recommended) or npm
-curl -fsSL https://bun.sh/install | bash
-
-# Install dependencies
-bun install
-
-# Start development server
-bun run dev
-```
-
-</Tab>
-<Tab value="Python (Helium)">
-
-```bash
-# Create a virtual environment
-python -m venv .venv
-source .venv/bin/activate  # On Windows: .venv\Scripts\activate
-
-# Install dependencies using poetry
-poetry install
-
-# Run tests
-poetry run python template_test.py
-```
-
-</Tab>
-<Tab value=".NET (Helium)">
-
-```bash
-# Restore dependencies
-dotnet restore
-
-# Build the project
-dotnet build
-
-# Run tests
-dotnet test
-```
-
-</Tab>
-</Tabs>
-
-## Repository-Specific Setup
-
-### Iridium (CLI)
-
-```bash
-# Additional setup for Iridium
-cd sulfone.iridium
-
-# Setup using go-task (Taskfile.yaml)
-task setup
-
-# Run CLI in development mode
-cargo run -- init test-project
-```
-
-### Boron (Executor)
-
-```bash
-# Additional setup for Boron
-cd sulfone.boron
-
-# Setup using go-task (Taskfile.yaml)
-task setup
-
-# Build the project
-go build ./...
-
-# Run the executor
-go run . --config config/local.yaml
-```
-
-### Zinc (Registry API)
-
-```bash
-# Additional setup for Zinc
-cd sulfone.zinc
-
-# Setup using go-task (Taskfile.yml)
-task setup
-
-# Run database migrations using Entity Framework
-dotnet ef migrations add InitialCreate --project App
-
-# Start the API server
-dotnet run --project App
-```
-
-### Argon (Web UI)
-
-```bash
-# Additional setup for Argon
-cd sulfone.argon
-
-# Create local environment file with required variables
-# Required: AUTH_SECRET, DESCOPE_ID, DESCOPE_SECRET, PUBLIC_LANDSCAPE
-cp .env .env.local
-
-# Edit .env.local with your settings
-
-# Start development server
-bun run dev
-```
-
-### Helium (SDKs)
-
-```bash
-# Setup for all SDKs
-cd sulfone.helium
-
-# TypeScript SDK
-cd sdks/node
-bun install
-bun run build
-
-# Python SDK
-cd ../python
-poetry install
-
-# .NET SDK
-cd ../dotnet
-dotnet restore
-```
-
-### Silicon (Documentation)
-
-```bash
-# Additional setup for Silicon
-cd sulfone.silicon
-
-# Install dependencies
-bun install
-
-# Start development server
-bun run dev
-
-# Build for production
-bun run build
-```
-
-## Development Workflow
-
-<Mermaid chart={`flowchart TD
-    A[Fork Repository] --> B[Clone Locally]
-    B --> C[Create Branch]
-    C --> D[Make Changes]
-    D --> E[Run Tests]
-    E --> F{Tests Pass?}
-    F -->|No| D
-    F -->|Yes| G[Run Lint]
-    G --> H{Lint Pass?}
-    H -->|No| I[Fix Issues]
-    I --> G
-    H -->|Yes| J[Commit Changes]
-    J --> K[Push Branch]
-    K --> L[Create PR]
-`} />
-
-## Code Style
-
-### Rust Projects
-
-```bash
-# Format code
-cargo fmt
-
-# Run linter
-cargo clippy -- -D warnings
-```
-
-### Go Projects
-
-```bash
-# Format code
-go fmt ./...
-
-# Run linter
-golangci-lint run
-```
-
-### .NET Projects
-
-```bash
-# Format code
-dotnet format
-
-# Build with warnings as errors
-dotnet build /warnaserror
-```
-
-### TypeScript Projects
-
-```bash
-# Format and lint
-bun run lint:fix
-# or
-biome lint --write .
-```
-
-### Python Projects
-
-```bash
-# Format with black
-black src/
-
-# Sort imports
-isort src/
-
-# Lint with ruff
-ruff check src/
-```
-
-## Testing
-
-### Unit Tests
-
-Each repository has its own test command:
-
-| Repository | Command |
-| ---------- | ------- |
-| Iridium | `cargo test` |
-| Boron | `go test ./...` |
-| Zinc | `dotnet test` |
-| Argon | `bun run test` |
-| Helium (TS) | `bun run test` |
-| Helium (Python) | `poetry run python template_test.py` |
-| Helium (.NET) | `dotnet test` |
-| Silicon | N/A (no tests configured) |
-
-### Integration Tests
-
-Some repositories have integration tests that require Docker:
-
-<Tabs groupId="repo" items={['Rust (Iridium)', 'Go (Boron)', '.NET (Zinc)']} persist>
-<Tab value="Rust (Iridium)">
-
-```bash
-# Start test infrastructure
-docker-compose -f docker-compose.test.yml up -d
-
-# Run integration tests
-cargo test --features integration
-
-# Cleanup
-docker-compose -f docker-compose.test.yml down
-```
-
-</Tab>
-<Tab value="Go (Boron)">
-
-```bash
-# Start test infrastructure
-docker-compose -f docker-compose.test.yml up -d
-
-# Run integration tests
-go test -tags=integration ./...
-
-# Cleanup
-docker-compose -f docker-compose.test.yml down
-```
-
-</Tab>
-<Tab value=".NET (Zinc)">
-
-```bash
-# Start test infrastructure
-docker-compose -f docker-compose.test.yml up -d
-
-# Run integration tests
-dotnet test --filter "Category=Integration"
-
-# Cleanup
-docker-compose -f docker-compose.test.yml down
-```
-
-</Tab>
-</Tabs>
-
-## IDE Setup
-
-### VS Code
-
-Recommended extensions:
-
-```json
-{
-  "recommendations": [
-    "rust-lang.rust-analyzer",
-    "golang.go",
-    "ms-dotnettools.csharp",
-    "bradlc.vscode-tailwindcss",
-    "esbenp.prettier-vscode",
-    "ms-python.python",
-    "biomejs.biome"
-  ]
-}
-```
-
-### Rust Analyzer Settings
-
-```json
-{
-  "rust-analyzer.checkOnSave.command": "clippy",
-  "rust-analyzer.cargo.features": "all"
-}
-```
-
-## Troubleshooting
-
-### Common Issues
-
-**Docker not running:**
-```bash
-# Start Docker Desktop or Docker daemon
-# Linux: sudo systemctl start docker
-```
-
-**Port already in use:**
-```bash
-# Find process using port
-lsof -i :8080
-# Kill process
-kill -9 <PID>
-```
-
-**Database connection errors:**
-```bash
-# Check if PostgreSQL is running
-docker ps | grep postgres
-# Restart if needed
-docker-compose restart postgres
+pre-commit run -a
 ```
 
 ## Next Steps
 
 - Read the [Architecture Overview](/docs/contributor/architecture/overview)
 - Explore the [Repositories](/docs/contributor/repositories)
-- Check out [Good First Issues](https://github.com/AtomiCloud?q=label:good-first-issue)

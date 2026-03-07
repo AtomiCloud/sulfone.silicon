@@ -10,7 +10,7 @@ import { Callout } from 'fumadocs-ui/components/callout';
 The `cyan.yaml` file provides metadata about your plugin for the Cyan registry. This file is required for publishing your plugin.
 
 <Callout type="info">
-This page describes the **plugin** cyan.yaml schema. Template cyan.yaml files have different fields like `processors`, `plugins`, and `templates` arrays. See the [Template cyan.yaml](/developer/templates/reference/cyan-yaml) documentation for that schema.
+This page describes the **plugin** cyan.yaml schema. Template cyan.yaml files have different fields like `processors`, `plugins`, and `templates` arrays. See the [Template cyan.yaml](/docs/developer/templates/reference/cyan-yaml) documentation for that schema.
 </Callout>
 
 ## Basic Structure
@@ -64,7 +64,7 @@ Plugins and templates use different cyan.yaml schemas:
 - **Template cyan.yaml**: Contains additional fields like `processors`, `plugins`, and `templates` arrays to define the template's dependencies
 
 <Callout type="info">
-Plugin cyan.yaml does not define a `config` schema. Configuration is passed at runtime by the template when invoking the plugin. See [Conditional Execution](/developer/plugins/how-to/conditional-execution) for how templates pass config to plugins.
+Plugin cyan.yaml does not define a `config` schema. Configuration is passed at runtime by the template when invoking the plugin. See [Conditional Execution](/docs/developer/plugins/how-to/conditional-execution) for how templates pass config to plugins.
 </Callout>
 
 ## Usage in Templates
@@ -94,6 +94,6 @@ plugins:
 
 ## Related
 
-- [Project Structure](/developer/plugins/reference/project-structure) - Directory layout
-- [Push to Registry](/developer/plugins/how-to/push-to-registry) - Publishing your plugin
-- [Conditional Execution](/developer/plugins/how-to/conditional-execution) - Using config at runtime
+- [Project Structure](/docs/developer/plugins/reference/project-structure) - Directory layout
+- [Push to Registry](/docs/developer/plugins/how-to/push-to-registry) - Publishing your plugin
+- [Conditional Execution](/docs/developer/plugins/how-to/conditional-execution) - Using config at runtime

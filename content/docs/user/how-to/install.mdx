@@ -9,7 +9,7 @@ import { Tab, Tabs } from 'fumadocs-ui/components/tabs';
 
 ## Install Latest
 
-<Tabs groupId="installer" items={['Nix', 'Brew', 'APT', 'YUM']} persist>
+<Tabs groupId="installer" items={['Nix', 'Brew', 'Scoop', 'APT', 'YUM']} persist>
 <Tab value="Nix">
 
 ```bash
@@ -25,6 +25,14 @@ nix profile install github:AtomiCloud/sulfone.iridium
 
 ```bash
 brew install AtomiCloud/tap/cyanprint
+```
+
+</Tab>
+<Tab value="Scoop">
+
+```bash
+scoop bucket add cyanprint https://github.com/AtomiCloud/scoop-bucket
+scoop install cyanprint
 ```
 
 </Tab>
@@ -54,7 +62,7 @@ yum install cyanprint
 
 ## Pin to Specific Version
 
-<Tabs groupId="installer" items={['Nix', 'Brew', 'APT', 'YUM']} persist>
+<Tabs groupId="installer" items={['Nix', 'Brew', 'Scoop', 'APT', 'YUM']} persist>
 <Tab value="Nix">
 
 ```bash
@@ -74,6 +82,17 @@ brew info AtomiCloud/tap/cyanprint
 
 # Install specific version (if available)
 brew install AtomiCloud/tap/cyanprint@2.6.0
+```
+
+</Tab>
+<Tab value="Scoop">
+
+```bash
+# List available versions
+scoop info cyanprint
+
+# Install specific version
+scoop install cyanprint@2.6.0
 ```
 
 </Tab>
@@ -103,5 +122,5 @@ yum install cyanprint-2.6.0
 
 ## Next Steps
 
-- [Create your first project](/user/how-to/create-project)
-- [CLI Commands Reference](/user/reference/cli-commands)
+- [Create your first project](/docs/user/how-to/create-project)
+- [CLI Commands Reference](/docs/user/reference/cli-commands)

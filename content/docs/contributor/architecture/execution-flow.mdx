@@ -3,6 +3,8 @@ title: Execution Flow
 description: Understanding how templates, processors, and plugins execute in CyanPrint
 ---
 
+import { Callout } from 'fumadocs-ui/components/callout';
+
 # Execution Flow
 
 This document explains how CyanPrint executes templates, processors, and plugins through the Boron coordinator using containerized environments.
@@ -83,7 +85,7 @@ Inside the container, the template executes:
 <Mermaid chart={`flowchart TD
     A[Container Starts] --> B[Initialize SDK Runtime]
     B --> C[Load Template Module]
-    C --> D[Call template(inquirer, determinism)]
+    C --> D["Call template - inquirer, determinism"]
     D --> E[Process Input Schema]
     E --> F[Execute Template Logic]
     F --> G[Return File Tree]
@@ -116,11 +118,15 @@ Processors transform the template output in parallel:
     B --> G
 `} />
 
-Common processor types:
-- **Formatters**: Apply code formatting (Prettier, Biome, etc.)
-- **Linters**: Check code quality and fix issues
-- **Transformers**: Modify file contents based on rules
-- **Validators**: Ensure output meets requirements
+Processors are primarily **templaters** that perform file transformations:
+
+- **Template engines**: Handlebars, Mustache, Jinja2, etc.
+- **Syntax transformers**: TypeScript compiler, Sass, etc.
+- **File processors**: Copy, rename, organize files
+
+<Callout type="info">
+Formatters, linters, and validators run in the **Plugin** stage (Phase 6), not as processors.
+</Callout>
 
 ### Phase 6: Plugin Application
 

@@ -40,6 +40,15 @@ Resolvers handle file conflicts when composing multiple templates. They:
 - Merge or resolve conflicting content
 - Return a single unified output for each file
 
+**Resolver Execution Points:**
+
+Resolvers execute in two places:
+
+1. **After processors** - Server-side resolution during template execution
+2. **On client-side during layering:**
+   - **Vertical layering**: Dependency resolution between templates
+   - **Horizontal layering**: Merging across multiple templates
+
 ### Plugins
 
 Plugins run after files are generated. The SDK provides the interface contract - common implementation examples include:
@@ -67,7 +76,7 @@ Plugins run after files are generated. The SDK provides the interface contract -
 
 ## Choose Your Path
 
-- [Create a Template](/developer/templates) - Build project scaffolds
-- [Create a Processor](/developer/processors) - Build file transformers
-- [Create a Resolver](/developer/resolvers) - Build conflict resolvers
-- [Create a Plugin](/developer/plugins) - Build post-processors
+- [Create a Template](/docs/developer/templates) - Build project scaffolds
+- [Create a Processor](/docs/developer/processors) - Build file transformers
+- [Create a Resolver](/docs/developer/resolvers) - Build conflict resolvers
+- [Create a Plugin](/docs/developer/plugins) - Build post-processors

@@ -15,7 +15,7 @@ Publish your processor to a container registry and register it with the CyanPrin
 - Docker installed and logged in
 - Access to a container registry (Docker Hub, GitHub GHCR, etc.)
 - Completed processor code
-- Dockerfile includes `LABEL cyanprint.dev=true` (see [Dockerfile Reference](/developer/processors/reference/dockerfile))
+- Dockerfile includes `LABEL cyanprint.dev=true` (see [Dockerfile Reference](/docs/developer/processors/reference/dockerfile))
 
 ## Publish Process
 
@@ -138,7 +138,7 @@ The CyanPrint registry stores processor metadata including:
 - **Processor metadata**: Information from your processor's documentation
 
 <Callout type="info">
-For details on registering your processor with the CyanPrint registry, refer to the [Zinc Registry API](/contributor/repositories/zinc) documentation. Use the `POST /api/v1/processor/push/{username}` endpoint to register your processor.
+For details on registering your processor with the CyanPrint registry, refer to the [Zinc Registry API](/docs/contributor/repositories/zinc) documentation. Use the `POST /api/v1/processor/push/{username}` endpoint to register your processor.
 </Callout>
 
 ### Verify Registration
@@ -206,6 +206,6 @@ This workflow pushes the Docker image to GHCR only. You must also register the p
 
 ## Related
 
-- [First Processor Tutorial](/developer/processors/tutorials/first-processor) - Create your first processor
-- [Project Structure](/developer/processors/reference/project-structure) - Processor file layout
-- [Dockerfile Reference](/developer/processors/reference/dockerfile) - Dockerfile best practices
+- [First Processor Tutorial](/docs/developer/processors/tutorials/first-processor) - Create your first processor
+- [Project Structure](/docs/developer/processors/reference/project-structure) - Processor file layout
+- [Dockerfile Reference](/docs/developer/processors/reference/dockerfile) - Dockerfile best practices

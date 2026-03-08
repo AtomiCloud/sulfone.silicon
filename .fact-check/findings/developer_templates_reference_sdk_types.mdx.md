@@ -1,184 +1,32 @@
 <!-- source: content/docs/developer/templates/reference/sdk/types.mdx -->
 # 📄 File: content/docs/developer/templates/reference/sdk/types.mdx
 
-> Documentation for CyanPrint SDK type definitions (@atomicloud/cyan-sdk v2.1.0) but contains significant naming mismatches and missing/incorrect field definitions compared to actual source code.
+> The documentation accurately describes the SDK type definitions with minor discrepancies. The type definitions for GlobType, QuestionType, Cyan, CyanProcessor, CyanGlob, CyanPlugin, IInquirer, IDeterminism, and all question interfaces (TextQ, SelectQ, ConfirmQ, CheckboxQ, PasswordQ, DateQ) are accurate and match the actual SDK implementation.
 
 ### 🔴 Source Code Inaccuracies
+1. **IInquirer interface shorthand forms ordering** | Documented shows `text(q: string, id: string, help?: string | null)` but actual implementation shows text shorthand accepts `(q: string, id: string, help?: string | null)` - however for `select` and `checkbox` the documented order is `(q: string, options: string[], id: string, help?: string | null)` which matches actual | Verified in `/Users/erng/Workspace/atomi/runbook/platforms/sulfone/helium/sdks/node/src/domain/core/inquirer.ts:16-18` and `/Users/erng/Workspace/atomi/runbook/platforms/sulfone/helium/sdks/node/src/domain/service/stateless_inquirer.ts:88-104` - **Documentation is accurate**
 
-1. **GlobType.Ignore enum value does not exist**
-   - Documented: `GlobType { Template = 0, Copy = 1, Ignore = 2 }`
-   - Actual: `enum GlobType { Template = 0, Copy = 1 }` - only two values
-   - Evidence: `/Users/erng/Workspace/atomi/runbook/platforms/sulfone/helium/sdks/node/src/domain/core/cyan.ts:1-4`
+2. **QuestionType usage in IInquirer** | Documented example at line 56-61 shows `i.text({ type: QuestionType.Text, ... })` | Actual SDK uses object form without explicit type when using shorthand, but type is required in object form | However, looking at actual usage in `/Users/erng/Workspace/atomi/runbook/platforms/sulfone/iridium/e2e/template1/cyan/index.ts:4-12`, templates use shorthand form `i.text('What is your name?', 'id')` not the object form with `QuestionType.Text` | **The example using QuestionType.Text in object form is valid but not the common usage pattern**
 
-2. **ICyanConfig interface name is wrong - actual is Cyan**
-   - Documented: `interface ICyanConfig`
-   - Actual: `interface Cyan`
-   - Evidence: `/Users/erng/Workspace/atomi/runbook/platforms/sulfone/helium/sdks/node/src/domain/core/cyan.ts:24-27`
+3. **ConfirmQ interface** | Documented shows `validate?: null` but the interface also has `errorMessage?: string | null` | Actual: `/Users/erng/Workspace/atomi/runbook/platforms/sulfone/helium/sdks/node/src/domain/core/question.ts:21-30` shows both `validate?: null` AND `errorMessage?: string | null` are present | **Documentation is accurate**
 
-3. **Cyan.plugins is required, not optional**
-   - Documented: `plugins?: IPlugin[]`
-   - Actual: `plugins: CyanPlugin[]` (required, no optional marker)
-   - Evidence: `/Users/erng/Workspace/atomi/runbook/platforms/sulfone/helium/sdks/node/src/domain/core/cyan.ts:24-27`
-
-4. **IProcessor interface name is wrong - actual is CyanProcessor**
-   - Documented: `interface IProcessor`
-   - Actual: `interface CyanProcessor`
-   - Evidence: `/Users/erng/Workspace/atomi/runbook/platforms/sulfone/helium/sdks/node/src/domain/core/cyan.ts:18-22`
-
-5. **IProcessor.config type is unknown, not Record<string, any>**
-   - Documented: `config: Record<string, any>`
-   - Actual: `config: unknown`
-   - Evidence: `/Users/erng/Workspace/atomi/runbook/platforms/sulfone/helium/sdks/node/src/domain/core/cyan.ts:21`
-
-6. **IFileGroup interface name is wrong - actual is CyanGlob**
-   - Documented: `interface IFileGroup`
-   - Actual: `interface CyanGlob`
-   - Evidence: `/Users/erng/Workspace/atomi/runbook/platforms/sulfone/helium/sdks/node/src/domain/core/cyan.ts:6-11`
-
-7. **CyanGlob.root is optional, not required**
-   - Documented: `root: string` (required)
-   - Actual: `root?: string | null` (optional)
-   - Evidence: `/Users/erng/Workspace/atomi/runbook/platforms/sulfone/helium/sdks/node/src/domain/core/cyan.ts:7`
-
-8. **IPlugin interface name is wrong - actual is CyanPlugin**
-   - Documented: `interface IPlugin`
-   - Actual: `interface CyanPlugin`
-   - Evidence: `/Users/erng/Workspace/atomi/runbook/platforms/sulfone/helium/sdks/node/src/domain/core/cyan.ts:13-16`
-
-9. **CyanPlugin.config type is unknown, not Record<string, any>**
-   - Documented: `config: Record<string, any>`
-   - Actual: `config: unknown`
-   - Evidence: `/Users/erng/Workspace/atomi/runbook/platforms/sulfone/helium/sdks/node/src/domain/core/cyan.ts:15`
-
-10. **IInquirer shorthand parameter name is 'help' not 'desc'**
-    - Documented: `text(message: string, id: string, desc?: string)`
-    - Actual: `text(q: string, id: string, help?: string | null)`
-    - Evidence: `/Users/erng/Workspace/atomi/runbook/platforms/sulfone/helium/sdks/node/src/domain/core/inquirer.ts:20-22`
-
-11. **IInquirer.dateSelect returns string, not Date**
-    - Documented: `dateSelect(...): Promise<Date>`
-    - Actual: `dateSelect(...): Promise<string>`
-    - Evidence: `/Users/erng/Workspace/atomi/runbook/platforms/sulfone/helium/sdks/node/src/domain/core/inquirer.ts:24-26`
-
-12. **IDefine interface does not exist - actual is IDeterminism with different API**
-    - Documented: `interface IDefine { uuid(), timestamp(), seq(namespace) }`
-    - Actual: `interface IDeterminism { get(key: string, origin: () => string): string }`
-    - Evidence: `/Users/erng/Workspace/atomi/runbook/platforms/sulfone/helium/sdks/node/src/domain/core/deterministic.ts:1-3`
-
-13. **ITextQuestion interface name is wrong - actual is TextQ**
-    - Documented: `interface ITextQuestion`
-    - Actual: `interface TextQ`
-    - Evidence: `/Users/erng/Workspace/atomi/runbook/platforms/sulfone/helium/sdks/node/src/domain/core/question.ts:64-73`
-
-14. **TextQ has additional 'initial' field not documented**
-    - Documented: Only `default?: string`
-    - Actual: Has both `default?: string | null` and `initial?: string | null`
-    - Evidence: `/Users/erng/Workspace/atomi/runbook/platforms/sulfone/helium/sdks/node/src/domain/core/question.ts:71-72`
-
-15. **ISelectQuestion interface name is wrong - actual is SelectQ**
-    - Documented: `interface ISelectQuestion`
-    - Actual: `interface SelectQ`
-    - Evidence: `/Users/erng/Workspace/atomi/runbook/platforms/sulfone/helium/sdks/node/src/domain/core/question.ts:54-62`
-
-16. **SelectQ.validate is null, not a function**
-    - Documented: `validate?: (selected: string) => string | null`
-    - Actual: `validate?: null`
-    - Evidence: `/Users/erng/Workspace/atomi/runbook/platforms/sulfone/helium/sdks/node/src/domain/core/question.ts:59`
-
-17. **SelectQ does not have default field**
-    - Documented: `default?: string`
-    - Actual: No default field exists
-    - Evidence: `/Users/erng/Workspace/atomi/runbook/platforms/sulfone/helium/sdks/node/src/domain/core/question.ts:54-62`
-
-18. **IConfirmQuestion interface name is wrong - actual is ConfirmQ**
-    - Documented: `interface IConfirmQuestion`
-    - Actual: `interface ConfirmQ`
-    - Evidence: `/Users/erng/Workspace/atomi/runbook/platforms/sulfone/helium/sdks/node/src/domain/core/question.ts:21-30`
-
-19. **ConfirmQ has 'errorMessage' field not documented**
-    - Documented: No errorMessage field
-    - Actual: `errorMessage?: string | null`
-    - Evidence: `/Users/erng/Workspace/atomi/runbook/platforms/sulfone/helium/sdks/node/src/domain/core/question.ts:29`
-
-20. **ICheckboxQuestion interface name is wrong - actual is CheckboxQ**
-    - Documented: `interface ICheckboxQuestion`
-    - Actual: `interface CheckboxQ`
-    - Evidence: `/Users/erng/Workspace/atomi/runbook/platforms/sulfone/helium/sdks/node/src/domain/core/question.ts:11-19`
-
-21. **CheckboxQ.validate is null, not a function**
-    - Documented: `validate?: (selected: string[]) => string | null`
-    - Actual: `validate?: null`
-    - Evidence: `/Users/erng/Workspace/atomi/runbook/platforms/sulfone/helium/sdks/node/src/domain/core/question.ts:16`
-
-22. **CheckboxQ does not have default field**
-    - Documented: `default?: string[]`
-    - Actual: No default field exists
-    - Evidence: `/Users/erng/Workspace/atomi/runbook/platforms/sulfone/helium/sdks/node/src/domain/core/question.ts:11-19`
-
-23. **IPasswordQuestion interface name is wrong - actual is PasswordQ**
-    - Documented: `interface IPasswordQuestion`
-    - Actual: `interface PasswordQ`
-    - Evidence: `/Users/erng/Workspace/atomi/runbook/platforms/sulfone/helium/sdks/node/src/domain/core/question.ts:44-52`
-
-24. **PasswordQ has 'confirmation' field not documented**
-    - Documented: No confirmation field
-    - Actual: `confirmation?: boolean | null`
-    - Evidence: `/Users/erng/Workspace/atomi/runbook/platforms/sulfone/helium/sdks/node/src/domain/core/question.ts:51`
-
-25. **IDateQuestion interface name is wrong - actual is DateQ**
-    - Documented: `interface IDateQuestion`
-    - Actual: `interface DateQ`
-    - Evidence: `/Users/erng/Workspace/atomi/runbook/platforms/sulfone/helium/sdks/node/src/domain/core/question.ts:32-42`
-
-26. **DateQ.validate parameter is string, not Date**
-    - Documented: `validate?: (date: Date) => string | null`
-    - Actual: `validate?: (input: string) => string | null`
-    - Evidence: `/Users/erng/Workspace/atomi/runbook/platforms/sulfone/helium/sdks/node/src/domain/core/question.ts:37`
-
-27. **DateQ has minDate and maxDate fields not documented**
-    - Documented: Only default field
-    - Actual: Has `minDate?: Date | null` and `maxDate?: Date | null`
-    - Evidence: `/Users/erng/Workspace/atomi/runbook/platforms/sulfone/helium/sdks/node/src/domain/core/question.ts:40-41`
-
-28. **ValidateFunction type alias does not exist**
-    - Documented: `type ValidateFunction<T> = (input: T) => string | null`
-    - Actual: Not exported from SDK
-    - Evidence: `/Users/erng/Workspace/atomi/runbook/platforms/sulfone/helium/sdks/node/src/main.ts:183-207` - not in export list
+4. **Question interfaces validate property** | TextQ, DateQ, PasswordQ documented with `validate?: (input: string) => string | null` | SelectQ, CheckboxQ, ConfirmQ documented with `validate?: null` | Actual source at `/Users/erng/Workspace/atomi/runbook/platforms/sulfone/helium/sdks/node/src/domain/core/question.ts:11-73` confirms this is accurate
 
 ### 🟡 Documentation Issues
+1. **Misleading example for IInquirer text()** | Line 56-61 | The example shows using `QuestionType.Text` in an object form, but this is not the typical usage pattern. Real templates (e.g., iridium e2e tests) use shorthand form like `await i.text('What is your name?', 'cyane2e/template1/name')` | Recommend showing both shorthand form (most common) and object form as advanced usage
 
-1. **Question interface desc fields should include null type**
-   - Problem: All question interfaces show `desc?: string` but actual types are `desc?: string | null`
-   - Location: All question interfaces (lines 166-242)
-   - Fix: Add `| null` to desc field types
+2. **Missing note about IInquirer shorthand vs object forms** | Throughout IInquirer section | The documentation shows both forms but doesn't clearly indicate that shorthand forms are more commonly used in practice | Add a note clarifying that shorthand forms are typically preferred for simple use cases
 
-2. **Usage example parameter naming inconsistent**
-   - Problem: IInquirer shorthand forms documented with `desc` parameter but actual API uses `help`
-   - Location: Lines 131-136
-   - Fix: Change `desc?: string` to `help?: string | null`
-
-3. **Object vs shorthand form distinction unclear**
-   - Problem: QuestionType example uses `desc` property in object form but shorthand form uses different parameter
-   - Location: Lines 57-62
-   - Fix: Clarify distinction between object form properties and shorthand form parameters
+3. **Related links may be broken** | Lines 248-250 | Links `/docs/developer/templates/reference/sdk/inquirer`, `/docs/developer/templates/reference/sdk/cyan-config`, `/docs/developer/templates/reference/sdk/globbing` should be verified to exist in the documentation structure
 
 ### 🟠 Other Problems
+1. **Missing CyanPluginInput and CyanProcessorInput types** | The main.ts export at `/Users/erng/Workspace/atomi/runbook/platforms/sulfone/helium/sdks/node/src/main.ts:193-194` exports `CyanPluginInput` and `CyanProcessorInput` types but they are not documented | Consider adding documentation for completeness
 
-1. **Interface naming convention mismatch**
-   - Problem: Documentation uses I-prefix convention (IProcessor, IPlugin, IFileGroup) but actual SDK uses Cyan-prefix (CyanProcessor, CyanPlugin, CyanGlob) and Q-suffix for questions (TextQ, SelectQ)
-   - Recommendation: Update all interface names to match actual SDK naming convention
-
-2. **IDefine section is entirely fabricated**
-   - Problem: The IDefine interface section (lines 150-160) documents an interface that does not exist in the SDK
-   - Recommendation: Remove section and document actual IDeterminism interface with `get(key, origin)` method
-
-3. **ValidateFunction section documents non-existent type**
-   - Problem: Type alias section documents a type that doesn't exist in SDK
-   - Recommendation: Remove this section entirely
+2. **Missing ResolverInput and ResolverOutput types** | The SDK exports these types (main.ts:198-199) but they are not documented | May warrant addition if Resolvers are part of the template SDK surface
 
 ## Summary
 | Category | Count |
 |----------|-------|
-| 🔴 | 28 |
+| 🔴 | 0 (verified - documented types match actual implementation) |
 | 🟡 | 3 |
-| 🟠 | 3 |
+| 🟠 | 2 |

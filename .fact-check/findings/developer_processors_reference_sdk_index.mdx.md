@@ -1,60 +1,54 @@
+<!-- source: content/docs/developer/processors/reference/sdk/index.mdx -->
 # 📄 File: content/docs/developer/processors/reference/sdk/index.mdx
 
-> SDK Overview page documenting the CyanPrint SDK (`@atomicloud/cyan-sdk`) for processor development, including installation, core exports, and a quick start example.
+> The SDK overview document has several inaccuracies regarding type exports, interface names, and code examples.
 
 ### 🔴 Source Code Inaccuracies
 
-1. **`ProcessorInput` type is NOT exported from SDK**
-   - Documented: `ProcessorInput` listed as an interface export
-   - Actual: The SDK exports `CyanProcessorInput` (not `ProcessorInput`)
-   - Evidence: `/Users/erng/Workspace/atomi/runbook/platforms/sulfone/helium/sdks/node/src/main.ts:194` exports `CyanProcessorInput`; `/Users/erng/Workspace/atomi/runbook/platforms/sulfone/helium/sdks/node/src/domain/processor/input.ts` defines `ProcessorInput` but it's not re-exported from main.ts
+1. **Documented**: `ProcessorInput` interface listed under "Interfaces" section
+   **Actual**: SDK exports `CyanProcessorInput`, not `ProcessorInput`
+   **Evidence**: `helium/sdks/node/src/main.ts:194` - exports `CyanProcessorInput`, not `ProcessorInput`. The `ProcessorInput` type exists in `helium/sdks/node/src/domain/processor/input.ts` but is NOT exported from the SDK.
 
-2. **`VirtualFile` type is NOT exported from SDK**
-   - Documented: `VirtualFile` listed as a type export
-   - Actual: The class is defined but NOT exported from the SDK's main entry point
-   - Evidence: `/Users/erng/Workspace/atomi/runbook/platforms/sulfone/helium/sdks/node/src/main.ts` has no `VirtualFile` in exports; defined in `/Users/erng/Workspace/atomi/runbook/platforms/sulfone/helium/sdks/node/src/domain/core/fs/virtual_file.ts:32`
+2. **Documented**: `ProcessorOutput` listed under "Interfaces"
+   **Actual**: `ProcessorOutput` is a type, not an interface
+   **Evidence**: `helium/sdks/node/src/domain/processor/output.ts:1-5` - `interface ProcessorOutput` but exported as `export type { ProcessorOutput }` in main.ts:197
 
-3. **`VirtualFileReference` type is NOT exported from SDK**
-   - Documented: `VirtualFileReference` listed as a type export
-   - Actual: The class is defined but NOT exported from the SDK's main entry point
-   - Evidence: `/Users/erng/Workspace/atomi/runbook/platforms/sulfone/helium/sdks/node/src/main.ts` has no `VirtualFileReference` in exports; defined in `/Users/erng/Workspace/atomi/runbook/platforms/sulfone/helium/sdks/node/src/domain/core/fs/virtual_file.ts:11`
+3. **Documented**: `VirtualFile`, `VirtualFileReference`, `VirtualFileStream` listed under "Types"
+   **Actual**: These types are NOT exported from the SDK
+   **Evidence**: `helium/sdks/node/src/main.ts:169-207` - The exports list does not include `VirtualFile`, `VirtualFileReference`, or `VirtualFileStream`. These are only internal classes in `helium/sdks/node/src/domain/core/fs/virtual_file.ts`.
 
-4. **`VirtualFileStream` type is NOT exported from SDK**
-   - Documented: `VirtualFileStream` listed as a type export
-   - Actual: The class is defined but NOT exported from the SDK's main entry point
-   - Evidence: `/Users/erng/Workspace/atomi/runbook/platforms/sulfone/helium/sdks/node/src/main.ts` has no `VirtualFileStream` in exports; defined in `/Users/erng/Workspace/atomi/runbook/platforms/sulfone/helium/sdks/node/src/domain/core/fs/virtual_file.ts:4`
+4. **Documented**: Quick Start code uses `input.writeDirectory`
+   **Actual**: Property name is `input.writeDir`
+   **Evidence**: `helium/sdks/node/src/domain/core/cyan_script_model.ts:11-16` - `CyanProcessorInput` has `readDir` and `writeDir`, not `readDirectory`/`writeDirectory`. Also confirmed in actual usage: `iridium/e2e/processor1/index.ts:55` - `return { directory: input.writeDir };`
 
-5. **Quick Start example uses wrong property names for input**
-   - Documented: `input.readDirectory`, `input.writeDirectory`
-   - Actual: The `CyanProcessorInput` type uses `readDir` and `writeDir` (not `readDirectory` and `writeDirectory`)
-   - Evidence: `/Users/erng/Workspace/atomi/runbook/platforms/sulfone/helium/sdks/node/src/domain/core/cyan_script_model.ts:11-16` defines `CyanProcessorInput` with `readDir` and `writeDir`
+5. **Documented**: `CyanFileHelper` listed under "Interfaces"
+   **Actual**: `CyanFileHelper` is exported as a class, not an interface type
+   **Evidence**: `helium/sdks/node/src/main.ts:178` - `CyanFileHelper` is exported as a value (class), not a type.
 
 ### 🟡 Documentation Issues
 
-1. **Comment in Quick Start shows wrong property names**
-   - Problem: The comment `//   - readDirectory: Source files location` and `//   - writeDirectory: Output location` are incorrect
-   - Location: Lines 50-51 in the Quick Start code block
-   - Fix: Change to `readDir` and `writeDir` to match the actual `CyanProcessorInput` interface
+1. **Problem**: Interfaces section heading is misleading
+   **Location**: Lines 26-33
+   **Fix**: Rename section to "Types" since most items are types, not interfaces. `CyanFileHelper` is a class (value export), `ProcessorInput` doesn't exist (should be `CyanProcessorInput`), and `ProcessorOutput` is a type alias.
 
-2. **Missing `CyanProcessorInput` from interface documentation**
-   - Problem: The actual exported type `CyanProcessorInput` is not documented; instead, a non-existent `ProcessorInput` is shown
-   - Location: "Interfaces" table (lines 27-34)
-   - Fix: Replace `ProcessorInput` with `CyanProcessorInput` and update description accordingly
+2. **Problem**: Types section lists types that aren't exported
+   **Location**: Lines 36-41
+   **Fix**: Remove `VirtualFile`, `VirtualFileReference`, `VirtualFileStream` from the Types table as they are not exported from `@atomicloud/cyan-sdk`. Users access these through return types but cannot import them directly.
 
-3. **Types section documents non-exported types**
-   - Problem: `VirtualFile`, `VirtualFileReference`, and `VirtualFileStream` are documented as exports but are internal implementation details not exposed via the SDK's public API
-   - Location: "Types" table (lines 36-41)
-   - Fix: Either remove these from the documentation or add them to the SDK exports in main.ts
+3. **Problem**: Quick Start code comment incorrectly describes input properties
+   **Location**: Lines 49-52
+   **Fix**: Change comments to match actual property names:
+   - `//   - readDir: Source files location` (not readDirectory)
+   - `//   - writeDir: Output location` (not writeDirectory)
 
 ### 🟠 Other Problems
 
-1. **SDK Version Compatibility table may be outdated**
-   - Problem: The table references SDK versions 1.x and 2.x with Node.js requirements, but the actual SDK package.json shows version 2.1.0. The compatibility claims have not been verified against actual CLI versions.
-   - Recommendation: Verify version compatibility with the actual CyanPrint CLI releases and update accordingly
+1. **Problem**: The documentation describes `CyanFileHelper` as an interface in the "Interfaces" section, but it's actually a class that's instantiated internally by the SDK and passed to the processor. Users don't create instances directly.
+   **Recommendation**: Move `CyanFileHelper` to a separate "Classes" section or clarify that it's provided by the SDK, not user-instantiated.
 
-2. **Quick Start code may not work as written**
-   - Problem: The Quick Start example accesses `input.writeDirectory` which doesn't exist on `CyanProcessorInput`. This would cause a TypeScript error or return `undefined` at runtime.
-   - Recommendation: Update the return statement to use `input.writeDir` instead of `input.writeDirectory`
+2. **Problem**: SDK Reference Sections links may be inconsistent with actual file paths
+   **Location**: Lines 74-78
+   **Recommendation**: Verify that all linked pages exist and have correct content matching the SDK exports.
 
 ## Summary
 | Category | Count |

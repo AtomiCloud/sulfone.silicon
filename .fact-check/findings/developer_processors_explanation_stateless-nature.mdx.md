@@ -1,65 +1,35 @@
 <!-- source: content/docs/developer/processors/explanation/stateless-nature.mdx -->
 # 📄 File: content/docs/developer/processors/explanation/stateless-nature.mdx
 
-> Documentation explaining the stateless nature of processors, including what it means to be stateless, benefits, implications, and best practices for designing stateless processors. The conceptual content is accurate, but there are API inaccuracies in code examples that use incorrect property names.
+> Documentation explaining the stateless nature of processors, including what it means, why it's important, implications, and testing approaches. Most factual claims are accurate, but the testing section presents mock utilities that don't exist in the SDK.
 
 ### 🔴 Source Code Inaccuracies
-
-1. **Wrong Property Name `input.writeDirectory`**
-   - **Documented**: `return { directory: input.writeDirectory };`
-   - **Actual**: `return { directory: input.writeDir };`
-   - **Evidence**: `/Users/erng/Workspace/atomi/runbook/platforms/sulfone/helium/sdks/node/src/domain/core/cyan_script_model.ts:11-16` - `CyanProcessorInput` interface defines `writeDir` (not `writeDirectory`). Also verified in `/Users/erng/Workspace/atomi/runbook/platforms/sulfone/iridium/e2e/processor1/index.ts:55` which returns `{ directory: input.writeDir }`.
-
-2. **CLI Command Name Inconsistency**
-   - **Documented**: `cyanprint create myorg/my-template output1`
-   - **Actual**: Command exists as both `cyanprint create` and via `pls` wrapper
-   - **Evidence**: `/Users/erng/Workspace/atomi/runbook/platforms/sulfone/iridium/cyanprint/src/commands.rs:32-46` defines the Create command. The CLI binary is `cyanprint`. Documentation reference in `/Users/erng/Workspace/atomi/runbook/platforms/sulfone/iridium/docs/developer/surfaces/cli/02-create.md:8` shows `pls create <template_ref> [path]`.
-
-3. **Non-existent Function in Testing Example**
-   - **Documented**: `import { processFiles } from './processor';` and `const result1 = processFiles(input, config);`
-   - **Actual**: No such `processFiles` function exists in the SDK
-   - **Evidence**: Searched the helium SDK codebase - no `processFiles` function found. The actual processor API uses `StartProcessorWithLambda` with a callback function pattern.
-
-4. **Wrong Test Input Structure in Testing Example**
-   - **Documented**: Test input has `content` and `relative` properties directly on the input object
-   - **Actual**: The processor input (`CyanProcessorInput`) has `readDir`, `writeDir`, `globs`, and `config` properties
-   - **Evidence**: `/Users/erng/Workspace/atomi/runbook/platforms/sulfone/helium/sdks/node/src/domain/core/cyan_script_model.ts:11-16` - `CyanProcessorInput` interface structure.
+1. **Testing section uses non-existent mock utilities** | The documentation presents `createMockFileHelper()` and `MockFile` types as if they exist | Evidence: Searched `helium/sdks/node` - no `createMockFileHelper` or `MockFile` exports found. The SDK only exports `CyanFileHelper` class, not any mock utilities. File: helium/sdks/node/src/main.ts:169-207
 
 ### 🟡 Documentation Issues
-
-1. **Misleading Test Example Structure**
-   - **Problem**: The testing example (lines 177-196) shows a unit test pattern that doesn't match how processors are actually invoked. Processors use `StartProcessorWithLambda` with a callback, not a `processFiles` function.
-   - **Location**: Lines 172-196
-   - **Fix**: Either remove the test example or rewrite it to show how to actually test a processor (mocking fileHelper and input structures, or using integration tests).
-
-2. **Wrong Output Type in Test Assertion**
-   - **Problem**: The test example uses `expect(result1).toBe('Hello World')` but actual processor output is a `ProcessorOutput` object with a `directory` property, not a string.
-   - **Location**: Lines 193-194
-   - **Fix**: Update the test example to reflect that `ProcessorOutput` is `{ directory: string }`, not a content string.
-
-3. **Abstract Transform Function Without Definition**
-   - **Problem**: Line 89 shows `file.content = transform(file.content);` with undefined `transform` function
-   - **Location**: Lines 82-100
-   - **Fix**: Either show a concrete transformation example or add comment indicating pseudocode.
-
-4. **Conceptual Model Inconsistency**
-   - **Problem**: Line 20 shows `output = processor(input, files)` but actual signature is `(input, fileHelper)` and files are obtained via `fileHelper.resolveAll()`
-   - **Location**: Line 18-22
-   - **Fix**: Update to `output = processor(input, fileHelper)` or add clarifying comment about the conceptual nature.
+1. **Testing code is conceptual only** | Lines 184-219 | Add a disclaimer that the test code is conceptual/pseudo-code and users need to implement their own mock utilities, OR provide actual testing utilities in the SDK
+2. **Test code uses `processor(mockInput, mockFileHelper)`** | Line 204 | The `StartProcessorWithLambda` function doesn't return a callable - it starts an HTTP server on port 5551. You cannot call the processor function directly for testing. File: helium/sdks/node/src/main.ts:87-109
+3. **Test expectation incorrect** | Line 217 | `expect(mockFiles[0].content).toBe('Hello World')` - The test mutates mockFiles but the actual SDK's `VirtualFile` is immutable after creation from `resolveAll()`. The example is misleading about how files work.
 
 ### 🟠 Other Problems
-
-1. **SDK Package Name Not Documented**
-   - **Problem**: Documentation doesn't specify the exact SDK package name (`@atomicloud/cyan-sdk`)
-   - **Recommendation**: Add import statement showing `import { StartProcessorWithLambda } from '@atomicloud/cyan-sdk';` in code examples.
-
-2. **Real-World Examples Not Referenced**
-   - **Problem**: Actual processor implementations exist in `/Users/erng/Workspace/atomi/runbook/platforms/sulfone/iridium/e2e/processor1/index.ts` but documentation uses abstract examples
-   - **Recommendation**: Consider linking to actual processor examples for more concrete understanding.
+1. **No actual testing guidance** | The documentation should either point to a real testing approach (e.g., integration testing with the HTTP server, or creating actual test utilities) rather than showing non-functional mock code
+2. **SDK doesn't export testing utilities** | Consider exporting test helpers (like a mock file helper factory) from the SDK to make the documentation example actually usable
 
 ## Summary
 | Category | Count |
 |----------|-------|
-| 🔴 | 4 |
-| 🟡 | 4 |
+| 🔴 | 1 |
+| 🟡 | 3 |
 | 🟠 | 2 |
+
+## Verified Accurate Claims
+- `StartProcessorWithLambda` function exists and takes a lambda function (helium/sdks/node/src/main.ts:106-108)
+- Lambda signature `(input: CyanProcessorInput, fileHelper: CyanFileHelper) => Promise<ProcessorOutput>` is correct (helium/sdks/node/src/api/processor/lambda.ts:6)
+- `CyanProcessorInput` has `readDir`, `writeDir`, `globs`, `config` properties (helium/sdks/node/src/domain/core/cyan_script_model.ts:11-16)
+- `fileHelper.resolveAll()` returns `VirtualFile[]` (helium/sdks/node/src/domain/core/fs/cyan_fs_helper.ts:33-40)
+- `VirtualFile` has `content` property and `writeFile()` method (helium/sdks/node/src/domain/core/fs/virtual_file.ts:32-54)
+- `ProcessorOutput` has `directory` property (helium/sdks/node/src/domain/processor/output.ts:1-5)
+- `GlobType` enum exists with `Template` and `Copy` values (helium/sdks/node/src/domain/core/cyan.ts:1-4)
+- SDK package name `@atomicloud/cyan-sdk` is correct (helium/sdks/node/package.json:2)
+- CLI command `cyanprint create` is correct (iridium/cyanprint/LLM.MD:119)
+- Related links to why-processors, read-write-dirs, and memory-loading exist in the content structure

@@ -64,13 +64,13 @@ cyanprint update [path]
 cyanprint update --interactive
 
 # Push artifacts to the registry
-cyanprint push template <path>
-cyanprint push group <path>
-cyanprint push plugin <path>
-cyanprint push processor <path>
+cyanprint push template <blob_image> <blob_tag> <template_image> <template_tag> --config <path> --token <token>
+cyanprint push group --config <path> --token <token>
+cyanprint push plugin <image> <tag> --config <path> --token <token>
+cyanprint push processor <image> <tag> --config <path> --token <token>
 
 # Run the daemon locally
-cyanprint daemon
+cyanprint daemon [version] [--port <port>] [--registry <url>]
 
 # Enable debug output (available on all commands)
 cyanprint -d create <template-ref>

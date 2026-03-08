@@ -1,80 +1,36 @@
 <!-- source: content/docs/developer/plugins/reference/project-structure.mdx -->
 # 📄 File: content/docs/developer/plugins/reference/project-structure.mdx
 
-> Documentation describes the standard directory layout for CyanPrint plugin projects. The document covers required files (index.ts, package.json, Dockerfile) and optional files (.dockerignore, README.md, cyan.yaml). Analysis verified against actual plugin implementations in iridium/e2e/ directory.
+> This page documents the standard directory layout for plugin projects. Most content is accurate, but there are some minor inconsistencies with other documentation pages and the cyan.yaml `readme` field casing differs from actual source code.
 
 ### 🔴 Source Code Inaccuracies
-1. **Dockerfile Bun version mismatch**
-   - Documented: `FROM oven/bun:1.1.31`
-   - Actual: Most plugin Dockerfiles use `oven/bun:1.0.11` (plugin1, plugin2, processor1, processor2), while template1/cyan uses `oven/bun:1.1.31`
-   - Evidence: `/Users/erng/Workspace/atomi/runbook/platforms/sulfone/iridium/e2e/plugin1/Dockerfile:1:FROM oven/bun:1.0.11`
-
-2. **Dockerfile COPY command syntax**
-   - Documented: `COPY package.json bun.lockb* ./`
-   - Actual: All Dockerfiles use separate COPY commands without glob pattern: `COPY package.json .` followed by `COPY bun.lockb .`
-   - Evidence: `/Users/erng/Workspace/atomi/runbook/platforms/sulfone/iridium/e2e/plugin1/Dockerfile:4:COPY package.json .` and line 5: `COPY bun.lockb .`
-
-3. **package.json structure differs**
-   - Documented: `"dependencies": { "@atomicloud/cyan-sdk": "^1.0.0" }`
-   - Actual: All plugins use `"@atomicloud/cyan-sdk": "latest"` not a pinned version
-   - Evidence: `/Users/erng/Workspace/atomi/runbook/platforms/sulfone/iridium/e2e/plugin1/package.json:12:"@atomicloud/cyan-sdk": "latest"`
-
-4. **package.json missing "module" field in documentation**
-   - Documented: Shows only "name", "version", "type", "dependencies" fields
-   - Actual: All plugins include `"module": "index.ts"` field
-   - Evidence: `/Users/erng/Workspace/atomi/runbook/platforms/sulfone/iridium/e2e/plugin1/package.json:3:"module": "index.ts"`
-
-5. **package.json missing devDependencies and peerDependencies**
-   - Documented: Does not show devDependencies or peerDependencies
-   - Actual: All plugins include `devDependencies: { "bun-types": "latest" }` and `peerDependencies: { "typescript": "^5.0.0" }`
-   - Evidence: `/Users/erng/Workspace/atomi/runbook/platforms/sulfone/iridium/e2e/plugin1/package.json:5-10`
-
-6. **cyan.yaml structure differs significantly**
-   - Documented: Shows `name: org/my-plugin`, `version: 1.0.0`, `description`, `author`
-   - Actual: Uses `username`, `name`, `description`, `project`, `source`, `email`, `tags`, `readme` fields - no `version` or `author` fields
-   - Evidence: `/Users/erng/Workspace/atomi/runbook/platforms/sulfone/iridium/e2e/plugin1/cyan.yaml:1-8`
-
-7. **.dockerignore content differs**
-   - Documented: Shows `.git`, `.gitignore`, `*.md`, `.env`, `.env.*`, `.DS_Store`
-   - Actual: Only contains `node_modules`, `.idea`, `.vscode`
-   - Evidence: `/Users/erng/Workspace/atomi/runbook/platforms/sulfone/iridium/e2e/plugin1/.dockerignore:1-3`
+1. **Documented**: `readme: README.md` (lowercase) in cyan.yaml example (line 129)
+   **Actual**: Actual plugin cyan.yaml files use `readme: README.MD` (uppercase)
+   **Evidence**: `/Users/erng/Workspace/atomi/runbook/platforms/sulfone/iridium/e2e/plugin1/cyan.yaml:8` and `/Users/erng/Workspace/atomi/runbook/platforms/sulfone/iridium/e2e/plugin2/cyan.yaml:8` both show `readme: README.MD`
 
 ### 🟡 Documentation Issues
-1. **Plugin vs Template/Processor distinction unclear**
-   - Problem: The document is titled "Plugin Project Structure" but shows `StartPluginWithLambda` while actual codebase has three types: `StartPluginWithLambda`, `StartProcessorWithLambda`, and `StartTemplateWithLambda`
-   - Location: Throughout the document
-   - Fix: Clarify that this is specifically for plugins, and create separate docs for processors and templates
+1. **Problem**: Inconsistent type naming - The page uses `PluginInput` in the code comments and descriptions but the actual SDK exports `CyanPluginInput`
+   **Location**: Throughout the page (lines 27-38, 152-169)
+   **Fix**: The SDK index page (sdk/index.mdx:25) clarifies that `CyanPluginInput` is the primary type with `PluginInput` as an alias. Consider mentioning this alias relationship or using `CyanPluginInput` consistently
 
-2. **Missing tsconfig.json in project structure**
-   - Problem: Directory tree shows `index.ts`, `package.json`, `bun.lockb`, `Dockerfile`, `.dockerignore`, `cyan.yaml`, `README.md` but all actual plugins include `tsconfig.json` and `.gitignore`
-   - Location: Lines 10-19 (directory tree)
-   - Fix: Add `tsconfig.json` and `.gitignore` to the project structure
+2. **Problem**: Inconsistent cyan.yaml example across documentation
+   **Location**: Lines 121-130 (cyan.yaml example)
+   **Fix**: The cyan.yaml example shows `readme: README.md` while the dedicated Plugin cyan.yaml page shows `readme: README.MD`. Should be consistent - uppercase `README.MD` matches actual source code
 
-3. **PluginOutput type not shown in basic example**
-   - Problem: The basic index.ts example doesn't import or use `PluginOutput` type, but actual plugins explicitly type the return: `Promise<PluginOutput>`
-   - Location: Lines 27-36 (basic index.ts example)
-   - Fix: Either show the type import or explain it's optional
+3. **Problem**: Missing cyan.yaml fields documentation
+   **Location**: Lines 117-130 (cyan.yaml section)
+   **Fix**: The cyan.yaml example is labeled as "optional" (line 19) but the dedicated Plugin cyan.yaml page states it is "required for publishing your plugin" (cyan-yaml.mdx:10). Consider clarifying that it's optional for local development but required for registry publishing
 
 ### 🟠 Other Problems
-1. **Version pinning inconsistency**
-   - Problem: Documentation shows pinned version `^1.0.0` for SDK, but actual implementations use `latest`. This could lead to reproducibility issues.
-   - Recommendation: Document best practices for version pinning vs using `latest`
+1. **Problem**: Dockerfile uses `CMD [ "bun", "run", "index.ts" ]` with array syntax with spaces inside quotes
+   **Recommendation**: The Dockerfile example on line 79 has inconsistent spacing in the CMD array syntax: `CMD [ "bun", "run", "index.ts" ]`. Standard Docker convention is `CMD ["bun", "run", "index.ts"]` without spaces after `[` and before `]`. Minor formatting issue.
 
-2. **No mention of bun.lockb requirement**
-   - Problem: Dockerfile copies `bun.lockb` but documentation doesn't explain the importance of committing this file for reproducible builds
-   - Recommendation: Add note about committing bun.lockb for reproducible builds
-
-3. **Missing .gitignore in documentation**
-   - Problem: All actual plugins include a `.gitignore` file (typically 2.2k in size) but it's not mentioned in the documentation
-   - Recommendation: Add `.gitignore` to the required/optional files section
-
-4. **Dockerfile CMD format inconsistency**
-   - Problem: Documentation shows `CMD ["bun", "run", "index.ts"]` with commas, but some actual Dockerfiles have slightly different spacing/formatting
-   - Recommendation: Standardize Dockerfile formatting in documentation
+2. **Problem**: Package.json example shows `"@atomicloud/cyan-sdk": "latest"` but best practice would be to pin the version
+   **Recommendation**: Consider adding a note that in production plugins, the SDK version should be pinned rather than using "latest" for reproducibility
 
 ## Summary
 | Category | Count |
 |----------|-------|
-| 🔴 | 7 |
+| 🔴 | 1 |
 | 🟡 | 3 |
-| 🟠 | 4 |
+| 🟠 | 2 |

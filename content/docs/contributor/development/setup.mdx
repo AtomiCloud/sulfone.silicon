@@ -23,6 +23,7 @@ CyanPrint uses **Nix** for reproducible development environments. All dependenci
 
 ```bash
 # Fork the repository on GitHub, then clone your fork
+# Replace REPO_NAME with: boron, iridium, zinc, helium, or argon
 git clone https://github.com/YOUR_USERNAME/sulfone.REPO_NAME.git
 cd sulfone.REPO_NAME
 ```
@@ -34,6 +35,7 @@ cd sulfone.REPO_NAME
 direnv allow
 
 # Nix will automatically install all required dependencies
+# Note: Some repositories run 'pls setup' automatically via .envrc
 ```
 
 ### 3. Setup and Run
@@ -48,27 +50,29 @@ pls dev
 
 ## Common Commands
 
-All repositories use `pls` (Taskfile) for common operations:
+All repositories use `pls` (Taskfile) for common operations. Note that available commands vary by repository:
 
 | Command | Description |
 | ------- | ----------- |
 | `pls setup` | Install dependencies |
-| `pls dev` | Start development server |
+| `pls dev` | Start development server (not available in all repos) |
 | `pls build` | Build for production |
-| `pls test` | Run tests (if available) |
+| `pls test` | Run tests (only available in some repos) |
+
+Check each repository's `Taskfile.yaml` for the full list of available commands.
 
 ## Pre-commit Hooks
 
 Pre-commit hooks run automatically on commit and handle:
-- Code formatting (Biome, treefmt)
-- Linting
+- Code formatting (treefmt)
+- Linting (language-specific: golangci-lint, clippy, biome, ruff, mypy, eslint, etc.)
 - Secrets scanning
 - Shellcheck
 
 To run all checks manually:
 
 ```bash
-pre-commit run -a
+nix flake check
 ```
 
 ## Next Steps

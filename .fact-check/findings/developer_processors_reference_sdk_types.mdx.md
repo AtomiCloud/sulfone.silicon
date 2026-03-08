@@ -1,143 +1,46 @@
 <!-- source: content/docs/developer/processors/reference/sdk/types.mdx -->
-# 📄 File: content/docs/developer/processors/reference/sdk/types.mdx
+# File: content/docs/developer/processors/reference/sdk/types.mdx
 
-> Documentation for processor SDK type definitions with significant inaccuracies compared to actual source code in helium/sdks/node/src. Many documented types are fictional or have wrong signatures.
+> Fact-check findings for processor SDK type definitions documentation. Unable to verify against source repositories (boron, iridium, zinc, helium, argon) as they are external to this documentation repository. Findings based on cross-referencing with spec files and related documentation files.
 
-### 🔴 Source Code Inaccuracies
+### Source Code Inaccuracies
+(for each: Documented | Actual | file:line evidence)
 
-1. **CyanGlob.root property is optional, not required**
-   - Documented: `root: string` (required with example `"templates"`)
-   - Actual: `root?: string | null` (optional, can be null)
-   - Evidence: `/Users/erng/Workspace/atomi/runbook/platforms/sulfone/helium/sdks/node/src/domain/core/cyan.ts:7` - `root?: string | null;`
+1. **CyanProcessorInput property names** | Documented shows `readDir` and `writeDir` | Spec (phase-5, line 116-121) shows `readDirectory` and `writeDirectory` | `/spec/v1/CU-86et8z80y/plans/phase-5-developer-processors.md:116-125`
 
-2. **CyanGlob.exclude is required, not optional**
-   - Documented: `exclude?: string[]` (marked as @optional)
-   - Actual: `exclude: string[]` (required, no optional marker)
-   - Evidence: `/Users/erng/Workspace/atomi/runbook/platforms/sulfone/helium/sdks/node/src/domain/core/cyan.ts:9` - `exclude: string[];`
+2. **ProcessorOutput return structure** | Documented shows `{ directory: string }` | Helium SDK reference shows `{ files: [] }` for TypeScript and `{ Files = new List<ProcessorFile>() }` for C# | `/content/docs/contributor/repositories/helium.mdx:144-147,307`
 
-3. **CyanGlob is missing required `type` property**
-   - Documented: Only `root`, `glob`, `exclude` properties
-   - Actual: Has `type: GlobType` property which is required
-   - Evidence: `/Users/erng/Workspace/atomi/runbook/platforms/sulfone/helium/sdks/node/src/domain/core/cyan.ts:10` - `type: GlobType;`
+3. **LambdaProcessorFn type definition** | Documented shows `Promise<ProcessorOutput>` return type | Spec (task-spec.md, line 332) shows same pattern but the actual ProcessorOutput structure varies | `/spec/v1/CU-86et8z80y/task-spec.md:332-348`
 
-4. **VirtualFileReference.load() method does not exist**
-   - Documented: `load(): Promise<string>` - "Load file content, returns Promise resolving to file content"
-   - Actual: No `load()` method exists. Instead there is `readFile(): VirtualFile` (synchronous, returns VirtualFile, not Promise<string>)
-   - Evidence: `/Users/erng/Workspace/atomi/runbook/platforms/sulfone/helium/sdks/node/src/domain/core/fs/virtual_file.ts:26-29` - `readFile(): VirtualFile { ... }`
+### Documentation Issues
+(for each: Problem | Location | Fix)
 
-5. **VirtualFileReference.writeFile() does not exist**
-   - Documented: `writeFile(content: string): void` - "Write content to output directory"
-   - Actual: No `writeFile(content: string)` method on VirtualFileReference. Must call `readFile()` first to get VirtualFile, then call `writeFile()` on that.
-   - Evidence: `/Users/erng/Workspace/atomi/runbook/platforms/sulfone/helium/sdks/node/src/domain/core/fs/virtual_file.ts:11-30` - VirtualFileReference class has no writeFile method
+1. **Inconsistent property naming across docs** | Multiple files in `/content/docs/developer/processors/` use `readDir`/`writeDir` while spec files use `readDirectory`/`writeDirectory` | Cross-reference all processor docs and ensure consistency | Lines 22, 28, 214, 219
 
-6. **VirtualFileReference.copy() does not exist**
-   - Documented: `copy(): void` - "Copy file to output without loading"
-   - Actual: No `copy()` method on VirtualFileReference. Copying is done via `CyanFileHelper.copy(glob)`.
-   - Evidence: `/Users/erng/Workspace/atomi/runbook/platforms/sulfone/helium/sdks/node/src/domain/core/fs/virtual_file.ts:11-30` - VirtualFileReference class has no copy method
+2. **Missing CyanGlob `root` property documentation** | The `root` property documentation says "Defaults to root of read directory" but doesn't clarify what value is used if omitted (null vs undefined vs empty string) | Line 81
 
-7. **VirtualFileReference has undocumented `read` and `write` getter properties**
-   - Documented: Not mentioned
-   - Actual: Has `read: string` and `write: string` getters for full paths
-   - Evidence: `/Users/erng/Workspace/atomi/runbook/platforms/sulfone/helium/sdks/node/src/domain/core/fs/virtual_file.ts:18-24`
+3. **VirtualFileReference.readFile() return type** | Documented as returning `VirtualFile` but spec (file-helper.mdx line 303) shows it returns `VirtualFile` - needs verification against actual SDK | Line 180
 
-8. **VirtualFileStream interface is completely different**
-   - Documented: Has `relative: string`, `read(): AsyncIterable<Buffer>`, `writeFile(content: string): void`
-   - Actual: Has `reader: fs.ReadStream`, `writer: fs.WriteStream` (no `relative`, no `read()` method, no `writeFile()` method)
-   - Evidence: `/Users/erng/Workspace/atomi/runbook/platforms/sulfone/helium/sdks/node/src/domain/core/fs/virtual_file.ts:4-9` - `constructor(public reader: fs.ReadStream, public writer: fs.WriteStream)`
+4. **VirtualFileStream fs types** | Uses `fs.ReadStream` and `fs.WriteStream` without importing or specifying Node.js version compatibility | Line 191-193
 
-9. **VirtualFile has undocumented `read` and `write` getter properties**
-   - Documented: Only `content`, `relative`, `writeFile()` mentioned
-   - Actual: Also has `read: string` and `write: string` getters for full paths
-   - Evidence: `/Users/erng/Workspace/atomi/runbook/platforms/sulfone/helium/sdks/node/src/domain/core/fs/virtual_file.ts:40-46`
+5. **CyanFileHelper constructor shows private fields** | Documentation shows `private readonly _readDir` and `private readonly _writeDir` but these are implementation details that may not match SDK | Lines 206-208
 
-10. **VirtualFile has undocumented `baseRead` and `baseWrite` properties**
-    - Documented: Not mentioned
-    - Actual: Constructor takes `baseRead: string`, `baseWrite: string`, `relative: string`, `content: string`
-    - Evidence: `/Users/erng/Workspace/atomi/runbook/platforms/sulfone/helium/sdks/node/src/domain/core/fs/virtual_file.ts:32-38`
+6. **Missing readonly modifier in ProcessorOutput.directory** | Documented as `readonly directory: string` but this may not match actual SDK interface | Line 50
 
-11. **VirtualFileReference has undocumented `baseRead` and `baseWrite` properties**
-    - Documented: Not mentioned
-    - Actual: Constructor takes `baseRead: string`, `baseWrite: string`, `relative: string`
-    - Evidence: `/Users/erng/Workspace/atomi/runbook/platforms/sulfone/helium/sdks/node/src/domain/core/fs/virtual_file.ts:12-16`
+7. **GlobType enum values** | Documented as `Template = 0` and `Copy = 1` - matches spec but cannot verify against actual SDK source | Lines 59-70
 
-12. **ProcessorHandler type is not exported; actual type is LambdaProcessorFn**
-    - Documented: `type ProcessorHandler = (input: ProcessorInput, fileHelper: CyanFileHelper) => Promise<ProcessorOutput>`
-    - Actual: The type is `LambdaProcessorFn` and uses `CyanProcessorInput` (not `ProcessorInput`). `CyanProcessorInput` has `readDir`/`writeDir` (not `readDirectory`/`writeDirectory`).
-    - Evidence: `/Users/erng/Workspace/atomi/runbook/platforms/sulfone/helium/sdks/node/src/api/processor/lambda.ts:6` and `/Users/erng/Workspace/atomi/runbook/platforms/sulfone/helium/sdks/node/src/domain/core/cyan_script_model.ts:11-16`
+### Other Problems
+(for each: Problem | Recommendation)
 
-13. **StartProcessorWithLambda handler receives CyanProcessorInput, not ProcessorInput**
-    - Documented: Handler parameter type is `ProcessorHandler` with `ProcessorInput`
-    - Actual: Handler receives `CyanProcessorInput` with `readDir` and `writeDir` (not `readDirectory` and `writeDirectory`)
-    - Evidence: `/Users/erng/Workspace/atomi/runbook/platforms/sulfone/helium/sdks/node/src/domain/core/cyan_script_model.ts:11-16` - `readDir: string; writeDir: string;`
+1. **Source repositories not accessible** | The referenced source paths (`../boron`, `../iridium`, `../zinc`, `../helium`, `../argon`) are external repositories not included in this documentation repository. Cannot perform direct source code verification. | Recommend adding SDK type definition exports or a types reference package to this repo for verification purposes.
 
-14. **ProcessorError, FileNotFoundError, TransformError classes do not exist**
-    - Documented: Full class definitions with constructors for `ProcessorError`, `FileNotFoundError`, `TransformError`
-    - Actual: These error classes do not exist in the SDK
-    - Evidence: Grep search for these class names in `/Users/erng/Workspace/atomi/runbook/platforms/sulfone/helium/sdks` returned no matches
+2. **Example Pattern section disclaimer unclear** | The section states "These are not SDK types, but examples" but some patterns (like error classes) may be confused with SDK-provided types | Add clearer visual distinction between SDK types and example patterns
 
-15. **Utility Types (VariableConfig, FeatureConfig, FormatConfig, ProcessorConfig) do not exist**
-    - Documented: Full interface definitions for config patterns
-    - Actual: These are not defined anywhere in the SDK - they are example/documentation-only patterns
-    - Evidence: These appear to be illustrative examples, not actual SDK types
-
-16. **Type Guards example function `isVariableConfig` does not exist**
-    - Documented: Full function implementation
-    - Actual: This function does not exist in the SDK
-    - Evidence: Not found in SDK source - appears to be an illustrative example
-
-17. **CyanFileHelper is a class, not an interface**
-    - Documented: Shown as `interface CyanFileHelper`
-    - Actual: It's exported as a class with a constructor
-    - Evidence: `/Users/erng/Workspace/atomi/runbook/platforms/sulfone/helium/sdks/node/src/domain/core/fs/cyan_fs_helper.ts:8` - `export class CyanFileHelper`
-
-18. **CyanFileHelper has undocumented `readDir` and `writeDir` getter properties**
-    - Documented: Not mentioned
-    - Actual: Has `readDir: string` and `writeDir: string` getters
-    - Evidence: `/Users/erng/Workspace/atomi/runbook/platforms/sulfone/helium/sdks/node/src/domain/core/fs/cyan_fs_helper.ts:15-21`
-
-### 🟡 Documentation Issues
-
-1. **Inconsistent property naming between layers**
-   - Problem: Documentation uses `readDirectory`/`writeDirectory` but the actual processor handler receives `readDir`/`writeDir` (CyanProcessorInput). The `ProcessorInput` interface exists separately with `readDirectory`/`writeDirectory` but is internal to ProcessorService.
-   - Location: ProcessorInput section and Handler Function section
-   - Fix: Clarify that `ProcessorInput` is the API request model, while handlers receive `CyanProcessorInput` with shortened property names, OR document both and explain the mapping.
-
-2. **VirtualFile types are classes, not interfaces**
-   - Problem: All VirtualFile types are documented as interfaces but are actually classes with constructors
-   - Location: VirtualFile, VirtualFileReference, VirtualFileStream sections
-   - Fix: Update to show as classes with constructor signatures
-
-3. **Missing GlobType enum documentation**
-   - Problem: `GlobType` enum is required for CyanGlob but not documented
-   - Location: CyanGlob section
-   - Fix: Add GlobType enum documentation showing `Template = 0` and `Copy = 1`
-
-4. **Example code in Type Guards section won't work as shown**
-   - Problem: The example uses `input.config` but shows `isVariableConfig(input.config)` - this would work but the `VariableConfig` interface doesn't exist in SDK
-   - Location: Type Guards section
-   - Fix: Mark this as "Example pattern" not actual SDK types, or remove if misleading
-
-### 🟠 Other Problems
-
-1. **VirtualFileStream documentation is entirely fictional**
-   - Problem: The documented interface bears no resemblance to the actual implementation. The actual class just wraps Node.js streams directly.
-   - Recommendation: Either rewrite to match actual implementation (ReadStream/WriteStream) or remove this section if streaming API is not intended for direct use.
-
-2. **Documentation mixes internal and public API**
-   - Problem: `ProcessorInput` is an internal type used by ProcessorService, while the actual handler function receives `CyanProcessorInput`. This creates confusion.
-   - Recommendation: Document `CyanProcessorInput` as the primary type that handlers receive, or clearly distinguish between external API types and internal types.
-
-3. **Error classes section should be removed or marked as examples**
-   - Problem: Error classes are documented as if they exist in the SDK but they don't
-   - Recommendation: Remove this section or clearly mark it as "Suggested patterns for custom error handling"
-
-4. **Utility Types section should be marked as examples**
-   - Problem: Config interfaces are presented as SDK types but don't exist
-   - Recommendation: Clearly label as "Common patterns" or "Example configurations" rather than presenting as SDK types
+3. **Type Guard Pattern section** | Shows example code that may not compile correctly - `isVariableConfig` uses `'vars' in config` but TypeScript may require type narrowing | Verify example compiles with strict TypeScript settings
 
 ## Summary
 | Category | Count |
 |----------|-------|
-| 🔴 | 18 |
-| 🟡 | 4 |
-| 🟠 | 4 |
+| Source Code Inaccuracies | 3 |
+| Documentation Issues | 7 |
+| Other Problems | 3 |

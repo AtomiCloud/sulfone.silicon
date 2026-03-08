@@ -1,56 +1,26 @@
 <!-- source: content/docs/developer/plugins/reference/sdk/start-plugin.mdx -->
 # 📄 File: content/docs/developer/plugins/reference/sdk/start-plugin.mdx
 
-> This document describes the StartPluginWithLambda function for CyanPrint plugins. The documentation is generally accurate for the workflow and endpoint details, but contains a critical type naming inconsistency where it uses `PluginInput` instead of the actual exported type `CyanPluginInput`.
+> Documentation for StartPluginWithLambda function in the CyanPrint SDK. The document correctly describes the function signature and usage patterns. Minor discrepancies exist in type names between documented and exported types.
 
 ### 🔴 Source Code Inaccuracies
-1. **Type name mismatch in function signature**
-   - Documented: `handler: (input: PluginInput) => Promise<PluginOutput>`
-   - Actual: `handler: (input: CyanPluginInput) => Promise<PluginOutput>`
-   - Evidence: `/Users/erng/Workspace/atomi/runbook/platforms/sulfone/helium/sdks/node/src/api/plugin/lambda.ts:5` - `type LambdaPluginFn = (input: CyanPluginInput) => Promise<PluginOutput>;`
+1. Documented: Type named `CyanPluginInput` in signature `(input: CyanPluginInput) => Promise<PluginOutput>` | Actual: The SDK exports both `CyanPluginInput` (from `cyan_script_model.ts`) AND a separate `PluginInput` type (from `domain/plugin/input.ts`), but only `CyanPluginInput` is exported from main.ts. However, both have identical structure `{ directory: string; config: unknown; }` | file: `/Users/erng/Workspace/atomi/runbook/platforms/sulfone/helium/sdks/node/src/domain/core/cyan_script_model.ts:18-21` and `/Users/erng/Workspace/atomi/runbook/platforms/sulfone/helium/sdks/node/src/domain/plugin/input.ts:1-4`
 
-2. **Exported type name is different**
-   - Documented: Type `PluginInput` is available from `@atomicloud/cyan-sdk`
-   - Actual: SDK exports `CyanPluginInput`, NOT `PluginInput`
-   - Evidence: `/Users/erng/Workspace/atomi/runbook/platforms/sulfone/helium/sdks/node/src/main.ts:193` - exports `CyanPluginInput`, not `PluginInput`
-
-3. **Related documentation files also incorrect**
-   - Documented: The input-output.mdx and types.mdx files show importing `PluginInput` from SDK
-   - Actual: These files show `import { type PluginInput } from '@atomicloud/cyan-sdk'` which would fail at runtime
-   - Evidence: `/Users/erng/Workspace/atomi/runbook/platforms/sulfone/silicon.Adelphi-Liong-CU-86et8z80y-Si-Improve-Documentation-new/content/docs/developer/plugins/reference/sdk/types.mdx:70` shows import of non-existent `PluginInput` type
+2. Documented: Response shows `PluginOutput` with `directory` field returned to CyanPrint | Actual: The internal `PluginOutput` type has `directory`, but the API response object sent back uses `outputDir` field (mapped via `PluginMapper.ToRes()` which converts `directory` to `outputDir`) | file: `/Users/erng/Workspace/atomi/runbook/platforms/sulfone/helium/sdks/node/src/api/plugin/mapper.ts:14-18`
 
 ### 🟡 Documentation Issues
-1. **Missing import example for types**
-   - Problem: The basic usage example doesn't show how to import types if needed
-   - Location: Lines 28-38 (Basic usage section)
-   - Fix: Add example showing `import { StartPluginWithLambda, type CyanPluginInput, type PluginOutput } from '@atomicloud/cyan-sdk';` if type annotations are needed
+1. Problem: The cross-reference link text uses "PluginInput/Output" but the actual type is `CyanPluginInput` | Location: "Related" section, first link | Fix: Update the cross-reference page to clarify that `CyanPluginInput` is the exported type name used by `StartPluginWithLambda`
 
-2. **Inconsistent type naming convention**
-   - Problem: Documentation uses `PluginInput` but SDK uses `CyanPluginInput` (Cyan prefix)
-   - Location: Throughout the document (signature, parameters table)
-   - Fix: Either update documentation to use `CyanPluginInput` or add a note explaining the type alias
+2. Problem: The "How It Works" section step 2 mentions "POST `/api/plug` with `PluginInput`" but the actual type should be `PluginReq` at the API boundary | Location: Line 89 | Fix: Clarify that the HTTP request uses `PluginReq` type which is mapped to `PluginInput` for internal processing
+
+3. Problem: The documentation says `config: unknown` in the handler signature but the request type (`PluginReq`) actually defines `config: Record<string, unknown>` | Location: Parameters table, line 22 | Fix: Add a note that at the API boundary, config is `Record<string, unknown>` but appears as `unknown` in the handler
 
 ### 🟠 Other Problems
-1. **Cross-file consistency issue**
-   - Problem: The types.mdx file shows importing `PluginInput` which doesn't exist in the SDK
-   - Recommendation: Audit all SDK documentation files to ensure consistent type naming - either all use `CyanPluginInput` or SDK adds a type alias `PluginInput = CyanPluginInput`
-
-2. **No type alias exists in SDK**
-   - Problem: No `PluginInput` type alias exists in the SDK to provide a simpler name
-   - Evidence: `/Users/erng/Workspace/atomi/runbook/platforms/sulfone/helium/sdks/node/src/domain/plugin/input.ts:6` has a `PluginInput` but it's internal and not exported from main.ts
-   - Recommendation: Consider adding `export type PluginInput = CyanPluginInput;` to the SDK for better developer experience
+1. Problem: Inconsistency between type names - the SDK exports `CyanPluginInput` but the related input-output.mdx documents `PluginInput`. This could confuse users. | Recommendation: Standardize type naming across documentation - either use the exported name `CyanPluginInput` everywhere or note the aliasing
 
 ## Summary
 | Category | Count |
 |----------|-------|
-| 🔴 | 3 |
-| 🟡 | 2 |
-| 🟠 | 2 |
-
-### Verified Accurate
-- Port 5552 is correct (main.ts:65)
-- POST /api/plug endpoint is correct (main.ts:68)
-- `PluginOutput` type is correctly named and exported
-- Handler function signature structure is correct (just type name differs)
-- Return value requirement to return `{ directory }` is accurate
-- Sequence diagram flow is accurate
+| 🔴 | 2 |
+| 🟡 | 3 |
+| 🟠 | 1 |

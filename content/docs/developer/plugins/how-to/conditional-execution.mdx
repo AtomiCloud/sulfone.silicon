@@ -64,9 +64,10 @@ Configure the plugin in your template's `index.ts` file. The plugin configuratio
 
 ```ts
 import type { Cyan } from '@atomicloud/cyan-sdk';
+import type { IInquirer, IDeterminism } from '@atomicloud/cyan-sdk';
 
 // In your template's index.ts, obtain answers from inquirer prompts
-export default async function (input: CyanPluginInput): Promise<Cyan> {
+export default async function (i: IInquirer, d: IDeterminism): Promise<Cyan> {
   // ... prompt users for answers using inquirer ...
 
   return {

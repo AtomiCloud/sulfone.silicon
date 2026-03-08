@@ -15,7 +15,7 @@ Zinc is the registry API that stores template metadata, delegates authentication
 
 | Technology | Purpose |
 | ---------- | ------- |
-| F#/.NET 8 | Primary language and runtime |
+| C#/.NET 8 | Primary language and runtime |
 | ASP.NET Core with Kestrel | Web framework |
 | Entity Framework Core | Database access (PostgreSQL) |
 | Descope | Authentication service |
@@ -160,11 +160,8 @@ GET /api/v{version}/user/{userId}/tokens
 # Create token
 POST /api/v{version}/user/{userId}/tokens
 
-# Get token by ID
-GET /api/v{version}/user/{userId}/tokens/{tokenId}
-
-# Update token
-PUT /api/v{version}/user/{userId}/tokens/{tokenId}
+# Revoke token
+POST /api/v{version}/user/{userId}/tokens/{tokenId}/revoke
 
 # Delete token
 DELETE /api/v{version}/user/{userId}/tokens/{tokenId}
@@ -174,7 +171,7 @@ DELETE /api/v{version}/user/{userId}/tokens/{tokenId}
 
 ```bash
 # Like/unlike templates, plugins, processors, resolvers
-POST /api/v{version}/{entityType}/like/{username}/{name}
+POST /api/v{version}/{entityType}/slug/{username}/{name}/like/{likerId}/{like:bool}
 ```
 
 ## Data Model
@@ -242,18 +239,18 @@ POST /api/v{version}/{entityType}/like/{username}/{name}
 # Setup dependencies
 pls setup
 
-# Start the service
-pls start
+# Start development server
+pls dev
 
 # Build
-dotnet build
+pls build
 
 # Run tests
-dotnet test
+pls test
 
 # Run Entity Framework migrations (if applicable)
-dotnet ef migrations add <MigrationName>
-dotnet ef database update
+pls migration:create -- <MigrationName>
+
 ```
 
 ## Configuration
@@ -263,23 +260,24 @@ dotnet ef database update
 Kestrel:
   Endpoints:
     Http:
-      Url: "http://0.0.0.0:8080"
+      Url: "http://+:9001"
 
 Database:
-  MAIN:
+  Main:
     Host: "localhost"
     Port: 5432
     Database: "zinc"
-    UserId: "postgres"
+    User: "postgres"
     Password: "password"
 
 Auth:
   Settings:
-    Domain: "api.descope.com/YOUR_PROJECT_ID"
-    # Authentication is delegated to Descope
+    Domain: "sulfone"
 
-EFCore:
-  Enabled: true
+Trace:
+  Instrument:
+    EFCore:
+      Enabled: true
 ```
 
 ## Contributing

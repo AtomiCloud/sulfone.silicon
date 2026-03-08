@@ -30,7 +30,7 @@ Processors execute **in parallel** (subject to parallelism limits), then their o
 
 1. User invokes template
 2. Template asks questions via `IInquirer` and receives `IDeterminism` for deterministic behavior
-3. Template returns `CyanConfig` with processors and plugins
+3. Template returns `Cyan` with processors and plugins
 
 ```ts
 // Template index.ts - the template function signature
@@ -41,7 +41,7 @@ export default async function(i: IInquirer, d: IDeterminism) {
     processors: [
       {
         name: 'my-processor',
-        files: { /* CyanGlob configuration */ },
+        files: [{ /* CyanGlob configuration */ }],
         config: { /* processor-specific config */ }
       }
     ],
@@ -140,12 +140,12 @@ return {
   processors: [
     {
       name: 'cyan/default',
-      files: { include: ['**/*'], exclude: ['node_modules/**'] },
+      files: [{ glob: '**/*', exclude: ['node_modules/**'] }],
       config: { }
     },
     {
       name: 'custom/formatter',
-      files: { include: ['**/*.ts', '**/*.tsx'] },
+      files: [{ glob: '**/*.ts', exclude: [] }, { glob: '**/*.tsx', exclude: [] }],
       config: { formatter: 'prettier' }
     },
   ],

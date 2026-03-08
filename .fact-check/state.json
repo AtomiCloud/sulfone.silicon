@@ -1,7 +1,7 @@
 {
-  "docsPath": "content/docs/",
-  "sourcePaths": ["../argon", "../boron", "../helium", "../iridium", "../zinc"],
-  "outputFile": ".fact-check/report.md",
+  "docsPath": "content/docs",
+  "sourcePaths": ["../boron", "../iridium", "../zinc", "../helium", "../argon"],
+  "outputFile": "fact-check-report.md",
   "concurrentAgents": 3,
   "filesToCheck": [
     "content/docs/contributor/architecture/execution-flow.mdx",
@@ -218,5 +218,5 @@
     "content/docs/user/tutorials/get-started.mdx"
   ],
   "pendingFiles": [],
-  "startTime": "2026-03-03T07:47:26Z"
+  "startTime": "2026-03-08T21:25:14Z"
 }

@@ -39,12 +39,8 @@ Argon is the web-based user interface for browsing, searching, and managing Cyan
         COMPS --> HTTP[Swagger HTTP Client]
     end
 
-    subgraph "Server"
-        HTTP --> API[API Endpoints]
-    end
-
     subgraph "External"
-        API --> ZINC[Zinc REST API]
+        HTTP --> ZINC[Zinc REST API]
     end
 
     BROWSER[Browser] --> PAGES
@@ -69,7 +65,6 @@ Argon is the web-based user interface for browsing, searching, and managing Cyan
 
 - Create and publish templates
 - Version management
-- Usage analytics
 
 ## Page Structure
 
@@ -90,19 +85,19 @@ Argon is the web-based user interface for browsing, searching, and managing Cyan
 
 ```bash
 # Install dependencies
-npm install
+bun install
 
 # Development server
-npm run dev
+bun run dev
 
 # Build for production
-npm run build
+bun run build
 
 # Run tests
-npm run test:integration && npm run test:unit
+bun run test
 
 # Type checking
-npm run check
+bun run check
 ```
 
 ## Configuration
@@ -112,30 +107,30 @@ npm run check
 DESCOPE_ID=your-descope-project-id
 DESCOPE_SECRET=your-descope-secret
 AUTH_SECRET=your-auth-secret
-PUBLIC_LANDSCAPE=raichu  # Options: pichu, pikachu, raichu, lapras
+PUBLIC_LANDSCAPE=lapras  # Options: pichu, pikachu, raichu, lapras (default: lapras)
 ```
 
 ## Key Components
 
 ### Template Card
 
-Displays template information in a card format:
+Displays template information in a card format. Note that most fields are optional:
 
 ```svelte
 <TemplateCard
   template={{
     name: "react-app",
     description: "React application template",
-    userId: "user-123",
-    email: "user@example.com",
-    tags: ["react", "typescript"]
+    userId: "user-123",  // optional
+    email: "user@example.com",  // optional
+    tags: ["react", "typescript"]  // optional
   }}
 />
 ```
 
 ### Search
 
-Full-text search with autocomplete on the registry page:
+Full-text search with autocomplete on the registry page (simplified example):
 
 ```svelte
 <input

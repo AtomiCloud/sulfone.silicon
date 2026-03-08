@@ -1,60 +1,45 @@
 <!-- source: content/docs/user/explanation/template-lifecycle.mdx -->
 # 📄 File: content/docs/user/explanation/template-lifecycle.mdx
 
-> This document has multiple inaccuracies: it describes semantic versioning when the system uses simple integer versioning, and documents a deprecation feature that does not exist in the source code.
+> Documentation accurately describes template versioning, updates, and deprecation status. All CLI commands correctly use `cyanprint`.
 
 ### 🔴 Source Code Inaccuracies
-
-1. **Documented**: "Templates use semantic versioning (MAJOR.MINOR.PATCH)"
-   - **Actual**: Templates use auto-incrementing integer version numbers (1, 2, 3, ...), not semantic versioning
-   - **Evidence**: `/Users/erng/Workspace/atomi/runbook/platforms/sulfone/zinc/docs/developer/concepts/04-version.md:3-7` explicitly states: "Previous documentation incorrectly described versions as semver-encoded. **Type**: `ulong` (simple integer)". Also confirmed in `/Users/erng/Workspace/atomi/runbook/platforms/sulfone/zinc/Domain/Model/TemplateVersion.cs:32-33` where `Version` is `ulong`, not a semver string.
-
-2. **Documented**: "MAJOR: Breaking changes, MINOR: New features, backward compatible, PATCH: Bug fixes"
-   - **Actual**: Since the system uses integer versioning (1, 2, 3...), these semantic versioning categories do not apply. Version numbers simply auto-increment on each push.
-   - **Evidence**: Same as above. The version is a monotonically increasing integer with no semantic meaning.
-
-3. **Documented**: "Templates may be deprecated by their maintainers. Deprecated templates remain available but show a warning when used."
-   - **Actual**: No deprecation functionality exists in the template registry models or CLI. The `Template`, `TemplatePrincipal`, `TemplateVersion`, and `TemplateVersionPrincipal` models have no `deprecated`, `is_deprecated`, or similar field. The only deprecation references in the codebase are for Swagger API versioning, not template deprecation.
-   - **Evidence**: `/Users/erng/Workspace/atomi/runbook/platforms/sulfone/zinc/Domain/Model/Template.cs:1-56` shows no deprecation field. `/Users/erng/Workspace/atomi/runbook/platforms/sulfone/zinc/Domain/Model/TemplateVersion.cs:1-57` shows no deprecation field. Grep for `deprecated|is_deprecated|IsDeprecated` in zinc only finds Swagger-related deprecation (`/Users/erng/Workspace/atomi/runbook/platforms/sulfone/zinc/App/StartUp/Services/Swagger/SwaggerConfig.cs:83-84`), not template deprecation.
+None found.
 
 ### 🟡 Documentation Issues
-
-1. **Problem**: The Versioning section provides semantic versioning guidance that cannot be followed since versions are auto-incremented integers
-   - **Location**: Lines 9-14 (entire Versioning section)
-   - **Fix**: Replace the Versioning section with accurate description of how versioning actually works:
-   ```markdown
-   ## Versioning
-
-   Templates use auto-incrementing integer versions (1, 2, 3, ...).
-
-   Each time you publish a template with `cyanprint push`, a new version is automatically created with the next integer. Version numbers have no semantic meaning - they simply track the order of publication.
-   ```
-
-2. **Problem**: The Deprecation section documents a non-existent feature
-   - **Location**: Lines 22-24 (entire Deprecation section)
-   - **Fix**: Remove the Deprecation section entirely, or replace with a note that deprecation is not currently supported:
-   ```markdown
-   ## Deprecation
-
-   Template deprecation is not currently supported. To indicate a template is no longer maintained, update the template description or readme to note this.
-   ```
-
-3. **Problem**: The update command reference is correct (`cyanprint update`) but no detail about how "latest" is determined
-   - **Location**: Line 18
-   - **Fix**: Add clarification that "latest" means the highest integer version number available in the registry
+None found.
 
 ### 🟠 Other Problems
+None found.
 
-1. **Problem**: This document is very brief (30 lines) and provides minimal value for users trying to understand template lifecycle
-   - **Recommendation**: Consider expanding this document with:
-     - How versions are created (via `cyanprint push`)
-     - How to view available versions
-     - How version selection works in interactive mode
-     - Link to the state file format (`.cyan_state.yaml`)
+## Verification Details
+
+**Versioning Claims Verified:**
+- Auto-incrementing integer versions: **CONFIRMED**
+  - Evidence: `/Users/erng/Workspace/atomi/runbook/platforms/sulfone/zinc/App/Modules/Cyan/Data/Repositories/TemplateRepository.cs:620-636`
+  - Code shows `latest = db.TemplateVersions.Where(x => x.TemplateId == template.Id).Max(x => x.Version as ulong?) ?? 0;` followed by `Version = latest + 1`
+- Version numbers have no semantic meaning: **CONFIRMED** (versions are simply `ulong` integers, not semver)
+
+**CLI Commands Verified:**
+- `cyanprint push`: **CONFIRMED** - Evidence: `/Users/erng/Workspace/atomi/runbook/platforms/sulfone/iridium/cyanprint/src/commands.rs:29-30`
+- `cyanprint update`: **CONFIRMED** - Evidence: `/Users/erng/Workspace/atomi/runbook/platforms/sulfone/iridium/cyanprint/src/commands.rs:48-72`
+
+**Updates Claims Verified:**
+- "latest" refers to highest integer version: **CONFIRMED**
+  - Evidence: `/Users/erng/Workspace/atomi/runbook/platforms/sulfone/boron/docs/developer/algorithms/01-version-resolution.md:10` - "When no version is specified, it iterates from the latest version down"
+  - Evidence: `/Users/erng/Workspace/atomi/runbook/platforms/sulfone/zinc/App/Modules/Cyan/Data/Repositories/TemplateRepository.cs:543-545` - Uses `OrderByDescending(x => x.Version).FirstOrDefaultAsync()` to get latest
+
+**Deprecation Claims Verified:**
+- Template deprecation not currently supported: **CONFIRMED**
+  - Searched Zinc codebase for "deprecat" - only found API version deprecation in Swagger config, not template deprecation
+
+**Links Verified:**
+- `/docs/user/how-to/update-project`: Valid internal link
+- `/docs/user/explanation/3-way-merge`: Valid internal link
 
 ## Summary
 | Category | Count |
 |----------|-------|
-| 🔴 | 3 |
-| 🟡 | 3 |
-| 🟠 | 1 |
+| 🔴 | 0 |
+| 🟡 | 0 |
+| 🟠 | 0 |

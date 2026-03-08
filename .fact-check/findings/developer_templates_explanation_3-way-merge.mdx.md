@@ -1,107 +1,43 @@
-# File: content/docs/developer/templates/explanation/3-way-merge.mdx
+<!-- source: content/docs/developer/templates/explanation/3-way-merge.mdx -->
+# 📄 File: content/docs/developer/templates/explanation/3-way-merge.mdx
 
-> This document explains the 3-way merge functionality in CyanPrint for updating templates while preserving user modifications. While the core concepts are accurate, there are several discrepancies between the documentation and the actual implementation in the iridium codebase.
+> This document describes 3-way merge for template updates. The concept exists in the codebase but several implementation details are inaccurate.
 
-### Source Code Inaccuracies
+### 🔴 Source Code Inaccuracies
 
-1. **State Storage Directory Structure**
-   - **Documented**: `.cyan/` directory with `generation.json` and `base/` subdirectory
-   - **Actual**: `.cyan_state.yaml` single YAML file in the project root
-   - **Evidence**: `iridium/cyancoordinator/src/template/history.rs:75` uses `target_dir.join(".cyan_state.yaml")`, and the state persistence documentation at `iridium/docs/developer/features/04-state-persistence.md:3` explicitly states "Stores template execution state...in `.cyan_state.yaml`"
+1. **Directory Structure** | Documented: `.cyan/generation.json` and `.cyan/base/` | Actual: `.cyan_state.yaml` (single YAML file, no separate base directory) | iridium/docs/developer/features/04-state-persistence.md:75-89
 
-2. **Command Name**
-   - **Documented**: `cyanprint update ./my-project`
-   - **Actual**: `pls update ./my-project` (the CLI tool is invoked via `pls` wrapper)
-   - **Evidence**: `iridium/docs/developer/surfaces/cli/03-update.md:8` shows `pls update [path] [options]`
+2. **Update Command - Version Argument** | Documented: `cyanprint update ./my-project myorg/template:2.0.0` (supports specifying template reference) | Actual: `cyanprint update [path]` - no template reference argument supported | iridium/cyanprint/src/commands.rs:52-72
 
-3. **Command Options**
-   - **Documented**: `cyanprint update ./my-project myorg/template:2.0.0` and `--dry-run`
-   - **Actual**: No template reference argument or `--dry-run` option exists. Available options are `--coordinator-endpoint`/`-c`, `--interactive`/`-i`
-   - **Evidence**: `iridium/cyanprint/src/commands.rs:52-72` defines the Update command with only `path`, `coordinator_endpoint`, and `interactive` options
+3. **Update Command - Dry Run** | Documented: `cyanprint update ./my-project --dry-run` | Actual: `--dry-run` option does not exist in the CLI | iridium/cyanprint/src/commands.rs:52-72 (no dry-run flag defined)
 
-4. **Determinism API Syntax**
-   - **Documented**: `const projectId = d.uuid(); // "abc-123"`
-   - **Actual**: The API uses `determinism.get('key', () => origin_function)` pattern, not `d.uuid()`
-   - **Evidence**: `helium/docs/developer/concepts/03-determinism.md:27-28` shows `determinism.get('project-id', () => randomUUID())` and the `IDeterminism` interface at `helium/sdks/node/src/domain/core/deterministic.ts:1-5` only has a `get(key: string, origin: () => string): string` method
+4. **Merge Algorithm Flow** | Documented: "Compare Base vs Ours" then "Compare Base vs Theirs" decision tree | Actual: Uses git2 library to create temporary git repository with three branches (base, current, incoming) and performs a real git merge | iridium/cyancoordinator/src/fs/merger.rs:134-300
 
-5. **"Pin System" Terminology**
-   - **Documented**: "The pin system ensures IDs remain consistent across updates"
-   - **Actual**: The system uses "deterministic states" not "pin system". The term "pin" does not appear in the deterministic states documentation
-   - **Evidence**: `iridium/docs/developer/concepts/04-deterministic-states.md` and `helium/docs/developer/concepts/03-determinism.md` refer to "deterministic states" and `deterministicStates`, not pins
+5. **Base Files Storage** | Documented: Base files stored in `.cyan/base/` directory | Actual: Base VFS is regenerated from stored answers/deterministic_states in `.cyan_state.yaml`, not persisted as files | iridium/docs/developer/features/04-state-persistence.md:77-89
 
-6. **State File Metadata Content**
-   - **Documented**: `generation.json` contains metadata
-   - **Actual**: `.cyan_state.yaml` contains `templates` map with `active` flag, `history` array containing `version`, `time`, `answers`, and `deterministic_states`
-   - **Evidence**: `iridium/docs/developer/features/04-state-persistence.md:75-89` shows the actual YAML structure
+6. **Command Name** | Documented: Uses `cyanprint` | Actual: Correct - binary is `cyanprint` | iridium/cyanprint/src/main.rs confirms this
 
-### Documentation Issues
+### 🟡 Documentation Issues
 
-1. **Incorrect Directory Structure Diagram**
-   - **Problem**: The documented `.cyan/` directory structure does not match actual implementation
-   - **Location**: Lines 43-49
-   - **Fix**: Replace with actual state file format:
-     ```yaml
-     .cyan_state.yaml    # State file in project root
-     ```
+1. **Misleading Directory Tree** | The `.cyan/` directory structure shown at lines 43-49 does not match actual implementation. The state is stored in `.cyan_state.yaml`, not in a `.cyan/` directory with `generation.json` and `base/` subdirectory. | Lines 43-49 | Replace with `.cyan_state.yaml` file structure showing templates, history, answers, and deterministic_states
 
-2. **Non-existent Command Arguments**
-   - **Problem**: Documentation shows template reference argument and `--dry-run` option that don't exist
-   - **Location**: Lines 182-191 (Update Command section)
-   - **Fix**: Update to reflect actual command syntax:
-     ```bash
-     # Update to latest version
-     pls update ./my-project
+2. **Missing CLI Command Prefix** | The update command examples use `cyanprint update` which is correct, but the source documentation in iridium uses `pls update`. The document correctly uses `cyanprint`. | N/A | No change needed, but ensure consistency
 
-     # Update with interactive version selection
-     pls update ./my-project --interactive
+3. **Update Process Steps Incomplete** | The documented 5-step update process (Read base, Read ours, Generate theirs, Merge, Report conflicts) is simplified. The actual process includes: BUILD specs, MAP (execute templates), LAYER (merge VFS), MERGE (3-way with local), WRITE | Lines 52-57 | Update to reflect actual batch_process flow: PHASE 1 BUILD -> PHASE 2-4 BATCH PROCESS (MAP -> LAYER -> MERGE+WRITE)
 
-     # Update current directory
-     pls update
-     ```
+4. **Conflict Marker Format** | Documented: Uses `<<<<<<< OURS` and `>>>>>>> THEIRS` | Actual: Git2 standard conflict markers are used, which are `<<<<<<<`, `=======`, `>>>>>>>` (the labels may differ) | iridium/cyancoordinator/src/fs/merger.rs:262-268
 
-3. **Incorrect Determinism Code Example**
-   - **Problem**: Uses `d.uuid()` syntax which doesn't exist in the SDK
-   - **Location**: Lines 167-173
-   - **Fix**: Use correct API:
-     ```ts
-     // v1.0 generation
-     const projectId = determinism.get('project-id', () => randomUUID()); // "abc-123"
+### 🟠 Other Problems
 
-     // v2.0 update with same deterministic states
-     const projectId = determinism.get('project-id', () => randomUUID()); // "abc-123" - same!
-     ```
+1. **Terminology Mismatch** | The document uses "Ours/Theirs" terminology while the codebase uses "current/incoming". Consider aligning terminology or noting the equivalence. | Recommendation: Add a note clarifying that "Ours" = "current/local" and "Theirs" = "incoming"
 
-4. **Misleading Terminology - "Pin System"**
-   - **Problem**: Uses non-standard term "pin system" instead of "deterministic states"
-   - **Location**: Lines 165, 225
-   - **Fix**: Replace "pin system" with "deterministic states" to match actual codebase terminology
+2. **Missing Rename Detection Feature** | The actual merger supports configurable rename detection with similarity threshold (0-100), which is not mentioned in the documentation. | iridium/cyancoordinator/src/fs/merger.rs:231-233 | Recommendation: Document the rename detection capability
 
-5. **Incorrect Terminology - "Base" Directory**
-   - **Problem**: References "base/" directory for storing original files, but actual implementation stores state in YAML
-   - **Location**: Lines 43-49, 53-57
-   - **Fix**: The "base" version is reconstructed from stored answers and deterministic states during the update process, not stored as a file copy. Update the explanation to reflect this.
-
-### Other Problems
-
-1. **Missing CLI Tool Name Explanation**
-   - **Problem**: Documentation uses `cyanprint update` but actual CLI is invoked via `pls` wrapper
-   - **Recommendation**: Either explain that `pls` is the CLI wrapper for cyanprint, or use consistent command naming throughout
-
-2. **Incomplete Update Flow Description**
-   - **Problem**: The documented update process mentions "Read base - Load original generated files" but actual implementation regenerates the base from stored state
-   - **Recommendation**: Clarify that the base version is regenerated using stored answers and deterministic states, not loaded from a file copy
-
-3. **Missing Related Documentation Links**
-   - **Problem**: The "Related" section links to determinism and client-state docs that may use different terminology
-   - **Recommendation**: Ensure linked documentation uses consistent terminology (deterministic states vs pin system)
-
-4. **Outdated Best Practice for Users**
-   - **Problem**: "Keep base files - Don't delete `.cyan/`" references non-existent directory
-   - **Recommendation**: Update to "Keep state file - Don't delete `.cyan_state.yaml`"
+3. **Fast-Forward Case Not Documented** | The merge algorithm handles three cases: up-to-date, fast-forward, and normal merge. Only normal merge with conflicts is documented. | iridium/cyancoordinator/src/fs/merger.rs:242-299 | Recommendation: Document all three merge scenarios
 
 ## Summary
 | Category | Count |
 |----------|-------|
-| Source Code Inaccuracies | 6 |
-| Documentation Issues | 5 |
-| Other Problems | 4 |
+| 🔴 | 6 |
+| 🟡 | 4 |
+| 🟠 | 3 |

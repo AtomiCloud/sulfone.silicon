@@ -1,64 +1,32 @@
+<!-- source: content/docs/developer/processors/tutorials/first-processor.mdx -->
 # File: content/docs/developer/processors/tutorials/first-processor.mdx
 
-> Tutorial for creating a basic processor that transforms files using `StartProcessorWithLambda` and `CyanFileHelper`.
+> Tutorial for creating a first processor - API and code samples verified against helium SDK and iridium examples. Minor issues found with input type naming and Dockerfile version.
 
 ### Source Code Inaccuracies
+1. **Input Type Name** | Documented: `ProcessorInput` | Actual: `CyanProcessorInput` | helium/sdks/node/src/domain/core/cyan_script_model.ts:11 - The SDK type is `CyanProcessorInput` with properties `readDir`, `writeDir`, `globs`, `config`. The documented `ProcessorInput` is an internal type in helium/sdks/node/src/domain/processor/input.ts.
 
-1. **Wrong property name on input object**
-   - **Documented**: `return { directory: input.writeDirectory };` (line 55)
-   - **Actual**: `return { directory: input.writeDir };`
-   - **Evidence**: `helium/sdks/node/src/domain/core/cyan_script_model.ts:12-16` - `CyanProcessorInput` interface has `writeDir`, not `writeDirectory`. Also confirmed by actual usage in `iridium/e2e/processor1/index.ts:55` which uses `input.writeDir`.
+2. **Input Property Names** | Documented: `input.writeDirectory` (line 55) | Actual: `input.writeDir` | helium/sdks/node/src/domain/core/cyan_script_model.ts:13 and iridium/e2e/processor1/index.ts:55 - The actual property is `writeDir`, not `writeDirectory`.
 
-2. **Incorrect type name in documentation table**
-   - **Documented**: `ProcessorInput` type in the `StartProcessorWithLambda` arguments table (line 92)
-   - **Actual**: `CyanProcessorInput` type
-   - **Evidence**: `helium/sdks/node/src/api/processor/lambda.ts:6` - The lambda function signature is `(i: CyanProcessorInput, fileHelper: CyanFileHelper) => Promise<ProcessorOutput>`. Note that `ProcessorInput` is a different internal type used by the service layer (`helium/sdks/node/src/domain/processor/input.ts:3-8`).
+3. **Dockerfile Bun Version** | Documented: `oven/bun:1.1.31` | Actual: `oven/bun:1.0.11` in examples | iridium/e2e/processor1/Dockerfile:1 and iridium/e2e/processor2/Dockerfile:1 - The example Dockerfiles use 1.0.11. Note: 1.1.31 may be intentional as a newer recommended version, but this is inconsistent with actual e2e tests.
 
-3. **CyanFileHelper table incorrectly documents method signatures**
-   - **Documented**: `read(glob)`, `get(glob)`, `readAsStream(glob)`, `copy(glob)` (lines 101-105)
-   - **Actual**: All methods require a `CyanGlob` object, not just a glob string
-   - **Evidence**: `helium/sdks/node/src/domain/core/fs/cyan_fs_helper.ts:73` - `read(g: CyanGlob): VirtualFile[]`, line 60 - `get(g: CyanGlob): VirtualFileReference[]`, line 42 - `readAsStream(g: CyanGlob): VirtualFileStream[]`, line 77 - `copy(copy: CyanGlob): void`.
+4. **Bun.lockb Copy Pattern** | Documented: `COPY package.json bun.lockb* ./` (with wildcard) | Actual: `COPY bun.lockb .` (without wildcard) | iridium/e2e/processor1/Dockerfile:5 - The wildcard pattern is a valid improvement for optional lockfile, but differs from actual examples.
 
 ### Documentation Issues
+1. **Inconsistent Input Property Reference** | Location: Line 55 code example `return { directory: input.writeDirectory };` | Fix: Change to `return { directory: input.writeDir };` to match the actual SDK type `CyanProcessorInput`.
 
-1. **VirtualFile properties table is incomplete**
-   - **Problem**: The VirtualFile table (lines 109-118) only lists `content` and `relative` properties, but `VirtualFile` has additional properties: `baseRead`, `baseWrite`, and computed getters `read` and `write`.
-   - **Location**: Lines 109-118
-   - **Fix**: Either add the additional properties or clarify this is a simplified view. The additional properties are: `baseRead: string`, `baseWrite: string`, `read: string` (getter), `write: string` (getter).
+2. **Type Name Mismatch in Table** | Location: Line 92 table `ProcessorInput` | Fix: Change to `CyanProcessorInput` to match the exported SDK type, or clarify that this is the conceptual name.
 
-2. **Missing return type import in code example**
-   - **Problem**: The code example (lines 38-57) does not import or specify `ProcessorOutput` return type, but actual processors (like in e2e tests) explicitly type the return: `Promise<ProcessorOutput>`.
-   - **Location**: Lines 38-57
-   - **Fix**: Either add explicit return type annotation or add `ProcessorOutput` to the import statement for clarity.
-
-3. **Template test code example has incorrect property name**
-   - **Problem**: The test example (lines 132-141) shows `files: [{ root: 'templates', glob: '**/*', exclude: [], type: GlobType.Template }]` but the root should be `template` (singular) to match actual e2e test usage.
-   - **Location**: Lines 132-141
-   - **Fix**: Change `root: 'templates'` to `root: 'template'` to match actual usage in `iridium/e2e/template1/cyan/index.ts:43`.
-
-4. **Missing GlobType import in code example**
-   - **Problem**: The test template code uses `GlobType.Template` but doesn't show importing `GlobType` from the SDK.
-   - **Location**: Lines 132-141
-   - **Fix**: Add `GlobType` to the imports or note that it should be imported from `@atomicloud/cyan-sdk`.
-
-5. **Incorrect file structure description for test template**
-   - **Problem**: The test template code example (lines 132-141) says "// In template's index.ts" but the actual location based on e2e tests would be `cyan/index.ts` within the template directory.
-   - **Location**: Line 133
-   - **Fix**: Change comment to "// In template's cyan/index.ts".
+3. **Missing ProcessorInput Import** | Location: Code example at line 38-56 | Fix: The code example doesn't import `ProcessorInput` but references it conceptually. The actual SDK exports `CyanProcessorInput` type, not `ProcessorInput`. Consider either showing the import or adjusting the table to use correct type name.
 
 ### Other Problems
+1. **Processor Return Directory Property** | Recommendation: The documentation shows `return { directory: input.writeDirectory }` but real examples use `return { directory: input.writeDir }`. Ensure consistency with SDK - the `ProcessorOutput` interface only requires a `directory` property, which should point to the write directory.
 
-1. **Code example uses forEach instead of idiomatic approach**
-   - **Problem**: The example uses `files.forEach(file => {...})` which mutates files in place. Actual processor implementations (e.g., `iridium/e2e/processor1/index.ts:46-53`) use `.map().map()` chain for functional transformation.
-   - **Recommendation**: While `forEach` works, showing a more idiomatic functional approach with `.map()` would better align with actual codebase patterns.
-
-2. **Documentation references non-existent internal type**
-   - **Problem**: The table mentions `ProcessorInput` type which exists internally in the service layer but is not the type exposed to processor developers. This could cause confusion if developers try to find this type in the SDK exports.
-   - **Recommendation**: Use the correct exported type name `CyanProcessorInput` in all documentation.
+2. **Template Test Code Example** | Location: Lines 132-141 | The example shows an inline comment `// In template's index.ts` but the actual format would use `StartTemplateWithLambda`. Consider providing a more complete example or linking to the template tutorials for context.
 
 ## Summary
 | Category | Count |
 |----------|-------|
-| Source Code Inaccuracies | 3 |
-| Documentation Issues | 5 |
+| Source Code Inaccuracies | 4 |
+| Documentation Issues | 3 |
 | Other Problems | 2 |

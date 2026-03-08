@@ -80,3 +80,144 @@
 .ruler-group:has([data-hover='6']:hover) [data-hover='6'] > .bg {
   opacity: 1;
 }
+
+/* CodeHike base styles */
+[data-ch] {
+  font-family: var(
+    --font-mono,
+    ui-monospace,
+    SFMono-Regular,
+    Menlo,
+    Monaco,
+    Consolas,
+    'Liberation Mono',
+    'Courier New',
+    monospace
+  );
+}
+
+pre[data-ch] {
+  overflow-x: auto;
+  overflow-y: hidden;
+  line-height: 1.5;
+  tab-size: 2;
+}
+
+pre[data-ch] > div {
+  display: flex;
+  flex-direction: column;
+  min-width: 100%;
+}
+
+/* CodeHike line styles */
+pre[data-ch] > div > div {
+  display: flex;
+  min-height: 1.5em;
+  padding-left: 1rem;
+  padding-right: 1rem;
+}
+
+/* CodeHike token styles */
+pre[data-ch] span {
+  white-space: pre;
+}
+
+/* CodeHike code container */
+.ch-code {
+  position: relative;
+  display: flex;
+  flex-direction: column;
+  border-radius: 0.5rem;
+  overflow: hidden;
+}
+
+/* Code block with title styling */
+.ch-code-title {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  padding: 0.5rem 1rem;
+  border-bottom: 1px solid var(--ch-23, #d0d7de);
+  font-size: 0.875rem;
+  color: var(--ch-4, #24292f);
+}
+
+.dark .ch-code-title {
+  color: var(--ch-4, #c9d1d9);
+  border-bottom-color: var(--ch-23, #30363d);
+}
+
+/* Editor background colors using CodeHike theme variables */
+.bg-editor-background {
+  background-color: var(--ch-16, #ffffff);
+}
+
+.dark .bg-editor-background {
+  background-color: var(--ch-16, #0d1117);
+}
+
+/* Selection colors */
+::selection {
+  background-color: var(--ch-20, #add6ff);
+}
+
+.dark ::selection {
+  background-color: var(--ch-20, #264f78);
+}
+
+.selection\:bg-editor-selectionBackground::selection {
+  background-color: var(--ch-20, #add6ff);
+}
+
+.dark .selection\:bg-editor-selectionBackground::selection {
+  background-color: var(--ch-20, #264f78);
+}
+
+/* Tab styling */
+.text-tab-activeForeground {
+  color: var(--ch-4, #24292f);
+}
+
+.dark .text-tab-activeForeground {
+  color: var(--ch-4, #c9d1d9);
+}
+
+/* Border color fallback */
+:root {
+  --bg-color: var(--ch-16);
+  --border-color: var(--ch-23);
+}
+
+.dark {
+  --bg-color: var(--ch-16);
+  --border-color: var(--ch-23);
+}
+
+/* Ensure inline code doesn't have weird spacing */
+code:not(pre code) {
+  padding: 0.125rem 0.25rem;
+  border-radius: 0.25rem;
+  background-color: oklch(0.97 0 0);
+}
+
+.dark code:not(pre code) {
+  background-color: oklch(0.2 0 0);
+}
+
+/* Code block scroll styling */
+pre[data-ch]::-webkit-scrollbar {
+  height: 8px;
+}
+
+pre[data-ch]::-webkit-scrollbar-track {
+  background: transparent;
+}
+
+pre[data-ch]::-webkit-scrollbar-thumb {
+  background-color: var(--ch-23, #d0d7de);
+  border-radius: 4px;
+}
+
+.dark pre[data-ch]::-webkit-scrollbar-thumb {
+  background-color: var(--ch-23, #30363d);
+}

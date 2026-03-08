@@ -1,122 +1,65 @@
+<!-- source: content/docs/contributor/repositories/helium.mdx -->
 # 📄 File: content/docs/contributor/repositories/helium.mdx
 
-> Documentation for the Helium repository which provides CyanPrint SDKs. The documentation contains significant inaccuracies regarding package names, repository structure, and API usage.
+> Documentation for sulfone.helium SDKs is mostly accurate with minor issues in Python SDK method names and C# namespace usage.
 
 ### 🔴 Source Code Inaccuracies
 
-1. **TypeScript Package Name**
-   - Documented: `@cyanprint/sdk`
-   - Actual: `@atomicloud/cyan-sdk`
-   - Evidence: `/Users/erng/Workspace/atomi/runbook/platforms/sulfone/helium/sdks/node/package.json:2` shows `"name": "@atomicloud/cyan-sdk"`
+1. **Python SDK IInquirer method name** | Documented: `dateSelect` | Actual: `date_select`
+   - Evidence: `sdks/python/cyanprintsdk/domain/core/inquirer.py:69-71` - The method is `date_select`, not `dateSelect`
 
-2. **Python Package Name**
-   - Documented: `cyanprint-sdk`
-   - Actual: `cyanprintsdk` (no hyphen)
-   - Evidence: `/Users/erng/Workspace/atomi/runbook/platforms/sulfone/helium/sdks/python/pyproject.toml:2` shows `name = "cyanprintsdk"`
+2. **Python SDK question type example uses incorrect method name** | Documented: `dateSelect` | Actual: `date_select`
+   - Evidence: Documentation line 226 shows `await i.date_select(...)` which is correct, but line 226 contradicts the IInquirer table which shows `dateSelect`
 
-3. **C# Package Name**
-   - Documented: `CyanPrint.SDK`
-   - Actual: `AtomiCloud.CyanPrint`
-   - Evidence: `/Users/erng/Workspace/atomi/runbook/platforms/sulfone/helium/sdks/dotnet/sulfone-helium/sulfone-helium.csproj:14` shows `<PackageId>AtomiCloud.CyanPrint</PackageId>`
+3. **C# SDK namespace for imports** | Documented: `using sulfone_helium;` | Actual: Correct but uses `sulfone_helium` (underscore not hyphen)
+   - Evidence: `sdks/dotnet/sulfone-helium/Server.cs:16` - namespace is `sulfone_helium`, the documented code is correct
 
-4. **Repository Structure**
-   - Documented: `packages/typescript/`, `packages/python/`, `packages/dotnet/`, `protocols/`, `examples/`
-   - Actual: `sdks/node/`, `sdks/python/`, `sdks/dotnet/` - no `packages/`, `protocols/`, or `examples/` directories exist
-   - Evidence: `/Users/erng/Workspace/atomi/runbook/platforms/sulfone/helium/` root directory contains `sdks/` not `packages/`, and neither `protocols/` nor `examples/` directories exist
+4. **Python SDK main module path** | Documented: `from cyanprintsdk.main import start_template_with_fn` | Actual: Correct
+   - Evidence: `sdks/python/cyanprintsdk/main.py:122` - Function exists and is exported correctly
 
-5. **TypeScript SDK Import Statement**
-   - Documented: `import { defineTemplate, input, output } from '@cyanprint/sdk';`
-   - Actual: SDK exports `StartTemplate`, `StartTemplateWithLambda`, `StartProcessor`, `StartProcessorWithLambda`, `StartPlugin`, `StartPluginWithLambda`, `StartResolver`, `StartResolverWithLambda`, `CyanFileHelper`, `GlobType`, `QuestionType` - no `defineTemplate`, `input`, or `output` exports
-   - Evidence: `/Users/erng/Workspace/atomi/runbook/platforms/sulfone/helium/sdks/node/src/main.ts:169-207` shows actual exports
+5. **IDeterminism.get() signature - missing second parameter** | Documented: `d.get('unique-id')` (single argument) | Actual: `get(key: string, origin: () => string): string` (two arguments)
+   - Evidence: `sdks/node/src/domain/core/deterministic.ts:2` - The interface requires both `key` and `origin` parameters
+   - Evidence: `sdks/python/cyanprintsdk/domain/core/deterministic.py:7` - Python SDK also requires `origin: Callable[[], str]`
+   - Evidence: `sdks/dotnet/sulfone-helium/Domain/Core/Deterministic.cs:5` - .NET SDK requires `Func<string> origin`
 
-6. **TypeScript Template Definition Pattern**
-   - Documented: Uses `defineTemplate()` function with `inputs` and `generate()` method
-   - Actual: Uses class-based `ICyanTemplate` interface with `template(inquirer: IInquirer, determinism: IDeterminism): Promise<Cyan>` method
-   - Evidence: `/Users/erng/Workspace/atomi/runbook/platforms/sulfone/helium/sdks/node/src/domain/core/cyan_script.ts:11-13` shows the actual interface
+6. **TypeScript SDK Processor output** | Documented: `return { files: [] };` | Actual: `return { directory: "..." }`
+   - Evidence: `sdks/node/src/domain/processor/output.ts:2-3` - ProcessorOutput has `directory: string`, not `files`
 
-7. **TypeScript Input Types API**
-   - Documented: `input.string()`, `input.boolean()`, `input.number()`, `input.select()`, `input.array()`, `input.object()`
-   - Actual: No `input` object exists. Instead, SDK uses `IInquirer` interface with methods: `text()`, `confirm()`, `select()`, `checkbox()`, `password()`, `dateSelect()`
-   - Evidence: `/Users/erng/Workspace/atomi/runbook/platforms/sulfone/helium/sdks/node/src/domain/core/inquirer.ts:3-27` shows actual inquirer interface
+7. **TypeScript SDK Plugin output** | Documented: `return {};` | Actual: `return { directory: "..." }`
+   - Evidence: `sdks/node/src/domain/plugin/output.ts:2` - PluginOutput has `directory: string`
 
-8. **Python SDK Import Statement**
-   - Documented: `from cyanprint import Template, Input, Output`
-   - Actual: SDK uses `from cyanprintsdk.domain.core.cyan_script import ICyanTemplate, ICyanProcessor, ICyanPlugin, ICyanResolver`
-   - Evidence: `/Users/erng/Workspace/atomi/runbook/platforms/sulfone/helium/sdks/python/cyanprintsdk/main.py:22-27` shows actual imports
+8. **TypeScript SDK Resolver output** | Documented: `return {};` | Actual: `return { path: "...", content: "..." }`
+   - Evidence: `sdks/node/src/domain/resolver/output.ts:1-3` - ResolverOutput has `path` and `content`
 
-9. **Python Template Definition Pattern**
-   - Documented: Class-based with `name`, `version`, `inputs` attributes and `generate()` method
-   - Actual: Uses abstract class `ICyanTemplate` with `template(inquirer: IInquirer, determinism: IDeterminism) -> Cyan` method
-   - Evidence: `/Users/erng/Workspace/atomi/runbook/platforms/sulfone/helium/sdks/python/cyanprintsdk/domain/core/cyan_script.py:17-20` shows actual interface
+9. **C# SDK Processor signature** | Documented: `CyanProcessorInput input, CyanFileHelper fs` | Actual: Correct
+   - Evidence: `sdks/dotnet/sulfone-helium/Server.cs:99-101` - Signature is `Func<CyanProcessorInput, CyanFileHelper, Task<ProcessorOutput>>`
 
-10. **Python Package Installation Command**
-    - Documented: `pip install cyanprint-sdk`
-    - Actual: Should be `pip install cyanprintsdk` (no hyphen)
-    - Evidence: `/Users/erng/Workspace/atomi/runbook/platforms/sulfone/helium/sdks/python/pyproject.toml:2` shows package name is `cyanprintsdk`
+10. **C# SDK Processor output** | Documented: `new ProcessorOutput { Files = new List<ProcessorFile>() }` | Actual: `new ProcessorOutput(string Directory)`
+    - Evidence: `sdks/dotnet/sulfone-helium/Domain/Processor/Output.cs:3` - `ProcessorOutput` is a record with `Directory` property, not `Files`
 
-11. **C# SDK Namespace and Pattern**
-    - Documented: `using CyanPrint;` with `Template` base class, `[Input]` attributes, `Generate()` method
-    - Actual: Uses `sulfone_helium` namespace with `ICyanTemplate` interface having `Template(IInquirer inquirer, IDeterminism determinism)` method
-    - Evidence: `/Users/erng/Workspace/atomi/runbook/platforms/sulfone/helium/sdks/dotnet/sulfone-helium/Domain/Core/CyanScript.cs:8-11` shows actual interface
+11. **C# SDK Plugin output** | Documented: `new PluginOutput()` | Actual: `new PluginOutput(string Directory)`
+    - Evidence: `sdks/dotnet/sulfone-helium/Domain/Plugin/Output.cs:3` - `PluginOutput` is a record with `Directory` property
 
-12. **File System API**
-    - Documented: `fs.write()`, `fs.writeBinary()`, `fs.mkdir()`, `fs.chmod()`, `fs.copyTemplateAsset()`
-    - Actual: `CyanFileHelper` class provides: `resolveAll()`, `readAsStream()`, `get()`, `read()`, `copy()` methods with different signatures
-    - Evidence: `/Users/erng/Workspace/atomi/runbook/platforms/sulfone/helium/sdks/node/src/domain/core/fs/cyan_fs_helper.ts:8-94` shows actual implementation
-
-13. **Build Commands**
-    - Documented: `bun run build:all`, `bun run build:typescript`, `bun run build:python`, `bun run test`
-    - Actual: Uses Taskfile with commands like `task setup`, `task template`, `task resolver`. No `build:all`, `build:typescript`, `build:python` scripts exist
-    - Evidence: `/Users/erng/Workspace/atomi/runbook/platforms/sulfone/helium/Taskfile.yaml` and `/Users/erng/Workspace/atomi/runbook/platforms/sulfone/helium/sdks/node/package.json:13-15` shows no such scripts
+12. **C# SDK Resolver output** | Documented: `new ResolverOutput()` | Actual: `new ResolverOutput(string Path, string Content)`
+    - Evidence: `sdks/dotnet/sulfone-helium/Domain/Resolver/Output.cs:3` - `ResolverOutput` is a record with `Path` and `Content` properties
 
 ### 🟡 Documentation Issues
 
-1. **Incorrect Installation Instructions**
-   - Problem: TypeScript SDK installation shows wrong package name
-   - Location: Lines 38-42
-   - Fix: Change `@cyanprint/sdk` to `@atomicloud/cyan-sdk`
+1. **Repository structure mentions `tasks/` but documentation focuses on SDKs** | Problem: The tasks directory contains test task definitions, not user-facing tasks | Recommendation: Clarify that `tasks/` is for SDK testing, not general usage
 
-2. **Missing SDK Concept Explanation**
-   - Problem: Documentation doesn't explain that SDKs are HTTP server-based (not CLI libraries). Templates/Processors/Plugins/Resolvers run as HTTP services with specific ports
-   - Location: Entire TypeScript/Python/C# SDK sections
-   - Fix: Add explanation that SDKs start HTTP servers (Template:5550, Processor:5551, Plugin:5552, Resolver:5553)
+2. **Building section uses `pls` command** | Problem: Documentation uses `pls` which is atomicloud's alias for `task` | Location: Lines 330-337 | Fix: This is correct for the project context, no change needed
 
-3. **Missing Core Exports**
-   - Problem: Documentation doesn't mention `ICyanProcessor`, `ICyanPlugin`, `ICyanResolver` interfaces which are equally important
-   - Location: SDK usage sections
-   - Fix: Document all four interface types (Template, Processor, Plugin, Resolver)
-
-4. **Incorrect Python Package Reference**
-   - Problem: Python import uses `cyanprint` but package is `cyanprintsdk`
-   - Location: Lines 114-115
-   - Fix: Update import to `from cyanprintsdk import ...`
-
-5. **Missing IInquirer Methods Documentation**
-   - Problem: Documentation shows non-existent `input.*` methods but doesn't document actual `IInquirer` methods (text, confirm, select, checkbox, password, dateSelect)
-   - Location: Lines 77-102
-   - Fix: Replace with actual inquirer methods and their signatures
+3. **IInquirer method name inconsistency** | Problem: Table shows `dateSelect` but Python uses `date_select` | Location: Line 46 table | Fix: Clarify that Python SDK uses snake_case (`date_select`) while TypeScript and C# use camelCase/PascalCase
 
 ### 🟠 Other Problems
 
-1. **Documentation Appears Fabricated**
-   - Problem: The entire API documentation appears to be written without reference to actual source code. None of the documented patterns match the implementation
-   - Recommendation: Rewrite entire SDK documentation based on actual source code in `/Users/erng/Workspace/atomi/runbook/platforms/sulfone/helium/sdks/`
+1. **Python SDK installation mentions `pip install cyanprintsdk`** | Recommendation: Consider mentioning poetry as well since the project uses pyproject.toml with poetry
 
-2. **No Version Information**
-   - Problem: Documentation doesn't mention SDK version (currently 2.1.0)
-   - Recommendation: Add version information from pyproject.toml and package.json
-
-3. **Missing Determinism Interface**
-   - Problem: `IDeterminism` interface is used in actual code but not documented
-   - Recommendation: Document the `IDeterminism` interface that templates receive
-
-4. **Missing Cyan Output Type**
-   - Problem: Templates return `Cyan` type containing `processors` and `plugins` arrays, not files directly
-   - Recommendation: Document the `Cyan` interface structure
+2. **The IDeterminism interface description is incomplete** | Problem: Documentation says "provides a `get()` method for generating deterministic values" but doesn't mention the required `origin` callback parameter | Recommendation: Update to show the full signature and explain the origin callback
 
 ## Summary
 | Category | Count |
 |----------|-------|
-| 🔴 | 13 |
-| 🟡 | 5 |
-| 🟠 | 4 |
+| 🔴 | 12 |
+| 🟡 | 3 |
+| 🟠 | 2 |

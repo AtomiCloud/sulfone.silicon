@@ -1,83 +1,49 @@
 <!-- source: content/docs/developer/templates/how-to/default-values.mdx -->
 # 📄 File: content/docs/developer/templates/how-to/default-values.mdx
 
-> Documentation explaining how to set default values for question types in the IInquirer API. Contains significant inaccuracies regarding which question types support defaults and the actual API structure.
+> This document describes how to set default values for question types. Multiple cross-document inconsistencies were found regarding which types support defaults, and the return type of `dateSelect()`.
 
 ### 🔴 Source Code Inaccuracies
+1. **Checkbox `default` support contradiction**
+   - Documented: Line 87 states "`select()` and `checkbox()` question types do **not** support the `default` property"
+   - Actual: `content/docs/developer/templates/how-to/ask-checkbox.mdx` lines 31 and 117 show `checkbox()` WITH `default` property: `default: ['ESLint']` and `default: ['ESLint', 'Prettier']`
+   - Evidence: The reference docs in `types.mdx` lines 206-213 show `CheckboxQ` interface WITHOUT `default` property, and `inquirer.mdx` line 271 confirms "Select and Checkbox also do not support default values"
+   - The `ask-checkbox.mdx` documentation is incorrect and should be fixed, OR the `default-values.mdx` statement is incorrect and needs updating
 
-1. **SelectQ `default` property does not exist**
-   - Documented: `select()` with a `default: 'MIT'` property (lines 44-52)
-   - Actual: `SelectQ` interface does NOT have a `default` property in any SDK
-   - Evidence: `/Users/erng/Workspace/atomi/runbook/platforms/sulfone/helium/sdks/node/src/domain/core/question.ts:54-62` - `SelectQ` only has `type`, `id`, `message`, `desc?`, `validate?`, and `options` - no `default`
-   - Evidence: `/Users/erng/Workspace/atomi/runbook/platforms/sulfone/helium/sdks/dotnet/sulfone-helium/Domain/Core/Questions/SelectQ.cs:1-13` - no `Default` property
-   - Evidence: `/Users/erng/Workspace/atomi/runbook/platforms/sulfone/helium/sdks/python/cyanprintsdk/domain/core/question.py:47-54` - no `default` field
-
-2. **CheckboxQ `default` property does not exist**
-   - Documented: `checkbox()` with a `default: ['ESLint', 'Prettier']` property (lines 69-78)
-   - Actual: `CheckboxQ` interface does NOT have a `default` property in any SDK
-   - Evidence: `/Users/erng/Workspace/atomi/runbook/platforms/sulfone/helium/sdks/node/src/domain/core/question.ts:11-19` - `CheckboxQ` only has `type`, `id`, `message`, `desc?`, `validate?`, and `options` - no `default`
-   - Evidence: `/Users/erng/Workspace/atomi/runbook/platforms/sulfone/helium/sdks/dotnet/sulfone-helium/Domain/Core/Questions/CheckboxQ.cs:1-12` - no `Default` property
-   - Evidence: `/Users/erng/Workspace/atomi/runbook/platforms/sulfone/helium/sdks/python/cyanprintsdk/domain/core/question.py:6-13` - no `default` field
-
-3. **Conditional Defaults example uses non-existent SelectQ default**
-   - Documented: Lines 124-142 show conditional defaults for `select()` with `default: 'React'` and `default: framework === 'Vue' ? 'Vitest' : 'Jest'`
-   - Actual: `SelectQ` does not support `default` property at all
-   - Evidence: Same as issue #1 above
-
-4. **`dateSelect()` return type is `string`, not `Date`**
-   - Documented: Example at lines 82-89 shows `default: new Date()` and implies the return value is a Date object
-   - Actual: `dateSelect()` returns `Promise<string>`, not `Promise<Date>`
-   - Evidence: `/Users/erng/Workspace/atomi/runbook/platforms/sulfone/helium/sdks/node/src/domain/core/inquirer.ts:24` - `dateSelect(q: DateQ): Promise<string>`
-   - Evidence: `/Users/erng/Workspace/atomi/runbook/platforms/sulfone/helium/sdks/python/cyanprintsdk/domain/core/inquirer.py:69-72` - `-> str` return type
-
-5. **Computed Defaults example for dateSelect uses incorrect default type**
-   - Documented: Lines 107-118 show `default: defaultDeadline` where `defaultDeadline` is a `Date` object
-   - Actual: While `DateQ.default` accepts `Date | null` in TypeScript, the return type is still `string`, which may cause confusion for users expecting a Date object back
-   - Evidence: `/Users/erng/Workspace/atomi/runbook/platforms/sulfone/helium/sdks/node/src/domain/core/question.ts:32-42` - `default?: Date | null` is valid, but the return is still `Promise<string>`
+2. **Checkbox `validate` support contradiction**
+   - Documented: Line 171 states "Only `text()`, `confirm()`, and `dateSelect()` support defaults; `select()` and `checkbox()` do not"
+   - Actual: `ask-checkbox.mdx` lines 32-36 and 99-105 show `checkbox()` WITH `validate` property
+   - Evidence: `types.mdx` lines 206-213 show `CheckboxQ` interface with `validate?: null`, meaning validate is NOT supported. `inquirer.mdx` line 271 confirms "Select, Checkbox, and Confirm do not support custom validation functions"
+   - The `ask-checkbox.mdx` documentation is incorrect about validate support
 
 ### 🟡 Documentation Issues
+1. **`dateSelect()` return type inconsistency**
+   - Problem: `default-values.mdx` line 83 states "startDate is a string, e.g., '2024-01-15'", but `ask-date.mdx` line 18 states "// Returns: Date object" and shows code calling `.toISOString()` on the result (lines 41, 75-76)
+   - Location: Lines 73-84 and 116
+   - Fix: Need to reconcile with `ask-date.mdx` which says return type is Date. The `inquirer.mdx` line 227 confirms "dateSelect() returns a string in ISO date format". The `default-values.mdx` documentation appears correct; `ask-date.mdx` needs fixing.
 
-1. **No mention of `initial` property for TextQ**
-   - Problem: `TextQ` has both `default` and `initial` properties, but only `default` is documented
-   - Location: Lines 32-40 (Text section)
-   - Fix: Document the `initial` property and explain the difference between `default` and `initial`
-   - Evidence: `/Users/erng/Workspace/atomi/runbook/platforms/sulfone/helium/sdks/node/src/domain/core/question.ts:64-73` shows both `default?: string | null` and `initial?: string | null`
+2. **Shorthand form comment is misleading**
+   - Problem: Line 15 shows "Shorthand - no default support" but this could be clearer - shorthand forms simply don't have a parameter for default, they don't actively prevent defaults
+   - Location: Lines 14-17
+   - Fix: Clarify that shorthand forms don't have a parameter for default values; use object form to specify defaults
 
-2. **No mention that SelectQ and CheckboxQ do NOT support defaults**
-   - Problem: Documentation implies all question types support defaults, but Select and Checkbox do not
-   - Location: "Default by Question Type" section (lines 28-90)
-   - Fix: Add a clear note that Select and Checkbox do NOT support the `default` property, or remove those sections entirely
-
-3. **SelectQ and CheckboxQ `validate` property is `null`, not a function**
-   - Problem: Documentation shows `validate` functions for Select and Checkbox, but actual types show `validate?: null`
-   - Location: Lines 44-52 (Select) and lines 69-78 (Checkbox)
-   - Evidence: `/Users/erng/Workspace/atomi/runbook/platforms/sulfone/helium/sdks/node/src/domain/core/question.ts:54-62` - `validate?: null` for SelectQ
-   - Evidence: `/Users/erng/Workspace/atomi/runbook/platforms/sulfone/helium/sdks/node/src/domain/core/question.ts:11-19` - `validate?: null` for CheckboxQ
-   - Fix: Either remove validate examples from Select/Checkbox or document that validation is not supported for these types
-
-4. **Related link path inconsistency**
-   - Problem: The "Related" section links to `/developer/templates/reference/sdk/inquirer` - should verify this matches Fumadocs routing
-   - Location: Line 154
-   - Fix: Verify the link resolves correctly
+3. **Missing return type annotation for Confirm**
+   - Problem: Line 67 shows confirm example without return type annotation, making it less clear what the default returns
+   - Location: Lines 61-69
+   - Fix: Add comment showing return type, e.g., "// Returns: boolean"
 
 ### 🟠 Other Problems
+1. **Inconsistent code style for return type comments**
+   - Problem: Some examples show return type comments (lines 83, 116), others do not (lines 67)
+   - Recommendation: Be consistent about showing return types in code examples
 
-1. **Inconsistency between SDKs for DateQ.default type**
-   - Problem: TypeScript SDK uses `Date | null` for default, but C# SDK uses `DateOnly?`
-   - Recommendation: Document the type difference per SDK language
-
-2. **Cross-file inconsistency in documentation**
-   - Problem: The `inquirer.mdx` reference file also shows `default` for Select and Checkbox, perpetuating the same inaccuracies
-   - Recommendation: Fix all documentation files consistently
-
-3. **DateQ default in C# uses DateOnly, not DateTime**
-   - Problem: Documentation shows `new Date()` (JavaScript Date) but C# SDK uses `DateOnly?`
-   - Evidence: `/Users/erng/Workspace/atomi/runbook/platforms/sulfone/helium/sdks/dotnet/sulfone-helium/Domain/Core/Questions/DateQ.cs:8` - `public DateOnly? Default { get; set; }`
-   - Recommendation: Add language-specific examples or notes
+2. **Best Practices section could be clearer about validate support**
+   - Problem: Line 171 states limits on default support but doesn't mention validate support limits which is related
+   - Recommendation: Add note about validate function support: only `text()`, `password()`, and `dateSelect()` support custom validation
 
 ## Summary
 | Category | Count |
 |----------|-------|
-| 🔴 | 5 |
-| 🟡 | 4 |
-| 🟠 | 3 |
+| 🔴 | 2 |
+| 🟡 | 3 |
+| 🟠 | 2 |

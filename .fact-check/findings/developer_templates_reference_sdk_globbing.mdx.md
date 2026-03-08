@@ -1,46 +1,24 @@
 <!-- source: content/docs/developer/templates/reference/sdk/globbing.mdx -->
-# 📄 File: content/docs/developer/templates/reference/sdk/globbing.mdx
+# File: content/docs/developer/templates/reference/sdk/globbing.mdx
 
-> This document provides globbing pattern reference for templates. Several inaccuracies were found regarding GlobType enum values and unsupported features.
+> Documentation for glob patterns in templates. Mostly accurate with one minor technical correction needed for the extglob callout and verification of Python SDK note.
 
-### 🔴 Source Code Inaccuracies
-1. **GlobType.Ignore does not exist** | Documented: `GlobType.Ignore` with use case "Files to skip entirely" | Actual: Only `GlobType.Template` and `GlobType.Copy` exist | Evidence: `/Users/erng/Workspace/atomi/runbook/platforms/sulfone/helium/sdks/node/src/domain/core/cyan.ts:1-4`:
-   ```typescript
-   enum GlobType {
-     Template = 0,
-     Copy = 1,
-   }
-   ```
-   Same in Python SDK (`/Users/erng/Workspace/atomi/runbook/platforms/sulfone/helium/sdks/python/cyanprintsdk/domain/core/cyan.py:6-9`), .NET SDK (`/Users/erng/Workspace/atomi/runbook/platforms/sulfone/helium/sdks/dotnet/sulfone-helium/Domain/Core/Cyan.cs:3-7`), and Iridium/Rust (`/Users/erng/Workspace/atomi/runbook/platforms/sulfone/iridium/cyanprompt/src/domain/models/cyan.rs:4-7`).
+### Source Code Inaccuracies
+1. Documented: "The Node SDK uses `minimatch` which supports these by default" (line 84) | Actual: The Node SDK uses the `glob` package (v11.0.0) which internally uses `minimatch`. While this is technically true, it's more accurate to say the SDK uses the `glob` package. | Evidence: `/Users/erng/Workspace/atomi/runbook/platforms/sulfone/helium/sdks/node/package.json:39` shows `"glob": "^11.0.0"` and `/Users/erng/Workspace/atomi/runbook/platforms/sulfone/helium/sdks/node/src/domain/core/fs/cyan_fs_helper.ts:6` shows `import { glob } from 'glob';`
 
-2. **Python SDK has different enum values** | Documented: `GlobType.Template` = 0, `GlobType.Copy` = 1 (implicitly via Node SDK) | Actual: Python SDK uses `Template = 1`, `Copy = 2` | Evidence: `/Users/erng/Workspace/atomi/runbook/platforms/sulfone/helium/sdks/python/cyanprintsdk/domain/core/cyan.py:6-9`:
-   ```python
-   @dataclass
-   class GlobType(Enum):
-       Template = 1
-       Copy = 2
-   ```
-   Note: The `@dataclass` decorator on an Enum class is incorrect Python usage (enums should not be dataclasses), but this is a code bug, not documentation issue.
+2. Documented: ".NET SDK uses 0 and 1 like Node" (implied comparison in Python SDK Note at line 150) | Actual: The .NET SDK also uses 0 for Template and 1 for Copy (C# enums are 0-indexed by default). | Evidence: `/Users/erng/Workspace/atomi/runbook/platforms/sulfone/helium/sdks/dotnet/sulfone-helium/Domain/Core/Cyan.cs:3-7` shows enum without explicit values, defaulting to 0 and 1.
 
-### 🟡 Documentation Issues
-1. **Extglob syntax examples may not work universally** | Problem: Patterns like `**/*.ts?(x)` and `**/*.@(js|ts)?(x)` are documented, but the callout admits they "may not be supported in all versions" | Location: Lines 66-78 | Fix: Either remove these examples or clarify which SDK versions/platforms support them. The glob library v11 uses minimatch which supports extglob by default, but this should be tested and documented clearly.
+### Documentation Issues
+1. Problem: The Python SDK Note (lines 149-151) correctly states Python uses 1 and 2 instead of 0 and 1, but could be clearer about which SDKs use which values. | Location: Line 149-151 | Fix: The note is factually correct - Python SDK does use `GlobType.Template = 1` and `GlobType.Copy = 2` as verified in `/Users/erng/Workspace/atomi/runbook/platforms/sulfone/helium/sdks/python/cyanprintsdk/domain/core/cyan.py:7-9`. No change needed.
 
-2. **Inconsistent terminology** | Problem: The documentation uses "files" array in examples but doesn't explain that `CyanGlob` objects are configured per-processor within `CyanProcessor.files` | Location: Throughout the document | Fix: Add context that glob patterns are part of the `Cyan` configuration structure, not standalone configuration.
+2. Problem: The CyanGlob interface documentation mentions `root` defaults to `.` but the interface shows it as optional. | Location: Line 93 | Fix: This is correctly documented. The source code at `/Users/erng/Workspace/atomi/runbook/platforms/sulfone/helium/sdks/node/src/domain/core/cyan.ts:7` shows `root?: string | null;` and `/Users/erng/Workspace/atomi/runbook/platforms/sulfone/helium/sdks/node/src/domain/core/fs/cyan_fs_helper.ts:24` shows the default: `return path.resolve(this.readDir, g.root ?? '.');` - No change needed.
 
-3. **Testing patterns section inaccurate** | Problem: The `find` command example `find templates -name "**/*.md"` is incorrect - `find` doesn't support `**` globbing in `-name` by default, and the syntax shown would look for literal `**` in filenames | Location: Lines 183-188 | Fix: Use correct commands like `find templates -name "*.md"` or use shell globbing with `ls templates/**/*.md`.
-
-### 🟠 Other Problems
-1. **Missing brace expansion syntax** | Problem: The pattern syntax table omits brace expansion `{a,b,c}` which is commonly used and supported by the glob library | Recommendation: Add `{a,b,c}` pattern to the syntax table (e.g., `*.{ts,tsx,js,jsx}`).
-
-2. **No SDK-specific notes** | Problem: The document doesn't differentiate between SDKs (Node, Python, .NET) which have slightly different implementations | Recommendation: Add a section noting SDK-specific differences, particularly for Python which has different enum values and the field naming convention (`root` vs `Root`, etc.).
-
-3. **Missing import statement in examples** | Problem: Code examples show `GlobType.Template` usage but do not show the required import statement | Recommendation: Add import example: `import { GlobType } from '@atomicloud/cyan-sdk';`.
-
-4. **`root` property default not documented** | Problem: The documentation does not explain that the `root` property in `CyanGlob` defaults to `.` (current directory) when not specified | Recommendation: Document that `root` is optional and defaults to the read directory.
+### Other Problems
+1. Problem: The extglob patterns `?(x)` and `@(a|b)` documentation could be confusing as these are advanced features that may not work identically across all glob implementations. | Recommendation: Consider adding a note that these patterns depend on the glob library's specific implementation and users should test their patterns.
 
 ## Summary
 | Category | Count |
 |----------|-------|
-| 🔴 | 2 |
-| 🟡 | 3 |
-| 🟠 | 4 |
+| | 2 |
+| | 2 |
+| | 1 |

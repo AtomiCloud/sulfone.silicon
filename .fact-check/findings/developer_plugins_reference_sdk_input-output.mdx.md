@@ -1,69 +1,60 @@
+<!-- source: content/docs/developer/plugins/reference/sdk/input-output.mdx -->
 # 📄 File: content/docs/developer/plugins/reference/sdk/input-output.mdx
 
-> Documentation for Plugin Input/Output types used with the `StartPluginWithLambda` function from `@atomicloud/cyan-sdk`.
+> Documentation for Plugin Input/Output types. The type name `PluginInput` used throughout this document is incorrect - the SDK exports `CyanPluginInput`. The interface structure and `PluginOutput` are correct.
 
 ### 🔴 Source Code Inaccuracies
 
-1. **PluginInput type name is incorrect**
-   - **Documented**: `interface PluginInput` as a type imported/used from `@atomicloud/cyan-sdk`
-   - **Actual**: The SDK exports `CyanPluginInput`, not `PluginInput`
-   - **Evidence**: `/Users/erng/Workspace/atomi/runbook/platforms/sulfone/helium/sdks/node/src/main.ts:193` exports `CyanPluginInput`, and `/Users/erng/Workspace/atomi/runbook/platforms/sulfone/helium/sdks/node/src/api/plugin/lambda.ts:5` defines `LambdaPluginFn = (input: CyanPluginInput) => Promise<PluginOutput>`
-   - **Impact**: All code examples showing `import { ... PluginInput ... } from '@atomicloud/cyan-sdk'` will fail because `PluginInput` is not exported
+1. **Type Name: `PluginInput` vs `CyanPluginInput`**
+   - Documented: `PluginInput` (used throughout the document)
+   - Actual: `CyanPluginInput`
+   - Evidence: `helium/sdks/node/src/main.ts:193` exports `CyanPluginInput`, not `PluginInput`. The internal type `PluginInput` in `helium/sdks/node/src/domain/plugin/input.ts:1-6` is NOT exported from the SDK's main entry point.
 
-2. **LambdaPluginFn input type mismatch**
-   - **Documented**: Documentation implies the lambda function receives `PluginInput`
-   - **Actual**: `LambdaPluginFn` receives `CyanPluginInput`
-   - **Evidence**: `/Users/erng/Workspace/atomi/runbook/platforms/sulfone/helium/sdks/node/src/api/plugin/lambda.ts:5`: `type LambdaPluginFn = (input: CyanPluginInput) => Promise<PluginOutput>`
+2. **Import Statement in Examples**
+   - Documented: `import { StartPluginWithLambda } from '@atomicloud/cyan-sdk';` (implies using `PluginInput`)
+   - Actual: Should be `import { StartPluginWithLambda, type CyanPluginInput } from '@atomicloud/cyan-sdk';`
+   - Evidence: `helium/sdks/node/src/main.ts:183-207` shows the actual exported types. Only `CyanPluginInput` is exported (line 193).
 
-3. **PluginInput exists but is internal**
-   - **Documented**: `PluginInput` appears to be a public SDK type
-   - **Actual**: `PluginInput` exists in `/Users/erng/Workspace/atomi/runbook/platforms/sulfone/helium/sdks/node/src/domain/plugin/input.ts` but is NOT exported from `main.ts`. It's an internal type used by the service layer.
-   - **Evidence**: Compare `/Users/erng/Workspace/atomi/runbook/platforms/sulfone/helium/sdks/node/src/domain/plugin/input.ts` (PluginInput) with the exports at `/Users/erng/Workspace/atomi/runbook/platforms/sulfone/helium/sdks/node/src/main.ts:183-207` (only `CyanPluginInput` is exported)
+3. **Interface Definition Section**
+   - Documented: `interface PluginInput { directory: string; config: unknown; }`
+   - Actual: The exported interface is `CyanPluginInput` with the same structure
+   - Evidence: `helium/sdks/node/src/domain/core/cyan_script_model.ts:18-21` shows `CyanPluginInput` interface definition.
+
+4. **Property Table References**
+   - Documented: Uses `PluginInput` in section headers
+   - Actual: Should use `CyanPluginInput`
+   - Evidence: Same as above.
 
 ### 🟡 Documentation Issues
 
-1. **Incorrect import statement in Usage example**
-   - **Problem**: The Usage section shows importing `StartPluginWithLambda` from `@atomicloud/cyan-sdk` without any type imports, which is correct. However, the related types.mdx file shows `import { StartPluginWithLambda, type PluginInput, type PluginOutput }` which is incorrect since `PluginInput` is not exported.
-   - **Location**: Lines 38-47 (Usage section) and cross-referenced types.mdx
-   - **Fix**: Either update SDK to export `PluginInput` as an alias for `CyanPluginInput`, or update all documentation to use `CyanPluginInput`
+1. **Inconsistent Type Naming Across Docs**
+   - Problem: The related docs (`start-plugin.mdx` and `types.mdx`) correctly use `CyanPluginInput`, but this document uses `PluginInput`
+   - Location: Entire document (title, interface definitions, tables, code examples)
+   - Fix: Replace all occurrences of `PluginInput` with `CyanPluginInput` to match the SDK exports and sibling documentation files
 
-2. **Type definition shown is not the actual exported type**
-   - **Problem**: The documentation shows `interface PluginInput { ... }` but users will need to use `CyanPluginInput` when importing from the SDK
-   - **Location**: Lines 16-21 (Definition section)
-   - **Fix**: Either rename to `CyanPluginInput` in documentation or add a note that `CyanPluginInput` is the actual exported type
+2. **Missing Type Import in Examples**
+   - Problem: Code examples don't show importing the input type, which would fail if users try to type their handlers
+   - Location: "Usage" section (lines 38-47) and "Full Example" (lines 160-213)
+   - Fix: Add `type CyanPluginInput` to the import statement
 
-3. **Inconsistent type naming convention**
-   - **Problem**: The documentation uses `PluginInput` but the SDK uses `CyanPluginInput`, which may confuse users who try to copy code examples
-   - **Location**: Throughout the document
-   - **Fix**: Align documentation with actual SDK exports
+3. **Misleading Section Header**
+   - Problem: Section "## PluginInput" implies this is the exported type name
+   - Location: Line 10
+   - Fix: Change to "## CyanPluginInput"
 
 ### 🟠 Other Problems
 
-1. **The code examples may still work due to TypeScript inference**
-   - **Problem**: The code examples in input-output.mdx don't explicitly import `PluginInput`, so they may work because TypeScript infers the type from the lambda parameter. However, this creates inconsistency with the types.mdx file which explicitly imports `PluginInput`.
-   - **Recommendation**: Ensure all documentation files use consistent type names that match SDK exports
+1. **Internal Type Name Collision**
+   - Problem: There is an internal `PluginInput` type in `helium/sdks/node/src/domain/plugin/input.ts` that is NOT exported, which could cause confusion
+   - Recommendation: Either export `PluginInput` as an alias for `CyanPluginInput`, or rename the internal type to avoid confusion
 
-2. **Related documentation file has the same issue**
-   - **Problem**: The related file `types.mdx` explicitly imports `PluginInput` which doesn't exist in SDK exports
-   - **Evidence**: `/Users/erng/Workspace/atomi/runbook/platforms/sulfone/silicon.Adelphi-Liong-CU-86et8z80y-Si-Improve-Documentation-new/content/docs/developer/plugins/reference/sdk/types.mdx:70` shows: `import { StartPluginWithLambda, type PluginInput, type PluginOutput } from '@atomicloud/cyan-sdk';`
-   - **Recommendation**: Update types.mdx to use `CyanPluginInput` instead of `PluginInput`
-
-3. **Actual e2e test plugins don't use explicit type imports**
-   - **Problem**: The real plugins in iridium e2e tests use `PluginOutput` but don't explicitly type the input, relying on inference
-   - **Evidence**: `/Users/erng/Workspace/atomi/runbook/platforms/sulfone/iridium/e2e/plugin1/index.ts:5` uses `async (input): Promise<PluginOutput>` without explicit input type
-   - **Recommendation**: Documentation should match real-world usage patterns
+2. **API Endpoint Comment Inconsistency**
+   - Problem: The `start-plugin.mdx` document mentions "POST /api/plug with PluginInput" in the "How It Works" section (line 89), which should also be `CyanPluginInput` for consistency
+   - Recommendation: Cross-check all plugin documentation for consistent type naming
 
 ## Summary
 | Category | Count |
 |----------|-------|
-| 🔴 | 3 |
+| 🔴 | 4 |
 | 🟡 | 3 |
-| 🟠 | 3 |
-
-### Key Finding
-The documentation uses `PluginInput` as the type name, but the SDK actually exports `CyanPluginInput`. While the `PluginInput` interface exists in the codebase at `domain/plugin/input.ts`, it is an internal type that is NOT exported from the main SDK entry point. The public API uses `CyanPluginInput` (defined in `domain/core/cyan_script_model.ts` and exported from `main.ts`).
-
-### Recommended Actions
-1. **Option A**: Update SDK to export `PluginInput` as an alias: `export type { CyanPluginInput as PluginInput }`
-2. **Option B**: Update all documentation to use `CyanPluginInput` instead of `PluginInput`
-3. **Option C**: Document both names and explain the relationship
+| 🟠 | 2 |

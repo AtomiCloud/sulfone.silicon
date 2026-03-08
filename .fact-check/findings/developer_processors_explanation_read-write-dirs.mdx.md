@@ -1,37 +1,52 @@
 <!-- source: content/docs/developer/processors/explanation/read-write-dirs.mdx -->
-# File: content/docs/developer/processors/explanation/read-write-dirs.mdx
+# 📄 File: content/docs/developer/processors/explanation/read-write-dirs.mdx
 
-> Documentation explains read/write directory concepts for processors but uses incorrect property names throughout. The documented `input.readDirectory` and `input.writeDirectory` do not exist - actual properties are `input.readDir` and `input.writeDir`.
+> Documentation explaining readDir and writeDir directories for processors, including usage patterns and rules. Contains one significant inaccuracy regarding the writeDir path value.
 
-### Source Code Inaccuracies
+### 🔴 Source Code Inaccuracies
 
-1. **Incorrect input parameter names** | **Documented**: `input.readDirectory` and `input.writeDirectory` | **Actual**: `input.readDir` and `input.writeDir` | Evidence: `/Users/erng/Workspace/atomi/runbook/platforms/sulfone/helium/sdks/node/src/domain/core/cyan_script_model.ts:12-13` shows `CyanProcessorInput` uses `readDir` and `writeDir`
+1. **writeDir path is incorrect**
+   - Documented: `/workspace/output/`
+   - Actual: `/workspace/area/<uuid>` (unique UUID per processor)
+   - Evidence: `boron/docker_executor/merger.go:147-148` shows `WriteDir: "/workspace/area/" + filePath.String()` where filePath is a UUID. Also confirmed in `boron/docs/developer/features/03-merger-system.md:121` which shows `"writeDir": "/workspace/area/<uuid>"`
 
-2. **Incorrect lambda function signature usage** | **Documented**: `StartProcessorWithLambda(async (input, fileHelper) => { ... return { directory: input.writeDirectory }; })` | **Actual**: `return { directory: input.writeDir }` | Evidence: `/Users/erng/Workspace/atomi/runbook/platforms/sulfone/iridium/e2e/processor1/index.ts:55` shows `{ directory: input.writeDir }`
+### 🟡 Documentation Issues
 
-3. **Path resolution examples use wrong properties** | **Documented**: `${input.readDirectory}/${file.relative}` and `${input.writeDirectory}/${file.relative}` | **Actual**: `${input.readDir}/${file.relative}` and `${input.writeDir}/${file.relative}` | Evidence: Same property naming error throughout code examples
+1. **Inconsistent path examples throughout document**
+   - Problem: Multiple code examples use `/workspace/output/` which is incorrect
+   - Location: Lines 31, 89, 120, 139-140, 198-199, 228-241
+   - Fix: Replace `/workspace/output/` with `/workspace/area/<uuid>/` or use a note explaining it's a simplified example
 
-4. **Console.log examples show wrong property names** | **Documented**: `console.log('Reading from:', input.readDirectory);` and `console.log('Writing to:', input.writeDirectory);` | **Actual**: Should be `input.readDir` and `input.writeDir` | Evidence: Property names don't exist on `CyanProcessorInput`
+2. **readDir path has trailing slash inconsistency**
+   - Problem: Documentation shows `/workspace/cyanprint/` with trailing slash, but source code uses `/workspace/cyanprint` without
+   - Location: Lines 30-31, 44-45
+   - Evidence: `boron/docker_executor/merger.go:147` shows `ReadDir: "/workspace/cyanprint"` (no trailing slash)
+   - Fix: Either remove trailing slashes or clarify that both forms are equivalent
 
-5. **Comment in example shows wrong property** | **Documented**: `return { directory: input.writeDirectory };` with comment "never change this" | **Actual**: `return { directory: input.writeDir };` | Evidence: `CyanProcessorInput.writeDir` is the correct property
+3. **Callout claims paths are "typical examples" but should clarify they are representative**
+   - Problem: The info callout says "Actual values depend on your container or deployment configuration" but the readDir value is actually fixed in the codebase
+   - Location: Lines 33-35
+   - Fix: Clarify that readDir is always `/workspace/cyanprint` (fixed) while writeDir is always `/workspace/area/<uuid>` (unique per processor)
 
-### Documentation Issues
+4. **VirtualFile class name inconsistency**
+   - Problem: Documentation uses `VirtualFile` but the helper class is `CyanFileHelper`
+   - Location: Line 113 "VirtualFile Paths" section title
+   - Evidence: The class in `helium/sdks/node/src/domain/core/fs/virtual_file.ts:32` is `VirtualFile` but it's accessed via `CyanFileHelper`
+   - Fix: Consider renaming section to "File Paths" or clarify that `VirtualFile` is the type returned by `resolveAll()`
 
-1. **Problem**: All code examples use incorrect property names `readDirectory`/`writeDirectory` instead of `readDir`/`writeDir` | **Location**: Lines 62-72, 93-106, 130-136, 143-162, 168-174, 179-186, 190-211, 215-239 | **Fix**: Replace all occurrences of `input.readDirectory` with `input.readDir` and `input.writeDirectory` with `input.writeDir`
+### 🟠 Other Problems
 
-2. **Problem**: Table shows "Path" values as `/workspace/cyanprint/` and `/workspace/output/` but these are environment-specific and may not match all deployments | **Location**: Lines 28-32 | **Fix**: Add note that paths are examples and actual values depend on container/deployment configuration
+1. **Ambiguity about readDir access**
+   - Problem: Documentation says "never access directly" but the `VirtualFile` class has a `read` getter that constructs the full path
+   - Recommendation: Clarify that `file.read` property is acceptable for reading, but direct `fs.readFileSync(input.readDir + '/...')` is not
 
-3. **Problem**: Missing explanation of type distinction - internal `ProcessorInput` (with `readDirectory`/`writeDirectory`) vs SDK-exposed `CyanProcessorInput` (with `readDir`/`writeDir`) | **Location**: Throughout document | **Fix**: Add a note explaining that the SDK uses shorthand property names for developer convenience
-
-### Other Problems
-
-1. **Problem**: The `resolveAll()` method has side effects not documented - it copies Copy-type files first, then returns Template-type files | **Recommendation**: Document that `resolveAll()` performs automatic file copying for Copy-type globs before returning Template-type files for processing
-
-2. **Problem**: The statement "Files not written are not included in output" (Rule 4) is incomplete - it doesn't explain that Copy-type files are automatically written during `resolveAll()` | **Recommendation**: Clarify the distinction between Copy-type files (auto-copied) and Template-type files (must call `writeFile()`)
+2. **Missing detail about writeDir uniqueness**
+   - Problem: Documentation doesn't explain that each processor gets a unique writeDir to enable parallel processing
+   - Recommendation: Add explanation that the UUID suffix prevents conflicts when multiple processors run in parallel
 
 ## Summary
 | Category | Count |
 |----------|-------|
-| Source Code Inaccuracies | 5 |
-| Documentation Issues | 3 |
-| Other Problems | 2 |
+| 🔴 | 1 |
+| 🟡 | 4 |
+| 🟠 | 2 |

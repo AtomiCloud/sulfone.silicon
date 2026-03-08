@@ -102,7 +102,7 @@ The `cyan/default` processor accepts:
 config: {
   vars: Record<string, unknown>,  // Variables for substitution
   parser: {
-    varSyntax: [[string, string]] // Custom tag pairs
+    varSyntax: [string, string][] // Custom tag pairs (array of tuples)
   }
 }
 ```

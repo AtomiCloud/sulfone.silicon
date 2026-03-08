@@ -1,22 +1,23 @@
 <!-- source: content/docs/developer/templates/explanation/processors-vs-plugins.mdx -->
-# 📄 File: content/docs/developer/templates/explanation/processors-vs-plugins.mdx
+# File: content/docs/developer/templates/explanation/processors-vs-plugins.mdx
 
-> Documentation explaining when to use processors vs plugins in CyanPrint templates. The document is conceptually accurate but has interface naming inaccuracies in the "Creating Custom" section.
+> Documentation explains the conceptual difference between processors and plugins in CyanPrint. Most content is accurate but interface names are incorrect and plugin names are examples not actual implementations.
 
-### 🔴 Source Code Inaccuracies
-1. Documented: "Implement `IProcessor` interface" (line 185) | Actual: The interface is named `ICyanProcessor` | Evidence: `/Users/erng/Workspace/atomi/runbook/platforms/sulfone/helium/sdks/node/src/domain/core/cyan_script.ts:15-17` - `interface ICyanProcessor { process(input: CyanProcessorInput, fileHelper: CyanFileHelper): Promise<ProcessorOutput>; }`
-2. Documented: "Implement `IPlugin` interface" (line 195) | Actual: The interface is named `ICyanPlugin` | Evidence: `/Users/erng/Workspace/atomi/runbook/platforms/sulfone/helium/sdks/node/src/domain/core/cyan_script.ts:19-21` - `interface ICyanPlugin { plugin(input: CyanPluginInput): Promise<PluginOutput>; }`
+### Source Code Inaccuracies
+1. **Interface names incorrect**: Documented says "Implement `IProcessor` interface" and "Implement `IPlugin` interface" (lines 184, 195) | Actual: Interfaces are `ICyanProcessor` and `ICyanPlugin` | helium/sdks/node/src/domain/core/cyan_script.ts:15-21
+2. **Plugin names are examples, not actual plugins**: Documented shows `cyan/init-git` and `cyan/npm-install` as real plugin names (lines 103, 107, 161, 172) | Actual: No source code evidence these plugins exist; only test plugins `plugin1` and `plugin2` found in iridium/e2e | iridium/e2e/plugin1/cyan.yaml, iridium/e2e/plugin2/cyan.yaml
 
-### 🟡 Documentation Issues
-1. Problem: Interface names are incorrect - missing "Cyan" prefix | Location: Lines 185 and 195 under "Creating Custom" section | Fix: Change "Implement `IProcessor` interface" to "Implement `ICyanProcessor` interface" and "Implement `IPlugin` interface" to "Implement `ICyanPlugin` interface"
-2. Problem: The step-by-step instructions could be more specific | Location: Lines 183-186 and 193-197 | Fix: Update step 2 to read "Implement `ICyanProcessor` interface" and "Implement `ICyanPlugin` interface" respectively
+### Documentation Issues
+1. **Missing clarification for example plugins**: Problem: Plugin names used throughout as if real but no implementation exists | Location: Lines 96-112, 156-175 | Fix: Add a note similar to content/docs/developer/templates/reference/sdk/cyan-config.mdx:119 clarifying "The plugin names shown (e.g., `cyan/init-git`, `cyan/npm-install`) are examples. Actual plugin names depend on your Cyan registry configuration."
+2. **Interface names need correction**: Problem: Wrong interface names referenced | Location: Lines 184, 195 | Fix: Change `IProcessor` to `ICyanProcessor` and `IPlugin` to `ICyanPlugin`
+3. **Link text could be more specific**: Problem: Link text says "Processor Development" and "Plugin Development" but links to index pages | Location: Lines 188, 199, 216-217 | Fix: Consider making link text clearer or ensure target pages exist and are appropriate
 
-### 🟠 Other Problems
-1. Problem: The processor names `cyan/default`, `cyan/init-git`, and `cyan/npm-install` are used as examples throughout the document but their implementations are not found in the referenced source paths (argon, boron, helium, iridium, zinc) - these appear to be built-in or registry packages maintained separately | Recommendation: Consider adding a note that these are built-in processors/plugins provided by the CyanPrint platform, or link to where they can be found in a registry
+### Other Problems
+1. **Mermaid diagram shows linear plugin execution**: Problem: The diagram at lines 89-94 shows plugins executing sequentially (Plugin 1 -> Plugin 2 -> Plugin 3) | Recommendation: This is accurate per the execution order documentation; no fix needed but could reference the execution order docs for more detail
 
 ## Summary
 | Category | Count |
 |----------|-------|
-| 🔴 | 2 |
-| 🟡 | 2 |
-| 🟠 | 1 |
+| Source Code Inaccuracies | 2 |
+| Documentation Issues | 3 |
+| Other Problems | 1 |

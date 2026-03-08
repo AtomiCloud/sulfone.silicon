@@ -1,67 +1,33 @@
+<!-- source: content/docs/developer/basics/quickstart.mdx -->
 # 📄 File: content/docs/developer/basics/quickstart.mdx
 
-> Minimal placeholder file containing only title, description, and heading for CyanPrint development quickstart. Contains virtually no substantive content to verify.
+> Fact-check findings for the Developer Quickstart documentation page. The document has a significant inconsistency with the artifact count (says 3 but there are 4) and uses a meta template reference that cannot be verified in the source code.
 
 ### 🔴 Source Code Inaccuracies
 
-None identified - the documentation makes no specific technical claims that can be verified against source code.
+1. **Documented**: "CyanPrint has three extensible components called **artifacts**" (line 20) | **Actual**: CyanPrint has **four** extensible artifacts: Templates, Processors, Resolvers, and Plugins | Evidence: `content/docs/developer/basics/introduction.mdx:8-17` lists all four artifacts with SDK ports; `content/docs/developer/index.mdx:12-19` also lists four artifacts; `zinc/docs/developer/surfaces/api/01-template.md:356-367` shows resolvers in template version response
+
+2. **Documented**: Quickstart table lists only Templates, Processors, and Plugins (lines 22-26) | **Actual**: The Resolvers artifact is missing from the table | Evidence: `content/docs/developer/basics/introduction.mdx:16` shows Resolvers with SDK port 5553; Zinc API documentation (`zinc/docs/developer/surfaces/api/01-template.md:437-446`) shows resolvers are part of template version creation
+
+3. **Documented**: Link to "the four artifacts" at `/docs/developer/basics/introduction` (line 40) | **Actual**: The link is correct but contradicts the "three extensible components" claim in this document | Evidence: Same document at line 20 says "three" while link target confirms "four"
 
 ### 🟡 Documentation Issues
 
-1. **Empty/Placeholder Content**
-   - **Problem**: The quickstart.mdx file is essentially empty, containing only frontmatter (title, description) and a single heading. It provides no actual quickstart guidance for CyanPrint development.
-   - **Location**: Entire file (lines 1-9)
-   - **Fix**: Populate with actual quickstart content. Based on source code analysis, a proper quickstart should cover:
-     - Installing the CyanPrint CLI
-     - Basic commands (`cyanprint create`, `cyanprint push`, `cyanprint update`, `cyanprint daemon`)
-     - Creating a project from a template
-     - Publishing a template
+1. **Problem**: Missing Resolvers link in "What Do You Want to Build?" table | **Location**: Lines 22-26 | **Fix**: Add Resolvers row: `| **Resolvers** | Resolve file conflicts from layered templates | [Resolver Tutorial](/docs/developer/resolvers/tutorials/first-resolver) |` - Note: This tutorial page may not exist yet and needs to be created
 
-2. **Misleading Title/Description**
-   - **Problem**: Title says "Quickstart" but there's no quickstart content. Description says "Quickstart guide for CyanPrint development" but the file has no development guidance.
-   - **Location**: Lines 2-3 (frontmatter)
-   - **Fix**: Either rename to indicate placeholder status (e.g., "Quickstart (Coming Soon)") or add substantive content.
+2. **Problem**: Meta template reference `cyan/new` cannot be verified in source code | **Location**: Line 33 | **Fix**: The command `cyanprint create cyan/new my-first-template` appears throughout the documentation but no `cyan/new` template exists in the searched source paths (boron, iridium, zinc, helium, argon). This may be a placeholder or a template expected to exist in a production registry. Consider either: (a) adding a note that this template must be published first, or (b) providing an alternative local development path
+
+3. **Problem**: "Next Steps" section links to `/docs/developer/basics/introduction` for "the four artifacts" but this document only shows three | **Location**: Line 40 | **Fix**: Either update line 20 to say "four extensible components" and add Resolvers to the table, or update the link text to match the actual content
 
 ### 🟠 Other Problems
 
-1. **Missing Essential Quickstart Information**
-   - **Problem**: A quickstart guide for CyanPrint development should minimally include:
-     - CLI installation instructions
-     - Command overview (the actual commands are: `push`, `create`, `update`, `daemon`)
-     - Registry endpoint configuration (default: `https://api.zinc.sulfone.raichu.cluster.atomi.cloud`)
-     - Coordinator endpoint configuration (default: `http://coord.cyanprint.dev:9000`)
-     - Authentication setup (`CYAN_TOKEN` environment variable)
-   - **Recommendation**: Reference `/Users/erng/Workspace/atomi/runbook/platforms/sulfone/iridium/docs/developer/modules/01-cyanprint.md` for accurate module information and `/Users/erng/Workspace/atomi/runbook/platforms/sulfone/iridium/docs/developer/surfaces/cli/` for CLI command details.
+1. **Problem**: Node.js 18+ requirement may not be accurate for all scenarios | **Recommendation**: The helium SDK Dockerfile (`helium/sdks/node/template.Dockerfile:1`) uses `oven/bun:1.0.30`, not Node.js. For local development, Node.js may be needed, but the containers use Bun. Consider clarifying: "Node.js 18+ for local development (containers use Bun)"
 
-2. **File Structure Reference Gap**
-   - **Problem**: No reference to the actual CyanPrint module structure that developers need to understand.
-   - **Recommendation**: Include reference to the actual source structure:
-     ```
-     cyanprint/
-     ├── src/
-     │   ├── main.rs          # Entry point, command routing
-     │   ├── commands.rs      # Clap CLI definitions
-     │   ├── run.rs           # Template execution logic
-     │   ├── update.rs        # Template update logic
-     │   ├── coord.rs         # Coordinator daemon startup
-     │   ├── util.rs          # Utility functions
-     │   └── errors.rs        # Error types
-     └── Cargo.toml
-     ```
-
-3. **Missing Command Reference**
-   - **Problem**: No mention of the actual CLI commands available in CyanPrint.
-   - **Recommendation**: Document the four main commands:
-     - `cyanprint push` (alias `p`) - Publish templates, plugins, processors to registry
-     - `cyanprint create` (alias `c`) - Create a project from a template
-     - `cyanprint update` (alias `u`) - Update all templates to latest versions
-     - `cyanprint daemon` (alias `d`) - Start coordinator service locally
+2. **Problem**: Inconsistency between developer index and quickstart on what developers can build | **Recommendation**: The developer index at `content/docs/developer/index.mdx:30-34` lists only Templates, Processors, and Plugins under "Build Your Artifact" section, omitting Resolvers despite listing it as an artifact type. This creates confusion about whether Resolvers are a first-class artifact that developers should build
 
 ## Summary
 | Category | Count |
 |----------|-------|
-| 🔴 | 0 |
-| 🟡 | 2 |
-| 🟠 | 3 |
-
-**Note**: This file requires significant content development. It currently serves as a placeholder with no verifiable technical claims. The source code in `/Users/erng/Workspace/atomi/runbook/platforms/sulfone/iridium/cyanprint/` provides comprehensive material for creating a proper quickstart guide.
+| 🔴 | 3 |
+| 🟡 | 3 |
+| 🟠 | 2 |

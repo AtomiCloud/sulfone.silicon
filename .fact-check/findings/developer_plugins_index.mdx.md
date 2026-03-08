@@ -1,58 +1,48 @@
+<!-- source: content/docs/developer/plugins/index.mdx -->
 # 📄 File: content/docs/developer/plugins/index.mdx
 
-> Overview page for Plugin Development documentation. Describes plugin architecture, capabilities, and provides a quick example with learning path links.
+> Overview page for plugin development documentation. Generally accurate but contains some issues with code examples that use Bun-specific APIs and a naming inconsistency in the Components table.
 
 ### 🔴 Source Code Inaccuracies
+1. **Documented**: Components table lists "CyanPluginInput" as the input type
+   **Actual**: The Components table on line 42 shows "CyanPluginInput" which is correct, but this naming is inconsistent with the reference documentation (input-output.mdx) which shows the interface name as "PluginInput" not "CyanPluginInput"
+   **Evidence**: content/docs/developer/plugins/reference/sdk/input-output.mdx:17-21 shows `interface PluginInput` not `CyanPluginInput`; however types.mdx:15 shows `interface CyanPluginInput` - there is an internal inconsistency in the documentation
 
-1. **`PluginInput` type is not exported from SDK**
-   - **Documented**: The Components table lists `PluginInput` as a component available from the system (line 41)
-   - **Actual**: The SDK exports `CyanPluginInput`, not `PluginInput`. While `PluginInput` exists internally in `helium/sdks/node/src/domain/plugin/input.ts`, it is NOT exported from `main.ts`
-   - **Evidence**: `/Users/erng/Workspace/atomi/runbook/platforms/sulfone/helium/sdks/node/src/main.ts:183-207` - The export block includes `CyanPluginInput` but not `PluginInput`
+2. **Documented**: Quick example uses `import { $ } from 'bun';` for shell commands
+   **Actual**: The Bun `$` shell API is a Bun-specific feature not part of @atomicloud/cyan-sdk. Actual plugin examples in the codebase use Node.js fs/path modules directly, not shell commands
+   **Evidence**: Previous fact-check of what-are-plugins.mdx found iridium/e2e/plugin1 uses `import fs from 'node:fs'` and `import path from 'node:path'`, no Bun imports
 
-2. **Quick Example uses incorrect import for type annotation**
-   - **Documented**: The quick example (lines 107-125) destructures `input` but doesn't explicitly import types. However, linked reference docs suggest importing `PluginInput`
-   - **Actual**: Real plugins in the codebase use `PluginOutput` only and don't import `PluginInput`:
-     ```ts
-     import { PluginOutput, StartPluginWithLambda } from '@atomicloud/cyan-sdk';
-     ```
-   - **Evidence**: `/Users/erng/Workspace/atomi/runbook/platforms/sulfone/iridium/e2e/plugin1/index.ts:1` and `/Users/erng/Workspace/atomi/runbook/platforms/sulfone/iridium/e2e/plugin2/index.ts:1`
+3. **Documented**: Shell commands `await $`git -C ${directory} init`.quiet();` and `await $`cd ${directory} && npm install`.quiet();`
+   **Actual**: These are Bun-specific shell template literals. While they work in Bun runtime, they are not part of the CyanPrint SDK and require Bun to be available in the container
+   **Evidence**: The SDK does not export a shell API - it only provides StartPluginWithLambda, input/output types, and file helpers
 
 ### 🟡 Documentation Issues
+1. **Problem**: Components table on line 42 shows "CyanPluginInput" but the linked reference page (input-output.mdx) shows the interface as "PluginInput"
+   **Location**: Line 42
+   **Fix**: Ensure consistent naming - either use CyanPluginInput everywhere (as types.mdx shows) or PluginInput everywhere; the actual SDK exports CyanPluginInput
 
-1. **Type naming inconsistency across documentation**
-   - **Problem**: The index.mdx table mentions `PluginInput` and `PluginOutput` as components, but the actual exported type from the SDK is `CyanPluginInput`. This creates confusion because:
-     - SDK exports: `CyanPluginInput`, `PluginOutput`
-     - Documentation uses: `PluginInput`, `PluginOutput`
-   - **Location**: Line 41 (Components table)
-   - **Fix**: Either update documentation to use `CyanPluginInput` or request SDK to export `PluginInput` as an alias
+2. **Problem**: The "What Plugins Can Do" table on lines 49-57 shows shell commands like `git init`, `npm install`, `prettier --write .` but doesn't explain that these require Bun's `$` API or child_process
+   **Location**: Lines 49-57
+   **Fix**: Add a note explaining that shell command execution requires Bun runtime with `$` API or Node.js child_process
 
-2. **Linked reference docs perpetuate type naming error**
-   - **Problem**: The referenced `/developer/plugins/reference/sdk/input-output.mdx` documents `PluginInput` interface but users cannot import it as shown
-   - **Location**: Line 87 (link to PluginInput/Output reference)
-   - **Fix**: Update reference docs to show `CyanPluginInput` as the actual type name, or note that it's the parameter type inferred from the lambda signature
+3. **Problem**: Quick Example section (lines 103-125) doesn't indicate that Bun runtime is required for the `$` template literal syntax
+   **Location**: Lines 103-125
+   **Fix**: Either note that this example requires Bun runtime, or provide an alternative using Node.js child_process or fs operations
 
-3. **Linked types.mdx shows unimportable type**
-   - **Problem**: The types.mdx shows `import { StartPluginWithLambda, type PluginInput, type PluginOutput }` but `PluginInput` cannot be imported
-   - **Location**: Line 88 (link to Type Definitions)
-   - **Fix**: Update to use `CyanPluginInput` or remove the import example
+4. **Problem**: Callout states "Plugins are the only component that can execute shell commands" but doesn't clarify that this is a design choice, not a technical enforcement
+   **Location**: Lines 59-61
+   **Fix**: Clarify that while plugins are designed for shell operations, both plugins and processors could technically execute commands via Node.js APIs - the distinction is architectural
 
 ### 🟠 Other Problems
+1. **Problem**: No explicit mention of the plugin port number (5552) on this overview page
+   **Recommendation**: The start-plugin.mdx reference mentions port 5552 - consider adding this to the architecture overview or components table
 
-1. **Missing import statement in Quick Example**
-   - **Problem**: The quick example (lines 107-125) doesn't show the `import { $ } from 'bun'` statement, but uses `$` for shell commands
-   - **Recommendation**: Add the bun import to make the example complete and runnable:
-     ```ts
-     import { StartPluginWithLambda } from '@atomicloud/cyan-sdk';
-     import { $ } from 'bun';
-     ```
-
-2. **Port 5552 not documented in index**
-   - **Problem**: While the reference docs mention port 5552, the overview doesn't mention that plugins run an HTTP server internally
-   - **Recommendation**: Consider adding a brief note that plugins run an HTTP server on port 5552 for communication with CyanPrint
+2. **Problem**: Learning path section links to pages that may have inconsistent type naming (CyanPluginInput vs PluginInput)
+   **Recommendation**: Audit all linked pages to ensure consistent type naming
 
 ## Summary
 | Category | Count |
 |----------|-------|
-| 🔴 | 2 |
-| 🟡 | 3 |
+| 🔴 | 3 |
+| 🟡 | 4 |
 | 🟠 | 2 |

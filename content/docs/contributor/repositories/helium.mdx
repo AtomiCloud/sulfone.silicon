@@ -43,7 +43,7 @@ All SDKs use an inquirer pattern for collecting user input. The `IInquirer` inte
 | `select` | Single selection from options | `string` |
 | `checkbox` | Multiple selections from options | `string[]` |
 | `password` | Hidden text input | `string` |
-| `dateSelect` | Date picker | `string` or `DateOnly` |
+| `dateSelect` / `date_select` | Date picker | `string` or `DateOnly` |
 
 ### IDeterminism Interface
 
@@ -87,7 +87,7 @@ StartTemplateWithLambda(async (i: IInquirer, d: IDeterminism): Promise<Cyan> => 
   const includeTests = await i.confirm('Include test files?', 'include-tests');
 
   // Use determinism for consistent values
-  const id = d.get('unique-id');
+  const id = d.get('unique-id', () => 'fallback-value');
 
   // Return the Cyan configuration
   return {
@@ -143,19 +143,19 @@ import {
 // Start a processor
 StartProcessorWithLambda(async (input) => {
   // Process files
-  return { files: [] };
+  return { directory: "output-dir" };
 });
 
 // Start a plugin
 StartPluginWithLambda(async (input) => {
   // Apply plugin logic
-  return {};
+  return { directory: "output-dir" };
 });
 
 // Start a resolver
 StartResolverWithLambda(async (input) => {
   // Resolve dependencies
-  return {};
+  return { path: "file.txt", content: "file content" };
 });
 ```
 
@@ -181,7 +181,7 @@ async def my_template(i: IInquirer, d: IDeterminism) -> Cyan:
     include_tests = await i.confirm("Include test files?", "include-tests")
 
     # Use determinism for consistent values
-    unique_id = d.get("unique-id")
+    unique_id = d.get("unique-id", lambda: "fallback-value")
 
     # Return the Cyan configuration
     return Cyan(
@@ -248,7 +248,7 @@ CyanEngine.StartTemplate(args, async (IInquirer i, IDeterminism d) =>
     var includeTests = await i.Confirm("Include test files?", "include-tests");
 
     // Use determinism for consistent values
-    var uniqueId = d.Get("unique-id");
+    var uniqueId = d.Get("unique-id", () => "fallback-value");
 
     // Return the Cyan configuration
     return new Cyan
@@ -304,21 +304,21 @@ var startDate = await i.DateSelect("Select start date:", "start-date");
 CyanEngine.StartProcessor(args, async (CyanProcessorInput input, CyanFileHelper fs) =>
 {
     // Process files
-    return new ProcessorOutput { Files = new List<ProcessorFile>() };
+    return new ProcessorOutput("output-dir");
 });
 
 // Start a plugin
 CyanEngine.StartPlugin(args, async (CyanPluginInput input) =>
 {
     // Apply plugin logic
-    return new PluginOutput();
+    return new PluginOutput("output-dir");
 });
 
 // Start a resolver
 CyanEngine.StartResolver(args, async (ResolverInput input) =>
 {
     // Resolve dependencies
-    return new ResolverOutput();
+    return new ResolverOutput("file.txt", "file content");
 });
 ```
 

@@ -1,87 +1,129 @@
 <!-- source: content/docs/developer/templates/tutorials/full-example.mdx -->
 # 📄 File: content/docs/developer/templates/tutorials/full-example.mdx
 
-> A tutorial demonstrating all major features of CyanPrint templates in a realistic project scaffold. This review was performed against the SDK reference documentation in this repository since the actual source code repositories (argon, boron, helium, iridium, zinc) are external.
+> Comprehensive tutorial with significant API and structural inaccuracies. The `d.uuid()` method doesn't exist, `cyan.yaml` format differs from documented, `cyan/default` processor and `cyan/init-git` plugin may not exist in the codebase, and the Dockerfile naming conventions don't match real templates.
 
 ### 🔴 Source Code Inaccuracies
-(for each: Documented | Actual | file:line evidence)
 
-1. **`d.uuid()` method not documented in SDK reference**
-   - Documented: `const projectId = d.uuid();` (line 106)
-   - Actual: The `IDefine` interface in types.mdx shows only `uuid()`, `timestamp()`, and `seq()` methods, but the helium.mdx shows a different SDK (`@cyanprint/sdk`) with different API patterns. The correct SDK is `@atomicloud/cyan-sdk`.
-   - Evidence: `/Users/erng/Workspace/atomi/runbook/platforms/sulfone/silicon.Adelphi-Liong-CU-86et8z80y-Si-Improve-Documentation-new/content/docs/developer/templates/reference/sdk/types.mdx:154-160`
+1. **d.uuid() method doesn't exist**
+   - Documented: `const projectId = d.uuid();` (line 108)
+   - Actual: The `IDeterminism` interface only has `get(key: string, origin: () => string): string` method
+   - Evidence: `/Users/erng/Workspace/atomi/runbook/platforms/sulfone/helium/sdks/node/src/domain/core/deterministic.ts:1-5`
+   ```typescript
+   interface IDeterminism {
+     get(key: string, origin: () => string): string;
+   }
+   ```
+   - Fix: Should be `const projectId = d.get('project-id', () => randomUUID());`
 
-2. **helium.mdx references wrong SDK package name**
-   - Documented: helium.mdx shows `@cyanprint/sdk` (line 38, 39) and `import { defineTemplate, input, output } from '@cyanprint/sdk';` (line 47)
-   - Actual: The correct SDK package is `@atomicloud/cyan-sdk` as shown in full-example.mdx and all SDK reference docs
-   - Evidence: `/Users/erng/Workspace/atomi/runbook/platforms/sulfone/silicon.Adelphi-Liong-CU-86et8z80y-Si-Improve-Documentation-new/content/docs/developer/templates/reference/sdk/index.mdx:8`
+2. **cyan.yaml format differs from real templates**
+   - Documented: `version: 1.0.0` and `author: Your Organization` fields (lines 277-281)
+   - Actual: Real cyan.yaml uses `username`, `email`, `project`, `source`, and no `version` or `author` fields
+   - Evidence: `/Users/erng/Workspace/atomi/runbook/platforms/sulfone/iridium/e2e/template1/cyan.yaml:1-11`
+   ```yaml
+   username: cyane2e
+   name: template1
+   description: Template1
+   project: https://google.com
+   source: https://google.com
+   email: cyane2e@atomi.cloud
+   tags: []
+   readme: cyan/README.MD
+   processors: ['cyane2e/processor1']
+   plugins: ['cyane2e/plugin1']
+   templates: []
+   ```
 
-3. **helium.mdx shows incompatible API patterns**
-   - Documented: helium.mdx shows `input.string()`, `input.boolean()`, `input.number()`, `input.select()`, `input.array()`, `input.object()` pattern (lines 79-101)
-   - Actual: The actual SDK uses `i.text()`, `i.confirm()`, `i.select()`, `i.checkbox()` methods on IInquirer interface
-   - Evidence: `/Users/erng/Workspace/atomi/runbook/platforms/sulfone/silicon.Adelphi-Liong-CU-86et8z80y-Si-Improve-Documentation-new/content/docs/developer/templates/reference/sdk/inquirer.mdx:25-54`
+3. **template.Dockerfile and blob.Dockerfile naming is incorrect**
+   - Documented: `cyan/template.Dockerfile` and `cyan/blob.Dockerfile` (lines 28-30, 285-306)
+   - Actual: Real templates use `cyan/Dockerfile` for script and `blob.Dockerfile` at root level
+   - Evidence: `/Users/erng/Workspace/atomi/runbook/platforms/sulfone/iridium/e2e/template1/cyan/Dockerfile` and `/Users/erng/Workspace/atomi/runbook/platforms/sulfone/iridium/e2e/template1/blob.Dockerfile`
 
-4. **helium.mdx shows different template structure**
-   - Documented: `defineTemplate({ name, version, inputs, async generate({ inputs, fs }) {...} })` pattern (lines 48-75)
-   - Actual: The actual SDK uses `StartTemplateWithLambda(async (i, d) => {...})` pattern
-   - Evidence: `/Users/erng/Workspace/atomi/runbook/platforms/sulfone/silicon.Adelphi-Liong-CU-86et8z80y-Si-Improve-Documentation-new/content/docs/developer/templates/reference/sdk/index.mdx:47-61`
+4. **template.Dockerfile content is incorrect**
+   - Documented: Uses `CMD ["node", "index.js"]` with `COPY cyan/ ./` (lines 287-298)
+   - Actual: Real templates use bun with `CMD ["bun", "run", "index.ts"]`
+   - Evidence: `/Users/erng/Workspace/atomi/runbook/platforms/sulfone/iridium/e2e/template1/cyan/Dockerfile:1-9`
+   ```dockerfile
+   FROM oven/bun:1.1.31
+   WORKDIR /app
+   LABEL cyanprint.dev=true
+   COPY package.json .
+   COPY bun.lockb .
+   RUN bun install
+   COPY . .
+   CMD ["bun", "run", "index.ts"]
+   ```
 
-5. **helium.mdx shows fs.write() instead of template-based generation**
-   - Documented: `await fs.write('README.md', '...')` for file generation (lines 64-68)
-   - Actual: Templates use file groups with GlobType and variable substitution, not programmatic file writing
-   - Evidence: `/Users/erng/Workspace/atomi/runbook/platforms/sulfone/silicon.Adelphi-Liong-CU-86et8z80y-Si-Improve-Documentation-new/content/docs/developer/templates/reference/sdk/cyan-config.mdx:79-86`
+5. **blob.Dockerfile content is incorrect**
+   - Documented: Simple `COPY cyan/templates/ /templates/` (lines 300-306)
+   - Actual: Complex multi-stage build with tar compression and specific CMD for extraction
+   - Evidence: `/Users/erng/Workspace/atomi/runbook/platforms/sulfone/iridium/e2e/template1/blob.Dockerfile:1-14`
+   ```dockerfile
+   FROM alpine:3.21 as base
+   RUN apk add tar
+   ...
+   CMD [ "tar", "-xzf", "/cyanprint/artifact/cyan.tar.gz", "-C", "/workspace/cyanprint", "--strip-components=1" ]
+   ```
 
-6. **helium.mdx shows fs.copyTemplateAsset() which doesn't exist in reference**
-   - Documented: `await fs.copyTemplateAsset('assets/logo.png', 'logo.png');` (line 185)
-   - Actual: This method is not documented in the SDK reference; templates use GlobType.Copy for binary files
-   - Evidence: `/Users/erng/Workspace/atomi/runbook/platforms/sulfone/silicon.Adelphi-Liong-CU-86et8z80y-Si-Improve-Documentation-new/content/docs/developer/templates/reference/sdk/globbing.mdx:135-139`
+6. **cyan/default processor existence unverified**
+   - Documented: `name: 'cyan/default'` as default processor (line 186)
+   - Actual: No `cyan/default` processor found in the source code. Spec files reference it, but actual implementation files use custom processors like `cyane2e/processor1`
+   - Evidence: Grep for `cyan/default` in `/Users/erng/Workspace/atomi/runbook/platforms/sulfone/iridium` returns no matches in implementation code
+
+7. **cyan/init-git plugin existence unverified**
+   - Documented: Plugin `cyan/init-git` for git initialization (lines 216-223)
+   - Actual: No `init-git` plugin found in the codebase
+   - Evidence: Grep for `init-git` in source repos returns no implementation files
+
+8. **docker buildx command line 324-334 shows wrong usage**
+   - Documented: `docker buildx build --platform linux/amd64,linux/arm64 -f cyan/template.Dockerfile`
+   - Actual: The publish script uses `-f "./cyan/Dockerfile"` and `-f "./blob.Dockerfile"` (different file paths), and uses `--$build_type` (load/push) not `--push`
+   - Evidence: `/Users/erng/Workspace/atomi/runbook/platforms/sulfone/iridium/e2e/publish-template.sh:26-40`
 
 ### 🟡 Documentation Issues
-(for each: Problem | Location | Fix)
 
-1. **SDK reference shows `d.uuid()` is correct**
-   - Problem: Previous findings claimed `d.uuid()` was incorrect, but the types.mdx reference actually documents `uuid(): string;` as a valid method on IDefine
-   - Location: Line 106 of full-example.mdx
-   - Fix: The `d.uuid()` usage is correct according to the SDK reference. No fix needed.
+1. **Object form for question validation - return type mismatch**
+   - Problem: The `validate` function is shown returning `null` for valid input, but the type signature shows `string | null`
+   - Location: Lines 51-62
+   - Fix: This is correct per the type signature `validate?: (input: string) => string | null` in question.ts
 
-2. **Object form vs shorthand form confusion**
-   - Problem: The full-example uses object form with `type: QuestionType.Text` for text() but shorthand form for other methods. This inconsistency could confuse readers.
-   - Location: Lines 50-61 vs 63-102
-   - Fix: Either use object form consistently or add a comment explaining when to use each form
+2. **Missing import for randomUUID**
+   - Problem: The corrected `d.get('project-id', () => randomUUID())` would require importing `randomUUID` from `node:crypto`
+   - Location: Line 108 area
+   - Fix: Add `import { randomUUID } from 'node:crypto';` to imports section
 
-3. **Plugin name `cyan/init-git` not documented in reference**
-   - Problem: The plugin `cyan/init-git` is used but there's no reference documentation for available plugins
-   - Location: Lines 212-219
-   - Fix: Either add a plugins reference page or clarify that this is a placeholder/conceptual example
+3. **Project structure shows incorrect directory layout**
+   - Problem: Shows `cyan/templates/` but real templates have `template/` (singular) at root
+   - Location: Lines 24-39
+   - Evidence: `/Users/erng/Workspace/atomi/runbook/platforms/sulfone/iridium/e2e/template1/cyan/index.ts:43-44` uses `root: 'template'`
 
-4. **Missing link to default processor explanation**
-   - Problem: References `cyan/default` processor but links to non-existent explanation page
-   - Location: Line 184 and cyan-config.mdx line 221
-   - Fix: Create the referenced explanation page or update the link
+4. **TextQ has both default and initial properties**
+   - Problem: Documentation shows only `default` property but `TextQ` interface has both `default?: string | null` and `initial?: string | null`
+   - Location: Line 61
+   - Evidence: `/Users/erng/Workspace/atomi/runbook/platforms/sulfone/helium/sdks/node/src/domain/core/question.ts:64-73`
 
-5. **helium.mdx contradicts full-example.mdx API usage**
-   - Problem: helium.mdx (source path for this review) shows a completely different API pattern than the main template tutorials
-   - Location: helium.mdx lines 46-75
-   - Fix: Update helium.mdx to use the actual `@atomicloud/cyan-sdk` API patterns
+5. **Testing commands use wrong file paths**
+   - Problem: Commands reference `cyan/template.Dockerfile` but should be `cyan/Dockerfile`
+   - Location: Lines 322-337
+   - Fix: Update paths to match actual template structure
 
 ### 🟠 Other Problems
-(for each: Problem | Recommendation)
 
-1. **Source paths point to documentation not source code**
-   - Problem: The source paths (argon, boron, helium, iridium, zinc) are documentation files (.mdx), not actual SDK source code. This makes verification against "source" impossible.
-   - Recommendation: Source verification should be done against actual SDK source repositories, not documentation files
+1. **Example is entirely hypothetical**
+   - Problem: This is a synthetic "node-template" example that doesn't match any real template in the codebase
+   - Recommendation: Consider using an actual template from the iridium e2e tests as a reference, or clearly mark this as a conceptual example
 
-2. **helium.mdx appears to be outdated or for a different product**
-   - Problem: The helium.mdx documentation shows `@cyanprint/sdk` with a fundamentally different API (`defineTemplate`, `input.string()`, `fs.write()`) that doesn't match `@atomicloud/cyan-sdk` used in templates
-   - Recommendation: Review and update helium.mdx to reflect the actual SDK API, or clearly indicate if it documents a different/legacy SDK
+2. **No cyan.yaml version field**
+   - Problem: Real cyan.yaml files don't have a `version` field at the top level, but documentation shows `version: 1.0.0`
+   - Recommendation: Remove `version` from the example or clarify it's optional/deprecated
 
-3. **No actual source code in this repository**
-   - Problem: This is a documentation-only repository; the actual CyanPrint SDK source code is in external repositories
-   - Recommendation: For thorough fact-checking, access to the actual helium SDK repository would be needed
+3. **Shorthand vs object form inconsistency**
+   - Problem: Documentation shows mixing shorthand `i.text('msg', 'id', 'desc')` with object form but doesn't explain when to use which
+   - Recommendation: Add explicit guidance on when to use each form
 
 ## Summary
 | Category | Count |
 |----------|-------|
-| 🔴 | 6 |
+| 🔴 | 8 |
 | 🟡 | 5 |
 | 🟠 | 3 |

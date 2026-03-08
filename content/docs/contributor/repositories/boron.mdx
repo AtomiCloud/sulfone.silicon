@@ -15,7 +15,7 @@ Boron is the execution coordinator that manages container-based template executi
 
 | Technology | Purpose |
 | ---------- | ------- |
-| Go 1.24 | Primary language |
+| Go 1.24.0 | Primary language |
 | Gin | HTTP/REST framework |
 | urfave/cli | CLI framework |
 | Docker | Container management |
@@ -108,7 +108,7 @@ go build
 go test ./...
 
 # Run locally (requires Docker)
-go run . --registry <registry-endpoint>
+go run . start --registry <registry-endpoint>
 ```
 
 ## Configuration
@@ -116,7 +116,7 @@ go run . --registry <registry-endpoint>
 Boron uses CLI flags for configuration:
 
 ```bash
-boron --registry <zinc-registry-endpoint>
+sulfone-boron start --registry <zinc-registry-endpoint>
 ```
 
 The `--registry` flag specifies the Zinc registry endpoint for container image resolution.

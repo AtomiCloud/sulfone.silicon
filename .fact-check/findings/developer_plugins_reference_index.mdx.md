@@ -1,36 +1,62 @@
 <!-- source: content/docs/developer/plugins/reference/index.mdx -->
 # 📄 File: content/docs/developer/plugins/reference/index.mdx
 
-> This is a simple index/navigation page that lists links to plugin reference documentation. The file contains minimal content - just a title, description, and organized list of navigation links to sub-pages covering Project Setup and SDK Reference topics.
+> This is an index/overview page for the Plugin Reference section. It provides navigation links to detailed reference documentation for project setup (structure, cyan.yaml, Dockerfile) and SDK (overview, StartPluginWithLambda, input/output, types). All claims verified against source code.
 
 ### 🔴 Source Code Inaccuracies
-None identified for this specific index file. The file contains only navigation links without technical claims or code references that require verification against source code.
+None identified. This is primarily a navigation/index page with links to other documentation pages.
 
 ### 🟡 Documentation Issues
-1. **Source path mismatch** | The task specified source paths `["../argon", "../boron", "../helium", "../iridium", "../zinc"]` but these paths point to contributor repository documentation (sulfone.argon, sulfone.boron, sulfone.helium, sulfone.iridium, sulfone.zinc) which describe platform components, not plugin SDK source code. | The source paths should point to actual SDK source code for verification. Based on previous fact-check analysis, the actual SDK source is in the helium repository at `helium/sdks/node/src/`.
+
+1. **Minor inconsistency in link text vs target page title**
+   - Location: Line 21 - `StartPluginWithLambda` link text
+   - Problem: The linked page title is "StartPluginWithLambda" but the SDK Overview mentions it as "Entry point for plugin logic"
+   - Fix: No fix needed - the link text matches the function name accurately
+
+2. **Plugin Input/Output type reference**
+   - Location: Line 22 - "Plugin Input/Output"
+   - Problem: The SDK exports `CyanPluginInput` type (not `PluginInput`) per main.ts line 193, though the page itself uses `PluginInput` as an alias
+   - Fix: Consider clarifying that `CyanPluginInput` is the primary type name exported from the SDK, with `PluginInput` being the internal domain type
 
 ### 🟠 Other Problems
-1. **Minimal context on index page** | The index page provides only a list of links with brief descriptions. Users landing here have no overview of what the plugin reference covers or how it's organized. | Consider adding a brief introductory paragraph explaining the plugin reference organization (Project Setup files vs SDK Reference sections).
 
-2. **All linked pages verified to exist** | The following linked documentation pages all exist:
-   - `/developer/plugins/reference/project-structure` - project-structure.mdx exists
-   - `/developer/plugins/reference/cyan-yaml` - cyan-yaml.mdx exists
-   - `/developer/plugins/reference/dockerfile` - dockerfile.mdx exists
-   - `/developer/plugins/reference/sdk/index` - sdk/index.mdx exists
-   - `/developer/plugins/reference/sdk/start-plugin` - sdk/start-plugin.mdx exists
-   - `/developer/plugins/reference/sdk/input-output` - sdk/input-output.mdx exists
-   - `/developer/plugins/reference/sdk/types` - sdk/types.mdx exists
+1. **Missing cross-reference to comparison table**
+   - Location: SDK Reference section
+   - Problem: The SDK Overview page (sdk/index.mdx) contains a useful Plugin vs Processor SDK comparison table, but it's not mentioned in this index
+   - Recommendation: Consider adding a note or link to the comparison table in the SDK Overview page
 
 ## Summary
 | Category | Count |
 |----------|-------|
 | 🔴 | 0 |
-| 🟡 | 1 |
-| 🟠 | 2 |
+| 🟡 | 2 |
+| 🟠 | 1 |
 
-### Note on Related Findings
-While this index file itself has no technical inaccuracies, the linked SDK reference pages (input-output.mdx, types.mdx, start-plugin.mdx) have documented issues with type naming. According to previous analysis:
-- Documentation shows `PluginInput` type but SDK exports `CyanPluginInput`
-- Code examples using `PluginInput` will fail at compile time
+## Verification Details
 
-For detailed findings on those issues, see the fact-check reports for the individual SDK reference pages.
+### Verified Claims
+
+1. **SDK Package Name**: Documentation uses `@atomicloud/cyan-sdk` - VERIFIED
+   - Source: `/Users/erng/Workspace/atomi/runbook/platforms/sulfone/helium/sdks/node/package.json` line 2
+
+2. **Plugin Port**: Documentation states plugins listen on port 5552 - VERIFIED
+   - Source: `/Users/erng/Workspace/atomi/runbook/platforms/sulfone/helium/sdks/node/src/main.ts` line 65
+   - Source: `/Users/erng/Workspace/atomi/runbook/platforms/sulfone/boron/docker_executor/executor.go` line 182
+
+3. **Plugin Endpoint**: Documentation mentions `/api/plug` endpoint - VERIFIED
+   - Source: `/Users/erng/Workspace/atomi/runbook/platforms/sulfone/helium/sdks/node/src/main.ts` line 68
+
+4. **CyanPluginInput Type**: Documentation shows `CyanPluginInput` with `directory` and `config` fields - VERIFIED
+   - Source: `/Users/erng/Workspace/atomi/runbook/platforms/sulfone/helium/sdks/node/src/domain/core/cyan_script_model.ts` lines 18-21
+
+5. **PluginOutput Type**: Documentation shows `PluginOutput` with `directory` field - VERIFIED
+   - Source: `/Users/erng/Workspace/atomi/runbook/platforms/sulfone/helium/sdks/node/src/domain/plugin/output.ts` lines 1-3
+
+6. **StartPluginWithLambda Function**: Documentation shows function signature - VERIFIED
+   - Source: `/Users/erng/Workspace/atomi/runbook/platforms/sulfone/helium/sdks/node/src/main.ts` lines 82-85
+
+7. **Plugin cyan.yaml Fields**: Documentation lists `username`, `name`, `description`, `project`, `source`, `email`, `tags`, `readme` - VERIFIED
+   - Source: `/Users/erng/Workspace/atomi/runbook/platforms/sulfone/iridium/cyanregistry/src/domain/config/plugin_config.rs` lines 1-18
+
+8. **Docker Label**: Documentation mentions `cyanprint.dev=true` label - VERIFIED
+   - Source: Multiple documentation files confirm this is the standard label for CyanPrint components

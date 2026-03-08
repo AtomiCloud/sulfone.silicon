@@ -1,63 +1,45 @@
 <!-- source: content/docs/developer/templates/how-to/ask-date.mdx -->
 # 📄 File: content/docs/developer/templates/how-to/ask-date.mdx
 
-> Documentation for the `dateSelect` API for asking date questions in templates. Contains critical inaccuracies regarding return types (returns string, not Date), validation function input type (receives string, not Date), and all code examples that use Date methods on the returned value would fail at runtime.
+> Documentation for using dateSelect questions in templates. Contains significant inaccuracies regarding the return type of dateSelect.
 
 ### 🔴 Source Code Inaccuracies
+1. **Return type of dateSelect**
+   - Documented: Returns `Date` object (line 18: `// Returns: Date object`)
+   - Actual: Returns `string`
+   - Evidence: `/Users/erng/Workspace/atomi/runbook/platforms/sulfone/helium/sdks/node/src/domain/core/inquirer.ts:24-26` shows `dateSelect(q: DateQ): Promise<string>` and `dateSelect(q: string, id: string, help?: string | null): Promise<string>`
 
-1. **Return Type Incorrect**
-   - **Documented:** `// Returns: Date object` (line 18)
-   - **Actual:** `Promise<string>` - The dateSelect method returns a string, not a Date object
-   - **Evidence:** `/Users/erng/Workspace/atomi/runbook/platforms/sulfone/helium/sdks/node/src/domain/core/inquirer.ts:24-26` shows `dateSelect(q: DateQ): Promise<string>;` and `dateSelect(q: string, id: string, help?: string | null): Promise<string>;`
+2. **Date method usage on result**
+   - Documented: Using Date methods like `.toISOString()`, `.getTime()`, `.getFullYear()`, `.getMonth()` on the returned value (lines 41, 47-48, 71, 125-126)
+   - Actual: The returned value is a string, not a Date object, so these methods would fail
+   - Evidence: Same as above - return type is `Promise<string>`
 
-2. **Return Type Used in Code Examples Incorrect**
-   - **Documented:** Code examples use `deadline.toISOString()`, `deadline.getFullYear()`, `deadline.getMonth()`, `endDate.getTime()`, `licenseExpiry.getTime()`, `date < new Date()` comparison
-   - **Actual:** The return type is `string`, not `Date`, so these Date methods would fail at runtime
-   - **Evidence:** `/Users/erng/Workspace/atomi/runbook/platforms/sulfone/helium/sdks/node/src/domain/service/stateless_inquirer.ts:148` shows `if (isStringAnswer(answer)) return Promise.resolve(answer.answer);` - returns a string
+3. **Validation function parameter type**
+   - Documented: `validate: (date) => { if (date < new Date()) {...} }` treating parameter as Date (lines 107-112)
+   - Actual: `validate?: (input: string) => string | null` - the parameter is a string
+   - Evidence: `/Users/erng/Workspace/atomi/runbook/platforms/sulfone/helium/sdks/node/src/domain/core/question.ts:37`
 
-3. **Validation Function Receives String, Not Date**
-   - **Documented:** `validate: (date) => { if (date < new Date()) ... }` (lines 107-111) - implies date parameter is a Date object
-   - **Actual:** The validate function receives a `string`, not a Date object
-   - **Evidence:** `/Users/erng/Workspace/atomi/runbook/platforms/sulfone/helium/sdks/node/src/domain/core/question.ts:37` shows `validate?: (input: string) => string | null;`
+4. **Date calculations using .getTime()**
+   - Documented: `endDate.getTime() - startDate.getTime()` (line 71)
+   - Actual: Since the return type is string, you must convert to Date first
+   - Evidence: Test file shows proper usage: `const date = new Date(x)` then operations on the Date object
 
-4. **Date Calculations Would Fail**
-   - **Documented:** Lines 70-71 show `endDate.getTime() - startDate.getTime()` which requires Date objects
-   - **Actual:** Since `dateSelect` returns strings, you would need to parse them first: `new Date(endDate).getTime() - new Date(startDate).getTime()`
-   - **Evidence:** `/Users/erng/Workspace/atomi/runbook/platforms/sulfone/helium/sdks/node/src/domain/core/inquirer.ts:24-26`
-
-5. **Formatting Examples Incorrect**
-   - **Documented:** Lines 41-49 show `deadline.toISOString().split('T')[0]` to format the date
-   - **Actual:** Since `dateSelect` returns a string (likely already in ISO format like "2024-12-31"), calling `.toISOString()` on a string would fail
-   - **Evidence:** `/Users/erng/Workspace/atomi/runbook/platforms/sulfone/helium/sdks/node/src/domain/service/stateless_inquirer.ts:148`
+5. **Date formatting using .toISOString()**
+   - Documented: `deadline.toISOString().split('T')[0]` (line 41)
+   - Actual: Result is already a string; cannot call .toISOString() on it
+   - Evidence: Return type is `Promise<string>`
 
 ### 🟡 Documentation Issues
+1. **Missing conversion step** | Throughout document | Should show that string result needs to be converted to Date for manipulations: `const date = new Date(dateString)`
 
-1. **Missing minDate/maxDate Properties**
-   - **Problem:** The documentation does not mention the `minDate` and `maxDate` properties available on DateQ
-   - **Location:** Object Form section (lines 23-31)
-   - **Fix:** Add examples showing `minDate` and `maxDate` usage for date range constraints
-   - **Evidence:** `/Users/erng/Workspace/atomi/runbook/platforms/sulfone/helium/sdks/node/src/domain/core/question.ts:40-41` shows `minDate?: Date | null;` and `maxDate?: Date | null;`
-
-2. **Test File Shows Additional Properties**
-   - **Problem:** The test file shows additional properties like `maxDate`, `minDate` being used but not documented
-   - **Location:** Common Patterns section
-   - **Fix:** Document the `minDate` and `maxDate` properties for constraining date selection
-   - **Evidence:** `/Users/erng/Workspace/atomi/runbook/platforms/sulfone/helium/sdks/node/template_test.ts:47-64`
+2. **Incorrect code examples** | Lines 37-51, 66-80, 86-97, 101-114, 118-135 | All code examples assume Date return type but should work with string
 
 ### 🟠 Other Problems
-
-1. **Inconsistent Return Type Across SDKs**
-   - **Problem:** The .NET SDK returns `DateOnly` while Node SDK returns `string`
-   - **Evidence:** `/Users/erng/Workspace/atomi/runbook/platforms/sulfone/helium/sdks/dotnet/sulfone-helium/Domain/Core/Inquirer.cs:17` shows `Task<DateOnly> DateSelect(DateQ q);`
-   - **Recommendation:** Document this difference clearly or note which SDK this documentation applies to
-
-2. **Validation Example Needs Conversion**
-   - **Problem:** The validation example compares `date < new Date()` but `date` is a string
-   - **Recommendation:** Update validation example to: `validate: (dateStr) => { if (new Date(dateStr) < new Date()) { return 'Start date must be in the future'; } return null; }`
+1. **Inconsistency with test file** | The actual test file (`template_test.ts`) shows the correct pattern: validation receives a string and converts it to Date with `new Date(x)`. The documentation should follow this pattern.
 
 ## Summary
 | Category | Count |
 |----------|-------|
 | 🔴 | 5 |
 | 🟡 | 2 |
-| 🟠 | 2 |
+| 🟠 | 1 |

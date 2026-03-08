@@ -1,74 +1,23 @@
+<!-- source: content/docs/developer/basics/architecture.mdx -->
 # File: content/docs/developer/basics/architecture.mdx
 
-> This document describes the CyanPrint system architecture including container communication, execution flow, container path mechanics, and SDK port assignments.
+> This document accurately describes the CyanPrint architecture with correct CLI name, ports, and endpoints. Found one missing artifact type (Resolver) and one minor inconsistency about Coordinator port usage.
 
 ### Source Code Inaccuracies
-
-1. **Registry API Endpoint Format**
-   - **Documented**: `GET /templates/atomi/template` (Line 58)
-   - **Actual**: `GET /api/v1/Template/slug/{username}/{name}/versions/latest?bumpDownload=true`
-   - **Evidence**: `/Users/erng/Workspace/atomi/runbook/platforms/sulfone/iridium/cyanregistry/src/http/client.rs:219-224` - The actual Zinc API uses a versioned endpoint with `/api/v{version}/Template/slug/{username}/{name}/versions/latest` format, not `/templates/{user}/{name}`.
-
-2. **Output Directory Path**
-   - **Documented**: `/workspace/output` (Lines 89, 98)
-   - **Actual**: `/workspace/area`
-   - **Evidence**: `/Users/erng/Workspace/atomi/runbook/platforms/sulfone/boron/docker_executor/docker.go:352-353` - The write volume is mounted at `/workspace/area`, not `/workspace/output`. Also in `merger.go:148,313` - Processor write directories are `/workspace/area/{uuid}` and merge path is `/workspace/area/{merge-uuid}`.
-
-3. **Critical Paths Table - Incorrect Path**
-   - **Documented**: `/workspace/output` owned by Coordinator (Line 98)
-   - **Actual**: `/workspace/area` is the read-write volume mount point for processor/plugin outputs
-   - **Evidence**: `/Users/erng/Workspace/atomi/runbook/platforms/sulfone/boron/docker_executor/docker.go:343-356` - Shows `/workspace/cyanprint` (read-only) and `/workspace/area` (read-write) as the two mount points.
-
-4. **Execution Flow Sequence - Missing Merger Component**
-   - **Documented**: Shows `Coordinator->>Processor: POST /api/process` directly (Line 63)
-   - **Actual**: The Merger component calls processors, not the Coordinator directly. The Coordinator starts the Merger container which then orchestrates processor execution.
-   - **Evidence**: `/Users/erng/Workspace/atomi/runbook/platforms/sulfone/boron/docker_executor/merger.go:102-177` - The Merger struct has `execProcessors` method that calls processor endpoints. Also `executor.go:61-91` shows `startMerger` is called alongside processors/plugins.
-
-5. **Container Communication Table - Missing Merger Role**
-   - **Documented**: Only Template, Processor, Plugin containers listed (Lines 78-82)
-   - **Actual**: A Merger container exists and plays a critical role in orchestrating processor execution and merging outputs.
-   - **Evidence**: `/Users/erng/Workspace/atomi/runbook/platforms/sulfone/boron/docker_executor/merger.go:15-20` - Merger struct definition. `/Users/erng/Workspace/atomi/runbook/platforms/sulfone/boron/docker_executor/executor.go:61-91` - `startMerger` method showing merger container startup on port 9000.
-
-6. **Step-by-Step Description Oversimplified**
-   - **Documented**: "Processing - Processor transforms files using the config" (Line 74)
-   - **Actual**: The processing step involves the Merger component which: (1) Executes all processors in parallel, (2) Merges outputs into a single directory, (3) Executes plugins on the merged output.
-   - **Evidence**: `/Users/erng/Workspace/atomi/runbook/platforms/sulfone/boron/docker_executor/merger.go:296-329` - The `Merge` function shows the complete flow: execProcessors -> merge -> execPlugins.
+1. **Missing Resolver artifact type** | Documented: Only Template, Processor, Plugin, Merger containers in SDK Port Assignments table | Actual: There is a 5th artifact type "Resolver" on port 5553 with endpoint POST /api/resolve | helium/sdks/node/src/main.ts:145-166 shows `StartResolver` and `StartResolverWithLambda` functions with port 5553 and `/api/resolve` endpoint
+2. **SDK Port Assignments table incomplete** | Documented: Template=5550, Processor=5551, Plugin=5552, Merger=9000, Coordinator=9000 | Actual: Resolver=5553 also exists as a valid SDK artifact type | helium/sdks/node/src/main.ts:147 shows `const port = 5553;` for Resolver
 
 ### Documentation Issues
-
-1. **Incomplete Architecture Diagram**
-   - **Problem**: The Mermaid diagram at line 12-35 does not show the Merger container which is a critical component.
-   - **Location**: Lines 12-35 (System Components diagram)
-   - **Fix**: Add Merger container to the "Remote Executor" subgraph and show it as the component that calls processors and plugins.
-
-2. **Misleading Path Warning**
-   - **Problem**: Warning says `/workspace` "WILL BE OVERRIDDEN" but the actual behavior is more nuanced - `/workspace/cyanprint` contains the extracted blob and `/workspace/area` is the working directory.
-   - **Location**: Lines 94-99 (Critical Paths table)
-   - **Fix**: Update the table to show correct paths: `/workspace/cyanprint` (read-only template volume) and `/workspace/area` (read-write session volume).
-
-3. **Missing Merger Port Information**
-   - **Problem**: SDK Port Assignments table (Lines 100-107) does not include the Merger container which runs on port 9000.
-   - **Location**: Lines 100-107
-   - **Fix**: Add Merger row: Port 9000, endpoint `POST /merge/{sessionId}`.
-
-4. **Execution Flow Diagram Simplification**
-   - **Problem**: The sequence diagram (Lines 49-66) shows Coordinator calling Processor directly, but actually the Merger component does this.
-   - **Location**: Lines 49-66
-   - **Fix**: Add Merger as a participant and show: Coordinator -> Merger -> Processor flow.
+1. **Component Overview table could mention Resolver** | Problem: The table lists only 4 components (Iridium CLI, Zinc API, Argon Web UI, Coordinator, Containers) but Resolver is an additional artifact type developers can create | Location: "Component Overview" table and "Container Communication" table | Fix: Add Resolver row to both tables with description "Resolves template references or configurations" and endpoint "POST /api/resolve"
+2. **Merger row in SDK Port Assignments could be clarified** | Problem: The table lists Merger at port 9000 alongside Coordinator at 9000, which may cause confusion since the merger functionality runs inside the coordinator container | Location: "SDK Port Assignments" table | Fix: Add note clarifying that Merger endpoints are served by the Coordinator container internally, not as a separate SDK artifact
 
 ### Other Problems
-
-1. **Terminology: "Coordinator" vs "Boron"**
-   - **Problem**: The documentation uses "Coordinator" generically but the actual implementation is in the "boron" repository and the code references "sulfone-boron" as the coordinator image.
-   - **Recommendation**: Consider clarifying that the Coordinator is the Boron component, or use consistent terminology.
-
-2. **Registry Name Ambiguity**
-   - **Problem**: The document refers to "Zinc API" but the actual API endpoints use `/api/v1/Template/...` format with "Template" (capitalized) as the controller name.
-   - **Recommendation**: Ensure consistent naming between documentation and actual API paths.
+1. **Argon Web UI shows resolvers but documentation omits them** | Problem: The Argon routes include `/resolvers/[user_id]/[resolver_id]/+page.ts` confirming Resolver is a supported artifact type in the registry UI | Recommendation: Update documentation to include Resolver as a first-class artifact type alongside Template, Processor, and Plugin
+2. **Container Communication table missing Resolver** | Problem: The table shows Template, Processor, Plugin, Merger but Resolver is also a valid container type | Recommendation: Add row: "Resolver | Resolves template configurations | POST /api/resolve"
 
 ## Summary
 | Category | Count |
 |----------|-------|
-| Source Code Inaccuracies | 6 |
-| Documentation Issues | 4 |
+| Source Code Inaccuracies | 2 |
+| Documentation Issues | 2 |
 | Other Problems | 2 |

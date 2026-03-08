@@ -84,7 +84,7 @@ StartTemplateWithLambda(async (i, d) => {
 
 Create your template files in `cyan/templates` (the directory name is configurable via the `root` property in your processor config):
 
-```bash
+```bash 
 mkdir -p cyan/templates
 echo "# My Project" > cyan/templates/README.md
 ```
@@ -95,7 +95,7 @@ This template copies `templates/README.md` to the output without any variable su
 
 Build and test locally:
 
-```bash
+```js a.js -cnb
 # Build the template
 docker build -f cyan/template.Dockerfile -t my-first-template:dev .
 

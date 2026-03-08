@@ -1,122 +1,47 @@
+<!-- source: content/docs/developer/templates/explanation/client-state.mdx -->
 # File: content/docs/developer/templates/explanation/client-state.mdx
 
-> Documentation describing client state management for template executions, including state file structure, CLI commands, and best practices. The document describes storing state in `.cyan/generation.json` using JSON format.
+> This document describes client state management but contains critical inconsistencies with other documentation files regarding the state file location, format, and command syntax.
 
 ### Source Code Inaccuracies
 
-1. **State File Path Incorrect**
-   - Documented: `.cyan/generation.json` (JSON file)
-   - Actual: `.cyan_state.yaml` (YAML file)
-   - Evidence: `/Users/erng/Workspace/atomi/runbook/platforms/sulfone/iridium/cyancoordinator/src/state/services.rs:58` - `let state_file_path = target_dir.join(".cyan_state.yaml");`
+1. **State file location and format** | Documented: `.cyan/generation.json` (lines 12-29, 62) | Actual: `.cyan_state.yaml` | Evidence: `content/docs/user/reference/cli-commands.mdx:60` states "This command uses the `.cyan_state.yaml` file"; `content/docs/user/how-to/update-project.mdx:27` states "Loads `.cyan_state.yaml`"; `content/docs/developer/templates/reference/project-structure.mdx:194` shows `.cyan_state.yaml` as the output file
 
-2. **State File Format Incorrect**
-   - Documented: JSON format with `version`, `template`, `pin`, `answers`, `generated` fields at root level
-   - Actual: YAML format with `templates` map containing template keys, each with `active` and `history` fields
-   - Evidence: `/Users/erng/Workspace/atomi/runbook/platforms/sulfone/iridium/cyancoordinator/src/state/models.rs:6-24` shows the actual structure with `TemplateHistoryEntry`, `TemplateState`, and `CyanState` structs serialized as YAML
+2. **State file JSON structure** | Documented: JSON format with `version`, `template`, `pin`, `answers`, `generated` fields (lines 14-28) | Actual: YAML format with different structure | Evidence: `content/docs/developer/templates/explanation/determinism.mdx:48-61` shows the actual YAML structure with `templates:` containing `active`, `history`, `answers`, and `deterministic_states` fields
 
-3. **"pin" Field Does Not Exist**
-   - Documented: `"pin": "abc123-def456-ghi789"` - determinism seed at root level
-   - Actual: `deterministic_states: HashMap<String, String>` inside each history entry (not a single "pin")
-   - Evidence: `/Users/erng/Workspace/atomi/runbook/platforms/sulfone/iridium/cyancoordinator/src/state/models.rs:11` - `pub deterministic_states: HashMap<String, String>`
+3. **Template state field structure** | Documented: `template.registry` field (line 83-84) | Actual: Not present in the actual state structure | Evidence: `content/docs/developer/templates/explanation/determinism.mdx:48-61` shows no `registry` field within template info
 
-4. **Template Registry Field Not Stored**
-   - Documented: `"registry": "https://registry.example.com"` inside template object
-   - Actual: Registry is not stored in state file; template key is formatted as `username/template.name`
-   - Evidence: `/Users/erng/Workspace/atomi/runbook/platforms/sulfone/iridium/cyancoordinator/src/state/services.rs:62` - `let template_key = format!("{}/{}", username, template.template.name);`
+4. **Pin storage location** | Documented: Top-level `pin` field in state (lines 88-93) | Actual: `deterministic_states` nested under template history | Evidence: `content/docs/developer/templates/explanation/determinism.mdx:58-60` shows `deterministic_states` as nested object within history entries
 
-5. **"generated" Field Name Incorrect**
-   - Documented: `"generated": "2024-01-15T10:30:00Z"`
-   - Actual: `"time": "2024-01-15T10:30:00Z"` inside each history entry
-   - Evidence: `/Users/erng/Workspace/atomi/runbook/platforms/sulfone/iridium/cyancoordinator/src/state/models.rs:9` - `pub time: DateTime<Utc>`
+5. **Command `cyanprint regenerate`** | Documented: `cyanprint regenerate ./my-project` (line 42) | Actual: No `regenerate` command exists | Evidence: `content/docs/user/reference/cli-commands.mdx` lists only `create`, `update`, `daemon`, `push` commands; `content/docs/contributor/repositories/iridium.mdx:53-78` lists same commands without `regenerate`
 
-6. **Version Type Incorrect**
-   - Documented: `"version": "1.0"` (string, schema version)
-   - Actual: `version: i64` (integer, template version number)
-   - Evidence: `/Users/erng/Workspace/atomi/runbook/platforms/sulfone/iridium/cyancoordinator/src/state/models.rs:8` - `pub version: i64`
-
-7. **Template Structure Incorrect**
-   - Documented: `template.name` and `template.version` as nested object
-   - Actual: Template is stored as a key in the `templates` map with format `username/template-name`
-   - Evidence: `/Users/erng/Workspace/atomi/runbook/platforms/sulfone/iridium/cyancoordinator/src/state/models.rs:21-24` - `pub templates: HashMap<String, TemplateState>`
-
-8. **CLI Command Name Incorrect**
-   - Documented: `cyanprint create`, `cyanprint regenerate`, `cyanprint update`
-   - Actual: CLI is installed as `pls` (based on iridium documentation), commands are `pls create`, `pls update`
-   - Evidence: `/Users/erng/Workspace/atomi/runbook/platforms/sulfone/iridium/docs/developer/surfaces/cli/02-create.md:8` - `pls create <template_ref> [path] [options]`
-
-9. **"regenerate" Command Does Not Exist**
-   - Documented: `cyanprint regenerate ./my-project`
-   - Actual: No `regenerate` command exists. The `update` command handles re-runs when the same version is detected (RerunTemplate flow)
-   - Evidence: `/Users/erng/Workspace/atomi/runbook/platforms/sulfone/iridium/cyanprint/src/commands.rs:27-72` - Only `Push`, `Create`, `Update`, `Daemon` commands exist
-
-10. **Update Command Syntax Incorrect**
-    - Documented: `cyanprint update ./my-project myorg/template:2.0.0` (with template argument)
-    - Actual: `pls update [path]` - no template argument, reads from state file
-    - Evidence: `/Users/erng/Workspace/atomi/runbook/platforms/sulfone/iridium/cyanprint/src/commands.rs:52-72` - Update only takes `path` and options, no template argument
-
-11. **Template Reference Format in State**
-    - Documented: `"name": "myorg/my-template"` (combined format)
-    - Actual: Template key is `username/template.name` (using template.name from API, not combined at input)
-    - Evidence: `/Users/erng/Workspace/atomi/runbook/platforms/sulfone/iridium/cyancoordinator/src/state/services.rs:62`
-
-12. **i.text() API Signature Incorrect**
-    - Documented: `await i.text('Name?', 'project.name', '...')` with third parameter as default
-    - Actual: `i.text(message: str, id: str, desc: Optional[str] = None)` - third parameter is description, not default value
-    - Evidence: `/Users/erng/Workspace/atomi/runbook/platforms/sulfone/helium/sdks/python/cyanprintsdk/domain/core/inquirer.py:61` - `async def text(self, message: str, id: str, desc: Optional[str] = None) -> str:`
-
-13. **No "registry" Field in State**
-    - Documented: `"registry": "https://registry.example.com"` in template object
-    - Actual: Registry endpoint is not persisted in state; it's configured via CLI args or environment variable
-    - Evidence: `/Users/erng/Workspace/atomi/runbook/platforms/sulfone/iridium/cyancoordinator/src/state/models.rs:6-24` - No registry field in any model
+6. **`cyanprint update` with template argument** | Documented: `cyanprint update ./my-project myorg/template:2.0.0` (line 54) | Actual: Update command does not accept a template reference argument | Evidence: `content/docs/user/reference/cli-commands.mdx:63` shows `cyanprint update [PATH]` with no template argument; `content/docs/contributor/repositories/iridium.mdx:61` shows same
 
 ### Documentation Issues
 
-1. **Outdated State File Documentation**
-   - Problem: The entire state file structure documented is based on an old/imagined JSON format
-   - Location: Lines 12-29 (What is Client State section)
-   - Fix: Update to reflect actual YAML structure from `iridium/cyancoordinator/src/state/models.rs`
+1. **Inconsistent state file location across docs** | Problem: This document uses `.cyan/generation.json` while 3-way-merge.mdx uses `.cyan/` directory (lines 44-48) with `generation.json` AND `base/` subdirectory, while CLI reference and update-project docs use `.cyan_state.yaml` | Location: Lines 12, 62, 190 | Fix: Standardize to actual format (`.cyan_state.yaml`) across all documentation
 
-2. **Mermaid Diagram References Non-existent Commands**
-   - Problem: Flow diagram shows `cyanprint create` and `cyanprint update` but actual CLI uses `pls`
-   - Location: Lines 117-132 (State Lifecycle diagram)
-   - Fix: Change to `pls create` and `pls update`
+2. **Inconsistent directory structure for base files** | Problem: This document doesn't mention the `.cyan/base/` directory for storing original generated files, but 3-way-merge.mdx does (lines 44-48) | Location: State Structure section | Fix: Either clarify that `.cyan/base/` exists separately or document the complete state structure
 
-3. **Missing Template History Concept**
-   - Problem: Documentation doesn't explain that state tracks history of multiple executions per template
-   - Location: Entire document
-   - Fix: Add explanation of `history` array in state structure
+3. **State lifecycle diagram inaccurate** | Problem: Mermaid diagram (lines 117-132) shows `F[Write .cyan/generation.json]` which is incorrect file name | Location: Lines 117-132 | Fix: Update to show `.cyan_state.yaml`
 
-4. **Incorrect Best Practice Examples**
-   - Problem: Code examples show incorrect `i.text()` signature with default value parameter
-   - Location: Lines 141-143, 162-166, 182-185
-   - Fix: Update to correct signature showing `desc` parameter
+4. **Missing reference to deterministic_states** | Problem: Document mentions `pin` field but doesn't explain the `deterministic_states` structure that actually stores deterministic values | Location: Pin section (lines 88-93) | Fix: Reference the actual deterministic_states mechanism or clarify relationship
 
-5. **Missing "active" Field Documentation**
-   - Problem: State structure includes `active: bool` field not mentioned in documentation
-   - Location: State Structure section
-   - Fix: Document the `active` field in TemplateState
+5. **Registry field in template example** | Problem: Example shows `registry` field in template object (line 83-84) which doesn't appear in actual state file structure | Location: Lines 79-85 | Fix: Remove or verify this field exists
+
+6. **Command examples in Mermaid use incorrect command** | Problem: Diagram shows `cyanprint create` and `cyanprint update` flow but refers to non-existent regenerate flow | Location: Lines 117-132 | Fix: Verify and update command flow to match actual CLI behavior
 
 ### Other Problems
 
-1. **Conceptual Mismatch with Determinism**
-   - Problem: Documentation describes "pin" as a single determinism seed, but actual implementation uses `deterministic_states` as a HashMap for multiple keyed values
-   - Recommendation: Rewrite the "Pin" section to explain `deterministic_states` as a collection of cached non-deterministic values keyed by string identifiers
+1. **Confusion between two state mechanisms** | Problem: The documentation appears to conflate two different state storage mechanisms - `.cyan/generation.json` (this doc) vs `.cyan_state.yaml` (other docs) vs `.cyan/base/` (3-way-merge). This creates confusion about what actually exists. | Recommendation: Audit all documentation to establish canonical state file format and location, then update all references consistently
 
-2. **Missing Update Type Distinctions**
-   - Problem: Documentation doesn't explain NewTemplate, UpgradeTemplate, and RerunTemplate update types
-   - Recommendation: Add section explaining the three execution modes and how state determines which is used
+2. **Missing cross-reference to actual state file docs** | Problem: This document should cross-reference the determinism.mdx which shows the actual `.cyan_state.yaml` structure | Recommendation: Add explicit link to determinism.mdx or merge content
 
-3. **Multiple Templates Not Documented**
-   - Problem: State file supports tracking multiple templates per project (composition), but this isn't explained
-   - Recommendation: Add section on template composition and how state tracks multiple templates
-
-4. **Related Links May Be Broken**
-   - Problem: Links to `/developer/templates/explanation/determinism`, `/developer/templates/explanation/3-way-merge`, and `/developer/templates/how-to/use-keys` should be verified
-   - Recommendation: Ensure these pages exist and accurately reflect current implementation
+3. **Key storage explanation inconsistent with actual behavior** | Problem: States that answers are stored "by key" (line 97) but doesn't clarify that keys are actually stored in `answers` object within `history` array under template name | Recommendation: Update to match actual YAML structure from determinism.mdx
 
 ## Summary
 | Category | Count |
 |----------|-------|
-| Source Code Inaccuracies | 13 |
-| Documentation Issues | 5 |
-| Other Problems | 4 |
+| Source Code Inaccuracies | 6 |
+| Documentation Issues | 6 |
+| Other Problems | 3 |

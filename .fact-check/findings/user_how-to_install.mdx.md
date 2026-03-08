@@ -1,55 +1,69 @@
 <!-- source: content/docs/user/how-to/install.mdx -->
 # 📄 File: content/docs/user/how-to/install.mdx
 
-> This file documents installation methods for CyanPrint CLI across multiple platforms. The documentation includes Nix, Homebrew, Scoop, APT, and YUM installation methods with version pinning examples.
+> Fact-check findings for the CyanPrint installation documentation page covering Nix, Brew, Scoop, APT, and YUM installation methods with version pinning.
 
 ### 🔴 Source Code Inaccuracies
 
-1. **Scoop Installation for Windows - Deprecated Platform**
-   - **Documented**: `scoop bucket add atomi https://github.com/AtomiCloud/scoop-bucket.git` and `scoop install atomi/cyanprint`
-   - **Actual**: Windows support was deprecated in v1.7.0 (commit 4a72573). The goreleaser.yaml only builds for `linux` and `darwin` (macOS). The CI workflow (`.github/workflows/⚡reusable-build.yaml`) only targets Linux x86_64, Linux aarch64, MacOS x86_64, and MacOS aarch64. No Windows builds are produced.
-   - **Evidence**: `/Users/erng/Workspace/atomi/runbook/platforms/sulfone/iridium/Changelog.md:214` - "deprecate windows support"; `/Users/erng/Workspace/atomi/runbook/platforms/sulfone/iridium/.goreleaser.yaml:16-21` - only lists `linux` and `darwin` under `goos`
+1. **Scoop Installation Not Configured in Release**
+   - Documented: `scoop bucket add cyanprint https://github.com/AtomiCloud/scoop-bucket` and `scoop install cyanprint`
+   - Actual: The `.goreleaser.yaml` file (iridium/.goreleaser.yaml) only configures `brews` and `nfpms` (for deb/rpm/apk). There is NO `scoops` configuration section, meaning Scoop packages are not being built or published.
+   - Evidence: iridium/.goreleaser.yaml lines 37-52 show brews config, lines 54-72 show nfpms config, but no scoop config exists.
 
-2. **Description Claims 6 Platforms - Only 4 Are Actually Supported**
-   - **Documented**: "Install CyanPrint CLI on 6 platforms" (description line 3)
-   - **Actual**: Only 4 platforms are actively built and supported: Linux x86_64, Linux aarch64, macOS x86_64, macOS aarch64. Windows (Scoop) is deprecated and there is no evidence of a working Scoop bucket.
-   - **Evidence**: `/Users/erng/Workspace/atomi/runbook/platforms/sulfone/iridium/.github/workflows/⚡reusable-build.yaml:26-50` - build matrix only includes Linux and MacOS targets
+2. **Version Example is Outdated**
+   - Documented: Examples use version `2.6.0` for version pinning
+   - Actual: Current version in source code is `2.7.0` (as of 2026-03-05). The 2.6.0 version was released on 2026-02-26.
+   - Evidence: iridium/cyanprint/Cargo.toml line 3: `version = "2.7.0"`, iridium/nix/default.nix line 9: `version = "2.7.0"`, iridium/Changelog.md line 1 shows 2.7.0 release.
 
-3. **Version Pinning Example Uses Outdated Version**
-   - **Documented**: Version pinning examples use `0.2.0` (lines 73, 76, 87, 98, 109, 120)
-   - **Actual**: Current version is `2.6.0` as defined in the nix build configuration and changelog
-   - **Evidence**: `/Users/erng/Workspace/atomi/runbook/platforms/sulfone/iridium/nix/default.nix:9` - `version = "2.6.0"`; `/Users/erng/Workspace/atomi/runbook/platforms/sulfone/iridium/Changelog.md:1` - "## [2.6.0]"
+3. **APT Repository URL Case Mismatch**
+   - Documented: `https://apt.fury.io/AtomiCloud/` (capital A and C)
+   - Actual: The fury.sh script pushes to `https://${FURY_TOKEN}@push.fury.io/atomicloud/` (lowercase). The fury.io repository URLs are case-sensitive for the account name.
+   - Evidence: iridium/scripts/fury.sh line 13: `curl -F package=@"$file" "https://${FURY_TOKEN}@push.fury.io/atomicloud/"`
+
+4. **YUM Repository URL Case Mismatch**
+   - Documented: `baseurl=https://yum.fury.io/atomicloud/` (lowercase)
+   - Actual: This is consistent with fury.sh, but contradicts the APT documentation case. The fury.io account is `atomicloud` (lowercase) based on fury.sh.
+   - Evidence: iridium/scripts/fury.sh line 13 shows `push.fury.io/atomicloud/`
 
 ### 🟡 Documentation Issues
 
-1. **Missing Deprecation Notice for Windows/Scoop**
-   - **Problem**: The Scoop tab is presented without any warning that Windows is no longer supported. Users attempting to use Scoop will fail since no Windows binaries are published.
-   - **Location**: Lines 34-39 (Scoop tab)
-   - **Fix**: Either remove the Scoop tab entirely or add a clear deprecation notice stating that Windows support was deprecated in v1.7.0
+1. **Inconsistent Repository URL Casing Between APT and YUM**
+   - Problem: APT instructions use `AtomiCloud` (PascalCase) while YUM uses `atomicloud` (lowercase). Both should be lowercase `atomicloud` to match the fury.io account.
+   - Location: Lines 43 (APT) and 54 (YUM)
+   - Fix: Change APT URL from `https://apt.fury.io/AtomiCloud/` to `https://apt.fury.io/atomicloud/`
 
-2. **Version Example Too Old**
-   - **Problem**: Using version `0.2.0` as an example is misleading as it's extremely outdated (current is 2.6.0, and 0.2.0 likely never existed publicly based on changelog starting at 1.0.0)
-   - **Location**: Lines 73, 76, 87, 98, 109, 120
-   - **Fix**: Update version examples to use a realistic recent version like `2.6.0` or use a placeholder like `2.x.x`
+2. **Scoop Installation Section Should Be Removed or Marked Unavailable**
+   - Problem: Scoop installation instructions exist but the release pipeline does not publish Scoop packages.
+   - Location: Lines 31-36 (Install Latest) and Lines 88-96 (Pin to Specific Version)
+   - Fix: Either add Scoop configuration to goreleaser.yaml or remove Scoop tabs from documentation.
 
-3. **Description Mismatch**
-   - **Problem**: Description says "6 platforms" but Nix Shell and Nix Profile are both Nix (same platform, different installation methods), and Windows/Scoop is deprecated
-   - **Location**: Line 3 (frontmatter description)
-   - **Fix**: Update to "Install CyanPrint CLI on Linux and macOS" or "Install CyanPrint CLI via Nix, Homebrew, APT, or YUM"
+3. **Version Pinning Syntax for Nix May Be Incorrect**
+   - Problem: The documentation shows `github:AtomiCloud/sulfone.iridium/2.6.0` but Nix flake references typically use `v` prefix for tags (e.g., `v2.6.0`). The changelog shows tags with `v` prefix (e.g., `v2.7.0`, `v2.6.0`).
+   - Location: Lines 70, 73
+   - Fix: Update to `github:AtomiCloud/sulfone.iridium/v2.6.0` to match actual git tags
+
+4. **Outdated Version Examples**
+   - Problem: Version pinning examples reference 2.6.0 which is not the latest version (2.7.0 is current).
+   - Location: Throughout the "Pin to Specific Version" section
+   - Fix: Update examples to use a more current version or use a placeholder like `X.Y.Z`
 
 ### 🟠 Other Problems
 
-1. **Inconsistent Tab Grouping**
-   - **Problem**: The first Tabs component splits Nix into "Nix Shell" and "Nix Profile" (6 items), while the second Tabs component combines them into just "Nix" (5 items). This inconsistency is confusing.
-   - **Recommendation**: Standardize the grouping approach across both tab sets. Either keep Nix Shell/Profile separate in both, or combine them in both.
+1. **Brew Version Pinning May Not Work As Documented**
+   - Problem: Homebrew versioned formula installation (`cyanprint@2.6.0`) requires the tap to publish versioned formulae. The goreleaser only publishes the latest version as `cyanprint`. Versioned installation may not be available.
+   - Recommendation: Verify with `brew info AtomiCloud/tap/cyanprint` whether older versions are available, or note that only the latest version is typically available via Homebrew.
 
-2. **Homebrew Version Pinning Syntax May Not Work**
-   - **Problem**: The documented `brew install AtomiCloud/tap/cyanprint@0.2.0` syntax for versioned installs may not work as expected. Homebrew versioned formulae require the formula to explicitly support versioning, which may not exist in the tap.
-   - **Recommendation**: Verify that versioned formulae exist in the homebrew-tap repository, or add a note that version pinning via Homebrew may require checking available versions first.
+2. **No Verification Step After Installation**
+   - Problem: Documentation doesn't include a step to verify the installation was successful.
+   - Recommendation: Add `cyanprint --version` or `cyanprint --help` as a verification step.
+
+3. **APT Repository Setup Missing GPG Key Configuration**
+   - Problem: Using `[trusted=yes]` bypasses GPG signature verification. While this works, it's a security trade-off that should be noted.
+   - Recommendation: Document this is for convenience and suggest proper GPG key setup if available.
 
 ## Summary
 | Category | Count |
 |----------|-------|
-| 🔴 | 3 |
-| 🟡 | 3 |
-| 🟠 | 2 |
+| 🔴 | 4 |
+| 🟡 | 4 |
+| 🟠 | 3 |

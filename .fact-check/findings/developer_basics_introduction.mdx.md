@@ -1,69 +1,41 @@
-# File: content/docs/developer/basics/introduction.mdx
+<!-- source: content/docs/developer/basics/introduction.mdx -->
+# 📄 File: content/docs/developer/basics/introduction.mdx
 
-> This document introduces CyanPrint development and describes the three artifact types: Templates, Processors, and Plugins. It includes a table with artifact names, purposes, and SDK ports, followed by brief descriptions of each artifact and a workflow diagram.
+> The introduction document describes the four CyanPrint artifacts (Templates, Processors, Resolvers, Plugins) with their SDK ports and execution flow. The SDK port assignments are verified as correct against the Helium SDK source code. The main issue is a broken link to the resolvers documentation section.
 
-### Source Code Inaccuracies
+### 🔴 Source Code Inaccuracies
+None found. The SDK port assignments are verified:
+- Template: 5550 - `helium/sdks/node/src/main.ts:112`, `helium/sdks/python/cyanprintsdk/main.py:178`, `helium/sdks/dotnet/Taskfile.yaml:17`
+- Processor: 5551 - `helium/sdks/node/src/main.ts:89`, `helium/sdks/python/cyanprintsdk/main.py:119`, `helium/sdks/dotnet/Taskfile.yaml:25`
+- Resolver: 5553 - `helium/sdks/node/src/main.ts:147`, `helium/sdks/python/cyanprintsdk/main.py:212`, `helium/sdks/dotnet/sulfone-helium/Server.cs:182`
+- Plugin: 5552 - `helium/sdks/node/src/main.ts:65`, `helium/sdks/python/cyanprintsdk/main.py:84`, `helium/sdks/dotnet/sulfone-helium-plugin-api/Dockerfile:17`
 
-1. **Missing Resolver Artifact**
-   - **Documented**: Only three artifacts (Templates, Processors, Plugins) are listed
-   - **Actual**: There is a fourth artifact type called "Resolver" with SDK port 5553
-   - **Evidence**:
-     - `helium/sdks/python/cyanprintsdk/main.py:84` - Plugin runs on port 5552
-     - `helium/sdks/python/cyanprintsdk/main.py:119` - Processor runs on port 5551
-     - `helium/sdks/python/cyanprintsdk/main.py:178` - Template runs on port 5550
-     - `helium/sdks/python/cyanprintsdk/main.py:212` - Resolver runs on port 5553
-     - `helium/sdks/node/src/main.ts:65` - Plugin port 5552
-     - `helium/sdks/node/src/main.ts:89` - Processor port 5551
-     - `helium/sdks/node/src/main.ts:112` - Template port 5550
-     - `helium/sdks/node/src/main.ts:147` - Resolver port 5553
-     - `helium/sdks/dotnet/sulfone-helium/Server.cs:182` - Resolver explicitly runs on `http://0.0.0.0:5553`
-     - `helium/sdks/node/src/domain/core/cyan_script.ts:23-25` - `ICyanResolver` interface defined alongside other artifact interfaces
-     - `zinc/docs/developer/surfaces/api/06-resolver.md` - Full Resolver API documentation exists in Zinc registry
+### 🟡 Documentation Issues
 
-### Documentation Issues
+1. **Broken link to Resolvers documentation**
+   - Documented: Link to `/docs/developer/resolvers` in "Choose Your Path" section (line 81)
+   - Location: Line 81: `- [Create a Resolver](/docs/developer/resolvers) - Build conflict resolvers`
+   - Actual: The `/docs/developer/resolvers` path does not exist. The meta.json at `/content/docs/developer/meta.json` only lists `["index", "basics", "templates", "processors", "plugins"]` - no resolvers section.
+   - Fix: Either create the resolvers documentation section OR remove/hide the resolvers link until documentation is available. The Resolver SDK exists (Helium v2.1.0, 2026-03-02) but documentation has not been written.
 
-1. **Incomplete Artifact Table**
-   - **Problem**: The table in "The Three Artifacts" section only lists three artifacts but source code shows four
-   - **Location**: Lines 12-16 (artifact table)
-   - **Fix**: Add Resolver row: `| **Resolvers** | Resolve template dependencies dynamically | 5553 |`
+2. **Inconsistent documentation coverage across artifacts**
+   - Problem: The developer index page (index.mdx) also lists Resolvers in the table but does not link to them in "Build Your Artifact" section
+   - Location: `/content/docs/developer/index.mdx` lines 14-19 and 32-34
+   - Fix: Ensure consistency - either add resolvers link to index.mdx when documentation exists, or acknowledge it as a planned feature
 
-2. **Missing Resolver Section**
-   - **Problem**: No description section for Resolvers like there is for Templates, Processors, and Plugins
-   - **Location**: After line 41 (after Plugins section)
-   - **Fix**: Add a "### Resolvers" section explaining their purpose (resolving template dependencies dynamically)
+### 🟠 Other Problems
 
-3. **Missing Resolver in "How They Work Together" Diagram**
-   - **Problem**: The workflow diagram and numbered steps don't include Resolvers
-   - **Location**: Lines 45-55
-   - **Fix**: Consider whether Resolvers should be part of the workflow documentation or clarify that they are a separate/optional component
+1. **Execution flow may be incomplete for resolvers**
+   - Problem: The Mermaid diagram and "How They Work Together" section show Resolver as an optional step (step 3), but the resolver execution points described (lines 46-50) mention "server-side resolution during template execution" and "client-side during layering". This distinction is technically correct but may need clarification about when resolvers actually execute in the current implementation.
+   - Recommendation: Verify if resolvers are fully integrated into Boron/Iridium execution pipeline, as no references to port 5553 were found in those codebases. The SDK exists but orchestration support may be incomplete.
 
-4. **Missing Resolver Link in "Choose Your Path"**
-   - **Problem**: No link to Resolver documentation in the navigation section
-   - **Location**: Lines 57-61
-   - **Fix**: Add `- [Create a Resolver](/developer/resolvers) - Build dependency resolvers` (if Resolver docs exist)
-
-5. **Inconsistent Title Count**
-   - **Problem**: Section title says "The Three Artifacts" but source code shows four artifacts
-   - **Location**: Line 10
-   - **Fix**: Change to "The Four Artifacts" or "CyanPrint Artifacts" if Resolver is considered a primary artifact
-
-### Other Problems
-
-1. **Ambiguous Column Header "SDK Port"**
-   - **Problem**: The column header "SDK Port" may be confusing - it's the port that each artifact type's server listens on when running in a container
-   - **Recommendation**: Consider renaming to "Default Port" or "Container Port" for clarity
-
-2. **Resolver Status Unclear**
-   - **Problem**: The Resolver artifact is fully implemented in the SDK (Python, Node, .NET) and has API documentation in Zinc, but is not mentioned in this introduction document
-   - **Recommendation**: Clarify whether Resolvers are:
-     - A fourth primary artifact that should be documented
-     - An internal/advanced feature that doesn't need introduction coverage
-     - An experimental feature in development
+2. **Missing cyanprint binary references**
+   - Problem: The document doesn't reference any CLI commands, which is appropriate for an introduction page
+   - Note: No `cyanprint` vs `cyan` issues as there are no CLI commands in this document
 
 ## Summary
-
 | Category | Count |
 |----------|-------|
-| Source Code Inaccuracies | 1 |
-| Documentation Issues | 5 |
-| Other Problems | 2 |
+| 🔴 | 0 |
+| 🟡 | 2 |
+| 🟠 | 2 |

@@ -1,87 +1,42 @@
 <!-- source: content/docs/developer/templates/how-to/compose-templates.mdx -->
-# 📄 File: content/docs/developer/templates/how-to/compose-templates.mdx
+# File: content/docs/developer/templates/how-to/compose-templates.mdx
 
-> This document describes template composition using YAML configuration. The document contains significant inaccuracies regarding the YAML schema and feature support.
+> Documentation for template composition feature. The document accurately describes the `templates` key in cyan.yaml, key namespacing patterns, and SDK usage. All SDK imports, function signatures, and CLI references are correct.
 
-### 🔴 Source Code Inaccuracies
+### Source Code Inaccuracies
+(for each: Documented | Actual | file:line evidence)
 
-1. **Documented YAML key `compose` | Actual key is `templates`**
-   - Documentation shows: `compose:` as the YAML key for template composition
-   - Actual code: `templates:` is the correct key in `CyanTemplateFileConfig`
-   - Evidence: `/Users/erng/Workspace/atomi/runbook/platforms/sulfone/iridium/cyanregistry/src/cli/models/template_config.rs:25` shows `pub templates: Vec<String>`
-   - Evidence: `/Users/erng/Workspace/atomi/runbook/platforms/sulfone/iridium/e2e/template3/cyan.yaml:11-13` shows actual usage: `templates:\n  - ernest/template1\n  - ernest/template2`
+None found. All documented APIs and patterns match the SDK and configuration format:
 
-2. **Documented template reference format uses `name` and `version` properties | Actual format is `username/name:version` string**
-   - Documentation shows:
-     ```yaml
-     compose:
-       - name: my-org/base-setup
-         version: "1.0.0"
-     ```
-   - Actual code: Template references are simple strings in format `username/name:version`
-   - Evidence: `/Users/erng/Workspace/atomi/runbook/platforms/sulfone/iridium/cyanregistry/src/cli/models/template_config.rs:25` shows `pub templates: Vec<String>` (array of strings, not objects)
-   - Evidence: `/Users/erng/Workspace/atomi/runbook/platforms/sulfone/iridium/e2e/template4/cyan.yaml:11-12` shows: `templates:\n  - ernest/template3:4`
+- `templates` key in cyan.yaml is valid (cyan-yaml.mdx lines 134-148, task-spec.md line 104)
+- `StartTemplateWithLambda` is correctly exported from `@atomicloud/cyan-sdk` (SDK index.mdx line 22, task-spec.md line 159)
+- `GlobType` enum is correctly documented (types.mdx lines 12-21, values: Template = 0, Copy = 1)
+- `i.text(q, id, help)` shorthand form is correct (inquirer.mdx lines 39-48)
+- `cyan/default` processor name is correct (used throughout SDK docs)
+- The return type with `processors` and `plugins` arrays matches the `Cyan` interface (types.mdx lines 68-76)
 
-3. **Documented version format uses semver strings | Actual version is an integer**
-   - Documentation shows: `version: "1.0.0"`, `version: "2.0.0"`, etc.
-   - Actual code: Version is parsed as `i64` (integer) after the colon
-   - Evidence: `/Users/erng/Workspace/atomi/runbook/platforms/sulfone/iridium/cyanregistry/src/domain/config/template_config.rs:44` shows `pub version: Option<i64>`
-   - Evidence: `/Users/erng/Workspace/atomi/runbook/platforms/sulfone/iridium/cyanregistry/src/cli/mapper.rs:72-75` shows `v.parse::<i64>().ok()`
+### Documentation Issues
+(for each: Problem | Location | Fix)
 
-4. **Documented `condition` property for conditional composition | Feature does not exist**
-   - Documentation shows:
-     ```yaml
-     compose:
-       - name: features/typescript
-         condition: ${usesTypescript}
-     ```
-   - Actual code: No `condition` property exists in `CyanTemplateFileConfig` or `CyanTemplateRef`
-   - Evidence: `/Users/erng/Workspace/atomi/runbook/platforms/sulfone/iridium/cyanregistry/src/cli/models/template_config.rs:4-26` - no condition field
-   - Evidence: `/Users/erng/Workspace/atomi/runbook/platforms/sulfone/iridium/cyanregistry/src/domain/config/template_config.rs:41-45` - CyanTemplateRef has only username, name, version
+1. **Missing `plugins` property in return object** | Lines 112-125 (Composition in Code example) | The code example returns only `{ processors: [...] }` but the `Cyan` interface requires both `processors` and `plugins`. The `plugins` property is missing. Add `plugins: []` to the return object for completeness.
 
-5. **Documented `name` property inside compose items | Actual uses inline reference format**
-   - Documentation shows: `- name: my-org/base-setup`
-   - Actual code: `- username/name:version` format directly as string
-   - Evidence: `/Users/erng/Workspace/atomi/runbook/platforms/sulfone/iridium/cyanregistry/src/cli/mapper.rs:61-82` - `template_reference_mapper` parses string format `username/name:version`
+2. **File conflict handling described but not implemented in example** | Lines 89-95 (File Conflicts section) | The section describes three strategies (Override, Merge, Fail) but provides no code example showing how to handle these. Consider adding a brief code example or noting that override is the default behavior.
 
-### 🟡 Documentation Issues
+### Other Problems
+(for each: Problem | Recommendation)
 
-1. **Incorrect YAML key throughout document | Multiple locations**
-   - Problem: All YAML examples use `compose:` instead of `templates:`
-   - Locations: Lines 16-23, 35-44, 50-60, 142-157
-   - Fix: Replace `compose:` with `templates:` and reformat to string array syntax
+1. **Code example line 106-109 uses shorthand form with unconventional argument names** | The `i.text()` call uses `'Project name from base?', 'base-template.project.name', '...'` where `'...'` is a placeholder. While valid, this could be clearer. Consider using a proper description like `'Name from base template'` instead of `'...'`.
 
-2. **Incorrect template reference syntax | Multiple locations**
-   - Problem: Examples show object syntax with `name` and `version` properties
-   - Locations: Lines 18-22, 147-156
-   - Fix: Use string format `- username/name:version` instead
+2. **Microservice example version numbers are inconsistent** | Lines 139-146 | The example shows version numbers like `company/node-base:2`, `company/docker:3`, etc. without context. Consider noting that versions are auto-incrementing registry integers, not semantic versions (as documented in cyan-yaml.mdx lines 150-158).
 
-3. **Semver version format not supported | Lines 19, 21, 147-156**
-   - Problem: Documentation shows semver versions like `"1.0.0"`, `"2.0.0"`
-   - Fix: Use integer versions like `:1`, `:2`, etc.
-
-4. **Unsupported conditional composition feature | Lines 54-59**
-   - Problem: Documentation describes `condition: ${usesTypescript}` feature that does not exist
-   - Recommendation: Remove this section entirely or mark as planned feature
-
-5. **Code example parameter order unclear | Lines 106-131**
-   - Problem: Documentation shows `StartTemplateWithLambda(async (i, d) => {` but doesn't explain parameters
-   - Actual: `LambdaTemplateFn = (inquirer: IInquirer, determinism: IDeterminism) => Promise<Cyan>`
-   - Evidence: `/Users/erng/Workspace/atomi/runbook/platforms/sulfone/helium/sdks/node/src/api/template/lambda.ts:6`
-
-### 🟠 Other Problems
-
-1. **Documentation may describe a planned or deprecated API**
-   - Problem: The `compose` key and object-based syntax suggest this documentation may be describing a different version or planned feature
-   - Recommendation: Verify with product team whether this describes a future API or should be completely rewritten to match current implementation
-
-2. **Inconsistent naming conventions in examples**
-   - Problem: Examples mix `my-org/`, `shared/`, `company/`, `base/`, `features/` prefixes without explaining the username/name convention
-   - Recommendation: Use consistent `username/template-name:version` format throughout
+3. **Missing link verification note** | All related links were verified:
+   - `/docs/developer/templates/how-to/use-keys` - EXISTS (use-keys.mdx)
+   - `/docs/developer/templates/explanation/3-way-merge` - EXISTS (3-way-merge.mdx)
+   - `/docs/developer/templates/explanation/docker-vs-cyan-registry` - EXISTS (per explanation/index.mdx line 27)
 
 ## Summary
 | Category | Count |
 |----------|-------|
-| 🔴 | 5 |
-| 🟡 | 5 |
-| 🟠 | 2 |
+| Source Code Inaccuracies | 0 |
+| Documentation Issues | 2 |
+| Other Problems | 3 |

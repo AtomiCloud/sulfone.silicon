@@ -1,54 +1,47 @@
+<!-- source: content/docs/developer/plugins/explanation/what-are-plugins.mdx -->
 # File: content/docs/developer/plugins/explanation/what-are-plugins.mdx
 
-> Documentation explaining what plugins are, their role in CyanPrint, how they work, and when to use them. Includes code examples and comparison with processors.
+> Documentation explains plugin architecture, input/output types, and usage patterns. Several inaccuracies found in code examples and technical claims.
 
 ### Source Code Inaccuracies
+1. **Import from 'bun' is not used in actual codebase**
+   - Documented: `import { $ } from 'bun';`
+   - Actual: Real plugins (iridium/e2e/plugin1, plugin2) use `import fs from 'node:fs'` and `import path from 'node:path'` for file operations. No shell template literal API exists in the SDK.
+   - Evidence: /Users/erng/Workspace/atomi/runbook/platforms/sulfone/iridium/e2e/plugin1/index.ts:1-4 shows `import { PluginOutput, StartPluginWithLambda } from '@atomicloud/cyan-sdk'; import fs from 'node:fs'; import path from 'node:path';`
 
-1. **Type Name Mismatch**
-   - **Documented**: `PluginInput` interface
-   - **Actual**: `CyanPluginInput` type is exported from the SDK
-   - **Evidence**: `/Users/erng/Workspace/atomi/runbook/platforms/sulfone/helium/sdks/node/src/main.ts:193` exports `CyanPluginInput`, not `PluginInput`. The internal interface is `CyanPluginInput` at `/Users/erng/Workspace/atomi/runbook/platforms/sulfone/helium/sdks/node/src/domain/core/cyan_script_model.ts:18-21`
+2. **Shell command examples use non-standard API**
+   - Documented: `await $`git -C ${directory} init`.quiet();` and `await $`cd ${directory} && npm install`.quiet();`
+   - Actual: The SDK does not provide a shell API. Bun's `$` template literal is a Bun-specific feature, but actual plugins use Node.js fs/path modules directly.
+   - Evidence: Grep search across helium and iridium directories found no usage of `from 'bun'` in actual source code.
 
-2. **Missing Import Statement in Code Examples**
-   - **Documented**: Code examples use `$` template literal syntax without import
-   - **Actual**: The `$` function is from Bun's shell API, not the SDK, and requires `import { $ } from 'bun';`
-   - **Evidence**: All code examples in lines 108-151 use `$` syntax without showing the required import. The SDK package.json at `/Users/erng/Workspace/atomi/runbook/platforms/sulfone/helium/sdks/node/package.json` does not include `zx` or any shell library.
-
-3. **Input Property Name Inconsistency**
-   - **Documented**: Input receives `directory` property
-   - **Actual**: Correct - but the internal domain type uses `directory` while the documentation shows destructuring correctly. No issue here, just confirming accuracy.
+3. **Claim about "only component with shell access" is misleading**
+   - Documented: "Plugins are the only component with shell access. Processors are isolated and cannot execute commands."
+   - Actual: Neither plugins nor processors have explicit shell access in the SDK. Both receive directory paths and can technically execute shell commands using Node.js APIs (child_process). The isolation is conceptual/design-based, not technically enforced by the SDK.
+   - Evidence: /Users/erng/Workspace/atomi/runbook/platforms/sulfone/helium/sdks/node/src/domain/plugin/input.ts:1-6 shows PluginInput only has `directory` and `config` - no shell API provided.
 
 ### Documentation Issues
+1. **Examples use Bun-specific shell API that isn't part of @atomicloud/cyan-sdk**
+   - Problem: All three code examples (Setup Plugin, Formatter Plugin, Build Plugin) use `import { $ } from 'bun'` which is not part of the SDK
+   - Location: Lines 108-121, 127-142, 148-163
+   - Fix: Replace with Node.js `child_process` examples or `node:fs` operations, or clearly document that Bun runtime is required for shell operations
 
-1. **Missing Import in Code Examples**
-   - **Problem**: All three code examples (Setup Plugin, Formatter Plugin, Build Plugin) use `$` syntax without importing it
-   - **Location**: Lines 108-151
-   - **Fix**: Add `import { $ } from 'bun';` to each example or add a note explaining that Bun shell is required
-
-2. **Type Reference Inconsistency**
-   - **Problem**: Documentation references `PluginInput` but SDK exports `CyanPluginInput`
-   - **Location**: Input section (lines 48-50) and throughout code examples
-   - **Fix**: Either update to use `CyanPluginInput` or add a note that `PluginInput` is an alias/simplified name for documentation purposes
-
-3. **No Mention of Bun Dependency**
-   - **Problem**: Code examples rely on Bun's shell API (`$`) but this dependency is not mentioned
-   - **Location**: Throughout the "Common Plugin Patterns" section
-   - **Fix**: Add a callout or note explaining that the `$` syntax requires Bun, and link to alternative approaches (Node.js child_process, execa) for non-Bun environments
+2. **"config" property usage is ambiguous in examples**
+   - Problem: Examples cast `config` to custom types without explaining the type structure
+   - Location: Lines 134, 155 - `const cfg = config as { formatter?: string };`
+   - Fix: Add explanation of how config is passed from the template's cyan.yaml
 
 ### Other Problems
+1. **Missing explanation of how shell operations work in containerized environment**
+   - Problem: Documentation doesn't explain whether shell commands (like `git init`, `npm install`) actually work when plugins run in containers
+   - Recommendation: Clarify the runtime environment and whether tools like git/npm are available
 
-1. **Callout Claim About Processor Isolation**
-   - **Problem**: Callout states "Plugins are the only component with shell access. Processors are isolated and cannot execute commands."
-   - **Recommendation**: While this is the design intent, there's no technical enforcement visible in the SDK code. The processor interface at `/Users/erng/Workspace/atomi/runbook/platforms/sulfone/helium/sdks/node/src/domain/core/cyan_script.ts:15-17` receives a `CyanFileHelper` but technically a processor could still import Node.js modules. Consider clarifying this is a "by design" constraint rather than a technical enforcement.
-
-2. **Code Example Port Reference Missing**
-   - **Problem**: Documentation doesn't mention that plugins run on port 5552
-   - **Recommendation**: Consider adding this technical detail, as it's documented in the SDK source at `/Users/erng/Workspace/atomi/runbook/platforms/sulfone/helium/sdks/node/src/main.ts:65`
+2. **Design philosophy section could be more specific**
+   - Problem: "Simple - Minimal API, just receive directory and return it" doesn't explain what operations are actually available
+   - Recommendation: Link to relevant SDK reference documentation for available APIs
 
 ## Summary
-
 | Category | Count |
 |----------|-------|
-| Source Code Inaccuracies | 2 |
-| Documentation Issues | 3 |
+| Source Code Inaccuracies | 3 |
+| Documentation Issues | 2 |
 | Other Problems | 2 |

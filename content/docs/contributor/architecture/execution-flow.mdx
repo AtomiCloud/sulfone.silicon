@@ -37,7 +37,7 @@ The CLI first resolves the requested template:
     participant Registry as Zinc Registry
 
     User->>CLI: cyanprint create template-ref
-    CLI->>Registry: GET api/v1/template/{template-ref}
+    CLI->>Registry: GET api/v1/template/slug/{username}/{name}
     Registry-->>CLI: Template metadata + version info
     CLI->>CLI: Validate template exists
     CLI->>CLI: Resolve dependencies
@@ -134,14 +134,16 @@ Plugins can modify the final output:
 
 <Mermaid chart={`flowchart TD
     A[Processor Output] --> B[Load Plugins]
-    B --> C{Plugin Type}
-    C -->|File Modifier| D[Apply Transformations]
-    C -->|Content Generator| E[Generate Additional Files]
-    C -->|Validator| F[Validate Output]
-    D --> G[plug method called with directory and config]
-    E --> G
-    F --> G
-    G --> H[Final File Tree]
+    B --> C[Plugin 1: plugin method called]
+    C --> D[Plugin 2: plugin method called]
+    D --> E[Plugin N: plugin method called]
+    E --> F[Final File Tree]
+
+    subgraph "Sequential Execution"
+        G["Each plugin sees result of previous plugin"]
+    end
+
+    A --> G
 `} />
 
 ### Phase 7: Output Streaming
@@ -181,7 +183,7 @@ Results are streamed back to the client:
 | Resolution | Template not found | Return error with suggestions |
 | Resolution | Version conflict | Show dependency tree, suggest resolution |
 | Input | Validation failed | Display errors, prompt for correction |
-| Processing | Processor failed | Continue with remaining processors, warn user |
+| Processing | Processor failed | Returns error, stops merge pipeline |
 | Output | Write failure | Retry with elevated permissions, suggest manual path |
 
 ## Next Steps

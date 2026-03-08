@@ -77,10 +77,12 @@ export function HighCode({
   const pre = (
     <Pre
       code={h}
-      className="m-0 py-2 px-0 bg-editor-background rounded-none group flex-1 selection:bg-editor-selectionBackground"
+      className="m-0 py-3 px-0 rounded-none group flex-1"
       handlers={handlers}
       style={{
-        backgroundColor: "var(--bg-color)",
+        ...highlighted.style,
+        backgroundColor: highlighted.style?.backgroundColor || "var(--ch-16)",
+        color: highlighted.style?.color || "var(--ch-4)",
       }}
     />
   )

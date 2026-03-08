@@ -1,29 +1,27 @@
 <!-- source: content/docs/developer/templates/how-to/ask-confirm.mdx -->
 # 📄 File: content/docs/developer/templates/how-to/ask-confirm.mdx
 
-> Documentation for the `i.confirm()` method for boolean yes/no questions. The API signatures and return types are accurate against the source code. Minor issues found with parameter naming and code examples.
+> Documentation for using confirm questions in Cyanprint templates. Covers the shorthand and object forms of the `i.confirm()` method, return type, and common patterns.
 
 ### 🔴 Source Code Inaccuracies
-1. **Parameter naming inconsistency in shorthand form comments** | Documented: `// Key` and `// Description` | Actual: IInquirer interface shows `id` and `help` as parameter names | `/Users/erng/Workspace/atomi/runbook/platforms/sulfone/helium/sdks/node/src/domain/core/inquirer.ts:10`
-   - Documentation shows: `i.confirm('Use TypeScript?', 'project.typescript', 'Add TypeScript config')` with comments `// Key` and `// Description`
-   - Actual signature: `confirm(q: string, id: string, help?: string | null): Promise<boolean>;`
-   - The 2nd parameter is `id` (not "Key"), 3rd is `help` (not "Description")
+1. **Shorthand form signature mismatch** | Documented: `i.confirm('Message', 'project.typescript', 'Add TypeScript config')` (message, key, description) | Actual: `confirm(q: string, id: string, help?: string | null)` (message, id, help) | helium/sdks/node/src/domain/core/inquirer.ts:10 and helium/sdks/node/src/domain/service/stateless_inquirer.ts:48-60
+   - The documentation uses the comment "Key" for the second parameter, which matches the actual `id` parameter, but the third parameter comment says "Description" when the actual parameter is named `help` (help text). While functionally equivalent, the naming differs.
+
+2. **Related link - "Ask Select" page does not exist** | Documented: `[Ask Select](/docs/developer/templates/reference/sdk/inquirer#select)` | Actual: No dedicated "Ask Select" how-to page exists. The link correctly points to the fragment on the inquirer reference page, but the label implies a separate how-to guide that doesn't exist.
 
 ### 🟡 Documentation Issues
-1. **Inconsistent comment style in shorthand example** | Lines 14-16 | Change `// Key` and `// Description` to `// id` and `// help` to match actual parameter names in the IInquirer interface
+1. **Inconsistent comment naming in shorthand form** | Problem: Line 16 says `// Key` for the `id` parameter, which is correct, but could be clearer as `// id (key)` for consistency with the reference documentation. | Location: Line 16 | Fix: Change comment to `// id (key)` for consistency.
 
-2. **Object form uses inconsistent property description** | Lines 27-28 | The example shows `desc: 'Add TypeScript configuration'` but there's no explanation that this maps to the `help` parameter in the shorthand form
-
-3. **Link to Ask Select uses anchor that may not exist** | Line 119 | Link `/developer/templates/reference/sdk/inquirer#select` - The inquirer.mdx file has `### select()` heading but heading anchors in Fumadocs may be auto-generated differently
+2. **Object form property naming** | Problem: The documentation uses `desc` property in the object form which is correct per source (`desc?: string | null`), but doesn't mention that `errorMessage` is also available for ConfirmQ. | Location: Object form examples (lines 24-30, 106-112) | Recommendation: Consider mentioning `errorMessage` property for completeness, though not strictly necessary for a how-to guide.
 
 ### 🟠 Other Problems
-1. **No mention of `errorMessage` property** | Recommendation: The ConfirmQ interface supports an `errorMessage?: string | null` property (see `/Users/erng/Workspace/atomi/runbook/platforms/sulfone/helium/sdks/node/src/domain/core/question.ts:29`), which is not documented in the "Object Form (with default)" example. This property could be useful for customizing validation error messages.
+1. **Example uses `files.push()` pattern which may be confusing** | The "In Template Logic" example (lines 37-51) uses `files.push()` which isn't standard Cyan template API - templates typically return a `Cyan` object with `processors` array containing `files`. | Recommendation: The example at lines 56-80 showing the full return structure is better; consider removing or clarifying the `files.push()` example.
 
-2. **No mention that `validate` is not supported for ConfirmQ** | The ConfirmQ interface shows `validate?: null` indicating validation is not available for confirm questions, unlike other question types. This should be noted in the documentation.
+2. **GlobType.Template and GlobType.Copy usage not explained** | The examples use `GlobType.Template` and `GlobType.Copy` without explaining the difference in this how-to guide. | Recommendation: Add a brief note or link to documentation about GlobType differences.
 
 ## Summary
 | Category | Count |
 |----------|-------|
-| 🔴 | 1 |
-| 🟡 | 3 |
+| 🔴 | 2 |
+| 🟡 | 2 |
 | 🟠 | 2 |

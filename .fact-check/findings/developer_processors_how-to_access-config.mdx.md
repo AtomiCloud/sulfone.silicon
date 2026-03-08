@@ -1,52 +1,51 @@
 <!-- source: content/docs/developer/processors/how-to/access-config.mdx -->
 # 📄 File: content/docs/developer/processors/how-to/access-config.mdx
 
-> Documentation describes accessing processor config from templates. Core API signatures are correct, but several code examples contain property name mismatches with actual SDK types.
+> Fact-check completed for processor config access documentation. All code examples and API references verified against helium SDK source code and iridium e2e tests.
 
 ### 🔴 Source Code Inaccuracies
-
-1. **Documented property `input.writeDirectory`** | **Actual property is `input.writeDir`**
-   - Documentation (lines 91, 131, 186): Uses `input.writeDirectory` in return statements
-   - Actual SDK (`helium/sdks/node/src/domain/core/cyan_script_model.ts:12-13`): `CyanProcessorInput` has `writeDir`, not `writeDirectory`
-   - Evidence: All iridium examples use `input.writeDir` (see `iridium/e2e/processor1/index.ts:55`, `iridium/e2e/processor2/index.ts:55`)
-
-2. **Non-existent function `writeFileTo`**
-   - Documentation (line 180): `writeFileTo(config.clientOptions.outputDir, clientCode);`
-   - Actual: No such function exists in the SDK
-   - Evidence: The SDK only provides `file.writeFile()` method on `VirtualFile` objects at `helium/sdks/node/src/domain/core/fs/virtual_file.ts:48-54`
+(None found)
 
 ### 🟡 Documentation Issues
-
-1. **Missing 4th parameter `help` explanation in `i.select()` call**
-   - Problem: Documentation shows `i.select()` with 4 parameters but doesn't explain the `help` parameter
-   - Location: Lines 35-40 show `i.select('Output format:', ['json', 'yaml'], 'config.format', 'Choose format')` - the 4th param 'Choose format' appears to be `help` but is not labeled
-   - Fix: Add explanation of the overloaded `select()` signatures or clarify parameter meanings
-   - Evidence: `helium/sdks/node/src/domain/core/inquirer.ts:16-18` shows `select(q: string, options: string[], id: string, help?: string | null): Promise<string>`
-
-2. **Example uses undefined helper functions**
-   - Problem: The examples reference functions like `addDockerConfig`, `convertToYaml`, `generateTypes`, `removeComments`, `parseSchema`, `generateClient` that are not part of the SDK and not defined
-   - Location: Lines 81-86, 120-126, 175-180
-   - Fix: Either remove these function calls, replace with placeholder comments, or provide implementations
-
-3. **Inconsistent return type annotation**
-   - Problem: Real processor examples import and use explicit `Promise<ProcessorOutput>` return type, but documentation examples don't
-   - Location: All `StartProcessorWithLambda` examples (lines 68-92, 106-132, 169-187)
-   - Fix: Add explicit return type annotation for consistency with real code patterns
-   - Evidence: `iridium/e2e/processor1/index.ts:19` uses `: Promise<ProcessorOutput>`
+1. **Template config example uses processor name pattern that doesn't match e2e conventions** | Line 44 | The example uses `name: 'myorg/my-processor'` which is fine as a placeholder, but actual e2e tests use patterns like `cyane2e/processor1`. This is a minor cosmetic issue - no fix required.
+2. **Complex Config Example comment could be clearer** | Lines 180-181 | The comment about creating new VirtualFile instances is helpful but doesn't show how to actually create them. The `VirtualFile` constructor is exported but the example doesn't demonstrate the pattern. Consider adding a brief example or linking to relevant documentation.
 
 ### 🟠 Other Problems
-
-1. **Complex Config Example writes to arbitrary directory**
-   - Problem: The example shows writing to `config.clientOptions.outputDir` using non-existent `writeFileTo` function. This pattern would bypass the CyanFileHelper system and could lead to files being written outside the expected output directory
-   - Recommendation: Either remove this example or show the correct way to write additional files using the SDK's file handling mechanisms
-
-2. **Template parameter naming differs from SDK type definitions**
-   - Problem: Using `i` and `d` as parameter names works but is less readable than `inquirer` and `determinism`
-   - Recommendation: Use descriptive parameter names matching the SDK types for better clarity (optional - shorthand is acceptable)
+(None found)
 
 ## Summary
 | Category | Count |
 |----------|-------|
-| 🔴 | 2 |
-| 🟡 | 3 |
-| 🟠 | 2 |
+| 🔴 | 0 |
+| 🟡 | 2 |
+| 🟠 | 0 |
+
+## Verification Details
+
+### ✅ Verified Accurate
+1. **`StartProcessorWithLambda` signature**: Document shows `StartProcessorWithLambda(async (input, fileHelper) =>` - matches actual `LambdaProcessorFn = (i: CyanProcessorInput, fileHelper: CyanFileHelper) => Promise<ProcessorOutput>` in `helium/sdks/node/src/api/processor/lambda.ts:6`
+
+2. **`StartTemplateWithLambda` signature**: Document shows `StartTemplateWithLambda(async (i, d) =>` - matches actual `LambdaTemplateFn = (inquirer: IInquirer, determinism: IDeterminism) => Promise<Cyan>` in `helium/sdks/node/src/api/template/lambda.ts:6`
+
+3. **`input.config` type**: Document correctly states "Config is passed as `unknown` type" - verified in `helium/sdks/node/src/domain/core/cyan_script_model.ts:15`
+
+4. **`input.writeDir` property**: Document uses `input.writeDir` - verified in `helium/sdks/node/src/domain/core/cyan_script_model.ts:13`
+
+5. **`ProcessorOutput` return type**: Document returns `{ directory: input.writeDir }` - verified in `helium/sdks/node/src/domain/processor/output.ts:2`
+
+6. **`fileHelper.resolveAll()` method**: Verified in `helium/sdks/node/src/domain/core/fs/cyan_fs_helper.ts:33-40`
+
+7. **`VirtualFile` properties and methods**:
+   - `file.content` - verified in `helium/sdks/node/src/domain/core/fs/virtual_file.ts:37`
+   - `file.relative` - verified in `helium/sdks/node/src/domain/core/fs/virtual_file.ts:36`
+   - `file.writeFile()` - verified in `helium/sdks/node/src/domain/core/fs/virtual_file.ts:48-54`
+
+8. **Inquirer methods**:
+   - `i.checkbox()` signature - verified in `helium/sdks/node/src/domain/core/inquirer.ts:6`
+   - `i.select()` signature - verified in `helium/sdks/node/src/domain/core/inquirer.ts:18`
+
+9. **`GlobType.Template` enum value**: Verified in `helium/sdks/node/src/domain/core/cyan.ts:2`
+
+10. **Template processor config structure**: Document shows `config: { ... } as ProcessorConfig` which matches actual usage in e2e tests like `iridium/e2e/template1/cyan/index.ts:46-58`
+
+11. **Processor config casting pattern**: Document shows `const config = input.config as ProcessorConfig` which matches actual usage in `iridium/e2e/processor1/index.ts:20`

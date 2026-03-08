@@ -1,78 +1,57 @@
 <!-- source: content/docs/developer/templates/how-to/use-custom-processor.mdx -->
-# 📄 File: content/docs/developer/templates/how-to/use-custom-processor.mdx
+# File: content/docs/developer/templates/how-to/use-custom-processor.mdx
 
-> A how-to guide explaining how to use custom processors in templates, covering processor configuration, multiple processors, and examples using Handlebars and code generation.
+> Document describes how to use custom processors in templates, with examples for Mustache, Handlebars, and Prisma processors. Overall structure and concepts are accurate, but several config examples use invented/misleading option names.
 
-### 🔴 Source Code Inaccuracies
+### Source Code Inaccuracies
+1. **Mustache processor config uses invented options**
+   - Documented: `delimiters: ['{{', '}}'], escapeDelimiter: '{{{'` (lines 35-36)
+   - Actual: The default processor uses `parser.varSyntax: [['var__', '__']]` format for delimiter configuration (see spec.md lines 140-146). The `delimiters` and `escapeDelimiter` options are not documented anywhere in the SDK or spec.
+   - Evidence: `spec/v1/CU-86et8z80y/task-spec.md` lines 140-146; `content/docs/developer/templates/explanation/default-processor.mdx` lines 96-101
 
-1. **Incorrect link to Processor Development page**
-   - **Documented**: `[Processor Development](/developer/processors)` (lines 107, 172, 176)
-   - **Actual**: The correct path should be `/developer/processors/tutorials/first-processor` or `/developer/processors/explanation/why-processors` based on the actual file structure
-   - **Evidence**: Glob search shows processor docs exist at `content/docs/developer/processors/tutorials/first-processor.mdx` and `content/docs/developer/processors/explanation/why-processors.mdx`, not at `/developer/processors` directly
+2. **Processor config structure shows incorrect nesting**
+   - Documented: `config: { vars: {...}, options: {...} }` (lines 79-97)
+   - Actual: The default processor config uses `vars` at the top level and `parser` for syntax config, not `options`. The `options` nested object is not documented.
+   - Evidence: `spec/v1/CU-86et8z80y/task-spec.md` lines 139-146; `content/docs/developer/templates/reference/sdk/cyan-config.mdx` lines 99-108
 
-2. **Incorrect Handlebars example configuration**
-   - **Documented**: `helpers: { uppercase: (str) => str.toUpperCase(), ... }` (lines 124-127)
-   - **Actual**: The HandlebarsConfig class in the .NET SDK only has a `Vars` property, no `helpers` property
-   - **Evidence**: `/Users/erng/Workspace/atomi/runbook/platforms/sulfone/helium/sdks/dotnet/sulfone-helium-processor-api/HandleBarsConfig.cs:3-6` shows only `Dictionary<string, string> Vars`
+3. **Handlebars processor helpers as config is misleading**
+   - Documented: `helpers: { uppercase: (str) => str.toUpperCase(), ... }` (lines 124-127)
+   - Actual: Config is passed as `unknown` type (JSON-serializable data), not executable functions. Functions cannot be passed through the config object from template to processor.
+   - Evidence: `content/docs/developer/processors/reference/sdk/types.mdx` line 39 shows `config: unknown`; `content/docs/developer/processors/how-to/access-config.mdx` lines 190-193
 
-3. **Incorrect config structure for multiple processors example**
-   - **Documented**: `config: { vars: { name: 'my-project' } }` (line 57)
-   - **Actual**: The template scripts return config with `vars` nested inside, but the documented format doesn't match the actual structure returned by template scripts
-   - **Evidence**: `/Users/erng/Workspace/atomi/runbook/platforms/sulfone/iridium/e2e/template1/cyan/index.ts:46-58` shows `config: { vars: { color, name, ... } }`
+4. **Prisma processor options are invented**
+   - Documented: `generateClient: true, outputDir: 'src/db', previewFeatures: ['fullTextSearch']` (lines 155-158)
+   - Actual: No evidence these options exist in any actual processor. While custom processors CAN accept any config, presenting these as if they're real options is misleading.
+   - Evidence: No matching config options found in any source code or spec files
 
-4. **Missing parser configuration option in examples**
-   - **Documented**: The default processor documentation mentions `parser.varSyntax` but this how-to doesn't show it
-   - **Actual**: The actual CyanInput interface supports `parser.varSyntax` for custom delimiters
-   - **Evidence**: `/Users/erng/Workspace/atomi/runbook/platforms/sulfone/iridium/e2e/processor1/index.ts:13-16` shows `parser?: { varSyntax?: [string, string][] }`
+### Documentation Issues
+1. **Examples present hypothetical processors as if they exist**
+   - Problem: The document uses `myorg/mustache-processor`, `myorg/handlebars-processor`, `myorg/codegen-processor`, `myorg/prisma-processor` as examples without clarifying these are hypothetical
+   - Location: Lines 30-40, 112-131, 145-161
+   - Fix: Add a disclaimer that these are example processor names and configs to illustrate patterns, not actual available processors
 
-### 🟡 Documentation Issues
+2. **"Available Processors" table is misleading**
+   - Problem: Table (lines 99-104) shows "Custom | Any engine | Depends on implementation" as if it's an available processor
+   - Location: Lines 99-104
+   - Fix: Clarify that only `cyan/default` is a built-in processor; custom processors must be created or obtained from a registry
 
-1. **Inconsistent processor name format in examples**
-   - **Problem**: Examples use inconsistent processor naming conventions (e.g., `myorg/mustache-processor`, `myorg/handlebars-processor`) that don't follow the actual naming pattern seen in source
-   - **Location**: Lines 31, 62, 81, 113, 150
-   - **Fix**: Use realistic processor names like `cyan/default` or `username/processorname` format matching actual code patterns
+3. **Callout link text doesn't match actual page structure**
+   - Problem: Callout says "See [Processor Development](/docs/developer/processors)" but this links to an index page, not a specific "Processor Development" page
+   - Location: Lines 106-108
+   - Fix: This is acceptable as it links to the processor section index which contains development guides
 
-2. **Code generation example is speculative**
-   - **Problem**: The "Prisma processor" example (lines 146-161) is entirely hypothetical and doesn't correspond to any actual processor in the codebase
-   - **Location**: Lines 146-161
-   - **Fix**: Either remove this example or clearly mark it as hypothetical
+### Other Problems
+1. **Missing TypeScript import in first example**
+   - Problem: First code example (lines 27-41) uses `GlobType.Template` but doesn't show the import statement
+   - Recommendation: Add `import { GlobType } from '@atomicloud/cyan-sdk';` for completeness
 
-3. **Handlebars example uses features not in SDK**
-   - **Problem**: The Handlebars example shows `helpers` configuration and `{{#each}}` syntax, but the actual Handlebars processor in the codebase only supports basic variable substitution
-   - **Location**: Lines 110-143
-   - **Fix**: Simplify the example to match actual SDK capabilities or clarify this is for custom implementation
-
-4. **Missing information about processor isolation**
-   - **Problem**: The document doesn't mention that processors run in Docker containers with isolation
-   - **Location**: Entire document
-   - **Fix**: Add note about container-based execution (referenced in boron docs: `docs/developer/features/04-processor-isolation.md`)
-
-5. **Steps for creating custom processors are too vague**
-   - **Problem**: Steps 1-4 (lines 165-170) lack actionable detail and don't reference actual SDK documentation
-   - **Location**: Lines 165-170
-   - **Fix**: Link to actual SDK entry points like `StartProcessorWithLambda`, `ICyanProcessor` interface
-
-### 🟠 Other Problems
-
-1. **No mention of GlobType.Copy**
-   - **Problem**: Only `GlobType.Template` is shown in examples, but `GlobType.Copy` is also available for static file copying
-   - **Recommendation**: Add example showing Copy type for files that don't need processing
-
-2. **Available Processors table is incomplete**
-   - **Problem**: The table (lines 99-104) only lists `cyan/default` and a generic "Custom" entry
-   - **Recommendation**: Either remove the table or populate it with actual available processors if they exist
-
-3. **No SDK-specific guidance**
-   - **Problem**: Document doesn't distinguish between Node, Python, and .NET SDK implementations
-   - **Recommendation**: Add SDK-specific code examples or link to SDK documentation
-
-4. **No error handling guidance**
-   - **Problem**: No mention of how to handle errors in custom processors
-   - **Recommendation**: Add section on error handling patterns
+2. **No mention of multi-language SDK support**
+   - Problem: According to spec.md, SDK examples should be provided in TypeScript, Python, and C# (lines 486-487)
+   - Recommendation: Consider adding tabbed examples for all 3 languages as per project standards
 
 ## Summary
 | Category | Count |
 |----------|-------|
-| 🔴 | 4 |
-| 🟡 | 5 |
-| 🟠 | 4 |
+| Source Code Inaccuracies | 4 |
+| Documentation Issues | 3 |
+| Other Problems | 2 |

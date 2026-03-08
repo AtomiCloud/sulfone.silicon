@@ -84,6 +84,7 @@ CyanPrint uses a containerized architecture where each artifact runs in its own 
 | Template   | Collects user input, returns Cyan config | POST /api/template/init, /api/template/validate |
 | Processor  | Reads files, transforms, writes output   | POST /api/process                               |
 | Plugin     | Post-processing on generated files       | POST /api/plug                                  |
+| Resolver   | Resolves file conflicts from layers      | POST /api/resolve                               |
 | Merger     | Merges processor outputs into final result | POST /merge/:sessionId, POST /zip              |
 
 ## Container Path Mechanics
@@ -111,7 +112,8 @@ CyanPrint uses a containerized architecture where each artifact runs in its own 
 | Template  | 5550 | POST /api/template/init, /api/template/validate |
 | Processor | 5551 | POST /api/process                               |
 | Plugin    | 5552 | POST /api/plug                                  |
-| Merger    | 9000 | POST /merge/:sessionId, POST /zip               |
+| Resolver  | 5553 | POST /api/resolve                               |
+| Merger    | 9000 | POST /merge/:sessionId, POST /zip (served by Coordinator) |
 | Coordinator | 9000 | Internal orchestration                         |
 
 Each artifact SDK starts an HTTP server on its assigned port. The Coordinator communicates with containers via these endpoints.

@@ -3,9 +3,14 @@ title: Type Definitions
 description: Full type reference for processor SDK
 ---
 
+import { Callout } from 'fumadocs-ui/components/callout';
+import { Accordion, Accordions } from 'fumadocs-ui/components/accordion';
+
 # Type Definitions
 
-Complete type reference for the processor SDK.
+Complete type reference for the processor SDK. Use these types when building custom processors to ensure type safety and proper integration with CyanPrint's processing pipeline.
+
+For usage examples, see [Processor Input/Output](/docs/developer/processors/reference/sdk/input-output).
 
 ## Core Types
 
@@ -39,6 +44,10 @@ interface CyanProcessorInput {
   config: unknown;
 }
 ```
+
+<Callout type="warn">
+  The `config` property is typed as `unknown`. You must cast it to your expected type or use a type guard pattern. See the [Type Guard Pattern](#type-guard-pattern) section below.
+</Callout>
 
 ### ProcessorOutput
 
@@ -103,7 +112,9 @@ interface CyanGlob {
 
 ## VirtualFile Types
 
-All VirtualFile types are **classes**, not interfaces.
+<Callout type="info" title="Classes, not interfaces">
+  All VirtualFile types are **classes**, not interfaces. This means they have constructor signatures and methods, not just property definitions.
+</Callout>
 
 ### VirtualFile
 
@@ -294,7 +305,8 @@ function StartProcessorWithLambda(
 
 The following sections show common patterns you can use in your processors. These are not SDK types, but examples of how to structure your code.
 
-### Common Config Patterns
+<Accordions type="single">
+  <Accordion title="Common Config Patterns">
 
 ```ts
 // Variable substitution config (like default processor)
@@ -321,7 +333,8 @@ interface ProcessorConfig extends FeatureConfig, FormatConfig {
 }
 ```
 
-### Error Handling Patterns
+  </Accordion>
+  <Accordion title="Error Handling Patterns">
 
 ```ts
 // Suggested error classes for custom error handling
@@ -347,9 +360,8 @@ class TransformError extends ProcessorError {
 }
 ```
 
----
-
-## Type Guard Pattern
+  </Accordion>
+  <Accordion title="Type Guard Pattern">
 
 Example pattern for safely casting the config:
 
@@ -371,6 +383,11 @@ StartProcessorWithLambda(async (input, fileHelper) => {
   };
 });
 ```
+
+  </Accordion>
+</Accordions>
+
+---
 
 ## Related
 

@@ -3,9 +3,12 @@ title: Update a Project
 description: Update existing projects with the latest template version
 ---
 
+import { Steps, Step } from 'fumadocs-ui/components/steps';
+import { Callout } from 'fumadocs-ui/components/callout';
+
 # Update a Project
 
-```bash
+```bash -c
 # Update project in current directory to latest versions
 cyanprint update
 
@@ -24,11 +27,33 @@ CyanPrint uses a 3-way merge to preserve your customizations when updating. See 
 
 When you run `cyanprint update`, the following happens:
 
-1. **Reads state file** - Loads `.cyan_state.yaml` to determine template history and current versions
-2. **Fetches latest templates** - Downloads the latest template versions from the registry
-3. **Performs 3-way merge** - Merges your local changes with the new template version
-4. **Writes merged files** - Applies the merged result to your project
-5. **Cleans up sessions** - Removes temporary session data
+<Steps>
+  <Step>
+    ### Reads state file
+
+    Loads `.cyan_state.yaml` to determine template history and current versions
+  </Step>
+  <Step>
+    ### Fetches latest templates
+
+    Downloads the latest template versions from the registry
+  </Step>
+  <Step>
+    ### Performs 3-way merge
+
+    Merges your local changes with the new template version
+  </Step>
+  <Step>
+    ### Writes merged files
+
+    Applies the merged result to your project
+  </Step>
+  <Step>
+    ### Cleans up sessions
+
+    Removes temporary session data
+  </Step>
+</Steps>
 
 ## CLI Options
 
@@ -48,11 +73,15 @@ When you run `cyanprint update`, the following happens:
 
 ### Missing `.cyan_state.yaml`
 
+<Callout type="warn">
 If the `.cyan_state.yaml` file is missing, CyanPrint cannot determine the template history. You will need to re-initialize the project or restore the state file from version control.
+</Callout>
 
 ### Merge Conflicts
 
+<Callout type="info">
 During 3-way merge, conflicts may occur when both you and the template have modified the same section. CyanPrint will preserve your local changes by default. Review the merged files carefully after an update.
+</Callout>
 
 ## CLI Reference
 

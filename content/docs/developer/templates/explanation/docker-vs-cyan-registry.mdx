@@ -4,6 +4,8 @@ description: Understanding where to publish templates
 ---
 
 import { Callout } from 'fumadocs-ui/components/callout';
+import { Steps, Step } from 'fumadocs-ui/components/steps';
+import { Cards, Card } from 'fumadocs-ui/components/card';
 
 # Docker Registry vs CyanPrint Registry
 
@@ -29,7 +31,7 @@ Docker registries store the actual template images.
 
 #### Docker Hub
 
-```bash
+```bash -c
 docker login
 docker buildx build -t docker.io/myorg/my-template:1.0.0 --push .
 ```
@@ -40,7 +42,7 @@ docker buildx build -t docker.io/myorg/my-template:1.0.0 --push .
 
 #### GitHub Container Registry (GHCR)
 
-```bash
+```bash -c
 echo $GITHUB_TOKEN | docker login ghcr.io -u USERNAME --password-stdin
 docker buildx build -t ghcr.io/myorg/my-template:1.0.0 --push .
 ```
@@ -51,7 +53,7 @@ docker buildx build -t ghcr.io/myorg/my-template:1.0.0 --push .
 
 #### Private Registry
 
-```bash
+```bash -c
 docker login registry.example.com
 docker buildx build -t registry.example.com/myorg/my-template:1.0.0 --push .
 ```
@@ -73,7 +75,7 @@ CyanPrint registry stores metadata about templates.
 
 ### Registration
 
-```bash
+```bash -c
 cyanprint push template --token $CYAN_TOKEN \
   myorg/my-template-blob 1.0.0 \
   myorg/my-template 1.0.0
@@ -105,32 +107,40 @@ This registers:
 
 ## Workflow
 
-### Publishing
+<Steps>
+  <Step>
+    ### Build and Push Images
 
-1. Build images and push to Docker registry
-2. Register with CyanPrint registry
+    Build images and push to Docker registry:
 
-```bash
-# 1. Build and push to Docker Hub
-docker buildx build --platform linux/amd64,linux/arm64 \
-  -f cyan/template.Dockerfile \
-  -t docker.io/myorg/my-template:1.0.0 \
-  --push .
+    ```bash -c
+    docker buildx build --platform linux/amd64,linux/arm64 \
+      -f cyan/template.Dockerfile \
+      -t docker.io/myorg/my-template:1.0.0 \
+      --push .
 
-docker buildx build --platform linux/amd64,linux/arm64 \
-  -f cyan/blob.Dockerfile \
-  -t docker.io/myorg/my-template-blob:1.0.0 \
-  --push .
+    docker buildx build --platform linux/amd64,linux/arm64 \
+      -f cyan/blob.Dockerfile \
+      -t docker.io/myorg/my-template-blob:1.0.0 \
+      --push .
+    ```
+  </Step>
+  <Step>
+    ### Register with CyanPrint
 
-# 2. Register with CyanPrint
-cyanprint push template --token $CYAN_TOKEN \
-  docker.io/myorg/my-template-blob 1.0.0 \
-  docker.io/myorg/my-template 1.0.0
-```
+    Register with CyanPrint registry:
+
+    ```bash -c
+    cyanprint push template --token $CYAN_TOKEN \
+      docker.io/myorg/my-template-blob 1.0.0 \
+      docker.io/myorg/my-template 1.0.0
+    ```
+  </Step>
+</Steps>
 
 ### Using
 
-```bash
+```bash -c
 # User searches
 cyanprint search nodejs
 
@@ -164,7 +174,7 @@ For internal templates, you can use only Docker registry with direct image refer
 
 Use templates without CyanPrint registry:
 
-```bash
+```bash -c
 # Direct image reference
 cyanprint create docker.io/myorg/my-template:1.0.0 ./my-project
 
@@ -179,6 +189,14 @@ This works but loses:
 
 ## Related
 
-- [Push to Registry](/docs/developer/templates/how-to/push-to-registry) - Publishing guide
-- [Dockerfiles Reference](/docs/developer/templates/reference/dockerfiles) - Docker configuration
-- [Project Structure](/docs/developer/templates/reference/project-structure) - Template organization
+<Cards>
+  <Card href="/docs/developer/templates/how-to/push-to-registry" title="Push to Registry">
+    Publishing guide
+  </Card>
+  <Card href="/docs/developer/templates/reference/dockerfiles" title="Dockerfiles Reference">
+    Docker configuration
+  </Card>
+  <Card href="/docs/developer/templates/reference/project-structure" title="Project Structure">
+    Template organization
+  </Card>
+</Cards>

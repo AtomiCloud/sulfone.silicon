@@ -5,6 +5,7 @@ description: Execute shell commands in the generated project directory
 
 import { Callout } from 'fumadocs-ui/components/callout';
 import { Tabs } from 'fumadocs-ui/components/tabs';
+import { Cards, Card } from 'fumadocs-ui/components/card';
 
 # Run Shell Commands
 
@@ -18,7 +19,7 @@ Bun provides a convenient shell API using template literals:
 Bun Shell is specific to the Bun runtime. If you're using Node.js, skip to the [Node.js child_process](#using-nodejs-child_process) section.
 </Callout>
 
-```ts
+```ts -c
 import { PluginOutput, StartPluginWithLambda } from '@atomicloud/cyan-sdk';
 import { $ } from 'bun';
 
@@ -50,7 +51,7 @@ StartPluginWithLambda(async (input): Promise<PluginOutput> => {
 
 ### Capturing Output
 
-```ts
+```ts -c
 import { PluginOutput, StartPluginWithLambda } from '@atomicloud/cyan-sdk';
 import { $ } from 'bun';
 
@@ -69,7 +70,7 @@ StartPluginWithLambda(async (input): Promise<PluginOutput> => {
 
 ### Handling Errors
 
-```ts
+```ts -c
 import { PluginOutput, StartPluginWithLambda } from '@atomicloud/cyan-sdk';
 import { $ } from 'bun';
 
@@ -93,7 +94,7 @@ For more control or compatibility, use Node.js APIs:
 
 <Tabs items={['exec', 'spawn', 'execa']}>
 
-```ts
+```ts -c
 import { exec } from 'child_process';
 import { promisify } from 'util';
 import { PluginOutput, StartPluginWithLambda } from '@atomicloud/cyan-sdk';
@@ -116,7 +117,7 @@ StartPluginWithLambda(async (input): Promise<PluginOutput> => {
 });
 ```
 
-```ts
+```ts -c
 import { spawn } from 'child_process';
 import { PluginOutput, StartPluginWithLambda } from '@atomicloud/cyan-sdk';
 
@@ -140,7 +141,7 @@ StartPluginWithLambda(async (input): Promise<PluginOutput> => {
 });
 ```
 
-```tsx
+```tsx -c
 // Install: bun add execa
 // Note: execa is not included in the SDK and must be installed separately
 import { execa } from 'execa';
@@ -165,7 +166,7 @@ StartPluginWithLambda(async (input): Promise<PluginOutput> => {
 
 ### Package Manager Commands
 
-```ts
+```ts -c
 import { PluginOutput, StartPluginWithLambda } from '@atomicloud/cyan-sdk';
 import { $ } from 'bun';
 
@@ -189,7 +190,7 @@ StartPluginWithLambda(async (input): Promise<PluginOutput> => {
 
 ### Git Operations
 
-```ts
+```ts -c
 import { PluginOutput, StartPluginWithLambda } from '@atomicloud/cyan-sdk';
 import { $ } from 'bun';
 
@@ -213,7 +214,7 @@ StartPluginWithLambda(async (input): Promise<PluginOutput> => {
 
 ### Running Build Tools
 
-```ts
+```ts -c
 import { PluginOutput, StartPluginWithLambda } from '@atomicloud/cyan-sdk';
 import { $ } from 'bun';
 
@@ -237,7 +238,7 @@ StartPluginWithLambda(async (input): Promise<PluginOutput> => {
 });
 ```
 
-<Callout type="info">
+<Callout type="warn">
 The `--if-present` flag for npm scripts requires npm version 7 or later. For older npm versions, you'll need to check if the script exists before running it.
 </Callout>
 
@@ -247,6 +248,14 @@ Be careful with long-running commands. The plugin timeout is configurable but ha
 
 ## Related
 
-- [Modify Generated Files](/docs/developer/plugins/how-to/modify-files) - Edit files
-- [Conditional Execution](/docs/developer/plugins/how-to/conditional-execution) - Run based on config
-- [Plugin Input/Output](/docs/developer/plugins/reference/sdk/input-output) - API reference
+<Cards>
+  <Card href="/docs/developer/plugins/how-to/modify-files" title="Modify Generated Files">
+    Edit files in the generated project
+  </Card>
+  <Card href="/docs/developer/plugins/how-to/conditional-execution" title="Conditional Execution">
+    Run commands based on configuration
+  </Card>
+  <Card href="/docs/developer/plugins/reference/sdk/input-output" title="Plugin Input/Output">
+    API reference for plugin inputs and outputs
+  </Card>
+</Cards>

@@ -3,6 +3,10 @@ title: Plugin Input/Output
 description: Type definitions for plugin interfaces
 ---
 
+import { TypeTable } from 'fumadocs-ui/components/type-table';
+import { Callout } from 'fumadocs-ui/components/callout';
+import { Tabs, Tab } from 'fumadocs-ui/components/tabs';
+
 # Plugin Input/Output
 
 Type definitions for the data structures passed to and returned from plugins.
@@ -13,7 +17,7 @@ The input object passed to the plugin handler.
 
 ### Definition
 
-```ts
+```ts types.ts -c
 interface CyanPluginInput {
   directory: string;
   config: unknown;
@@ -22,10 +26,20 @@ interface CyanPluginInput {
 
 ### Properties
 
-| Property | Type | Description |
-|----------|------|-------------|
-| `directory` | `string` | Path to the generated project files |
-| `config` | `unknown` | Configuration from the template |
+<TypeTable
+  type={{
+    directory: {
+      type: 'string',
+      description: 'Path to the generated project files',
+      required: true,
+    },
+    config: {
+      type: 'unknown',
+      description: 'Configuration from the template',
+      required: true,
+    },
+  }}
+/>
 
 ### Typical Values
 
@@ -35,7 +49,7 @@ interface CyanPluginInput {
 
 ### Usage
 
-```ts
+```ts plugin.ts -c
 import { StartPluginWithLambda, type CyanPluginInput, type PluginOutput } from '@atomicloud/cyan-sdk';
 
 StartPluginWithLambda(async (input) => {
@@ -54,7 +68,7 @@ The return value from the plugin handler.
 
 ### Definition
 
-```ts
+```ts types.ts -c
 interface PluginOutput {
   directory: string;
 }
@@ -62,13 +76,19 @@ interface PluginOutput {
 
 ### Properties
 
-| Property | Type | Description |
-|----------|------|-------------|
-| `directory` | `string` | Output directory path (same as input) |
+<TypeTable
+  type={{
+    directory: {
+      type: 'string',
+      description: 'Output directory path (same as input)',
+      required: true,
+    },
+  }}
+/>
 
 ### Usage
 
-```ts
+```ts plugin.ts -c
 StartPluginWithLambda(async (input) => {
   // ... processing ...
 
@@ -81,11 +101,13 @@ StartPluginWithLambda(async (input) => {
 
 ## Config Type
 
-The `config` property is typed as `unknown`. Cast to your expected type:
+<Callout type="info" title="Type Safety">
+  The `config` property is typed as `unknown`. Cast to your expected type for proper type checking.
+</Callout>
 
 ### Definition
 
-```ts
+```ts config.ts -c
 // Define your config type
 interface MyPluginConfig {
   git?: boolean;
@@ -94,44 +116,51 @@ interface MyPluginConfig {
 }
 ```
 
-### Option 1: Direct Cast
+### Config Options
 
-```ts
-StartPluginWithLambda(async (input) => {
-  // Cast to your type
-  const config = input.config as MyPluginConfig;
+<Tabs items={['Direct Cast', 'With Defaults']}>
+  <Tab value="Direct Cast">
 
-  if (config.git) {
-    // ...
-  }
+  ```ts plugin.ts -c
+  StartPluginWithLambda(async (input) => {
+    // Cast to your type
+    const config = input.config as MyPluginConfig;
 
-  return { directory: input.directory };
-});
-```
+    if (config.git) {
+      // ...
+    }
 
-### Option 2: With Defaults
+    return { directory: input.directory };
+  });
+  ```
 
-```ts
-StartPluginWithLambda(async (input) => {
-  // Provide defaults and merge with incoming config
-  const config: MyPluginConfig = {
-    git: true,
-    installDeps: false,
-    packageManager: 'npm',
-    ...(input.config as Partial<MyPluginConfig>)
-  };
+  </Tab>
+  <Tab value="With Defaults">
 
-  if (config.git) {
-    // ...
-  }
+  ```ts plugin.ts -c
+  StartPluginWithLambda(async (input) => {
+    // Provide defaults and merge with incoming config
+    const config: MyPluginConfig = {
+      git: true,
+      installDeps: false,
+      packageManager: 'npm',
+      ...(input.config as Partial<MyPluginConfig>)
+    };
 
-  return { directory: input.directory };
-});
-```
+    if (config.git) {
+      // ...
+    }
+
+    return { directory: input.directory };
+  });
+  ```
+
+  </Tab>
+</Tabs>
 
 ### Complex Config
 
-```ts
+```ts config.ts -c
 interface PluginConfig {
   // Simple types
   enabled: boolean;
@@ -157,7 +186,7 @@ interface PluginConfig {
 
 ## Full Example
 
-```ts
+```ts plugin.ts -c
 import { StartPluginWithLambda, type CyanPluginInput, type PluginOutput } from '@atomicloud/cyan-sdk';
 import { $ } from 'bun';
 import * as fs from 'fs/promises';

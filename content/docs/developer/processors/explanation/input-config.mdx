@@ -4,6 +4,7 @@ description: Understanding how configuration flows from template to processor
 ---
 
 import { Callout } from 'fumadocs-ui/components/callout';
+import { Cards, Card } from 'fumadocs-ui/components/card';
 
 # Input Config
 
@@ -24,7 +25,7 @@ Processors receive configuration from templates through `input.config`. This ena
 
 Templates define processor configuration in the return value:
 
-```ts
+```ts template/index.ts -c
 // Template's index.ts
 StartTemplateWithLambda(async (i, d) => {
   // Collect user input
@@ -55,7 +56,7 @@ StartTemplateWithLambda(async (i, d) => {
 
 Processors receive config through `input.config`:
 
-```ts
+```ts processor/index.ts -c
 // Processor's index.ts
 
 // Define expected config shape
@@ -71,9 +72,11 @@ interface MyProcessorConfig {
 
 StartProcessorWithLambda(async (input, fileHelper) => {
   // Cast to your type
+  // !mark
   const config = input.config as MyProcessorConfig;
 
   // Use config values
+  // !mark
   console.log('Project:', config.projectName);
   console.log('Features:', config.features);
 
@@ -153,7 +156,7 @@ interface ComplexConfig {
 
 Always handle missing config gracefully:
 
-```ts
+```ts -c
 interface Config {
   required: string;
   optional?: boolean;
@@ -177,7 +180,7 @@ StartProcessorWithLambda(async (input, fileHelper) => {
 });
 ```
 
-<Callout type="info">
+<Callout type="warn" title="Type Safety">
 `input.config` is typed as `unknown`. Always cast to your expected type and provide defaults for optional fields.
 </Callout>
 
@@ -185,7 +188,7 @@ StartProcessorWithLambda(async (input, fileHelper) => {
 
 Validate config at processor start:
 
-```ts
+```ts -c
 interface Config {
   mode: 'dev' | 'prod';
   maxFiles: number;
@@ -307,6 +310,14 @@ processor:
 
 ## Related
 
-- [Access Config](/docs/developer/processors/how-to/access-config) - How-to guide
-- [cyan.yaml Format](/docs/developer/processors/reference/cyan-yaml) - Config documentation
-- [Input/Output Types](/docs/developer/processors/reference/sdk/input-output) - Type definitions
+<Cards>
+  <Card href="/docs/developer/processors/how-to/access-config" title="Access Config">
+    How-to guide for accessing configuration
+  </Card>
+  <Card href="/docs/developer/processors/reference/cyan-yaml" title="cyan.yaml Format">
+    Config documentation reference
+  </Card>
+  <Card href="/docs/developer/processors/reference/sdk/input-output" title="Input/Output Types">
+    Type definitions reference
+  </Card>
+</Cards>

@@ -3,6 +3,8 @@ title: Plugin Reference
 description: Technical reference for CyanPrint plugins
 ---
 
+import { Cards, Card } from 'fumadocs-ui/components/card';
+
 # Plugin Reference
 
 Technical documentation for the CyanPrint plugin system.
@@ -11,13 +13,31 @@ This reference is organized into two main sections: **Project Setup** covers the
 
 ## Project Setup
 
-- [Project Structure](/docs/developer/plugins/reference/project-structure) - Standard directory layout and required files for plugin projects
-- [cyan.yaml](/docs/developer/plugins/reference/cyan-yaml) - Configuration file for plugin metadata and config schema
-- [Dockerfile](/docs/developer/plugins/reference/dockerfile) - Container configuration for CyanPrint plugins
+<Cards>
+  <Card href="/docs/developer/plugins/reference/project-structure" title="Project Structure">
+    Standard directory layout and required files for plugin projects
+  </Card>
+  <Card href="/docs/developer/plugins/reference/cyan-yaml" title="cyan.yaml">
+    Configuration file for plugin metadata and config schema
+  </Card>
+  <Card href="/docs/developer/plugins/reference/dockerfile" title="Dockerfile">
+    Container configuration for CyanPrint plugins
+  </Card>
+</Cards>
 
 ## SDK Reference
 
-- [SDK Overview](/docs/developer/plugins/reference/sdk/index) - Introduction to the plugin SDK
-- [StartPluginWithLambda](/docs/developer/plugins/reference/sdk/start-plugin) - Entry point for plugin logic
-- [Plugin Input/Output](/docs/developer/plugins/reference/sdk/input-output) - Type definitions for plugin interfaces
-- [Type Definitions](/docs/developer/plugins/reference/sdk/types) - Complete type reference
+<Cards>
+  <Card href="/docs/developer/plugins/reference/sdk/index" title="SDK Overview">
+    Introduction to the plugin SDK
+  </Card>
+  <Card href="/docs/developer/plugins/reference/sdk/start-plugin" title="StartPluginWithLambda">
+    Entry point for plugin logic
+  </Card>
+  <Card href="/docs/developer/plugins/reference/sdk/input-output" title="Plugin Input/Output">
+    Type definitions for plugin interfaces
+  </Card>
+  <Card href="/docs/developer/plugins/reference/sdk/types" title="Type Definitions">
+    Complete type reference
+  </Card>
+</Cards>

@@ -217,9 +217,9 @@ The template Dockerfile is named `Dockerfile` and located in the `cyan/` directo
 
 ### Development Build
 
-```bash
-# Build template locally (from within cyan/ directory)
-cd cyan && docker build -t my-template:dev .
+```bash -c
+# Build template locally
+docker build -t my-template:dev ./cyan
 
 # Build blob locally (from project root)
 docker build -f blob.Dockerfile -t my-template-blob:dev .
@@ -227,11 +227,11 @@ docker build -f blob.Dockerfile -t my-template-blob:dev .
 
 ### Production Build (Multi-Arch)
 
-```bash
-# Build and push template (from within cyan/ directory)
-cd cyan && docker buildx build --platform linux/amd64,linux/arm64 \
+```bash -c
+# Build and push template
+docker buildx build --platform linux/amd64,linux/arm64 \
   -t myorg/my-template:1.0.0 \
-  --push .
+  --push ./cyan
 
 # Build and push blob (from project root)
 docker buildx build --platform linux/amd64,linux/arm64 \
@@ -239,10 +239,6 @@ docker buildx build --platform linux/amd64,linux/arm64 \
   -t myorg/my-template-blob:1.0.0 \
   --push .
 ```
-
-<Callout type="info">
-See [Push to Registry](/docs/developer/templates/how-to/push-to-registry) for complete publishing instructions.
-</Callout>
 
 ## Image Sizes
 
@@ -256,17 +252,11 @@ Optimize for smaller images:
 | `python:slim` | ~150MB | Template execution (Python SDK) |
 | `mcr.microsoft.com/dotnet/runtime` | ~80MB | Template execution (.NET SDK) |
 
-## Related
-
-- [Push to Registry](/docs/developer/templates/how-to/push-to-registry) - Publishing templates
-- [Project Structure](/docs/developer/templates/reference/project-structure) - Template organization
-- [cyan.yaml Reference](/docs/developer/templates/reference/cyan-yaml) - Metadata configuration
-
 ## Debugging
 
 To debug Dockerfile issues locally:
 
-```bash
+```bash -c
 # Run template container interactively
 docker run -it --rm -p 5550:5550 my-template:dev sh
 
@@ -280,3 +270,9 @@ curl http://localhost:5550/init
 docker run -it --rm my-template-blob:dev sh
 ls -la /cyanprint/
 ```
+
+## Related
+
+- [Push to Registry](/docs/developer/templates/how-to/push-to-registry) - Publishing templates
+- [Project Structure](/docs/developer/templates/reference/project-structure) - Template organization
+- [cyan.yaml Reference](/docs/developer/templates/reference/cyan-yaml) - Metadata configuration

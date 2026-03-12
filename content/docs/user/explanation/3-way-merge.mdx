@@ -3,6 +3,10 @@ title: 3-Way Merge
 description: How CyanPrint updates preserve your local changes
 ---
 
+import { Mermaid } from '@/components/mdx/mermaid';
+import { Callout } from 'fumadocs-ui/components/callout';
+import { Cards, Card } from 'fumadocs-ui/components/card';
+
 # 3-Way Merge
 
 When updating a project, CyanPrint uses a 3-way merge to preserve your customizations.
@@ -15,16 +19,34 @@ The merge considers three versions:
 2. **Yours**: Your modified project files
 3. **Theirs**: New template version
 
+<Mermaid
+  chart="
+graph LR;
+  B[Base] --> M[Merge Result];
+  Y[Yours] --> M;
+  T[Theirs] --> M;
+  M --> F[Final Project];
+"
+/>
+
 The merge combines your changes with template updates automatically.
 
 ## Conflict Resolution
 
+<Callout type="warn" title="Conflicts May Occur">
 If conflicts occur, you'll be prompted to resolve them manually. This happens when:
 
 - You and the template both modified the same line
 - Structural changes conflict
+</Callout>
 
 ## Related
 
-- [Update a Project](/docs/user/how-to/update-project)
-- [Template Lifecycle](/docs/user/explanation/template-lifecycle)
+<Cards>
+  <Card href="/docs/user/how-to/update-project" title="Update a Project">
+    Learn how to update your project with template changes
+  </Card>
+  <Card href="/docs/user/explanation/template-lifecycle" title="Template Lifecycle">
+    Understand how templates evolve over time
+  </Card>
+</Cards>

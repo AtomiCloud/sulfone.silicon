@@ -3,9 +3,13 @@ title: Browse Templates
 description: Find templates via the registry web UI
 ---
 
+import { Callout } from 'fumadocs-ui/components/callout';
+
 # Browse Templates
 
-**Template discovery is via the web UI only.** There is no CLI search command.
+<Callout type="info">
+  Template discovery is via the web UI only. There is no CLI search command.
+</Callout>
 
 Visit [cyanprint.dev/registry](https://cyanprint.dev/registry) to:
 
@@ -18,5 +22,13 @@ For programmatic access, you can use the [REST API](/docs/user/reference/api) di
 
 ## Next Steps
 
-- [Create a project from a template](/docs/user/how-to/create-project)
-- [Registry UI Reference](/docs/user/reference/registry-ui)
+import { Cards, Card } from 'fumadocs-ui/components/card';
+
+<Cards>
+  <Card href="/docs/user/how-to/create-project" title="Create a Project from a Template">
+    Learn how to use a template to generate a new project
+  </Card>
+  <Card href="/docs/user/reference/registry-ui" title="Registry UI Reference">
+    Explore the full registry interface documentation
+  </Card>
+</Cards>

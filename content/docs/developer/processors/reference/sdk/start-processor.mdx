@@ -3,13 +3,15 @@ title: StartProcessorWithLambda
 description: Processor entry point API
 ---
 
+import { Callout } from 'fumadocs-ui/components/callout';
+
 # StartProcessorWithLambda
 
 The entry point for processor logic. Wrap your processor function with this to create a valid CyanPrint processor.
 
 ## Signature
 
-```ts
+```ts title="processor.ts"
 function StartProcessorWithLambda(
   handler: (input: CyanProcessorInput, fileHelper: CyanFileHelper) => Promise<ProcessorOutput>
 ): void;
@@ -30,7 +32,7 @@ The async function that implements processor logic.
 
 ## Usage
 
-```ts
+```ts title="processor.ts"
 import { StartProcessorWithLambda } from '@atomicloud/cyan-sdk';
 
 StartProcessorWithLambda(async (input, fileHelper) => {
@@ -59,7 +61,7 @@ StartProcessorWithLambda(async (input, fileHelper) => {
 | `readDir` | `string` | Path to source files (set by CLI, typically `/workspace/cyanprint/`) |
 | `writeDir` | `string` | Path for output files (set by CLI, typically `/workspace/output/`) |
 | `globs` | `CyanGlob[]` | File patterns from template |
-| `config` | `unknown` | Configuration from template |
+| `config` | `unknown` | Configuration from template (cast to your config type) |
 
 ## ProcessorOutput
 
@@ -67,9 +69,14 @@ StartProcessorWithLambda(async (input, fileHelper) => {
 |----------|------|-------------|
 | `directory` | `string` | Must be `input.writeDir` |
 
+<Callout type="warn" title="Required">
+  The `directory` property in the return value **must** be `input.writeDir`.
+  Returning any other path will cause the processor to fail.
+</Callout>
+
 ## Example: Simple Transform
 
-```ts
+```ts title="processor.ts"
 import { StartProcessorWithLambda } from '@atomicloud/cyan-sdk';
 
 StartProcessorWithLambda(async (input, fileHelper) => {
@@ -93,7 +100,9 @@ StartProcessorWithLambda(async (input, fileHelper) => {
 
 ## Example: Using Config
 
-```ts
+```ts title="processor.ts"
+import { StartProcessorWithLambda } from '@atomicloud/cyan-sdk';
+
 interface MyConfig {
   prefix: string;
   suffix: string;
@@ -114,7 +123,9 @@ StartProcessorWithLambda(async (input, fileHelper) => {
 
 ## Example: Selective Processing
 
-```ts
+```ts title="processor.ts"
+import { StartProcessorWithLambda } from '@atomicloud/cyan-sdk';
+
 StartProcessorWithLambda(async (input, fileHelper) => {
   // Load only markdown files
   const mdFiles = fileHelper.read({ root: 'templates', glob: '**/*.md' });

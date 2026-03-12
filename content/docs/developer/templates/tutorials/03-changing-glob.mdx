@@ -4,6 +4,7 @@ description: Control which files are processed vs copied
 ---
 
 import { Callout } from 'fumadocs-ui/components/callout';
+import { Files, File, Folder } from 'fumadocs-ui/components/files';
 
 # Tutorial 3: Changing Glob Patterns
 
@@ -41,7 +42,7 @@ files: [
 
 ## Complete Example
 
-```ts
+```ts index.ts -c
 import { StartTemplateWithLambda, GlobType } from '@atomicloud/cyan-sdk';
 
 StartTemplateWithLambda(async (inquirer, determinism) => {
@@ -101,16 +102,19 @@ files: [
 
 ## Project Structure Example
 
-```
-cyan/
-├── index.ts
-├── templates/
-│   ├── README.md        # Template - will be processed
-│   ├── package.json     # Template - will be processed
-│   └── logo.png         # Binary - will be copied
-└── static/
-    └── favicon.ico      # Static - will be copied
-```
+<Files>
+  <Folder name="cyan" defaultOpen>
+    <File name="index.ts" />
+    <Folder name="templates">
+      <File name="README.md" />
+      <File name="package.json" />
+      <File name="logo.png" />
+    </Folder>
+    <Folder name="static">
+      <File name="favicon.ico" />
+    </Folder>
+  </Folder>
+</Files>
 
 ## Best Practices
 

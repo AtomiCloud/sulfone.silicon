@@ -5,6 +5,8 @@ description: Create a plugin that runs post-processing commands
 
 import { Steps } from 'fumadocs-ui/components/steps';
 import { Callout } from 'fumadocs-ui/components/callout';
+import { TypeTable } from 'fumadocs-ui/components/type-table';
+import { Cards, Card } from 'fumadocs-ui/components/card';
 
 # Your First Plugin
 
@@ -24,7 +26,7 @@ Create a plugin that runs post-processing commands after file generation. This t
 
 Create a new directory and initialize:
 
-```bash
+```bash -c
 mkdir my-plugin
 cd my-plugin
 bun init -y
@@ -35,14 +37,15 @@ bun add @atomicloud/cyan-sdk
 
 Create `index.ts`:
 
-```ts
+```ts index.ts -c
 import { StartPluginWithLambda, PluginOutput } from '@atomicloud/cyan-sdk';
 import { $ } from 'bun';
 
 StartPluginWithLambda(async (input): Promise<PluginOutput> => {
+  // !callout[/directory, config/] The input contains the generated directory and plugin config
   const { directory, config } = input;
 
-  // Cast config to expected type
+  // !callout[/config as/] Cast config to expected type since it comes as unknown
   const cfg = config as {
     gitInit?: boolean;
     installDeps?: boolean;
@@ -78,7 +81,7 @@ StartPluginWithLambda(async (input): Promise<PluginOutput> => {
 
 Create `Dockerfile`:
 
-```dockerfile
+```dockerfile Dockerfile -c
 FROM oven/bun:1.0.11
 
 WORKDIR /app
@@ -106,30 +109,52 @@ CMD ["bun", "run", "index.ts"]
 
 Entry point for plugin logic. Receives one argument:
 
-| Argument | Type | Purpose |
-|----------|------|---------|
-| `input` | `CyanPluginInput` | Contains directory and config |
+<TypeTable
+  type={{
+    input: {
+      type: 'CyanPluginInput',
+      description: 'Contains directory and config',
+      required: true,
+    },
+  }}
+/>
 
 Unlike processors, plugins don't receive a file helper - they work directly with the filesystem.
 
 ### CyanPluginInput
 
-| Property | Type | Description |
-|----------|------|-------------|
-| `directory` | `string` | Path to generated project files |
-| `config` | `unknown` | Configuration from template |
+<TypeTable
+  type={{
+    directory: {
+      type: 'string',
+      description: 'Path to generated project files',
+      required: true,
+    },
+    config: {
+      type: 'unknown',
+      description: 'Configuration from template',
+      required: true,
+    },
+  }}
+/>
 
 ### PluginOutput
 
-| Property | Type | Description |
-|----------|------|-------------|
-| `directory` | `string` | Must return the directory path |
+<TypeTable
+  type={{
+    directory: {
+      type: 'string',
+      description: 'Must return the directory path',
+      required: true,
+    },
+  }}
+/>
 
 ### Bun Shell
 
 The `$` template literal from Bun provides a convenient way to run commands:
 
-```ts
+```ts -c
 // Simple command
 await $`echo "Hello"`;
 
@@ -144,7 +169,7 @@ await $`git init`.quiet();
 
 ### Build Docker Image
 
-```bash
+```bash -c
 docker build -t my-plugin:dev .
 ```
 
@@ -152,7 +177,7 @@ docker build -t my-plugin:dev .
 
 Configure your template to use the plugin:
 
-```ts
+```ts -c
 // In template's index.ts
 return {
   processors: [
@@ -185,6 +210,14 @@ During development, use local Docker images with the `:dev` tag. Push to a regis
 
 Learn more about plugin capabilities:
 
-- [Run Shell Commands](/docs/developer/plugins/how-to/run-commands) - Command execution patterns
-- [Modify Generated Files](/docs/developer/plugins/how-to/modify-files) - Edit files in the directory
-- [Plugin Input/Output](/docs/developer/plugins/reference/sdk/input-output) - Full API reference
+<Cards>
+  <Card href="/docs/developer/plugins/how-to/run-commands" title="Run Shell Commands">
+    Command execution patterns
+  </Card>
+  <Card href="/docs/developer/plugins/how-to/modify-files" title="Modify Generated Files">
+    Edit files in the directory
+  </Card>
+  <Card href="/docs/developer/plugins/reference/sdk/input-output" title="Plugin Input/Output">
+    Full API reference
+  </Card>
+</Cards>

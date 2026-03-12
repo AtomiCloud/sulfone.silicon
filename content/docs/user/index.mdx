@@ -3,6 +3,8 @@ title: User Overview
 description: Documentation for CyanPrint users
 ---
 
+import { Cards, Card } from 'fumadocs-ui/components/card';
+
 # User Documentation
 
 Welcome to CyanPrint! Generate projects from templates in seconds.
@@ -13,9 +15,17 @@ New to CyanPrint? Follow our [Get Started](/docs/user/tutorials/get-started) tut
 
 ## Sections
 
-Choose a section to explore:
-
-- [Tutorials](/docs/user/tutorials/get-started) - Step-by-step lessons to get you up and running quickly
-- [How-To Guides](/docs/user/how-to/install) - Practical guides for common tasks like installation and updates
-- [Reference](/docs/user/reference/cli-commands) - Technical documentation for CLI commands and the registry UI
-- [Explanation](/docs/user/explanation/template-lifecycle) - Understanding the concepts behind CyanPrint
+<Cards>
+  <Card href="/docs/user/tutorials/get-started" title="Tutorials">
+    Step-by-step lessons to get you up and running quickly
+  </Card>
+  <Card href="/docs/user/how-to/install" title="How-To Guides">
+    Practical guides for common tasks like installation and updates
+  </Card>
+  <Card href="/docs/user/reference/cli-commands" title="Reference">
+    Technical documentation for CLI commands and the registry UI
+  </Card>
+  <Card href="/docs/user/explanation/template-lifecycle" title="Explanation">
+    Understanding the concepts behind CyanPrint
+  </Card>
+</Cards>

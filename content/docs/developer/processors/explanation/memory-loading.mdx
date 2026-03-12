@@ -4,6 +4,7 @@ description: Understanding how processors load files into memory
 ---
 
 import { Callout } from 'fumadocs-ui/components/callout';
+import { Mermaid } from '@/components/mdx/mermaid';
 
 # Memory Loading
 
@@ -40,7 +41,7 @@ Processors load files into memory for transformation. Understanding memory impli
 
 `resolveAll()` loads **all matched files** into memory:
 
-```ts
+```ts -c
 // If your template has:
 // - 100 files
 // - Average 50KB each
@@ -65,7 +66,7 @@ const files = fileHelper.resolveAll();
 
 ### 1. Use read() for Specific Files
 
-```ts
+```ts -c
 // Only load files you need
 const mdFiles = fileHelper.read({ root: 'docs', glob: '**/*.md', exclude: [], type: GlobType.Template });
 // Only markdown files in memory
@@ -73,7 +74,7 @@ const mdFiles = fileHelper.read({ root: 'docs', glob: '**/*.md', exclude: [], ty
 
 ### 2. Use get() for Conditional Processing
 
-```ts
+```ts -c
 // Get references first
 const refs = fileHelper.get({ root: 'assets', glob: '**/*', exclude: [], type: GlobType.Template });
 
@@ -91,7 +92,7 @@ for (const ref of refs) {
 
 ### 3. Use readAsStream() for Large Files
 
-```ts
+```ts -c
 // Stream large files
 const streams = fileHelper.readAsStream({ root: 'data', glob: '*.csv', exclude: [], type: GlobType.Template });
 
@@ -105,7 +106,7 @@ for (const stream of streams) {
 
 ### 4. Use copy() for Static Files
 
-```ts
+```ts -c
 // Copy without loading
 fileHelper.copy({ root: 'images', glob: '**/*', exclude: [], type: GlobType.Copy });
 // Zero memory for file content
@@ -131,7 +132,7 @@ Container memory limits vary by deployment. Default processor containers typical
 
 ## Practical Example: Mixed Approach
 
-```ts
+```ts -c
 StartProcessorWithLambda(async (input, fileHelper) => {
   // Small files: load all
   const configs = fileHelper.read({ root: 'config', glob: '**/*.{json,yaml}', exclude: [], type: GlobType.Template });
@@ -185,7 +186,7 @@ StartProcessorWithLambda(async (input, fileHelper) => {
 
 ### Do
 
-```ts
+```ts -c
 // ✅ Choose appropriate method
 const files = needsAll
   ? fileHelper.resolveAll()

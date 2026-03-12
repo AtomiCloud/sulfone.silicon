@@ -3,24 +3,26 @@ title: Ask Confirm Questions
 description: How to ask yes/no confirmation questions
 ---
 
+import { Callout } from 'fumadocs-ui/components/callout';
+import { Cards, Card } from 'fumadocs-ui/components/card';
+
 # How to Ask Confirm Questions
 
 Use confirm questions for boolean yes/no choices.
 
 ## Shorthand Form
 
-```ts
+```ts template.ts -c
 const useTypescript = await i.confirm(
   'Use TypeScript?',     // Message
   'project.typescript',  // Key
   'Add TypeScript config' // Description
 );
-// Returns: boolean - true or false
 ```
 
 ## Object Form (with default)
 
-```ts
+```ts template.ts -c
 const useTypescript = await i.confirm({
   type: QuestionType.Confirm,
   id: 'project.typescript',
@@ -30,11 +32,15 @@ const useTypescript = await i.confirm({
 });
 ```
 
+<Callout type="info">
+The `confirm` method returns a `boolean` - `true` for yes, `false` for no.
+</Callout>
+
 ## Using Results
 
 ### In Template Logic
 
-```ts
+```ts processor.ts -c
 const docker = await i.confirm('Add Docker?', 'project.docker', 'Include Docker support');
 
 // Use directly in conditionals
@@ -53,7 +59,7 @@ config: {
 
 ### Multiple Related Confirms
 
-```ts
+```ts processor.ts -c
 const typescript = await i.confirm('Use TypeScript?', 'project.typescript', 'Add TS config');
 const eslint = await i.confirm('Add ESLint?', 'project.eslint', 'Add ESLint config');
 const prettier = await i.confirm('Add Prettier?', 'project.prettier', 'Add Prettier config');
@@ -85,7 +91,7 @@ return {
 
 Ask follow-up questions based on confirm response:
 
-```ts
+```ts conditional.ts -c
 const useDatabase = await i.confirm('Use a database?', 'project.db', 'Add database config');
 
 let dbType = null;
@@ -101,7 +107,7 @@ if (useDatabase) {
 
 ### With Default True
 
-```ts
+```ts default-true.ts -c
 // Default to yes for common choices
 const addReadme = await i.confirm({
   type: QuestionType.Confirm,
@@ -114,6 +120,14 @@ const addReadme = await i.confirm({
 
 ## Related
 
-- [IInquirer Reference](/docs/developer/templates/reference/sdk/inquirer) - Complete API documentation
-- [Ask Checkbox](/docs/developer/templates/how-to/ask-checkbox) - Multi-select questions
-- [Ask Select](/docs/developer/templates/reference/sdk/inquirer#select) - Single-choice questions
+<Cards>
+  <Card href="/docs/developer/templates/reference/sdk/inquirer" title="IInquirer Reference">
+    Complete API documentation
+  </Card>
+  <Card href="/docs/developer/templates/how-to/ask-checkbox" title="Ask Checkbox">
+    Multi-select questions
+  </Card>
+  <Card href="/docs/developer/templates/reference/sdk/inquirer#select" title="Ask Select">
+    Single-choice questions
+  </Card>
+</Cards>

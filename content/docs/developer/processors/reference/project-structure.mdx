@@ -3,24 +3,30 @@ title: Project Structure
 description: Standard file layout for processor projects
 ---
 
+import { Files, File, Folder } from 'fumadocs-ui/components/files';
+import { Callout } from 'fumadocs-ui/components/callout';
+import { Cards, Card } from 'fumadocs-ui/components/card';
+
 # Project Structure
 
 A processor project follows a standard layout for consistency and ease of development.
 
 ## Basic Structure
 
-```
-my-processor/
-├── index.ts           # Processor entry point
-├── package.json       # Dependencies and scripts
-├── bun.lockb          # Lock file (if using Bun)
-├── Dockerfile         # Container definition
-├── cyan.yaml          # Processor metadata
-├── tsconfig.json      # TypeScript configuration
-└── src/               # Optional: Additional source files
-    ├── transforms.ts
-    └── utils.ts
-```
+<Files>
+  <Folder name="my-processor" defaultOpen>
+    <File name="index.ts" />
+    <File name="package.json" />
+    <File name="bun.lockb" />
+    <File name="Dockerfile" />
+    <File name="cyan.yaml" />
+    <File name="tsconfig.json" />
+    <Folder name="src">
+      <File name="transforms.ts" />
+      <File name="utils.ts" />
+    </Folder>
+  </Folder>
+</Files>
 
 ## File Descriptions
 
@@ -28,7 +34,7 @@ my-processor/
 
 The main entry point using `StartProcessorWithLambda`:
 
-```ts
+```ts index.ts -c
 import { StartProcessorWithLambda } from '@atomicloud/cyan-sdk';
 
 StartProcessorWithLambda(async (input, fileHelper) => {
@@ -48,7 +54,7 @@ StartProcessorWithLambda(async (input, fileHelper) => {
 
 Define dependencies and scripts:
 
-```json
+```json package.json -c
 {
   "name": "my-processor",
   "version": "1.0.0",
@@ -70,7 +76,7 @@ Define dependencies and scripts:
 
 Container definition for the processor:
 
-```dockerfile
+```dockerfile Dockerfile -c
 FROM oven/bun:1.1.31
 
 WORKDIR /app
@@ -89,11 +95,15 @@ COPY . .
 CMD ["bun", "run", "index.ts"]
 ```
 
+<Callout type="warn">
+  The `LABEL cyanprint.dev=true` line is **required** for the container to be recognized as a CyanPrint processor.
+</Callout>
+
 ### `cyan.yaml`
 
 Metadata and documentation:
 
-```yaml
+```yaml cyan.yaml -c
 name: myorg/my-processor
 version: 1.0.0
 description: Description of what the processor does
@@ -112,7 +122,7 @@ processor:
 
 TypeScript configuration:
 
-```json
+```json tsconfig.json -c
 {
   "compilerOptions": {
     "target": "ES2022",
@@ -132,32 +142,36 @@ TypeScript configuration:
 
 Organize larger processors into modules:
 
-```
-src/
-├── transforms/
-│   ├── markdown.ts
-│   └── code.ts
-├── utils/
-│   ├── parsing.ts
-│   └── formatting.ts
-└── index.ts
-```
+<Files>
+  <Folder name="src" defaultOpen>
+    <Folder name="transforms">
+      <File name="markdown.ts" />
+      <File name="code.ts" />
+    </Folder>
+    <Folder name="utils">
+      <File name="parsing.ts" />
+      <File name="formatting.ts" />
+    </Folder>
+    <File name="index.ts" />
+  </Folder>
+</Files>
 
 ### `tests/`
 
 Unit tests for processor logic:
 
-```
-tests/
-├── transforms.test.ts
-└── utils.test.ts
-```
+<Files>
+  <Folder name="tests" defaultOpen>
+    <File name="transforms.test.ts" />
+    <File name="utils.test.ts" />
+  </Folder>
+</Files>
 
 ## Multi-File Example
 
 For complex processors, split logic into modules:
 
-```ts
+```ts index.ts -c
 // index.ts
 import { StartProcessorWithLambda } from '@atomicloud/cyan-sdk';
 import { transformMarkdown } from './src/transforms/markdown';
@@ -182,6 +196,14 @@ StartProcessorWithLambda(async (input, fileHelper) => {
 
 ## Related
 
-- [Dockerfile Reference](/docs/developer/processors/reference/dockerfile) - Docker configuration
-- [cyan.yaml Format](/docs/developer/processors/reference/cyan-yaml) - Metadata format
-- [First Processor](/docs/developer/processors/tutorials/first-processor) - Tutorial
+<Cards>
+  <Card href="/docs/developer/processors/reference/dockerfile" title="Dockerfile Reference">
+    Docker configuration details
+  </Card>
+  <Card href="/docs/developer/processors/reference/cyan-yaml" title="cyan.yaml Format">
+    Metadata format specification
+  </Card>
+  <Card href="/docs/developer/processors/tutorials/first-processor" title="First Processor">
+    Step-by-step tutorial
+  </Card>
+</Cards>

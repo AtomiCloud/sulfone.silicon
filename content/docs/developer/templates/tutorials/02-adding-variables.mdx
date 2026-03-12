@@ -3,7 +3,6 @@ title: Tutorial 2 - Adding Variables
 description: Add variable substitution to your templates
 ---
 
-import { Steps } from 'fumadocs-ui/components/steps';
 import { Callout } from 'fumadocs-ui/components/callout';
 
 # Tutorial 2: Adding Variables
@@ -14,7 +13,7 @@ Add variable substitution using the default processor. This enables dynamic cont
 
 First, update your file configuration to use `GlobType.Template` instead of `GlobType.Copy`:
 
-```ts
+```ts -c
 files: [{ root: 'template', glob: '**/*', exclude: [], type: GlobType.Template }]
 ```
 
@@ -26,7 +25,7 @@ Using `GlobType.Template` on binary files (images, PDFs) will corrupt them. See 
 
 Define variables in your processor configuration:
 
-```ts
+```ts -c
 config: {
   vars: {
     name: 'my-project',
@@ -42,7 +41,7 @@ The default processor uses `var__name__` syntax for variable substitution:
 
 `cyan/template/README.md`:
 
-```markdown
+```markdown template/README.md
 # var__name__
 
 Welcome to var__name__!
@@ -55,7 +54,7 @@ Welcome to var__name__!
 
 Update `cyan/index.ts`:
 
-```ts
+```ts cyan/index.ts -c
 import { StartTemplateWithLambda, GlobType } from '@atomicloud/cyan-sdk';
 
 StartTemplateWithLambda(async (i, d) => {
@@ -92,7 +91,7 @@ The default delimiter `var__` and `__` is chosen to avoid conflicts with common 
 
 ## Test Your Template
 
-```bash
+```bash -c
 # Build
 docker build -f cyan/Dockerfile -t my-first-template:dev .
 
@@ -105,7 +104,7 @@ cat ../test-output/README.md
 
 Expected output:
 
-```markdown
+```markdown -c
 # my-project
 
 Welcome to my-project!

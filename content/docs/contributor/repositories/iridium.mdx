@@ -50,7 +50,7 @@ Iridium is a Rust workspace containing 4 crates:
 
 The CLI provides the following main commands:
 
-```bash
+```bash -c
 # Create a new project from a template
 cyanprint create <template-ref> [path]
 
@@ -95,7 +95,7 @@ cyanprint --debug update
 
 ## Building
 
-```bash
+```bash -c
 # Debug build
 cargo build
 
@@ -121,7 +121,7 @@ Iridium is configured via environment variables and command-line flags:
 
 Example usage:
 
-```bash
+```bash -c
 # Set custom registry
 export CYANPRINT_REGISTRY=https://custom-registry.example.com
 
@@ -136,8 +136,17 @@ cyanprint create <template-ref> --coordinator-endpoint http://localhost:9000
 
 When contributing to Iridium:
 
-1. Follow Rust best practices and idiomatic code
-2. Run `cargo clippy` and address all warnings
-3. Ensure `cargo test` passes
-4. Update documentation for new commands
-5. Add integration tests for new features
+import { Steps, Step } from 'fumadocs-ui/components/steps';
+
+<Steps>
+  <Step>### Follow Rust Best Practices
+  Follow Rust best practices and idiomatic code</Step>
+  <Step>### Run Clippy
+  Run `cargo clippy` and address all warnings</Step>
+  <Step>### Run Tests
+  Ensure `cargo test` passes</Step>
+  <Step>### Update Documentation
+  Update documentation for new commands</Step>
+  <Step>### Add Integration Tests
+  Add integration tests for new features</Step>
+</Steps>

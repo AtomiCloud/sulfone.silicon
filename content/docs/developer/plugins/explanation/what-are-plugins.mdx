@@ -4,6 +4,8 @@ description: Understanding plugins and their role in CyanPrint
 ---
 
 import { Callout } from 'fumadocs-ui/components/callout';
+import { TypeTable } from 'fumadocs-ui/components/type-table';
+import { Cards, Card } from 'fumadocs-ui/components/card';
 
 # What Are Plugins?
 
@@ -45,9 +47,22 @@ Plugins are the only component with shell access. Processors are isolated and ca
 
 ### Input
 
-Plugins receive a `CyanPluginInput` object with:
-- `directory` - Path to all generated files
-- `config` - Configuration from the template
+Plugins receive a `CyanPluginInput` object:
+
+<TypeTable
+  type={{
+    directory: {
+      type: 'string',
+      description: 'Path to all generated files',
+      required: true,
+    },
+    config: {
+      type: 'object',
+      description: 'Configuration from the template',
+      required: true,
+    },
+  }}
+/>
 
 ### Execution
 
@@ -68,7 +83,16 @@ Plugins receive a `CyanPluginInput` object with:
 ### Output
 
 Plugins return a `PluginOutput` object:
-- `directory` - Same path (returned for pipeline continuity when multiple plugins run in sequence)
+
+<TypeTable
+  type={{
+    directory: {
+      type: 'string',
+      description: 'Same path (returned for pipeline continuity when multiple plugins run in sequence)',
+      required: true,
+    },
+  }}
+/>
 
 ## When to Use Plugins
 
@@ -83,9 +107,11 @@ Plugins return a `PluginOutput` object:
 
 ### Don't Use a Plugin When You Need To:
 
+<Callout type="warn">
 - Transform file content (use a processor)
 - Substitute variables (use a processor)
 - Process individual files (use a processor)
+</Callout>
 
 ## Plugin vs Processor
 
@@ -105,17 +131,20 @@ Read more in [Plugins vs Processors](/docs/developer/plugins/explanation/plugins
 
 Initialize the project environment:
 
-```ts
+```ts plugin.ts -c
 import { $ } from 'bun';
 import { StartPluginWithLambda } from '@atomicloud/cyan-sdk';
 import type { CyanPluginInput, PluginOutput } from '@atomicloud/cyan-sdk';
 
 StartPluginWithLambda(async (input: CyanPluginInput): Promise<PluginOutput> => {
+  // !mark Extract directory from input
   const { directory } = input;
 
+  // !callout[/\$\`/] Bun's shell template literal for running commands
   await $`git -C ${directory} init`.quiet();
   await $`cd ${directory} && npm install`.quiet();
 
+  // !mark Always return the directory for pipeline continuity
   return { directory };
 });
 ```

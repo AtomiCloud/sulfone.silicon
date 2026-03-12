@@ -3,15 +3,38 @@ title: SDK Overview
 description: CyanPrint SDK for template development
 ---
 
+import { Tabs, Tab } from 'fumadocs-ui/components/tabs';
+import { Cards, Card } from 'fumadocs-ui/components/card';
+
 # SDK Overview
 
 The CyanPrint SDK (`@atomicloud/cyan-sdk`) provides the APIs for creating templates, processors, and plugins.
 
 ## Installation
 
-```bash
+<Tabs items={['npm', 'yarn', 'pnpm']}>
+  <Tab value="npm">
+
+```bash -c
 npm install @atomicloud/cyan-sdk
 ```
+
+  </Tab>
+  <Tab value="yarn">
+
+```bash -c
+yarn add @atomicloud/cyan-sdk
+```
+
+  </Tab>
+  <Tab value="pnpm">
+
+```bash -c
+pnpm add @atomicloud/cyan-sdk
+```
+
+  </Tab>
+</Tabs>
 
 ## Core Exports
 
@@ -43,7 +66,7 @@ npm install @atomicloud/cyan-sdk
 
 ### Template Entry Point
 
-```ts
+```ts cyan.ts -c
 import { StartTemplateWithLambda, GlobType } from '@atomicloud/cyan-sdk';
 
 StartTemplateWithLambda(async (i, d) => {
@@ -63,7 +86,7 @@ StartTemplateWithLambda(async (i, d) => {
 
 ### Using IInquirer
 
-```ts
+```ts -c
 // Text input
 const name = await i.text('Project name?', 'project.name', 'Enter name');
 
@@ -82,7 +105,7 @@ const startDate = await i.dateSelect('Start date?', 'project.startDate', 'Select
 
 ### Using IDeterminism
 
-```ts
+```ts -c
 // Get deterministic value with key and origin function
 // The key identifies the value, origin provides a default if not cached
 const projectId = d.get('project.id', () => crypto.randomUUID());
@@ -96,10 +119,20 @@ const userId = d.get('user.id', () => `user-${Date.now()}`);
 
 ## SDK Reference Sections
 
-- [IInquirer](/docs/developer/templates/reference/sdk/inquirer) - Question asking API
-- [Cyan Config](/docs/developer/templates/reference/sdk/cyan-config) - Configuration structure
-- [Globbing](/docs/developer/templates/reference/sdk/globbing) - File pattern matching
-- [Types](/docs/developer/templates/reference/sdk/types) - Type definitions
+<Cards>
+  <Card href="/docs/developer/templates/reference/sdk/inquirer" title="IInquirer">
+    Question asking API for interactive prompts
+  </Card>
+  <Card href="/docs/developer/templates/reference/sdk/cyan-config" title="Cyan Config">
+    Configuration structure for templates
+  </Card>
+  <Card href="/docs/developer/templates/reference/sdk/globbing" title="Globbing">
+    File pattern matching configuration
+  </Card>
+  <Card href="/docs/developer/templates/reference/sdk/types" title="Types">
+    TypeScript type definitions
+  </Card>
+</Cards>
 
 ## Version Compatibility
 
@@ -110,6 +143,14 @@ const userId = d.get('user.id', () => `user-${Date.now()}`);
 
 ## Related
 
-- [Tutorials](/docs/developer/templates/tutorials) - Step-by-step guides
-- [How-to Guides](/docs/developer/templates/how-to) - Task-oriented guides
-- [Explanation](/docs/developer/templates/explanation) - Conceptual deep dives
+<Cards>
+  <Card href="/docs/developer/templates/tutorials" title="Tutorials">
+    Step-by-step guides
+  </Card>
+  <Card href="/docs/developer/templates/how-to" title="How-to Guides">
+    Task-oriented guides
+  </Card>
+  <Card href="/docs/developer/templates/explanation" title="Explanation">
+    Conceptual deep dives
+  </Card>
+</Cards>

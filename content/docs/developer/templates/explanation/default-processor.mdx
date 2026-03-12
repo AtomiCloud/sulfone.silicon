@@ -23,7 +23,7 @@ The default processor is the most commonly used processor. It:
 
 The default syntax uses `var__` prefix and `__` suffix:
 
-```
+```text title="template.md"
 var__name__
 var__project.version__
 ```
@@ -32,7 +32,7 @@ var__project.version__
 
 Template file:
 
-```markdown
+```markdown title="template.md"
 # var__name__
 
 Welcome to var__name__!
@@ -43,19 +43,21 @@ Version: var__version__
 
 With config:
 
-```ts
-config: {
-  vars: {
-    name: 'my-project',
-    author: 'John Doe',
-    version: '1.0.0'
-  }
-}
+```yaml {5-9} title="cyan.yaml" -c
+processor:
+  name: cyan/default
+  files:
+    - '**/*'
+  config:
+    vars:
+      name: 'my-project'
+      author: 'John Doe'
+      version: '1.0.0'
 ```
 
 Generated output:
 
-```markdown
+```markdown title="output.md"
 # my-project
 
 Welcome to my-project!
@@ -68,20 +70,21 @@ Version: 1.0.0
 
 Access nested properties with dot notation:
 
-```ts
-config: {
-  vars: {
-    project: {
-      name: 'my-project',
-      version: '1.0.0'
-    }
-  }
-}
+```yaml {5-10} title="cyan.yaml" -c
+processor:
+  name: cyan/default
+  files:
+    - '**/*'
+  config:
+    vars:
+      project:
+        name: 'my-project'
+        version: '1.0.0'
 ```
 
 Template:
 
-```markdown
+```markdown title="template.md"
 Project: var__project.name__
 Version: var__project.version__
 ```
@@ -92,52 +95,64 @@ Change the delimiters for compatibility with other template syntaxes:
 
 ### Using Angle Brackets
 
-```ts
-config: {
-  vars: { name: 'my-project' },
-  parser: {
-    varSyntax: [['<%', '%>']]
-  }
-}
+```yaml {5-8} title="cyan.yaml" -c
+processor:
+  name: cyan/default
+  files:
+    - '**/*'
+  config:
+    vars:
+      name: 'my-project'
+    parser:
+      varSyntax:
+        - ['<%', '%>']
 ```
 
 Template:
 
-```markdown
+```markdown title="template.md"
 # <% name %>
 ```
 
 ### Using Mustache Style
 
-```ts
-config: {
-  vars: { name: 'my-project' },
-  parser: {
-    varSyntax: [['{{', '}}']]
-  }
-}
+```yaml {5-8} title="cyan.yaml" -c
+processor:
+  name: cyan/default
+  files:
+    - '**/*'
+  config:
+    vars:
+      name: 'my-project'
+    parser:
+      varSyntax:
+        - ['{{', '}}']
 ```
 
 Template:
 
-```markdown
+```markdown title="template.md"
 # {{ name }}
 ```
 
 ### Using Double Braces
 
-```ts
-config: {
-  vars: { name: 'my-project' },
-  parser: {
-    varSyntax: [['${{', '}}']]
-  }
-}
+```yaml {5-8} title="cyan.yaml" -c
+processor:
+  name: cyan/default
+  files:
+    - '**/*'
+  config:
+    vars:
+      name: 'my-project'
+    parser:
+      varSyntax:
+        - ['${{', '}}']
 ```
 
 Template:
 
-```markdown
+```markdown title="template.md"
 # ${{ name }}
 ```
 
@@ -163,7 +178,7 @@ The default processor is built on Eta, which supports more than simple substitut
 
 ### Conditionals
 
-```markdown
+```markdown title="template.md"
 <% if (typescript) { %>
 ## TypeScript Configuration
 
@@ -175,7 +190,7 @@ Note: This requires changing delimiters to avoid `var__`.
 
 ### Loops
 
-```markdown
+```markdown title="template.md"
 ## Features
 <% features.forEach(function(feature) { %>
 - <%= feature %>
@@ -190,24 +205,22 @@ Advanced Eta features like conditionals and loops require custom delimiters and 
 
 The default processor supports the following configuration options:
 
-```ts
-{
-  name: 'cyan/default',
-  files: [/* ... */],
-  config: {
-    // Variables to substitute
-    vars: {
-      name: 'my-project',
+```yaml title="cyan.yaml" -c
+processor:
+  name: cyan/default
+  files:
+    - '**/*'
+  config:
+    # Variables to substitute
+    vars:
+      name: 'my-project'
       version: '1.0.0'
-    },
 
-    // Parser configuration
-    parser: {
-      // Custom tag pairs (default is ['var__', '__'])
-      varSyntax: [['var__', '__']]
-    }
-  }
-}
+    # Parser configuration
+    parser:
+      # Custom tag pairs (default is ['var__', '__'])
+      varSyntax:
+        - ['var__', '__']
 ```
 
 <Callout type="info">

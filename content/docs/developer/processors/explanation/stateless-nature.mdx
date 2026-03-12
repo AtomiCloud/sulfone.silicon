@@ -47,7 +47,7 @@ Processors should not:
 
 Same template + same answers = identical output:
 
-```bash
+```bash -c
 # Run 1
 cyanprint create myorg/my-template output1
 
@@ -79,7 +79,7 @@ Stateless processors can be:
 
 ### What You CAN Do
 
-```ts
+```ts -c
 import { StartProcessorWithLambda } from '@atomicloud/cyan-sdk';
 
 StartProcessorWithLambda(async (input, fileHelper) => {
@@ -103,7 +103,7 @@ StartProcessorWithLambda(async (input, fileHelper) => {
 
 ### What You CAN'T Do
 
-```ts
+```ts -c
 import { StartProcessorWithLambda } from '@atomicloud/cyan-sdk';
 
 StartProcessorWithLambda(async (input, fileHelper) => {
@@ -134,7 +134,7 @@ Processors that violate stateless principles may work in development but fail in
 
 Instead of fetching data, have the template pass it:
 
-```ts
+```ts -c
 // Template provides all needed data
 return {
   processors: [{
@@ -152,7 +152,7 @@ return {
 
 ### Avoid External Dependencies
 
-```ts
+```ts -c
 // ❌ Bad: External dependency
 import { fetchUserData } from 'external-api';
 
@@ -165,7 +165,7 @@ function transformContent(content: string, config: Config): string {
 
 ### Use Deterministic Algorithms
 
-```ts
+```ts -c
 // ❌ Bad: Non-deterministic
 file.content = content + Date.now();
 
@@ -177,7 +177,7 @@ file.content = content + config.timestamp;
 
 Stateless processors are easy to test. Since they're pure functions of their inputs, you can test by providing mock inputs and verifying outputs:
 
-```ts
+```ts -c
 import { StartProcessorWithLambda } from '@atomicloud/cyan-sdk';
 
 // Test helper to capture processor behavior

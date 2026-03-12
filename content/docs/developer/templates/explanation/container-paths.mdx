@@ -4,6 +4,8 @@ description: Understanding path mechanics in template containers
 ---
 
 import { Callout } from 'fumadocs-ui/components/callout';
+import { Files, File, Folder } from 'fumadocs-ui/components/files';
+import { Cards, Card } from 'fumadocs-ui/components/card';
 
 # Container Paths
 
@@ -13,20 +15,25 @@ Templates run in Docker containers with specific path conventions. Understanding
 
 ### Default Paths
 
-```
-/
-├── workspace/          # Working directory
-│   └── (output)        # Generated files go here
-├── templates/          # Template source files (from blob)
-└── cyan/               # Template code
-    └── index.ts
-```
+<Files>
+  <Folder name="workspace" defaultOpen>
+    <File name="(output)" />
+  </Folder>
+  <Folder name="templates" defaultOpen />
+  <Folder name="cyan" defaultOpen>
+    <File name="index.ts" />
+  </Folder>
+</Files>
+
+- **workspace/** - Working directory where generated files are written
+- **templates/** - Template source files (from blob)
+- **cyan/** - Template code
 
 ### Working Directory
 
 The default working directory is `/workspace`:
 
-```dockerfile
+```dockerfile filename="Dockerfile"
 WORKDIR /workspace
 ```
 
@@ -38,7 +45,7 @@ Generated files are written here.
 
 The `root` property in file groups refers to paths **inside the container**:
 
-```ts
+```ts filename="cyan.ts" -c
 files: [
   { root: 'templates', glob: '**/*', exclude: [], type: GlobType.Template }
   // root: 'templates' -> /templates/ in container
@@ -51,7 +58,7 @@ This path is relative to the container filesystem, not your development machine.
 
 The blob Dockerfile defines where template files are placed:
 
-```dockerfile
+```dockerfile filename="blob.Dockerfile" -c
 # blob.Dockerfile
 FROM alpine:latest
 
@@ -61,7 +68,7 @@ COPY cyan/templates/ /templates/
 
 Then reference in template:
 
-```ts
+```ts filename="cyan.ts" -c
 files: [
   { root: '/templates', glob: '**/*', exclude: [], type: GlobType.Template }
   // or simply 'templates' (relative to /workspace)
@@ -86,7 +93,7 @@ Inside the container, this maps to `/workspace/output`.
 
 Use absolute paths for clarity:
 
-```ts
+```ts filename="cyan.ts" -c
 files: [
   { root: '/templates', glob: '**/*.md', exclude: [], type: GlobType.Template }
 ]
@@ -96,7 +103,7 @@ files: [
 
 Relative paths are resolved from `/workspace`:
 
-```ts
+```ts filename="cyan.ts" -c
 files: [
   { root: 'templates', glob: '**/*.md', exclude: [], type: GlobType.Template }
   // Resolves to /workspace/templates
@@ -111,13 +118,13 @@ If your blob image places files at `/templates`, use `/templates` (absolute) to 
 
 ### Single Templates Directory
 
-```dockerfile
+```dockerfile filename="blob.Dockerfile" -c
 # blob.Dockerfile
 FROM alpine:latest
 COPY cyan/templates/ /templates/
 ```
 
-```ts
+```ts filename="cyan.ts" -c
 files: [
   { root: '/templates', glob: '**/*', exclude: [], type: GlobType.Template }
 ]
@@ -125,7 +132,7 @@ files: [
 
 ### Multiple Source Directories
 
-```dockerfile
+```dockerfile filename="blob.Dockerfile" -c
 # blob.Dockerfile
 FROM alpine:latest
 COPY cyan/templates/ /templates/
@@ -133,7 +140,7 @@ COPY cyan/static/ /static/
 COPY cyan/configs/ /configs/
 ```
 
-```ts
+```ts filename="cyan.ts" -c
 files: [
   { root: '/templates', glob: '**/*.md', exclude: [], type: GlobType.Template },
   { root: '/static', glob: '**/*', exclude: [], type: GlobType.Copy },
@@ -143,13 +150,13 @@ files: [
 
 ### Feature-Based Organization
 
-```dockerfile
+```dockerfile filename="blob.Dockerfile" -c
 # blob.Dockerfile
 FROM alpine:latest
 COPY cyan/templates/ /templates/
 ```
 
-```ts
+```ts filename="cyan.ts" -c
 files: [
   // Base files
   { root: '/templates/base', glob: '**/*', exclude: [], type: GlobType.Template },

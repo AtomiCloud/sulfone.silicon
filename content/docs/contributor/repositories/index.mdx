@@ -3,6 +3,9 @@ title: Repositories
 description: Index of all CyanPrint repositories
 ---
 
+import { Steps, Step } from 'fumadocs-ui/components/steps';
+import { Cards, Card } from 'fumadocs-ui/components/card';
+
 # CyanPrint Repositories
 
 CyanPrint is organized as a monorepo-style project with separate repositories for each component. This page provides an overview of all repositories and their purposes.
@@ -97,10 +100,16 @@ Multi-language SDKs for developing templates, processors, and plugins.
 
 To contribute to any CyanPrint repository:
 
-1. Fork the repository on GitHub
-2. Clone your fork locally
-3. Follow the setup instructions in the repository's README
-4. Make your changes and submit a pull request
+<Steps>
+  <Step>### Fork the Repository
+  Fork the repository on GitHub</Step>
+  <Step>### Clone Locally
+  Clone your fork locally</Step>
+  <Step>### Follow Setup Instructions
+  Follow the setup instructions in the repository's README</Step>
+  <Step>### Submit Changes
+  Make your changes and submit a pull request</Step>
+</Steps>
 
 For detailed setup instructions, see the [Development Setup Guide](/docs/contributor/development/setup).
 
@@ -113,3 +122,23 @@ Each repository has its own contributing guidelines, but general principles appl
 - Update documentation as needed
 - Submit pull requests against the `main` branch
 - Ensure CI passes before requesting review
+
+## Next Steps
+
+<Cards>
+  <Card href="/docs/contributor/repositories/iridium" title="Iridium (CLI)">
+    Rust-based CLI tool for project scaffolding
+  </Card>
+  <Card href="/docs/contributor/repositories/boron" title="Boron (Executor)">
+    Go-based execution coordinator for templates
+  </Card>
+  <Card href="/docs/contributor/repositories/zinc" title="Zinc (Registry API)">
+    F# registry API server
+  </Card>
+  <Card href="/docs/contributor/repositories/argon" title="Argon (Web UI)">
+    SvelteKit web interface for template browsing
+  </Card>
+  <Card href="/docs/contributor/repositories/helium" title="Helium (SDKs)">
+    Multi-language SDKs for template development
+  </Card>
+</Cards>

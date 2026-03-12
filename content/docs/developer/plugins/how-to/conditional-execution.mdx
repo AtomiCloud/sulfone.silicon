@@ -13,7 +13,7 @@ Run plugin logic based on configuration from the template. This allows templates
 
 The `config` property passed to plugins contains configuration defined in the template:
 
-```ts
+```ts plugin.ts -c
 import { StartPluginWithLambda } from '@atomicloud/cyan-sdk';
 import { $ } from 'bun';
 
@@ -62,7 +62,7 @@ StartPluginWithLambda(async (input) => {
 
 Configure the plugin in your template's `index.ts` file. The plugin configuration is defined programmatically in the return statement of your template's main function:
 
-```ts
+```ts template/index.ts -c
 import type { Cyan } from '@atomicloud/cyan-sdk';
 import type { IInquirer, IDeterminism } from '@atomicloud/cyan-sdk';
 
@@ -96,7 +96,7 @@ The code examples below use Bun's shell template syntax (`await $`command``) whi
 
 ### Feature Flags
 
-```ts
+```ts plugin.ts -c
 import fs from 'node:fs';
 import path from 'node:path';
 import { StartPluginWithLambda } from '@atomicloud/cyan-sdk';
@@ -149,7 +149,7 @@ StartPluginWithLambda(async (input) => {
 
 ### Conditional Based on Project Type
 
-```ts
+```ts plugin.ts -c
 import { StartPluginWithLambda } from '@atomicloud/cyan-sdk';
 import { $ } from 'bun';
 
@@ -181,7 +181,7 @@ StartPluginWithLambda(async (input) => {
 
 ### Using Defaults
 
-```ts
+```ts plugin.ts -c
 import { StartPluginWithLambda } from '@atomicloud/cyan-sdk';
 import { $ } from 'bun';
 
@@ -211,6 +211,16 @@ Always provide sensible defaults for optional configuration. Templates should wo
 
 ## Related
 
-- [Run Shell Commands](/docs/developer/plugins/how-to/run-commands) - Execute commands
-- [Modify Generated Files](/docs/developer/plugins/how-to/modify-files) - Edit files
-- [Plugin Input/Output (CyanPluginInput)](/docs/developer/plugins/reference/sdk/input-output) - API reference for the `CyanPluginInput` type
+import { Cards, Card } from 'fumadocs-ui/components/card';
+
+<Cards>
+  <Card href="/docs/developer/plugins/how-to/run-commands" title="Run Shell Commands">
+    Execute commands in your plugins
+  </Card>
+  <Card href="/docs/developer/plugins/how-to/modify-files" title="Modify Generated Files">
+    Edit files programmatically
+  </Card>
+  <Card href="/docs/developer/plugins/reference/sdk/input-output" title="Plugin Input/Output">
+    API reference for the CyanPluginInput type
+  </Card>
+</Cards>

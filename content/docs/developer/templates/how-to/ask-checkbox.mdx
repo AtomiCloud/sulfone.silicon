@@ -5,11 +5,13 @@ description: How to ask multi-select checkbox questions
 
 # How to Ask Checkbox Questions
 
-Use checkboxes when users need to select multiple options from a list.
+Checkbox questions allow users to select multiple options from a predefined list. Use checkboxes when users need to select one or more features, configurations, or options.
+
+This guide shows how to create checkbox questions using both shorthand and object forms, with examples for validation and conditional logic.
 
 ## Shorthand Form
 
-```ts
+```ts -c
 const features = await i.checkbox(
   'Select features',           // Message
   ['ESLint', 'Prettier', 'Jest', 'Docker'],  // Options
@@ -21,7 +23,7 @@ const features = await i.checkbox(
 
 ## Object Form (with options)
 
-```ts
+```ts -c
 const features = await i.checkbox({
   type: QuestionType.Checkbox,
   id: 'project.features',
@@ -40,7 +42,7 @@ const features = await i.checkbox({
 
 ### In Template Logic
 
-```ts
+```ts -c
 const features = await i.checkbox(
   'Select features',
   ['ESLint', 'Prettier', 'Jest'],
@@ -64,7 +66,7 @@ config: {
 
 ### Conditional Files Based on Selection
 
-```ts
+```ts -c
 const features = await i.checkbox(
   'Select features',
   ['ESLint', 'Prettier', 'Jest'],
@@ -89,7 +91,7 @@ if (features.includes('Jest')) {
 
 ### With Validation
 
-```ts
+```ts -c
 const databases = await i.checkbox({
   type: QuestionType.Checkbox,
   id: 'project.databases',
@@ -107,7 +109,7 @@ const databases = await i.checkbox({
 
 ### With Defaults
 
-```ts
+```ts -c
 const features = await i.checkbox({
   type: QuestionType.Checkbox,
   id: 'project.features',
@@ -120,6 +122,16 @@ const features = await i.checkbox({
 
 ## Related
 
-- [IInquirer Reference](/docs/developer/templates/reference/sdk/inquirer) - Complete API documentation
-- [Ask Confirm](/docs/developer/templates/how-to/ask-confirm) - Yes/no questions
-- [Validate Input](/docs/developer/templates/how-to/validate-input) - Input validation patterns
+import { Cards, Card } from 'fumadocs-ui/components/card';
+
+<Cards>
+  <Card href="/docs/developer/templates/reference/sdk/inquirer" title="IInquirer Reference">
+    Complete API documentation
+  </Card>
+  <Card href="/docs/developer/templates/how-to/ask-confirm" title="Ask Confirm">
+    Yes/no questions
+  </Card>
+  <Card href="/docs/developer/templates/how-to/validate-input" title="Validate Input">
+    Input validation patterns
+  </Card>
+</Cards>

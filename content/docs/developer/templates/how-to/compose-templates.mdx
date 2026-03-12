@@ -13,8 +13,7 @@ Compose multiple templates to create powerful combinations while maintaining sep
 
 Template composition allows one template to include and use other templates:
 
-```yaml
-# cyan.yaml
+```yaml cyan.yaml -c
 templates:
   - my-org/base-setup:1
   - my-org/docker-config:2
@@ -30,7 +29,7 @@ Build templates in layers:
 2. **Feature templates** - Optional features (Docker, CI/CD)
 3. **Platform templates** - Deployment targets
 
-```yaml
+```yaml cyan.yaml -c
 # Full-stack web app template
 templates:
   - shared/node-base:1        # Node.js project structure
@@ -45,8 +44,8 @@ templates:
 
 Let users compose features they need by specifying which templates to include:
 
-```yaml
-# cyan.yaml - user selects features
+```yaml cyan.yaml -c
+# user selects features
 templates:
   - base/project:1
   - features/typescript:2
@@ -62,7 +61,7 @@ templates:
 When composing templates, key collisions cause unexpected behavior. Always namespace your keys.
 </Callout>
 
-```ts
+```ts template.ts -c
 // Template A
 const name = await i.text('Name?', 'template-a.project.name', '...');
 
@@ -76,7 +75,7 @@ const name = await i.text('Name?', 'template-b.project.name', '...');
 
 Share values intentionally via common key names:
 
-```ts
+```ts template.ts -c
 // Both templates use the same project name
 // Template A
 const projectName = await i.text('Project name?', 'global.project.name', '...');
@@ -97,7 +96,7 @@ Handle file conflicts in composition:
 
 Access composed templates in your logic:
 
-```ts
+```ts template.ts -c
 import { StartTemplateWithLambda, GlobType } from '@atomicloud/cyan-sdk';
 
 StartTemplateWithLambda(async (i, d) => {
@@ -134,7 +133,7 @@ StartTemplateWithLambda(async (i, d) => {
 
 ## Example: Microservice Template
 
-```yaml
+```yaml cyan.yaml -c
 # cyan.yaml for microservice template
 name: company/microservice
 version: 1

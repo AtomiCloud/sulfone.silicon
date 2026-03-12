@@ -3,6 +3,9 @@ title: Template Lifecycle
 description: Understanding template versions, updates, and deprecation
 ---
 
+import { Callout } from 'fumadocs-ui/components/callout';
+import { Cards, Card } from 'fumadocs-ui/components/card';
+
 # Template Lifecycle
 
 ## Versioning
@@ -13,15 +16,27 @@ Each time you publish a template with `cyanprint push`, a new version is automat
 
 ## Updates
 
-When a template is updated, you can use the `cyanprint update` command to bring your project up to date while preserving your customizations. The "latest" version refers to the highest integer version number available in the registry.
+When a template is updated, you can use the `cyanprint update` command to bring your project up to date while preserving your customizations.
+
+<Callout type="info">
+  The "latest" version refers to the highest integer version number available in the registry, not semantic versioning.
+</Callout>
 
 See [Update a Project](/docs/user/how-to/update-project) for the how-to guide.
 
 ## Deprecation
 
-Template deprecation is not currently supported. To indicate a template is no longer maintained, update the template description or readme to note this.
+<Callout type="info" title="Workaround for Deprecation">
+  Template deprecation is not currently supported. To indicate a template is no longer maintained, update the template description or readme to note this.
+</Callout>
 
 ## Related
 
-- [3-Way Merge](/docs/user/explanation/3-way-merge)
-- [Update a Project](/docs/user/how-to/update-project)
+<Cards>
+  <Card href="/docs/user/explanation/3-way-merge" title="3-Way Merge">
+    Learn how CyanPrint preserves your customizations during updates
+  </Card>
+  <Card href="/docs/user/how-to/update-project" title="Update a Project">
+    Step-by-step guide to updating your project to the latest template version
+  </Card>
+</Cards>

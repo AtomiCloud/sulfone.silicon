@@ -3,6 +3,8 @@ title: Quickstart
 description: Quickstart guide for CyanPrint development
 ---
 
+import { Cards, Card } from 'fumadocs-ui/components/card';
+
 # Quickstart
 
 Get started with CyanPrint development in minutes. Choose your path based on what you want to build.
@@ -19,18 +21,26 @@ Before you begin, ensure you have:
 
 CyanPrint has four extensible components called **artifacts**:
 
-| Artifact | Purpose | Start Here |
-|----------|---------|------------|
-| **Templates** | Define questions and file processing rules | [Template Tutorials](/docs/developer/templates/tutorials/01-blank-template) |
-| **Processors** | Transform files (templating, syntax) | [Processor Tutorial](/docs/developer/processors/tutorials/first-processor) |
-| **Resolvers** | Resolve file conflicts from layered templates | Coming soon |
-| **Plugins** | Post-processing (run commands, file ops) | [Plugin Tutorial](/docs/developer/plugins/tutorials/first-plugin) |
+<Cards>
+  <Card href="/docs/developer/templates/tutorials/01-blank-template" title="Templates">
+    Define questions and file processing rules
+  </Card>
+  <Card href="/docs/developer/processors/tutorials/first-processor" title="Processors">
+    Transform files (templating, syntax)
+  </Card>
+  <Card href="#" title="Resolvers">
+    Resolve file conflicts from layered templates (Coming soon)
+  </Card>
+  <Card href="/docs/developer/plugins/tutorials/first-plugin" title="Plugins">
+    Post-processing (run commands, file ops)
+  </Card>
+</Cards>
 
 ## Quick Start: Create a Template
 
 The most common starting point is creating a template. Run this command:
 
-```bash
+```bash -c
 cyanprint create cyan/new my-first-template
 ```
 
@@ -38,6 +48,14 @@ This scaffolds a complete template project using the meta template.
 
 ## Next Steps
 
-- Learn about [the four artifacts](/docs/developer/basics/introduction)
-- Understand the [system architecture](/docs/developer/basics/architecture)
-- Follow the [template tutorials](/docs/developer/templates/tutorials/01-blank-template)
+<Cards>
+  <Card href="/docs/developer/basics/introduction" title="Four Artifacts">
+    Learn about the four extensible components
+  </Card>
+  <Card href="/docs/developer/basics/architecture" title="System Architecture">
+    Understand how CyanPrint works
+  </Card>
+  <Card href="/docs/developer/templates/tutorials/01-blank-template" title="Template Tutorials">
+    Follow step-by-step template creation
+  </Card>
+</Cards>

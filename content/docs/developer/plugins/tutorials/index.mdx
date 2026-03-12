@@ -3,15 +3,22 @@ title: Plugin Tutorials
 description: Step-by-step tutorials for learning plugin development
 ---
 
+import { Cards, Card } from 'fumadocs-ui/components/card';
+
 # Plugin Tutorials
 
 Learn plugin development with step-by-step tutorials.
 
 ## Tutorials
 
-- [Your First Plugin](/docs/developer/plugins/tutorials/first-plugin) - Create a plugin that runs post-processing commands like `git init` and dependency installation after file generation
+<Cards>
+  <Card href="/docs/developer/plugins/tutorials/first-plugin" title="Your First Plugin">
+    Create a plugin that runs post-processing commands like `git init` and dependency installation after file generation.
+  </Card>
+</Cards>
 
-**What you'll learn:**
+## What You'll Learn
+
 - Setting up a plugin project
 - Using `StartPluginWithLambda` with `CyanPluginInput`
 - Running shell commands
@@ -19,6 +26,7 @@ Learn plugin development with step-by-step tutorials.
 - Returning `PluginOutput`
 - Building and testing
 
-**Prerequisites:**
+## Prerequisites
+
 - Docker installed and running
 - Basic TypeScript knowledge

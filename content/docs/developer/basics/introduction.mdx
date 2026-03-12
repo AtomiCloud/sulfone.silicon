@@ -3,6 +3,8 @@ title: Introduction
 description: Introduction to CyanPrint development and the four artifacts
 ---
 
+import { Cards, Card } from 'fumadocs-ui/components/card';
+
 # Introduction to CyanPrint Development
 
 CyanPrint is a template-based project generator with four extensible components called **artifacts**.
@@ -76,7 +78,17 @@ Plugins run after files are generated. The SDK provides the interface contract -
 
 ## Choose Your Path
 
-- [Create a Template](/docs/developer/templates) - Build project scaffolds
-- [Create a Processor](/docs/developer/processors) - Build file transformers
-- Create a Resolver - Build conflict resolvers (coming soon)
-- [Create a Plugin](/docs/developer/plugins) - Build post-processors
+<Cards>
+  <Card href="/docs/developer/templates" title="Create a Template">
+    Build project scaffolds
+  </Card>
+  <Card href="/docs/developer/processors" title="Create a Processor">
+    Build file transformers
+  </Card>
+  <Card title="Create a Resolver">
+    Build conflict resolvers (coming soon)
+  </Card>
+  <Card href="/docs/developer/plugins" title="Create a Plugin">
+    Build post-processors
+  </Card>
+</Cards>

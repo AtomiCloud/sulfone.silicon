@@ -9,7 +9,7 @@ The `cyan.yaml` file defines template metadata and declares dependencies on proc
 
 ## Basic Structure
 
-```yaml
+```yaml cyan.yaml -c
 username: myorg
 name: my-template
 description: A template description
@@ -113,8 +113,9 @@ processors:
 
 Format: `username/processor-name[:version]`
 
-- Version is optional: `myorg/processor` (latest) or `myorg/processor:3` (specific version)
-- Versions are auto-incrementing integers managed by the registry (not semantic versions)
+<Callout type="info">
+Versions are auto-incrementing integers managed by the registry (not semantic versions). Version is optional: `myorg/processor` (latest) or `myorg/processor:3` (specific version).
+</Callout>
 
 ### `plugins`
 
@@ -127,9 +128,6 @@ plugins:
 ```
 
 Format: `username/plugin-name[:version]`
-
-- Version is optional: `cyan/init-git` (latest) or `cyan/init-git:1` (specific version)
-- Versions are auto-incrementing integers managed by the registry (not semantic versions)
 
 ### `templates`
 
@@ -144,9 +142,6 @@ templates:
 
 Format: `username/template-name[:version]`
 
-- Version is optional: `myorg/base-node` (latest) or `myorg/base-node:3` (specific version)
-- Versions are auto-incrementing integers managed by the registry (not semantic versions)
-
 ## Version Management
 
 Template versions are **auto-incrementing integers** managed by the registry, not semantic versions. When you push a template to the registry, it automatically receives the next available version number (1, 2, 3, ...).
@@ -159,7 +154,7 @@ This means:
 
 ## Complete Example
 
-```yaml
+```yaml cyan.yaml -c
 # Organization and identity
 username: myorg
 name: node-service
@@ -197,6 +192,14 @@ templates:
 
 ## Related
 
-- [Project Structure](/docs/developer/templates/reference/project-structure) - Template files organization
-- [Dockerfiles Reference](/docs/developer/templates/reference/dockerfiles) - Docker configuration
-- [Compose Templates](/docs/developer/templates/how-to/compose-templates) - Composition how-to
+<Cards>
+  <Card title="Project Structure" href="/docs/developer/templates/reference/project-structure">
+    Template files organization
+  </Card>
+  <Card title="Dockerfiles Reference" href="/docs/developer/templates/reference/dockerfiles">
+    Docker configuration
+  </Card>
+  <Card title="Compose Templates" href="/docs/developer/templates/how-to/compose-templates">
+    Composition how-to
+  </Card>
+</Cards>

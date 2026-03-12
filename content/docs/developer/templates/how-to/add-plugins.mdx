@@ -5,8 +5,6 @@ description: How to add plugins for post-generation actions
 
 import { Callout } from 'fumadocs-ui/components/callout';
 
-# How to Add Plugins
-
 Plugins run post-processing after file generation. They handle actions like git initialization, dependency installation, and more.
 
 ## What are Plugins?
@@ -24,7 +22,7 @@ Plugins execute after all processors have finished generating files:
 
 ### In cyan.yaml
 
-```yaml
+```yaml cyan.yaml -c
 plugins:
   - name: cyan/init-git
     config:
@@ -33,7 +31,7 @@ plugins:
 
 ### In Template Code
 
-```ts
+```ts -c
 return {
   processors: [/* ... */],
   plugins: [
@@ -53,7 +51,7 @@ return {
 
 Initialize a git repository:
 
-```yaml
+```yaml cyan.yaml -c
 plugins:
   - name: cyan/init-git
     config:
@@ -65,7 +63,7 @@ plugins:
 
 Install dependencies after generation:
 
-```yaml
+```yaml cyan.yaml -c
 plugins:
   - name: cyan/npm-install
     config:
@@ -77,7 +75,7 @@ plugins:
 
 Use community or custom plugins:
 
-```yaml
+```yaml cyan.yaml -c
 plugins:
   - name: myorg/setup-tooling
     config:
@@ -90,7 +88,7 @@ plugins:
 
 Chain multiple plugins:
 
-```ts
+```ts -c
 return {
   processors: [/* ... */],
   plugins: [
@@ -126,7 +124,7 @@ return {
 
 Add plugins based on user choices:
 
-```ts
+```ts -c
 const plugins = [];
 
 if (initGit) {
@@ -157,7 +155,7 @@ return {
 
 Pass any config your plugin needs:
 
-```yaml
+```yaml cyan.yaml -c
 plugins:
   - name: myorg/deploy-setup
     config:
@@ -171,7 +169,7 @@ plugins:
 
 ### Full Project Setup
 
-```ts
+```ts -c
 const plugins = [
   // Git
   {

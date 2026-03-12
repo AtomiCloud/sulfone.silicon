@@ -3,6 +3,11 @@ title: 3-Way Merge
 description: How template updates work with 3-way merging
 ---
 
+import { Files, File, Folder } from 'fumadocs-ui/components/files';
+import { Steps, Step } from 'fumadocs-ui/components/steps';
+import { Callout } from 'fumadocs-ui/components/callout';
+import { Cards, Card } from 'fumadocs-ui/components/card';
+
 # 3-Way Merge
 
 CyanPrint uses 3-way merge to update templates while preserving user modifications.
@@ -40,21 +45,30 @@ When users modify generated projects, naive updates would:
 
 Each generation stores its base state:
 
-```
-.cyan/
-├── generation.json     # Metadata
-└── base/               # Original generated files
-    ├── README.md
-    └── package.json
-```
+<Files>
+  <Folder name=".cyan" defaultOpen>
+    <File name="generation.json" />
+    <Folder name="base" defaultOpen>
+      <File name="README.md" />
+      <File name="package.json" />
+    </Folder>
+  </Folder>
+</Files>
 
 ### Update Process
 
-1. **Read base** - Load original generated files
-2. **Read ours** - Load current project files
-3. **Generate theirs** - Run new template version
-4. **Merge** - Combine all three versions
-5. **Report conflicts** - Flag unresolved changes
+<Steps>
+  <Step>### Read base
+  Load original generated files</Step>
+  <Step>### Read ours
+  Load current project files</Step>
+  <Step>### Generate theirs
+  Run new template version</Step>
+  <Step>### Merge
+  Combine all three versions</Step>
+  <Step>### Report conflicts
+  Flag unresolved changes</Step>
+</Steps>
 
 ### Merge Algorithm
 
@@ -179,7 +193,7 @@ This allows:
 
 ## Update Command
 
-```bash
+```bash -c
 # Update to latest version
 cyanprint update ./my-project
 
@@ -208,18 +222,22 @@ cyanprint update ./my-project --dry-run
 
 ## Limitations
 
-3-way merge works best with:
-- Text files (not binaries)
-- Line-based changes
-- Small modifications
+<Callout type="warn">
+3-way merge works best with text files (not binaries), line-based changes, and small modifications.
 
-It may struggle with:
-- Large reorganizations
-- Binary file changes
-- Complex refactors
+It may struggle with large reorganizations, binary file changes, and complex refactors.
+</Callout>
 
 ## Related
 
-- [Determinism](/docs/developer/templates/explanation/determinism) - How IDs stay consistent
-- [Client State](/docs/developer/templates/explanation/client-state) - State management
-- [Pin Determinism](/docs/developer/templates/how-to/pin-determinism) - Pin usage guide
+<Cards>
+  <Card href="/docs/developer/templates/explanation/determinism" title="Determinism">
+    How IDs stay consistent across updates
+  </Card>
+  <Card href="/docs/developer/templates/explanation/client-state" title="Client State">
+    State management for templates
+  </Card>
+  <Card href="/docs/developer/templates/how-to/pin-determinism" title="Pin Determinism">
+    Pin usage guide for consistent generation
+  </Card>
+</Cards>

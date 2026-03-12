@@ -3,25 +3,32 @@ title: Template Project Structure
 description: Understanding the structure of a CyanPrint template project
 ---
 
+import { Files, File, Folder } from 'fumadocs-ui/components/files';
+import { Tabs, Tab } from 'fumadocs-ui/components/tabs';
+
 # Template Project Structure
 
 A CyanPrint template is organized as a structured project with specific files and directories.
 
 ## Standard Structure
 
-```
-my-template/
-├── cyan/
-│   ├── index.ts              # Template logic entry point
-│   ├── Dockerfile            # Template container definition
-│   └── package.json          # SDK dependencies
-├── template/                 # Source template files
-│   ├── README.md
-│   └── src/
-│       └── index.ts
-├── blob.Dockerfile           # Blob container for file storage
-└── cyan.yaml                 # Template metadata and configuration
-```
+<Files>
+  <Folder name="my-template" defaultOpen>
+    <Folder name="cyan" defaultOpen>
+      <File name="index.ts" icon="ts" />
+      <File name="Dockerfile" />
+      <File name="package.json" icon="json" />
+    </Folder>
+    <Folder name="template" defaultOpen>
+      <File name="README.md" icon="markdown" />
+      <Folder name="src">
+        <File name="index.ts" icon="ts" />
+      </Folder>
+    </Folder>
+    <File name="blob.Dockerfile" />
+    <File name="cyan.yaml" icon="yaml" />
+  </Folder>
+</Files>
 
 ## Directory Details
 
@@ -29,12 +36,13 @@ my-template/
 
 Contains all template logic and SDK dependencies.
 
-```
-cyan/
-├── index.ts              # Main template logic
-├── Dockerfile            # Docker image for template execution
-└── package.json          # SDK dependencies
-```
+<Files>
+  <Folder name="cyan" defaultOpen>
+    <File name="index.ts" icon="ts" />
+    <File name="Dockerfile" />
+    <File name="package.json" icon="json" />
+  </Folder>
+</Files>
 
 ### `cyan/index.ts`
 
@@ -58,15 +66,18 @@ StartTemplateWithLambda(async (i: IInquirer, d: IDeterminism) => {
 
 Source files that will be processed and output to the user's project (located at root level, sibling to `cyan/`):
 
-```
-template/
-├── README.md           # Template with var__name__ placeholders
-├── src/
-│   ├── index.ts        # Source code template
-│   └── config.ts
-└── assets/
-    └── logo.png        # Binary files (use GlobType.Copy)
-```
+<Files>
+  <Folder name="template" defaultOpen>
+    <File name="README.md" icon="markdown" />
+    <Folder name="src">
+      <File name="index.ts" icon="ts" />
+      <File name="config.ts" icon="ts" />
+    </Folder>
+    <Folder name="assets">
+      <File name="logo.png" icon="image" />
+    </Folder>
+  </Folder>
+</Files>
 
 Use `GlobType.Template` for text files with variable substitution, and `GlobType.Copy` for binary files that should be copied as-is.
 

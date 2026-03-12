@@ -3,22 +3,29 @@ title: Plugin Project Structure
 description: Standard directory layout for plugin projects
 ---
 
+import { Files, File, Folder } from 'fumadocs-ui/components/files';
+import { Callout } from 'fumadocs-ui/components/callout';
+import { Cards, Card } from 'fumadocs-ui/components/card';
+
 # Plugin Project Structure
 
 A typical plugin project has a simple structure:
 
-```
-my-plugin/
-├── index.ts           # Entry point with plugin logic
-├── package.json       # Dependencies
-├── bun.lockb          # Lock file (commit for reproducible builds)
-├── tsconfig.json      # TypeScript configuration
-├── Dockerfile         # Container definition
-├── .dockerignore      # Files to exclude from image
-├── .gitignore         # Files to exclude from git
-├── cyan.yaml          # Plugin metadata (optional)
-└── README.md          # Documentation
-```
+<Files>
+  <File name="index.ts" />
+  <File name="package.json" />
+  <File name="bun.lockb" />
+  <File name="tsconfig.json" />
+  <File name="Dockerfile" />
+  <File name=".dockerignore" />
+  <File name=".gitignore" />
+  <File name="cyan.yaml" />
+  <File name="README.md" />
+</Files>
+
+<Callout type="info">
+Always commit `bun.lockb` to ensure reproducible builds across environments.
+</Callout>
 
 ## Required Files
 
@@ -26,7 +33,7 @@ my-plugin/
 
 The entry point containing plugin logic:
 
-```ts
+```ts index.ts -c
 import { StartPluginWithLambda } from '@atomicloud/cyan-sdk';
 
 StartPluginWithLambda(async (input) => {
@@ -42,7 +49,7 @@ StartPluginWithLambda(async (input) => {
 
 Dependencies for the plugin:
 
-```json
+```json package.json -c
 {
   "name": "my-plugin",
   "module": "index.ts",
@@ -63,7 +70,7 @@ Dependencies for the plugin:
 
 Container definition:
 
-```dockerfile
+```dockerfile Dockerfile -c
 FROM oven/bun:1.0.11
 
 WORKDIR /app
@@ -85,7 +92,7 @@ CMD [ "bun", "run", "index.ts" ]
 
 Exclude unnecessary files from the Docker build:
 
-```text
+```text .dockerignore -c
 node_modules
 .idea
 .vscode
@@ -95,7 +102,7 @@ node_modules
 
 Documentation for your plugin:
 
-```markdown
+```markdown README.md
 # My Plugin
 
 Description of what the plugin does.
@@ -118,7 +125,7 @@ plugins:
 
 Plugin metadata file:
 
-```yaml
+```yaml cyan.yaml -c
 username: your-username
 name: my-plugin
 description: A plugin that does something
@@ -133,24 +140,25 @@ readme: README.md
 
 For complex plugins, organize code into multiple files:
 
-```
-my-plugin/
-├── index.ts           # Entry point
-├── lib/
-│   ├── git.ts         # Git operations
-│   ├── npm.ts         # npm operations
-│   └── files.ts       # File operations
-├── types/
-│   └── config.ts      # Config types
-├── package.json
-├── bun.lockb
-├── tsconfig.json
-└── Dockerfile
-```
+<Files>
+  <File name="index.ts" />
+  <Folder name="lib" defaultOpen>
+    <File name="git.ts" />
+    <File name="npm.ts" />
+    <File name="files.ts" />
+  </Folder>
+  <Folder name="types">
+    <File name="config.ts" />
+  </Folder>
+  <File name="package.json" />
+  <File name="bun.lockb" />
+  <File name="tsconfig.json" />
+  <File name="Dockerfile" />
+</Files>
 
 ### index.ts
 
-```ts
+```ts index.ts
 import { StartPluginWithLambda } from '@atomicloud/cyan-sdk';
 import { initGit } from './lib/git';
 import { installDeps } from './lib/npm';
@@ -171,7 +179,7 @@ StartPluginWithLambda(async (input) => {
 
 ### lib/git.ts
 
-```ts
+```ts lib/git.ts
 import { $ } from 'bun';
 
 export async function initGit(directory: string, config: { git?: boolean }) {
@@ -184,5 +192,11 @@ export async function initGit(directory: string, config: { git?: boolean }) {
 
 ## Related
 
-- [Plugin Dockerfile](/docs/developer/plugins/reference/dockerfile) - Container setup
-- [First Plugin](/docs/developer/plugins/tutorials/first-plugin) - Create your first plugin
+<Cards>
+  <Card href="/docs/developer/plugins/reference/dockerfile" title="Plugin Dockerfile">
+    Container setup and configuration
+  </Card>
+  <Card href="/docs/developer/plugins/tutorials/first-plugin" title="First Plugin">
+    Create your first plugin
+  </Card>
+</Cards>

@@ -32,7 +32,7 @@ description: Complete reference for all CyanPrint CLI commands
 
 Create a new project from a template.
 
-```bash
+```bash -c
 cyanprint create <TEMPLATE_REF> [PATH]
 ```
 
@@ -59,7 +59,7 @@ cyanprint create <TEMPLATE_REF> [PATH]
 
 Update an existing project to the latest template version. This command uses the `.cyan_state.yaml` file to perform a 3-way merge between your local changes and the upstream template.
 
-```bash
+```bash -c
 cyanprint update [PATH]
 ```
 
@@ -78,9 +78,15 @@ cyanprint update [PATH]
 
 ## `cyanprint daemon`
 
-Start the CyanPrint daemon for local development. **Requires Docker to be running.**
+import { Callout } from 'fumadocs-ui/components/callout';
 
-```bash
+Start the CyanPrint daemon for local development.
+
+<Callout type="warn">
+Docker must be installed and running before starting the daemon.
+</Callout>
+
+```bash -c
 cyanprint daemon [VERSION]
 ```
 
@@ -93,7 +99,9 @@ cyanprint daemon [VERSION]
 
 ### Prerequisites
 
-- Docker must be installed and running
+<Callout type="warn">
+Docker must be installed and running.
+</Callout>
 
 ### Environment Variables
 
@@ -105,7 +113,7 @@ cyanprint daemon [VERSION]
 
 Push templates, processors, plugins, or groups to the registry.
 
-```bash
+```bash -c
 cyanprint push [OPTIONS] <COMMAND>
 ```
 
@@ -129,7 +137,7 @@ cyanprint push [OPTIONS] <COMMAND>
 
 Push a template to the registry.
 
-```bash
+```bash -c
 cyanprint push --token <TOKEN> template <BLOB_IMAGE> <BLOB_TAG> <TEMPLATE_IMAGE> <TEMPLATE_TAG>
 ```
 
@@ -137,7 +145,7 @@ cyanprint push --token <TOKEN> template <BLOB_IMAGE> <BLOB_TAG> <TEMPLATE_IMAGE>
 
 Push a processor to the registry.
 
-```bash
+```bash -c
 cyanprint push --token <TOKEN> processor <IMAGE> <TAG>
 ```
 

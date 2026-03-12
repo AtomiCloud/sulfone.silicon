@@ -4,6 +4,7 @@ description: Configuration structure for templates
 ---
 
 import { Callout } from 'fumadocs-ui/components/callout';
+import { TypeTable } from 'fumadocs-ui/components/type-table';
 
 # Cyan Config Reference
 
@@ -11,7 +12,7 @@ The configuration object returned by `StartTemplateWithLambda` defines how templ
 
 ## Structure Overview
 
-```ts
+```ts -c
 interface Cyan {
   processors: CyanProcessor[];
   plugins: CyanPlugin[];
@@ -24,7 +25,7 @@ Processors handle file transformation. Most templates use the default processor.
 
 ### Single Processor
 
-```ts
+```ts -c
 return {
   processors: [{
     name: 'cyan/default',
@@ -43,7 +44,7 @@ return {
 
 ### Multiple Processors
 
-```ts
+```ts -c
 return {
   processors: [
     {
@@ -68,24 +69,51 @@ return {
 
 ### CyanProcessor Interface
 
-```ts
-interface CyanProcessor {
-  name: string;           // Processor identifier
-  files: CyanGlob[];      // File groups to process
-  config: unknown;        // Processor-specific config
-}
-```
+<TypeTable
+  type={{
+    name: {
+      type: 'string',
+      description: 'Processor identifier',
+      required: true,
+    },
+    files: {
+      type: 'CyanGlob[]',
+      description: 'File groups to process',
+      required: true,
+    },
+    config: {
+      type: 'unknown',
+      description: 'Processor-specific configuration',
+      required: true,
+    },
+  }}
+/>
 
 ### File Groups
 
-```ts
-interface CyanGlob {
-  root?: string | null;   // Source directory (optional)
-  glob: string;           // Glob pattern
-  exclude: string[];      // Exclude patterns
-  type: GlobType;         // Processing type
-}
-```
+<TypeTable
+  type={{
+    root: {
+      type: 'string | null',
+      description: 'Source directory (optional)',
+    },
+    glob: {
+      type: 'string',
+      description: 'Glob pattern',
+      required: true,
+    },
+    exclude: {
+      type: 'string[]',
+      description: 'Exclude patterns',
+      required: true,
+    },
+    type: {
+      type: 'GlobType',
+      description: 'Processing type',
+      required: true,
+    },
+  }}
+/>
 
 ### GlobType Options
 
@@ -98,14 +126,18 @@ interface CyanGlob {
 
 The `cyan/default` processor accepts:
 
-```ts
-config: {
-  vars: Record<string, unknown>,  // Variables for substitution
-  parser: {
-    varSyntax: [string, string][] // Custom tag pairs (array of tuples)
-  }
-}
-```
+<TypeTable
+  type={{
+    vars: {
+      type: 'Record<string, unknown>',
+      description: 'Variables for substitution',
+    },
+    parser: {
+      type: 'object',
+      description: 'Parser configuration with varSyntax for custom tag pairs',
+    },
+  }}
+/>
 
 <Callout type="info">
 The `cyan/default` processor is the standard processor included with Cyan. The exact configuration options may vary based on the processor implementation. The `vars` type shown here is an example; the actual config type is `unknown`.
@@ -121,7 +153,7 @@ The plugin names shown below (e.g., `cyan/init-git`, `cyan/npm-install`) are exa
 
 ### Basic Plugin
 
-```ts
+```ts -c
 return {
   processors: [/* ... */],
   plugins: [
@@ -137,7 +169,7 @@ return {
 
 ### Multiple Plugins
 
-```ts
+```ts -c
 return {
   processors: [/* ... */],
   plugins: [
@@ -155,7 +187,7 @@ return {
 
 ### Conditional Plugins
 
-```ts
+```ts -c
 const plugins = [];
 
 if (initGit) {
@@ -173,7 +205,7 @@ return {
 
 ## Complete Example
 
-```ts
+```ts index.ts -c
 import { StartTemplateWithLambda, GlobType, QuestionType } from '@atomicloud/cyan-sdk';
 
 StartTemplateWithLambda(async (i, d) => {

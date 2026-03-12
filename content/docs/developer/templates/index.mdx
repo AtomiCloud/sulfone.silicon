@@ -99,7 +99,7 @@ Deep dives into concepts and architecture:
 
 Here's a minimal template that asks for a project name and generates a README:
 
-```ts
+```ts index.ts -c
 import { StartTemplateWithLambda, GlobType, IInquirer, IDeterminism } from '@atomicloud/cyan-sdk';
 
 StartTemplateWithLambda(async (i: IInquirer, d: IDeterminism) => {
@@ -118,7 +118,7 @@ StartTemplateWithLambda(async (i: IInquirer, d: IDeterminism) => {
 
 Template file (`template/README.md`):
 
-```markdown
+```markdown template/README.md -c
 # var__name__
 
 Welcome to your new project!

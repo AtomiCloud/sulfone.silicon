@@ -5,6 +5,7 @@ description: Build and publish your processor to a container registry and regist
 
 import { Steps } from 'fumadocs-ui/components/steps';
 import { Callout } from 'fumadocs-ui/components/callout';
+import { Tabs, Tab } from 'fumadocs-ui/components/tabs';
 
 # Push to Registry
 
@@ -25,37 +26,51 @@ Publish your processor to a container registry and register it with the CyanPrin
 
 Tag your processor image with the registry path:
 
-```bash
-# Docker Hub
-docker tag my-processor:dev username/my-processor:latest
-docker tag my-processor:dev username/my-processor:1.0.0
-
-# GitHub Container Registry
-docker tag my-processor:dev ghcr.io/org/my-processor:latest
-docker tag my-processor:dev ghcr.io/org/my-processor:1.0.0
-
-# Private registry
-docker tag my-processor:dev registry.company.com/processors/my-processor:latest
-```
+<Tabs groupId="registry" items={['Docker Hub', 'GHCR', 'Private Registry']} persist>
+  <Tab value="Docker Hub">
+    ```bash -c
+    docker tag my-processor:dev username/my-processor:latest
+    docker tag my-processor:dev username/my-processor:1.0.0
+    ```
+  </Tab>
+  <Tab value="GHCR">
+    ```bash -c
+    docker tag my-processor:dev ghcr.io/org/my-processor:latest
+    docker tag my-processor:dev ghcr.io/org/my-processor:1.0.0
+    ```
+  </Tab>
+  <Tab value="Private Registry">
+    ```bash -c
+    docker tag my-processor:dev registry.company.com/processors/my-processor:latest
+    ```
+  </Tab>
+</Tabs>
 
 ### Push to Registry
 
-```bash
-# Docker Hub
-docker push username/my-processor:latest
-docker push username/my-processor:1.0.0
-
-# GitHub Container Registry
-docker push ghcr.io/org/my-processor:latest
-docker push ghcr.io/org/my-processor:1.0.0
-
-# Private registry
-docker push registry.company.com/processors/my-processor:latest
-```
+<Tabs groupId="registry" items={['Docker Hub', 'GHCR', 'Private Registry']} persist>
+  <Tab value="Docker Hub">
+    ```bash -c
+    docker push username/my-processor:latest
+    docker push username/my-processor:1.0.0
+    ```
+  </Tab>
+  <Tab value="GHCR">
+    ```bash -c
+    docker push ghcr.io/org/my-processor:latest
+    docker push ghcr.io/org/my-processor:1.0.0
+    ```
+  </Tab>
+  <Tab value="Private Registry">
+    ```bash -c
+    docker push registry.company.com/processors/my-processor:latest
+    ```
+  </Tab>
+</Tabs>
 
 ### Verify the Push
 
-```bash
+```bash -c
 # Pull the image to verify
 docker pull username/my-processor:latest
 
@@ -89,7 +104,7 @@ The system uses the `username/name[:version]` format to reference processors in 
 
 Use semantic versioning for Docker image tags:
 
-```bash
+```bash -c
 # Major version (breaking changes)
 docker tag my-processor:dev org/my-processor:2.0.0
 
@@ -113,10 +128,10 @@ The CyanPrint registry (Zinc) uses auto-incremented integer version numbers (1, 
 
 Templates reference processors by name with an optional version tag:
 
-```ts
+```ts -c
 return {
   processors: [{
-    name: 'username/my-processor:1.0.0',  // Pinned Docker tag
+    name: 'username/my-processor:1.0.0',  // !callout[/1.0.0/] Pin to specific Docker tag
     files: [{ root: 'templates', glob: '**/*', exclude: [], type: GlobType.Template }],
     config: { /* ... */ }
   }]

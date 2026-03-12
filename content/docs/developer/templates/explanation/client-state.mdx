@@ -3,6 +3,9 @@ title: Client State
 description: Managing state across template executions
 ---
 
+import { Callout } from 'fumadocs-ui/components/callout';
+import { Cards, Card } from 'fumadocs-ui/components/card';
+
 # Client State
 
 Client state manages data persistence across template executions, enabling updates and reproducibility.
@@ -11,7 +14,7 @@ Client state manages data persistence across template executions, enabling updat
 
 Client state is stored in the generated project at `.cyan/generation.json`:
 
-```json
+```json .cyan/generation.json -c
 {
   "version": "1.0",
   "template": {
@@ -34,7 +37,7 @@ Client state is stored in the generated project at `.cyan/generation.json`:
 
 Regenerate with the same configuration:
 
-```bash
+```bash -c
 # Original generation stored answers
 cyanprint create myorg/template:1.0.0 ./my-project
 
@@ -46,7 +49,7 @@ cyanprint regenerate ./my-project
 
 Update to new template versions:
 
-```bash
+```bash -c
 # Update to latest version
 cyanprint update ./my-project
 
@@ -58,7 +61,7 @@ cyanprint update ./my-project myorg/template:2.0.0
 
 Inspect what configuration was used:
 
-```bash
+```bash -c
 cat ./my-project/.cyan/generation.json
 ```
 
@@ -137,7 +140,7 @@ Timestamp of generation:
 
 State is automatically managed. Access via keys:
 
-```ts
+```ts -c
 const name = await i.text('Name?', 'project.name', '...');
 // This answer is stored in state
 ```
@@ -146,7 +149,7 @@ const name = await i.text('Name?', 'project.name', '...');
 
 Read state directly:
 
-```bash
+```bash -c
 # Read state
 cat .cyan/generation.json | jq '.answers'
 

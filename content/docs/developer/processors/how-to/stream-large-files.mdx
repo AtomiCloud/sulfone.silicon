@@ -4,6 +4,8 @@ description: Stream large files for memory efficiency
 ---
 
 import { Callout } from 'fumadocs-ui/components/callout';
+import { TypeTable } from 'fumadocs-ui/components/type-table';
+import { Cards, Card } from 'fumadocs-ui/components/card';
 
 # Stream Large Files
 
@@ -19,9 +21,7 @@ Use `readAsStream()` to process large files chunk by chunk without loading the e
 
 ## Usage
 
-```ts
-import { StartProcessorWithLambda } from '@atomicloud/cyan-sdk';
-
+```ts filename="processor.ts" -c
 StartProcessorWithLambda(async (input, fileHelper) => {
   // Get streams for large files
   const streams = fileHelper.readAsStream({ root: 'assets', glob: '**/*' });

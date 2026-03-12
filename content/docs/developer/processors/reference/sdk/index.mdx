@@ -3,17 +3,31 @@ title: SDK Overview
 description: CyanPrint SDK for processor development
 ---
 
+import { Tabs, Tab } from 'fumadocs-ui/components/tabs';
+import { Cards, Card } from 'fumadocs-ui/components/card';
+
 # SDK Overview
 
 The CyanPrint SDK (`@atomicloud/cyan-sdk`) provides the APIs for creating processors.
 
 ## Installation
 
-```bash
-npm install @atomicloud/cyan-sdk
-# or
-bun add @atomicloud/cyan-sdk
-```
+<Tabs groupId="package_manager" items={['npm', 'bun']} persist>
+  <Tab value="npm">
+
+  ```bash
+  npm install @atomicloud/cyan-sdk
+  ```
+
+  </Tab>
+  <Tab value="bun">
+
+  ```bash
+  bun add @atomicloud/cyan-sdk
+  ```
+
+  </Tab>
+</Tabs>
 
 ## Core Exports
 
@@ -72,10 +86,20 @@ StartProcessorWithLambda(async (input, fileHelper) => {
 
 ## SDK Reference Sections
 
-- [StartProcessorWithLambda](/docs/developer/processors/reference/sdk/start-processor) - Entry point API
-- [CyanFileHelper](/docs/developer/processors/reference/sdk/file-helper) - File operations
-- [Input/Output](/docs/developer/processors/reference/sdk/input-output) - Type definitions
-- [Types](/docs/developer/processors/reference/sdk/types) - Full type reference
+<Cards>
+  <Card href="/docs/developer/processors/reference/sdk/start-processor" title="StartProcessorWithLambda">
+    Entry point API for processors
+  </Card>
+  <Card href="/docs/developer/processors/reference/sdk/file-helper" title="CyanFileHelper">
+    File operations API
+  </Card>
+  <Card href="/docs/developer/processors/reference/sdk/input-output" title="Input/Output">
+    Type definitions
+  </Card>
+  <Card href="/docs/developer/processors/reference/sdk/types" title="Types">
+    Full type reference
+  </Card>
+</Cards>
 
 ## Version Compatibility
 
@@ -86,6 +110,14 @@ StartProcessorWithLambda(async (input, fileHelper) => {
 
 ## Related
 
-- [First Processor](/docs/developer/processors/tutorials/first-processor) - Tutorial
-- [How-to Guides](/docs/developer/processors/how-to) - Task guides
-- [Explanation](/docs/developer/processors/explanation) - Concepts
+<Cards>
+  <Card href="/docs/developer/processors/tutorials/first-processor" title="First Processor">
+    Tutorial walkthrough
+  </Card>
+  <Card href="/docs/developer/processors/how-to" title="How-to Guides">
+    Task guides
+  </Card>
+  <Card href="/docs/developer/processors/explanation" title="Explanation">
+    Core concepts
+  </Card>
+</Cards>

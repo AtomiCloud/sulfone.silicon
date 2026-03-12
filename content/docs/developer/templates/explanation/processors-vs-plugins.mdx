@@ -4,6 +4,7 @@ description: When to use processors versus plugins
 ---
 
 import { Callout } from 'fumadocs-ui/components/callout';
+import { Mermaid } from '@/components/mdx/mermaid';
 
 # Processors vs Plugins
 
@@ -41,7 +42,7 @@ Processors handle **file transformation** during generation.
 
 ### Example
 
-```ts
+```ts -c
 return {
   processors: [{
     name: 'cyan/default',
@@ -95,7 +96,7 @@ Plugins handle **post-generation actions** after files are created.
 
 ### Example
 
-```ts
+```ts -c
 return {
   processors: [/* ... */],
   plugins: [
@@ -132,7 +133,7 @@ return {
 
 Use **processor**:
 
-```ts
+```ts -c
 processors: [{
   name: 'cyan/default',
   files: [{ root: 'templates', glob: '**/*', exclude: [], type: GlobType.Template }],
@@ -144,7 +145,7 @@ processors: [{
 
 Use **custom processor**:
 
-```ts
+```ts -c
 processors: [{
   name: 'myorg/graphql-codegen',
   files: [{ root: 'schemas', glob: '**/*.graphql', exclude: [], type: GlobType.Template }],
@@ -156,7 +157,7 @@ processors: [{
 
 Use **plugin**:
 
-```ts
+```ts -c
 plugins: [{
   name: 'cyan/init-git',
   config: { commitMessage: 'Initial commit' }
@@ -167,7 +168,7 @@ plugins: [{
 
 Use **plugin**:
 
-```ts
+```ts -c
 plugins: [{
   name: 'cyan/npm-install',
   config: { packageManager: 'pnpm' }

@@ -4,6 +4,7 @@ description: Collect user input to customize generated projects
 ---
 
 import { Callout } from 'fumadocs-ui/components/callout';
+import { Cards, Card } from 'fumadocs-ui/components/card';
 
 # Tutorial 4: Asking Questions
 
@@ -13,7 +14,7 @@ Collect user input to customize the generated project. Questions make templates 
 
 The `i` parameter provides methods to ask different question types:
 
-```ts
+```ts -c
 StartTemplateWithLambda(async (i, d) => {
   // i is the IInquirer interface
   const name = await i.text('Project name?', 'project.name', 'Enter name');
@@ -221,6 +222,14 @@ StartTemplateWithLambda(async (i, d) => {
 
 Now you understand the basics of template development. Explore specific patterns in the How-to Guides:
 
-- [**How-to Guides**](/docs/developer/templates/how-to) - Specific task guides
-- [**Full Example**](/docs/developer/templates/tutorials/full-example) - Complete template with all features
-- [**IInquirer Reference**](/docs/developer/templates/reference/sdk/inquirer) - Complete API documentation
+<Cards>
+  <Card href="/docs/developer/templates/how-to" title="How-to Guides">
+    Specific task guides
+  </Card>
+  <Card href="/docs/developer/templates/tutorials/full-example" title="Full Example">
+    Complete template with all features
+  </Card>
+  <Card href="/docs/developer/templates/reference/sdk/inquirer" title="IInquirer Reference">
+    Complete API documentation
+  </Card>
+</Cards>

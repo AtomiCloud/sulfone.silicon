@@ -3,7 +3,7 @@ title: Push to Registry
 description: How to build and publish templates to a registry
 ---
 
-import { Steps } from 'fumadocs-ui/components/steps';
+import { Steps, Step } from 'fumadocs-ui/components/steps';
 import { Callout } from 'fumadocs-ui/components/callout';
 
 # How to Push to Registry
@@ -17,41 +17,45 @@ Build and publish your template to make it available for others to use.
 - CyanPrint CLI for registration
 
 <Steps>
+  <Step>
+    ### Build Template Image
 
-## 1. Build Template Image
+    Build the template image for multiple architectures:
 
-Build the template image for multiple architectures:
+    ```bash -c
+    docker buildx build --platform linux/amd64,linux/arm64 \
+      -f cyan/template.Dockerfile \
+      -t myorg/my-template:1.0.0 \
+      --push .
+    ```
 
-```bash
-docker buildx build --platform linux/amd64,linux/arm64 \
-  -f cyan/template.Dockerfile \
-  -t myorg/my-template:1.0.0 \
-  --push .
-```
+    The `--push` flag pushes immediately after build.
+  </Step>
 
-The `--push` flag pushes immediately after build.
+  <Step>
+    ### Build Blob Image
 
-## 2. Build Blob Image
+    Build the blob image containing your template files:
 
-Build the blob image containing your template files:
+    ```bash -c
+    docker buildx build --platform linux/amd64,linux/arm64 \
+      -f cyan/blob.Dockerfile \
+      -t myorg/my-template-blob:1.0.0 \
+      --push .
+    ```
+  </Step>
 
-```bash
-docker buildx build --platform linux/amd64,linux/arm64 \
-  -f cyan/blob.Dockerfile \
-  -t myorg/my-template-blob:1.0.0 \
-  --push .
-```
+  <Step>
+    ### Register with CyanPrint
 
-## 3. Register with CyanPrint
+    Register your template with the CyanPrint registry:
 
-Register your template with the CyanPrint registry:
-
-```bash
-cyanprint push template --token $CYAN_TOKEN \
-  myorg/my-template-blob 1.0.0 \
-  myorg/my-template 1.0.0
-```
-
+    ```bash -c
+    cyanprint push template --token $CYAN_TOKEN \
+      myorg/my-template-blob 1.0.0 \
+      myorg/my-template 1.0.0
+    ```
+  </Step>
 </Steps>
 
 ## Build Options
@@ -60,7 +64,7 @@ cyanprint push template --token $CYAN_TOKEN \
 
 Build for multiple platforms:
 
-```bash
+```bash -c
 docker buildx build --platform linux/amd64,linux/arm64,linux/arm/v7 \
   -f cyan/template.Dockerfile \
   -t myorg/my-template:1.0.0 \
@@ -71,7 +75,7 @@ docker buildx build --platform linux/amd64,linux/arm64,linux/arm/v7 \
 
 Build locally for testing:
 
-```bash
+```bash -c
 docker buildx build --platform linux/amd64 \
   -f cyan/template.Dockerfile \
   -t myorg/my-template:dev \
@@ -84,7 +88,7 @@ The `--load` flag loads the image into Docker for local use.
 
 Use semantic versioning:
 
-```bash
+```bash -c
 # Tag with version
 docker buildx build -t myorg/my-template:1.0.0 --push .
 
@@ -96,21 +100,21 @@ docker buildx build -t myorg/my-template:latest --push .
 
 ### Docker Hub
 
-```bash
+```bash -c
 docker login
 docker buildx build -t docker.io/myorg/my-template:1.0.0 --push .
 ```
 
 ### GitHub Container Registry
 
-```bash
+```bash -c
 echo $GITHUB_TOKEN | docker login ghcr.io -u USERNAME --password-stdin
 docker buildx build -t ghcr.io/myorg/my-template:1.0.0 --push .
 ```
 
 ### Private Registry
 
-```bash
+```bash -c
 docker login registry.example.com
 docker buildx build -t registry.example.com/myorg/my-template:1.0.0 --push .
 ```
@@ -119,7 +123,7 @@ docker buildx build -t registry.example.com/myorg/my-template:1.0.0 --push .
 
 Verify your template is published:
 
-```bash
+```bash -c
 # List templates
 cyanprint list myorg/
 
@@ -131,7 +135,7 @@ cyanprint info myorg/my-template:1.0.0
 
 ### GitHub Actions
 
-```yaml
+```yaml .github/workflows/publish.yml -c
 name: Publish Template
 
 on:

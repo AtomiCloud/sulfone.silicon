@@ -3,13 +3,15 @@ title: Plugin SDK
 description: SDK reference for CyanPrint plugin development
 ---
 
+import { Cards, Card } from 'fumadocs-ui/components/card';
+
 # Plugin SDK
 
 The `@atomicloud/cyan-sdk` package provides the API for developing CyanPrint plugins.
 
 ## Installation
 
-```bash
+```bash -c
 bun add @atomicloud/cyan-sdk
 ```
 
@@ -27,7 +29,7 @@ The plugin SDK is minimal by design. Plugins receive a directory containing gene
 
 ### Quick Example
 
-```ts
+```ts plugin.ts -c
 import { StartPluginWithLambda } from '@atomicloud/cyan-sdk';
 import { $ } from 'bun';
 
@@ -44,9 +46,17 @@ StartPluginWithLambda(async (input) => {
 
 ## SDK Reference
 
-- [StartPluginWithLambda](/docs/developer/plugins/reference/sdk/start-plugin) - Entry point
-- [PluginInput/Output](/docs/developer/plugins/reference/sdk/input-output) - Type definitions
-- [Types](/docs/developer/plugins/reference/sdk/types) - All type definitions
+<Cards>
+  <Card href="/docs/developer/plugins/reference/sdk/start-plugin" title="StartPluginWithLambda">
+    Entry point for plugin logic
+  </Card>
+  <Card href="/docs/developer/plugins/reference/sdk/input-output" title="PluginInput/Output">
+    Type definitions for plugin input and output
+  </Card>
+  <Card href="/docs/developer/plugins/reference/sdk/types" title="Types">
+    Complete type definitions reference
+  </Card>
+</Cards>
 
 ## Plugin vs Processor SDK
 

@@ -5,7 +5,7 @@ description: Build and publish your plugin to a container registry
 
 import { Steps } from 'fumadocs-ui/components/steps';
 import { Callout } from 'fumadocs-ui/components/callout';
-import { Tabs } from 'fumadocs-ui/components/tabs';
+import { Tabs, Tab } from 'fumadocs-ui/components/tabs';
 
 # Push to Registry
 
@@ -40,6 +40,7 @@ docker tag my-plugin:dev registry.company.com/plugins/my-plugin:latest
 ### Push to Registry
 
 <Tabs items={['Docker Hub', 'GitHub GHCR', 'Private Registry']}>
+  <Tab value="Docker Hub">
 
 ```bash
 # Login to Docker Hub
@@ -52,6 +53,9 @@ docker push username/my-plugin:latest
 docker push username/my-plugin:1.0.0
 ```
 
+  </Tab>
+  <Tab value="GitHub GHCR">
+
 ```bash
 # Login to GitHub Container Registry
 echo $GITHUB_TOKEN | docker login ghcr.io -u USERNAME --password-stdin
@@ -61,6 +65,9 @@ docker push ghcr.io/orgname/my-plugin:latest
 docker push ghcr.io/orgname/my-plugin:1.0.0
 ```
 
+  </Tab>
+  <Tab value="Private Registry">
+
 ```bash
 # Login to private registry
 docker login registry.company.com
@@ -69,6 +76,7 @@ docker login registry.company.com
 docker push registry.company.com/plugins/my-plugin:latest
 ```
 
+  </Tab>
 </Tabs>
 
 ### Verify the Push

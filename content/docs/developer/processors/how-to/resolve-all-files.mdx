@@ -22,7 +22,7 @@ Use `resolveAll()` to load all files matching the processor's globs into memory.
 
 ## Usage
 
-```ts
+```ts -c
 import { StartProcessorWithLambda } from '@atomicloud/cyan-sdk';
 
 StartProcessorWithLambda(async (input, fileHelper) => {
@@ -63,7 +63,7 @@ StartProcessorWithLambda(async (input, fileHelper) => {
 
 ## Example: Variable Substitution
 
-```ts
+```ts -c
 StartProcessorWithLambda(async (input, fileHelper) => {
   const files = fileHelper.resolveAll();
   const config = input.config as { vars: Record<string, string> };
@@ -82,7 +82,7 @@ StartProcessorWithLambda(async (input, fileHelper) => {
 
 ## Example: Filter and Transform
 
-```ts
+```ts -c
 StartProcessorWithLambda(async (input, fileHelper) => {
   const files = fileHelper.resolveAll();
 

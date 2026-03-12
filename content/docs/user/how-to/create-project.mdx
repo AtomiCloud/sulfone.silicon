@@ -3,9 +3,15 @@ title: Create a Project
 description: Create projects from templates with CyanPrint
 ---
 
+import { Steps, Step } from 'fumadocs-ui/components/steps';
+import { Cards, Card } from 'fumadocs-ui/components/card';
+import { Callout } from 'fumadocs-ui/components/callout';
+
 # Create a Project
 
-```bash
+Learn how to create new projects from templates using the CyanPrint CLI.
+
+```bash -c
 cyanprint create <TEMPLATE_REF> [PATH]
 ```
 
@@ -19,7 +25,7 @@ cyanprint create <TEMPLATE_REF> [PATH]
 
 ## Examples
 
-```bash
+```bash -c
 # Create in current directory (latest version)
 cyanprint create atomicloud/starter
 
@@ -36,18 +42,30 @@ cyanprint create atomicloud/starter:1 my-project
 |--------|---------|-------------|
 | `-c, --coordinator-endpoint` | `http://coord.cyanprint.dev:9000` | Coordinator service URL |
 
+<Callout type="info">
 You can also set the coordinator endpoint via the `CYANPRINT_COORDINATOR` environment variable.
+</Callout>
 
 ## What Happens
 
-1. CLI fetches template from registry
-2. Target directory is created if needed
-3. Coordinator runs the template (handles compositions automatically)
-4. You answer questions interactively
-5. Project files are generated
+<Steps>
+  <Step>CLI fetches template from registry</Step>
+  <Step>Target directory is created if needed</Step>
+  <Step>Coordinator runs the template (handles compositions automatically)</Step>
+  <Step>You answer questions interactively</Step>
+  <Step>Project files are generated</Step>
+</Steps>
 
 ## Next Steps
 
-- [Update your project](/docs/user/how-to/update-project)
-- [Browse available templates](/docs/user/how-to/browse-templates)
-- [CLI Commands Reference](/docs/user/reference/cli-commands)
+<Cards>
+  <Card href="/docs/user/how-to/update-project" title="Update your project">
+    Learn how to update your project with new template versions
+  </Card>
+  <Card href="/docs/user/how-to/browse-templates" title="Browse templates">
+    Discover available templates in the registry
+  </Card>
+  <Card href="/docs/user/reference/cli-commands" title="CLI Commands">
+    Full reference for all CyanPrint CLI commands
+  </Card>
+</Cards>

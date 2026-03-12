@@ -3,7 +3,10 @@ title: Full Template Example
 description: A complete template demonstrating all features
 ---
 
+import { Files, File, Folder } from 'fumadocs-ui/components/files';
+import { Cards, Card } from 'fumadocs-ui/components/card';
 import { Callout } from 'fumadocs-ui/components/callout';
+import { Steps } from 'fumadocs-ui/components/steps';
 
 # Full Template Example
 
@@ -21,26 +24,29 @@ We'll create a template that scaffolds a Node.js project with:
 
 ## Project Structure
 
-```
-node-template/
-├── cyan/
-│   ├── index.ts              # Template logic
-│   ├── template.Dockerfile   # Template container
-│   ├── blob.Dockerfile       # Blob container
-│   └── templates/            # Source templates
-│       ├── README.md
-│       ├── package.json
-│       ├── tsconfig.json
-│       ├── Dockerfile
-│       ├── .eslintrc.json
-│       └── .prettierrc
-├── cyan.yaml                 # Metadata
-└── package.json              # Dependencies
-```
+<Files>
+  <Folder name="node-template" defaultOpen>
+    <Folder name="cyan" defaultOpen>
+      <File name="index.ts" />
+      <File name="template.Dockerfile" />
+      <File name="blob.Dockerfile" />
+      <Folder name="templates">
+        <File name="README.md" />
+        <File name="package.json" />
+        <File name="tsconfig.json" />
+        <File name="Dockerfile" />
+        <File name=".eslintrc.json" />
+        <File name=".prettierrc" />
+      </Folder>
+    </Folder>
+    <File name="cyan.yaml" />
+    <File name="package.json" />
+  </Folder>
+</Files>
 
 ## Template Logic (index.ts)
 
-```ts
+```ts -c -n
 import { StartTemplateWithLambda, GlobType, QuestionType } from '@atomicloud/cyan-sdk';
 
 StartTemplateWithLambda(async (i, d) => {

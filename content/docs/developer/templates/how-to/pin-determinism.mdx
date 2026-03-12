@@ -4,6 +4,7 @@ description: How to pin determinism for reproducible template generation
 ---
 
 import { Callout } from 'fumadocs-ui/components/callout';
+import { Steps } from 'fumadocs-ui/components/steps';
 
 # How to Pin Determinism
 
@@ -13,7 +14,7 @@ Pin determinism to ensure reproducible template generation. This is essential fo
 
 Templates generate deterministic values (UUIDs, timestamps) that change on every run:
 
-```ts
+```ts template.ts
 const id = d.uuid();  // Different every time!
 ```
 
@@ -43,7 +44,7 @@ cyanprint update ./my-project
 
 The `d` (IDefine) interface uses the pin to generate consistent values:
 
-```ts
+```ts template.ts
 StartTemplateWithLambda(async (i, d) => {
   // These are deterministic when pin is set
   const projectId = d.uuid();  // Same UUID every time with same pin
@@ -57,7 +58,7 @@ StartTemplateWithLambda(async (i, d) => {
 
 ### UUID Generation
 
-```ts
+```ts example.ts
 const projectId = d.uuid();  // "550e8400-e29b-41d4-a716-446655440000"
 ```
 
@@ -65,7 +66,7 @@ Same pin always produces the same UUID.
 
 ### Timestamps
 
-```ts
+```ts example.ts
 const createdAt = d.timestamp();  // Fixed timestamp
 const date = new Date(createdAt);
 ```
@@ -109,9 +110,11 @@ const id = d.seq('id');
 
 ## Update Workflow
 
+<Steps>
 1. **Initial generation** - Pin is created and stored
 2. **Template update** - Pin is reused
 3. **Deterministic values** - Same values generated
+</Steps>
 
 <Mermaid chart={`graph LR
     A[Template v1.0] --> B[Generate Project]

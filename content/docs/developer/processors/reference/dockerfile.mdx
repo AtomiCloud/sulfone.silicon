@@ -11,7 +11,7 @@ Processors run as Docker containers. The Dockerfile defines the container enviro
 
 ## Minimal Dockerfile
 
-```dockerfile
+```dockerfile -c
 FROM oven/bun:1.3.8
 
 WORKDIR /app
@@ -37,7 +37,7 @@ CMD ["bun", "run", "index.ts"]
 
 This label identifies the container as a CyanPrint processor. Without it, the processor won't be recognized:
 
-```dockerfile
+```dockerfile -c
 LABEL cyanprint.dev=true
 ```
 
@@ -45,7 +45,7 @@ LABEL cyanprint.dev=true
 
 Set the working directory. The convention is `/app`:
 
-```dockerfile
+```dockerfile -c
 WORKDIR /app
 ```
 
@@ -53,7 +53,7 @@ WORKDIR /app
 
 The command that runs the processor:
 
-```dockerfile
+```dockerfile -c
 # Bun
 CMD ["bun", "run", "index.ts"]
 
@@ -71,7 +71,7 @@ ENTRYPOINT ["dotnet", "Processor.dll"]
 
 If you prefer Node.js over Bun:
 
-```dockerfile
+```dockerfile -c
 FROM node:20-alpine
 
 WORKDIR /app
@@ -92,7 +92,7 @@ CMD ["node", "index.js"]
 
 Python processors use a different pattern:
 
-```dockerfile
+```dockerfile -c
 FROM python:3.12.12
 
 WORKDIR /app
@@ -113,7 +113,7 @@ CMD ["python", "-u", "main.py"]
 
 .NET processors use multi-stage builds and require explicit port configuration:
 
-```dockerfile
+```dockerfile -c
 FROM mcr.microsoft.com/dotnet/aspnet:8.0 AS base
 WORKDIR /app
 
@@ -141,7 +141,7 @@ ENTRYPOINT ["dotnet", "Processor.dll"]
 
 For smaller images with compiled code:
 
-```dockerfile
+```dockerfile -c
 # Build stage
 FROM oven/bun:1.3.8-alpine AS builder
 
@@ -171,14 +171,14 @@ CMD ["bun", "run", "index.js"]
 
 ### Configuration Files
 
-```dockerfile
+```dockerfile -c
 COPY config ./config
 COPY templates ./templates
 ```
 
 ### Binary Tools
 
-```dockerfile
+```dockerfile -c
 # Install additional tools
 RUN apt-get update && apt-get install -y \
     jq \
@@ -190,7 +190,7 @@ COPY . .
 
 ## Environment Variables
 
-```dockerfile
+```dockerfile -c
 # Set environment variables
 ENV NODE_ENV=production
 ENV LOG_LEVEL=info
@@ -203,7 +203,7 @@ ENV PROCESSOR_DEBUG=false
 
 ### 1. Use Specific Versions
 
-```dockerfile
+```dockerfile -c
 # Good: Specific version
 FROM oven/bun:1.3.8
 
@@ -215,7 +215,7 @@ Choose a version that matches your development environment. Current stable versi
 
 ### 2. Minimize Layers
 
-```dockerfile
+```dockerfile -c
 # Good: Combined commands
 RUN apt-get update && apt-get install -y \
     curl \
@@ -232,7 +232,7 @@ RUN apt-get install -y jq
 
 Create a `.dockerignore` file:
 
-```
+``` -c
 node_modules
 bun.lockb
 .git
@@ -244,7 +244,7 @@ tests/
 
 ### 4. Copy Lockfile Separately
 
-```dockerfile
+```dockerfile -c
 # Good: Separate COPY commands
 COPY package.json .
 COPY bun.lockb .
@@ -268,7 +268,7 @@ Processors communicate over port 5551 by default. The SDKs handle this automatic
 
 ## Full Example
 
-```dockerfile
+```dockerfile -c
 #syntax=docker/dockerfile:1
 
 # Build stage

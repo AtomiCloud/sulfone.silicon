@@ -4,16 +4,37 @@ description: Access configuration passed from template
 ---
 
 import { Callout } from 'fumadocs-ui/components/callout';
+import { TypeTable } from 'fumadocs-ui/components/type-table';
+import { Cards, Card } from 'fumadocs-ui/components/card';
 
 # Access Processor Config
 
 Processors receive configuration from the template through `input.config`. This allows templates to customize processor behavior.
 
+## ProcessorConfig Type
+
+<TypeTable
+  type={{
+    customSetting: {
+      type: 'boolean',
+      description: 'Enable custom behavior',
+    },
+    features: {
+      type: 'string[]',
+      description: 'List of enabled features',
+    },
+    outputFormat: {
+      type: "'json' | 'yaml'",
+      description: 'Output format for generated files',
+    },
+  }}
+/>
+
 ## Template Configuration
 
 In the template's `index.ts`, pass config to the processor:
 
-```ts
+```ts index.ts -c
 // Template's index.ts
 import { StartTemplateWithLambda, GlobType } from '@atomicloud/cyan-sdk';
 
@@ -55,7 +76,7 @@ StartTemplateWithLambda(async (i, d) => {
 
 ## Accessing Config in Processor
 
-```ts
+```ts index.ts -c
 // Processor's index.ts
 import { StartProcessorWithLambda } from '@atomicloud/cyan-sdk';
 
@@ -96,7 +117,7 @@ StartProcessorWithLambda(async (input, fileHelper) => {
 
 Always handle missing config gracefully:
 
-```ts
+```ts index.ts -c
 interface ProcessorConfig {
   includeComments?: boolean;
   indentSize?: number;
@@ -134,7 +155,7 @@ StartProcessorWithLambda(async (input, fileHelper) => {
 
 ## Complex Config Example
 
-```ts
+```ts template-config.ts -c
 // Template config
 {
   name: 'myorg/codegen-processor',
@@ -194,6 +215,14 @@ Config is passed as `unknown` type. Always cast to your expected type and provid
 
 ## Related
 
-- [Processor Input/Output](/docs/developer/processors/reference/sdk/input-output) - Type definitions
-- [CyanFileHelper API](/docs/developer/processors/reference/sdk/file-helper) - File operations
-- [Type Definitions](/docs/developer/processors/reference/sdk/types) - Full type reference
+<Cards>
+  <Card href="/docs/developer/processors/reference/sdk/input-output" title="Processor Input/Output">
+    Type definitions for processor input and output
+  </Card>
+  <Card href="/docs/developer/processors/reference/sdk/file-helper" title="CyanFileHelper API">
+    File operations and utilities
+  </Card>
+  <Card href="/docs/developer/processors/reference/sdk/types" title="Type Definitions">
+    Full type reference
+  </Card>
+</Cards>

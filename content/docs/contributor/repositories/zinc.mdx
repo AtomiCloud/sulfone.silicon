@@ -3,6 +3,8 @@ title: Zinc
 description: "Sulfone-Zinc: Registry API for CyanPrint"
 ---
 
+import { Callout } from 'fumadocs-ui/components/callout';
+
 # sulfone.zinc
 
 Zinc is the registry API that stores template metadata, delegates authentication to Descope, and serves template, plugin, processor, and resolver information to CLI users and the web UI.
@@ -231,11 +233,13 @@ POST /api/v{version}/{entityType}/slug/{username}/{name}/like/{likerId}/{like:bo
     }
 `} />
 
-**Note:** Versions use numeric versioning (ulong), not semantic versioning.
+<Callout type="info">
+Versions use numeric versioning (ulong), not semantic versioning.
+</Callout>
 
 ## Building
 
-```bash
+```bash -c
 # Setup dependencies
 pls setup
 
@@ -255,7 +259,7 @@ pls migration:create -- <MigrationName>
 
 ## Configuration
 
-```yaml
+```yaml settings.yaml -c
 # settings.yaml
 Kestrel:
   Endpoints:

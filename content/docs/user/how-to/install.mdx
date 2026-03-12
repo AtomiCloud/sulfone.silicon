@@ -4,15 +4,18 @@ description: Install CyanPrint CLI on Linux and macOS with version pinning
 ---
 
 import { Tab, Tabs } from 'fumadocs-ui/components/tabs';
+import { Cards, Card } from 'fumadocs-ui/components/card';
 
 # Installation
+
+CyanPrint is a template engine for generating projects. Install the CLI to start creating projects from templates.
 
 ## Install Latest
 
 <Tabs groupId="installer" items={['Nix', 'Brew', 'Scoop', 'APT', 'YUM']} persist>
 <Tab value="Nix">
 
-```bash
+```bash -c
 # Run directly without installing
 nix shell github:AtomiCloud/sulfone.iridium
 
@@ -23,14 +26,14 @@ nix profile install github:AtomiCloud/sulfone.iridium
 </Tab>
 <Tab value="Brew">
 
-```bash
+```bash -c
 brew install AtomiCloud/tap/cyanprint
 ```
 
 </Tab>
 <Tab value="Scoop">
 
-```bash
+```bash -c
 scoop bucket add cyanprint https://github.com/AtomiCloud/scoop-bucket
 scoop install cyanprint
 ```
@@ -38,7 +41,7 @@ scoop install cyanprint
 </Tab>
 <Tab value="APT">
 
-```bash
+```bash -c
 sudo apt install software-properties-common -y
 sudo apt-add-repository "deb [trusted=yes] https://apt.fury.io/AtomiCloud/ /" -y
 sudo apt update -y

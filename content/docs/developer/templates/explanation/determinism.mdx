@@ -15,7 +15,7 @@ Determinism ensures that running the same template with the same inputs produces
 
 Generate the same project multiple times with identical results:
 
-```bash
+```bash -c
 # First generation
 cyanprint create myorg/template:1.0.0 ./project-a
 
@@ -29,7 +29,7 @@ cyanprint create myorg/template:1.0.0 ./project-b
 
 Update templates without breaking existing projects:
 
-```bash
+```bash -c
 # Initial generation
 cyanprint create myorg/template:1.0.0 ./my-project
 
@@ -45,7 +45,7 @@ cyanprint update ./my-project myorg/template:2.0.0
 
 Every generation stores **deterministic states** - a key-value cache that ensures reproducible value generation:
 
-```yaml
+```yaml filename=".cyan_state.yaml"
 # Stored in .cyan_state.yaml
 templates:
   myorg/template-name:
@@ -64,7 +64,7 @@ templates:
 
 The `d` parameter provides deterministic value generation through the `IDeterminism` interface:
 
-```ts
+```ts -c filename="template.ts"
 StartTemplateWithLambda(async (i, d) => {
   // d.get() returns cached value if exists, otherwise calls origin function
   const projectId = d.get('project-id', () => crypto.randomUUID());
@@ -110,7 +110,7 @@ The `origin` function is only called when the key doesn't exist in the determini
 
 ### Deterministic UUIDs
 
-```ts
+```ts -c filename="deterministic-uuids.ts"
 StartTemplateWithLambda(async (i, d) => {
   const projectId = d.get('project-id', () => crypto.randomUUID());
   const apiKey = d.get('api-key', () => crypto.randomUUID());
@@ -129,7 +129,7 @@ StartTemplateWithLambda(async (i, d) => {
 
 ### Deterministic Timestamps
 
-```ts
+```ts -c filename="deterministic-timestamps.ts"
 StartTemplateWithLambda(async (i, d) => {
   const createdAt = d.get('created-at', () => Date.now().toString());
   const date = new Date(parseInt(createdAt)).toISOString();
@@ -150,7 +150,7 @@ StartTemplateWithLambda(async (i, d) => {
 
 For sequential numbers, use a unique key for each:
 
-```ts
+```ts -c filename="sequential-numbers.ts"
 StartTemplateWithLambda(async (i, d) => {
   const user1Id = d.get('user-id-1', () => '1');
   const user2Id = d.get('user-id-2', () => '2');
@@ -197,7 +197,7 @@ Some values should vary per generation:
 
 Verify determinism by generating twice:
 
-```bash
+```bash -c
 # Generate twice with same answers
 cyanprint create myorg/template:1.0.0 ./test1
 cyanprint create myorg/template:1.0.0 ./test2

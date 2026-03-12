@@ -3,9 +3,11 @@ title: Boron
 description: The CyanPrint execution coordinator
 ---
 
+import { Steps, Step } from 'fumadocs-ui/components/steps';
+
 # sulfone.boron
 
-Boron is the execution coordinator that manages container-based template execution. It handles container lifecycle, template warming, processor/plugin execution, and file operations.
+Boron is execution coordinator that manages container-based template execution. It handles container lifecycle, template warming, processor/plugin execution, and file operations.
 
 ## Repository
 
@@ -91,7 +93,7 @@ stateDiagram-v2
 
 Boron uses CPU-based parallelism for execution:
 
-```go
+```go filename="parallelism.go" -n
 // Parallelism is based on available CPUs
 cpu := runtime.NumCPU()
 ```
@@ -100,7 +102,7 @@ Execution is managed through a `ParallelismLimit` mechanism rather than explicit
 
 ## Building
 
-```bash
+```bash filename="shell" -c
 # Build
 go build
 
@@ -115,7 +117,7 @@ go run . start --registry <registry-endpoint>
 
 Boron uses CLI flags for configuration:
 
-```bash
+```bash -c
 sulfone-boron start --registry <zinc-registry-endpoint>
 ```
 
@@ -140,8 +142,30 @@ Boron manages Docker volumes for workspace isolation between execution sessions 
 
 When contributing to Boron:
 
-1. Follow Go best practices for goroutine handling
-2. Test container isolation thoroughly using the Gin framework
-3. Handle resource cleanup in error paths
-4. Add appropriate logging for new features
-5. Document API changes in the REST endpoint definitions
+<Steps>
+  <Step>
+    ### Follow Best Practices
+
+    Follow Go best practices for goroutine handling
+  </Step>
+  <Step>
+    ### Test Container Isolation
+
+    Test container isolation thoroughly using Gin framework
+  </Step>
+  <Step>
+    ### Handle Resource Cleanup
+
+    Handle resource cleanup in error paths
+  </Step>
+  <Step>
+    ### Add Logging
+
+    Add appropriate logging for new features
+  </Step>
+  <Step>
+    ### Document API Changes
+
+    Document API changes in REST endpoint definitions
+  </Step>
+</Steps>

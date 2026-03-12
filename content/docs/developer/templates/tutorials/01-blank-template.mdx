@@ -23,7 +23,7 @@ Create a template using the meta template. This is the starting point for all te
 
 ### Generate from Meta Template
 
-```bash
+```bash -c
 cyanprint create cyan/new my-first-template
 ```
 
@@ -31,7 +31,7 @@ This scaffolds a complete template project with all required files.
 
 ### Navigate to Project
 
-```bash
+```bash -c
 cd my-first-template
 ```
 
@@ -56,7 +56,7 @@ my-first-template/
 
 The `cyan/index.ts` file contains your template's logic:
 
-```ts
+```ts cyan/index.ts -c
 import { StartTemplateWithLambda, GlobType } from '@atomicloud/cyan-sdk';
 
 StartTemplateWithLambda(async (i, d) => {
@@ -84,7 +84,7 @@ StartTemplateWithLambda(async (i, d) => {
 
 Create your template files in `cyan/templates` (the directory name is configurable via the `root` property in your processor config):
 
-```bash 
+```bash -c
 mkdir -p cyan/templates
 echo "# My Project" > cyan/templates/README.md
 ```
@@ -95,7 +95,7 @@ This template copies `templates/README.md` to the output without any variable su
 
 Build and test locally:
 
-```js a.js -cnb
+```bash -cnb
 # Build the template
 docker build -f cyan/template.Dockerfile -t my-first-template:dev .
 

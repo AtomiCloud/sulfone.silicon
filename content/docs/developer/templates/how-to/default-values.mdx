@@ -3,6 +3,8 @@ title: Set Default Values
 description: How to set default values for questions
 ---
 
+import { Callout } from 'fumadocs-ui/components/callout';
+
 # How to Set Default Values
 
 Default values improve user experience by providing sensible starting points.
@@ -11,7 +13,7 @@ Default values improve user experience by providing sensible starting points.
 
 Shorthand forms don't support defaults. Use the object form for default values:
 
-```ts
+```ts -c
 // Shorthand - no default support
 const name = await i.text('Name?', 'project.name', 'Enter name');
 
@@ -34,7 +36,7 @@ The `text()` question type supports two ways to set initial values:
 - `default`: A fallback value used when no user input is provided
 - `initial`: A pre-filled value that appears in the input field (user can edit)
 
-```ts
+```ts -c
 const name = await i.text({
   type: QuestionType.Text,
   id: 'project.name',
@@ -46,7 +48,7 @@ const name = await i.text({
 
 Using `initial` for pre-filled input:
 
-```ts
+```ts -c
 const name = await i.text({
   type: QuestionType.Text,
   id: 'project.name',
@@ -58,7 +60,7 @@ const name = await i.text({
 
 ### Confirm
 
-```ts
+```ts -c
 const typescript = await i.confirm({
   type: QuestionType.Confirm,
   id: 'project.typescript',
@@ -72,7 +74,7 @@ const typescript = await i.confirm({
 
 The `dateSelect()` method accepts a `Date` object for the `default` property, but returns the selected date as a **string** (ISO format):
 
-```ts
+```ts -c
 const startDate = await i.dateSelect({
   type: QuestionType.DateSelect,
   id: 'project.start',
@@ -83,15 +85,15 @@ const startDate = await i.dateSelect({
 // startDate is a string, e.g., "2024-01-15"
 ```
 
-:::caution
-`select()` and `checkbox()` question types do **not** support the `default` property. Users must make an active selection for these question types.
-:::
+<Callout type="warn">
+  `select()` and `checkbox()` question types do **not** support the `default` property. Users must make an active selection for these question types.
+</Callout>
 
 ## Computed Defaults
 
 Calculate defaults dynamically:
 
-```ts
+```ts -c
 const projectName = await i.text({
   type: QuestionType.Text,
   id: 'project.name',
@@ -101,7 +103,7 @@ const projectName = await i.text({
 });
 ```
 
-```ts
+```ts -c
 // Default to one month from now
 const defaultDeadline = new Date();
 defaultDeadline.setMonth(defaultDeadline.getMonth() + 1);

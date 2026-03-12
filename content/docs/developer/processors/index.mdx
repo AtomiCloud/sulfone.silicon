@@ -4,6 +4,7 @@ description: Create custom file transformers for CyanPrint templates
 ---
 
 import { Callout } from 'fumadocs-ui/components/callout';
+import { Cards, Card } from 'fumadocs-ui/components/card';
 
 # Processor Development
 
@@ -73,52 +74,26 @@ Processors should be pure functions - same input always produces same output. Th
 
 ## Learning Path
 
-### Start Here: Tutorials
-
-Build your first processor step by step:
-
-- [First Processor](/docs/developer/processors/tutorials/first-processor) - Create a simple file transformer
-
-### How-To Guides
-
-Task-oriented guides for common scenarios:
-
-- [Resolve All Files](/docs/developer/processors/how-to/resolve-all-files) - Load all files into memory
-- [Lazy Load Files](/docs/developer/processors/how-to/lazy-load-files) - Get file references without content
-- [Stream Large Files](/docs/developer/processors/how-to/stream-large-files) - Memory-efficient streaming
-- [Copy Files](/docs/developer/processors/how-to/copy-files) - Copy without transformation
-- [Access Config](/docs/developer/processors/how-to/access-config) - Use processor configuration
-- [Push to Registry](/docs/developer/processors/how-to/push-to-registry) - Publish your processor
-
-[View all How-To Guides](/docs/developer/processors/how-to)
-
-### Reference
-
-Technical documentation for the SDK:
-
-- [CyanFileHelper API](/docs/developer/processors/reference/sdk/file-helper) - File operations
-- [StartProcessorWithLambda](/docs/developer/processors/reference/sdk/start-processor) - Entry point
-- [Input/Output Types](/docs/developer/processors/reference/sdk/input-output) - Interfaces
-- [Type Definitions](/docs/developer/processors/reference/sdk/types) - Full type reference
-
-[View all Reference Docs](/docs/developer/processors/reference)
-
-### Explanation
-
-Deep dives into processor concepts:
-
-- [Why Processors Exist](/docs/developer/processors/explanation/why-processors) - Purpose and use cases
-- [Stateless Nature](/docs/developer/processors/explanation/stateless-nature) - Reproducibility design
-- [Read/Write Directories](/docs/developer/processors/explanation/read-write-dirs) - Path mechanics
-- [Memory Loading](/docs/developer/processors/explanation/memory-loading) - Memory implications
-
-[View all Explanations](/docs/developer/processors/explanation)
+<Cards>
+  <Card href="/docs/developer/processors/tutorials/first-processor" title="Tutorials">
+    Build your first processor step by step
+  </Card>
+  <Card href="/docs/developer/processors/how-to" title="How-To Guides">
+    Task-oriented guides for common scenarios
+  </Card>
+  <Card href="/docs/developer/processors/reference" title="Reference">
+    Technical documentation for the SDK
+  </Card>
+  <Card href="/docs/developer/processors/explanation" title="Explanation">
+    Deep dives into processor concepts
+  </Card>
+</Cards>
 
 ## Quick Example
 
 Here's a minimal processor that uppercases all file content:
 
-```ts
+```ts index.ts -c
 import { StartProcessorWithLambda } from '@atomicloud/cyan-sdk';
 
 StartProcessorWithLambda(async (input, fileHelper) => {

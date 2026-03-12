@@ -4,6 +4,7 @@ description: Get file references without loading content
 ---
 
 import { Callout } from 'fumadocs-ui/components/callout';
+import { TypeTable } from 'fumadocs-ui/components/type-table';
 
 # Lazy Load Files
 
@@ -22,7 +23,7 @@ Use `get()` to get file references without loading content. Load content only wh
 
 ## Usage
 
-```ts
+```ts processor.ts -c
 import { StartProcessorWithLambda } from '@atomicloud/cyan-sdk';
 
 StartProcessorWithLambda(async (input, fileHelper) => {
@@ -53,40 +54,81 @@ StartProcessorWithLambda(async (input, fileHelper) => {
 
 ## VirtualFileReference Properties
 
-| Property | Type | Description |
-|----------|------|-------------|
-| `relative` | `string` | Path relative to read directory |
-| `baseRead` | `string` | Base read directory path |
-| `baseWrite` | `string` | Base write directory path |
-| `read` | `string` | Full path to read from (getter) |
-| `write` | `string` | Full path to write to (getter) |
+<TypeTable
+  type={{
+    relative: {
+      type: 'string',
+      description: 'Path relative to read directory',
+    },
+    baseRead: {
+      type: 'string',
+      description: 'Base read directory path',
+    },
+    baseWrite: {
+      type: 'string',
+      description: 'Base write directory path',
+    },
+    read: {
+      type: 'string',
+      description: 'Full path to read from (getter)',
+    },
+    write: {
+      type: 'string',
+      description: 'Full path to write to (getter)',
+    },
+  }}
+/>
 
 ## VirtualFileReference Methods
 
-| Method | Return | Description |
-|--------|--------|-------------|
-| `readFile()` | `VirtualFile` | Load file content synchronously |
+<TypeTable
+  type={{
+    readFile: {
+      type: '() => VirtualFile',
+      description: 'Load file content synchronously',
+    },
+  }}
+/>
 
 ## VirtualFile Properties
 
 Returned by `readFile()`, this class holds the loaded content:
 
-| Property | Type | Description |
-|----------|------|-------------|
-| `relative` | `string` | Path relative to read directory |
-| `content` | `string` | File content (read/write) |
-| `read` | `string` | Full path to read from (getter) |
-| `write` | `string` | Full path to write to (getter) |
+<TypeTable
+  type={{
+    relative: {
+      type: 'string',
+      description: 'Path relative to read directory',
+    },
+    content: {
+      type: 'string',
+      description: 'File content (read/write)',
+    },
+    read: {
+      type: 'string',
+      description: 'Full path to read from (getter)',
+    },
+    write: {
+      type: 'string',
+      description: 'Full path to write to (getter)',
+    },
+  }}
+/>
 
 ## VirtualFile Methods
 
-| Method | Return | Description |
-|--------|--------|-------------|
-| `writeFile()` | `void` | Write content to output |
+<TypeTable
+  type={{
+    writeFile: {
+      type: '() => void',
+      description: 'Write content to output',
+    },
+  }}
+/>
 
 ## Example: Conditional Processing
 
-```ts
+```ts processor.ts -c
 StartProcessorWithLambda(async (input, fileHelper) => {
   const refs = fileHelper.get({ root: 'templates', glob: '**/*' });
   const config = input.config as { processMarkdown: boolean };
@@ -109,7 +151,7 @@ StartProcessorWithLambda(async (input, fileHelper) => {
 
 ## Example: Process by Extension
 
-```ts
+```ts processor.ts -c
 StartProcessorWithLambda(async (input, fileHelper) => {
   const refs = fileHelper.get({ root: 'assets', glob: '**/*' });
 
@@ -132,7 +174,7 @@ StartProcessorWithLambda(async (input, fileHelper) => {
 });
 ```
 
-<Callout type="info">
+<Callout type="success">
 Lazy loading is memory-efficient because you only load content for files you actually need to process. Files that don't need transformation can be copied directly using `fileHelper.copy()`.
 </Callout>
 

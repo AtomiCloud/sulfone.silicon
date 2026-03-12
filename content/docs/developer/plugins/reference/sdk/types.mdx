@@ -3,6 +3,9 @@ title: Plugin Type Definitions
 description: Complete type reference for CyanPrint plugins
 ---
 
+import { TypeTable } from 'fumadocs-ui/components/type-table';
+import { Callout } from 'fumadocs-ui/components/callout';
+
 # Plugin Type Definitions
 
 Complete type reference for the CyanPrint plugin SDK.
@@ -11,37 +14,39 @@ Complete type reference for the CyanPrint plugin SDK.
 
 ### CyanPluginInput
 
-```ts
-interface CyanPluginInput {
-  /**
-   * Path to the generated project files.
-   * Plugin should operate on files within this directory.
-   */
-  directory: string;
+<TypeTable
+  type={{
+    directory: {
+      type: 'string',
+      description: 'Path to the generated project files. Plugin should operate on files within this directory.',
+      required: true,
+    },
+    config: {
+      type: 'unknown',
+      description: 'Configuration from the template. Type is unknown - cast to your expected type.',
+    },
+  }}
+/>
 
-  /**
-   * Configuration from the template.
-   * Type is unknown - cast to your expected type.
-   */
-  config: unknown;
-}
-```
+<Callout type="warn" title="Type Safety">
+  The `config` property is typed as `unknown`. You must cast it to your expected type or use type guards to validate the configuration at runtime.
+</Callout>
 
 ### PluginOutput
 
-```ts
-interface PluginOutput {
-  /**
-   * Output directory path.
-   * Should be the same as input.directory.
-   */
-  directory: string;
-}
-```
+<TypeTable
+  type={{
+    directory: {
+      type: 'string',
+      description: 'Output directory path. Should be the same as input.directory.',
+      required: true,
+    },
+  }}
+/>
 
 ### LambdaPluginFn
 
-```ts
+```ts -c
 /**
  * Function signature for plugin handler
  */
@@ -52,7 +57,7 @@ type LambdaPluginFn = (input: CyanPluginInput) => Promise<PluginOutput>;
 
 ### StartPluginWithLambda
 
-```ts
+```ts -c
 /**
  * Register a plugin handler function.
  * Starts HTTP server on port 5552.
@@ -66,7 +71,7 @@ function StartPluginWithLambda(handler: LambdaPluginFn): void;
 
 ### Complete Plugin with Types
 
-```ts
+```ts plugin.ts -c
 import { StartPluginWithLambda, type CyanPluginInput, type PluginOutput } from '@atomicloud/cyan-sdk';
 import { $ } from 'bun';
 
@@ -120,7 +125,7 @@ StartPluginWithLambda(setupGit);
 
 ### Validating Config
 
-```ts
+```ts type-guards.ts -c
 import { StartPluginWithLambda } from '@atomicloud/cyan-sdk';
 
 interface MyConfig {
@@ -155,7 +160,7 @@ StartPluginWithLambda(async (input: CyanPluginInput) => {
 
 ### With Defaults
 
-```ts
+```ts parse-config.ts -c
 interface Config {
   option1: boolean;
   option2: string;

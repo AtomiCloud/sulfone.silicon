@@ -5,31 +5,36 @@ description: Create your first CyanPrint project in under a minute
 
 import { Tab, Tabs } from 'fumadocs-ui/components/tabs';
 import { Callout } from 'fumadocs-ui/components/callout';
+import { Steps, Step } from 'fumadocs-ui/components/steps';
+import { Cards, Card } from 'fumadocs-ui/components/card';
 
 # Get Started
 
 Create your first CyanPrint project in under a minute.
 
-## 1. Install CLI
+<Steps>
+<Step>
+
+### Install CLI
 
 <Tabs groupId="installer" items={['Nix', 'Brew', 'APT', 'YUM']} persist>
 <Tab value="Nix">
 
-```bash
+```bash -c
 nix shell github:AtomiCloud/sulfone.iridium
 ```
 
 </Tab>
 <Tab value="Brew">
 
-```bash
+```bash -c
 brew install AtomiCloud/tap/cyanprint
 ```
 
 </Tab>
 <Tab value="APT">
 
-```bash
+```bash -c
 sudo apt-add-repository "deb [trusted=yes] https://apt.fury.io/atomicloud/ /"
 sudo apt update && sudo apt install cyanprint
 ```
@@ -37,7 +42,7 @@ sudo apt update && sudo apt install cyanprint
 </Tab>
 <Tab value="YUM">
 
-```bash
+```bash -c
 sudo sh -c 'echo "[fury]
 name=AtomiCloud Repo
 baseurl=https://yum.fury.io/atomicloud/
@@ -49,9 +54,12 @@ yum install cyanprint
 </Tab>
 </Tabs>
 
-## 2. Create Project
+</Step>
+<Step>
 
-```bash
+### Create Project
+
+```bash -c
 cyanprint create atomi/nix-init my-project
 ```
 
@@ -61,8 +69,19 @@ Answer the prompts, and your project is ready!
 The command above uses the latest version of the template. To specify a version, use `atomi/nix-init:1` (where `1` is the major version).
 </Callout>
 
+</Step>
+</Steps>
+
 ## Next Steps
 
-- [Full installation guide](/docs/user/how-to/install) (pinning versions, more options)
-- [Create more projects](/docs/user/how-to/create-project)
-- [Browse templates](/docs/user/how-to/browse-templates)
+<Cards>
+  <Card href="/docs/user/how-to/install" title="Full Installation Guide">
+    Pinning versions, more options
+  </Card>
+  <Card href="/docs/user/how-to/create-project" title="Create More Projects">
+    Learn about project creation
+  </Card>
+  <Card href="/docs/user/how-to/browse-templates" title="Browse Templates">
+    Explore available templates
+  </Card>
+</Cards>

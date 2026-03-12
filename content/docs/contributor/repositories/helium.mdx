@@ -3,6 +3,9 @@ title: Helium
 description: CyanPrint SDKs for multiple languages
 ---
 
+import { Tabs, Tab } from 'fumadocs-ui/components/tabs';
+import { Callout } from 'fumadocs-ui/components/callout';
+
 # sulfone.helium
 
 Helium provides SDKs for developing CyanPrint templates, processors, plugins, and resolvers. It supports multiple programming languages with consistent APIs based on an inquirer pattern.
@@ -60,11 +63,14 @@ interface Cyan {
 }
 ```
 
-## TypeScript SDK
+## SDKs
+
+<Tabs groupId="helium-sdk" items={['TypeScript', 'Python', 'C#']} persist>
+  <Tab value="TypeScript">
 
 ### Installation
 
-```bash
+```bash -c
 bun add @atomicloud/cyan-sdk
 # or
 npm install @atomicloud/cyan-sdk
@@ -159,11 +165,12 @@ StartResolverWithLambda(async (input) => {
 });
 ```
 
-## Python SDK
+  </Tab>
+  <Tab value="Python">
 
 ### Installation
 
-```bash
+```bash -c
 pip install cyanprintsdk
 ```
 
@@ -226,11 +233,12 @@ api_key = await i.password("Enter API key:", "api-key")
 start_date = await i.date_select("Select start date:", "start-date")
 ```
 
-## C# SDK
+  </Tab>
+  <Tab value="C#">
 
 ### Installation
 
-```bash
+```bash -c
 dotnet add package AtomiCloud.CyanPrint
 ```
 
@@ -322,11 +330,14 @@ CyanEngine.StartResolver(args, async (ResolverInput input) =>
 });
 ```
 
+  </Tab>
+</Tabs>
+
 ## Building
 
 The project uses Taskfile for build automation:
 
-```bash
+```bash -c
 # Setup all SDKs
 pls setup
 
@@ -338,10 +349,12 @@ pls python:setup
 
 ## Contributing
 
-When contributing to Helium:
+<Callout type="info" title="Cross-Language Consistency">
+When contributing to Helium, maintain API consistency across all three SDKs (TypeScript, Python, C#). Update all language variants when adding new features.
+</Callout>
 
-1. Maintain API consistency across all languages (TypeScript, Python, C#)
-2. Update all SDKs when adding new features
-3. Follow the inquirer/determinism pattern for templates
-4. Write integration tests for new functionality
-5. Update documentation for all language variants
+Additionally:
+
+1. Follow the inquirer/determinism pattern for templates
+2. Write integration tests for new functionality
+3. Update documentation for all language variants

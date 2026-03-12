@@ -3,13 +3,15 @@ title: cyan.yaml Format
 description: Processor metadata and configuration schema
 ---
 
+import { TypeTable } from 'fumadocs-ui/components/type-table';
+
 # cyan.yaml Format
 
 The `cyan.yaml` file contains metadata for publishing your processor to the Cyan registry. This file provides information about the processor for discovery and identification purposes.
 
 ## Basic Structure
 
-```yaml
+```yaml -c cyan.yaml
 username: your-username
 name: my-processor
 description: Description of the processor's purpose
@@ -26,20 +28,46 @@ readme: README.md
 
 All fields in the processor's `cyan.yaml` are required:
 
-| Field | Type | Description |
-|-------|------|-------------|
-| `username` | string | Registry username or organization |
-| `name` | string | Processor identifier (simple name, no org prefix) |
-| `description` | string | Brief description of functionality |
-| `project` | string | URL to the main project or organization |
-| `source` | string | URL to the processor's source code |
-| `email` | string | Contact email for the processor maintainer |
-| `tags` | string[] | Search keywords for registry discovery |
-| `readme` | string | Path to the README file (typically `README.md`) |
+<TypeTable
+  type={{
+    username: {
+      type: 'string',
+      description: 'Registry username or organization',
+    },
+    name: {
+      type: 'string',
+      description: 'Processor identifier (simple name, no org prefix)',
+    },
+    description: {
+      type: 'string',
+      description: 'Brief description of functionality',
+    },
+    project: {
+      type: 'string',
+      description: 'URL to the main project or organization',
+    },
+    source: {
+      type: 'string',
+      description: "URL to the processor's source code",
+    },
+    email: {
+      type: 'string',
+      description: 'Contact email for the processor maintainer',
+    },
+    tags: {
+      type: 'string[]',
+      description: 'Search keywords for registry discovery',
+    },
+    readme: {
+      type: 'string',
+      description: 'Path to the README file (typically `README.md`)',
+    },
+  }}
+/>
 
 ## Full Example
 
-```yaml
+```yaml -c cyan.yaml
 username: atomicloud
 name: markdown-processor
 description: Process markdown files with custom transformations
@@ -67,7 +95,7 @@ For defining config in templates, see [Access Config](/docs/developer/processors
 
 The config passed to your processor is typed as `unknown` and you define your own TypeScript interface:
 
-```ts
+```ts -c processor.ts
 interface MarkdownConfig {
   features?: string[];
   frontmatter?: boolean;
@@ -96,11 +124,11 @@ StartProcessorWithLambda(async (input, fileHelper) => {
 
 ## Best Practices
 
-1. **Use descriptive names** - Choose a clear, descriptive processor name
-2. **Provide accurate metadata** - Help users discover and understand your processor
-3. **Include relevant tags** - Add tags that help users find your processor in the registry
-4. **Maintain a good README** - The referenced README should document processor functionality and usage
-5. **Keep contact info current** - Use a valid email for support inquiries
+- **Use descriptive names** - Choose a clear, descriptive processor name
+- **Provide accurate metadata** - Help users discover and understand your processor
+- **Include relevant tags** - Add tags that help users find your processor in the registry
+- **Maintain a good README** - The referenced README should document processor functionality and usage
+- **Keep contact info current** - Use a valid email for support inquiries
 
 ## Related
 

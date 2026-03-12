@@ -4,6 +4,7 @@ description: Understanding the directory mechanics in processors
 ---
 
 import { Callout } from 'fumadocs-ui/components/callout';
+import { Mermaid } from '@/components/mdx/mermaid';
 
 # Read and Write Directories
 
@@ -40,7 +41,7 @@ Contains files from the template's blob image. This is your **source material**.
 
 ### Typical Value
 
-```
+```sh -c
 /workspace/cyanprint/
 ```
 
@@ -48,7 +49,7 @@ Contains files from the template's blob image. This is your **source material**.
 
 Files from the template that match the processor's globs:
 
-```
+```plaintext -c
 /workspace/cyanprint/
 ├── templates/
 │   ├── README.md
@@ -63,7 +64,7 @@ Files from the template that match the processor's globs:
 
 Use `CyanFileHelper` - never access directly:
 
-```ts
+```ts processor.ts -c
 StartProcessorWithLambda(async (input, fileHelper) => {
   // ✅ Correct: Use fileHelper
   const files = fileHelper.resolveAll();
@@ -85,7 +86,7 @@ Where processed files are written. This is your **output location**.
 
 ### Typical Value
 
-```
+```sh -c
 /workspace/output/
 ```
 
@@ -93,7 +94,7 @@ Where processed files are written. This is your **output location**.
 
 Use `writeFile()` on file objects:
 
-```ts
+```ts processor.ts -c
 StartProcessorWithLambda(async (input, fileHelper) => {
   const files = fileHelper.resolveAll();
 
@@ -113,7 +114,7 @@ StartProcessorWithLambda(async (input, fileHelper) => {
 
 The `relative` property is the path **between** read and write:
 
-```ts
+```ts processor.ts -c
 // Input: /workspace/cyanprint/templates/README.md
 // file.relative = 'templates/README.md'
 // Output: /workspace/output/templates/README.md
@@ -130,7 +131,7 @@ The `relative` property is the path **between** read and write:
 
 ### How Paths Work
 
-```ts
+```ts processor.ts -c
 // Full input path
 const inputPath = `${input.readDir}/${file.relative}`;
 // Example: /workspace/cyanprint/templates/README.md
@@ -144,7 +145,7 @@ const outputPath = `${input.writeDir}/${file.relative}`;
 
 You can change where files are written:
 
-```ts
+```ts processor.ts -c
 StartProcessorWithLambda(async (input, fileHelper) => {
   const files = fileHelper.resolveAll();
 
@@ -169,7 +170,7 @@ StartProcessorWithLambda(async (input, fileHelper) => {
 
 ### Rule 1: Always Return writeDir
 
-```ts
+```ts processor.ts -c
 // ✅ Correct
 return { directory: input.writeDir };
 
@@ -179,7 +180,7 @@ return { directory: input.writeDir };
 
 ### Rule 2: Use fileHelper for All File Operations
 
-```ts
+```ts processor.ts -c
 // ✅ Correct
 const files = fileHelper.resolveAll();
 files.forEach(f => f.writeFile());
@@ -191,7 +192,7 @@ files.forEach(f => f.writeFile());
 
 ### Rule 3: Preserve Directory Structure (Usually)
 
-```ts
+```ts processor.ts -c
 // Usually you want to maintain the same structure
 files.forEach(file => {
   // file.relative is preserved
@@ -205,11 +206,9 @@ files.forEach(file => {
 
 Files not written are not included in output:
 
-<Callout type="info">
-**Copy-type files** (matched by `copy` globs in cyan.yaml) are automatically written during `resolveAll()`. **Template-type files** require explicit `writeFile()` calls. If you don't call `writeFile()` on a template file, it won't be included in the output.
-</Callout>
+**Note:** **Copy-type files** (matched by `copy` globs in cyan.yaml) are automatically written during `resolveAll()`. **Template-type files** require explicit `writeFile()` calls. If you don't call `writeFile()` on a template file, it won't be included in the output.
 
-```ts
+```ts processor.ts -c
 files.forEach(file => {
   if (shouldInclude(file)) {
     file.writeFile(); // Included

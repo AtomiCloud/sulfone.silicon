@@ -17,9 +17,13 @@ Use `copy()` to transfer files from input to output without loading or transform
 - Large files that shouldn't be loaded into memory
 - Preserving exact file content
 
+<Callout type="info">
+`copy()` is the most memory-efficient option because files are transferred directly from read directory to write directory without being loaded into the processor's memory.
+</Callout>
+
 ## Usage
 
-```ts
+```ts filename="processor.ts" -c
 import { StartProcessorWithLambda } from '@atomicloud/cyan-sdk';
 
 StartProcessorWithLambda(async (input, fileHelper) => {
@@ -43,7 +47,7 @@ StartProcessorWithLambda(async (input, fileHelper) => {
 
 ## Copy with Glob Patterns
 
-```ts
+```ts filename="processor.ts" -c
 StartProcessorWithLambda(async (input, fileHelper) => {
   // Copy specific file types
   fileHelper.copy({ root: 'fonts', glob: '**/*.{woff,woff2,ttf}' });
@@ -66,7 +70,7 @@ StartProcessorWithLambda(async (input, fileHelper) => {
 
 Combine processing and copying in the same processor:
 
-```ts
+```ts filename="processor.ts" -c
 interface ProcessorConfig {
   transformDocs: boolean;
 }
@@ -96,7 +100,7 @@ StartProcessorWithLambda(async (input, fileHelper) => {
 
 ## Example: Binary Assets
 
-```ts
+```ts filename="processor.ts" -c
 StartProcessorWithLambda(async (input, fileHelper) => {
   // Process configuration files
   const configs = fileHelper.read({ root: 'config', glob: '**/*.{json,yaml}' });

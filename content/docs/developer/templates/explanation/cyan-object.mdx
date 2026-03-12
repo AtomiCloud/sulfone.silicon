@@ -9,7 +9,7 @@ The configuration object returned by `StartTemplateWithLambda` is the heart of e
 
 ## Overview
 
-```ts
+```ts -c
 import { StartTemplateWithLambda } from '@atomicloud/cyan-sdk';
 
 StartTemplateWithLambda(async (i, d) => {
@@ -90,9 +90,7 @@ interface CyanPlugin {
 
 The `cyan/default` processor uses Eta templating:
 
-```ts
-import { GlobType } from '@atomicloud/cyan-sdk';
-
+```ts -c
 {
   name: 'cyan/default',
   files: [/* ... */],
@@ -107,7 +105,7 @@ import { GlobType } from '@atomicloud/cyan-sdk';
 
 Use custom processors for specialized needs:
 
-```ts
+```ts -c
 {
   name: 'myorg/handlebars-processor',
   files: [/* ... */],
@@ -124,7 +122,7 @@ Use custom processors for specialized needs:
 
 Each file group specifies a set of files and how to process them:
 
-```ts
+```ts -c
 import { GlobType } from '@atomicloud/cyan-sdk';
 
 files: [
@@ -154,7 +152,7 @@ Files are processed in the order they appear in the array. Later entries can ove
 
 Variables flow from questions to processors:
 
-```ts
+```ts -c
 import { StartTemplateWithLambda, GlobType } from '@atomicloud/cyan-sdk';
 
 const name = await i.text('Name?', 'project.name', '...');
@@ -186,7 +184,7 @@ Generated on: var__date__
 
 Plugins run after all processors complete:
 
-```ts
+```ts -c
 import { StartTemplateWithLambda } from '@atomicloud/cyan-sdk';
 
 return {

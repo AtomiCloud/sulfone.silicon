@@ -3,53 +3,86 @@ title: Template How-To Guides
 description: Task-oriented guides for common template development tasks
 ---
 
+import { Cards, Card } from 'fumadocs-ui/components/card';
+
 # Template How-To Guides
 
 Practical guides for accomplishing specific tasks in template development.
 
 ## Question Types
 
-Guides for asking different question types:
-
-- [Ask Checkbox Questions](/docs/developer/templates/how-to/ask-checkbox) - Multi-select questions
-- [Ask Confirm Questions](/docs/developer/templates/how-to/ask-confirm) - Yes/no questions
-- [Ask Password Questions](/docs/developer/templates/how-to/ask-password) - Hidden input
-- [Ask Date Questions](/docs/developer/templates/how-to/ask-date) - Date selection
+<Cards>
+  <Card href="/docs/developer/templates/how-to/ask-checkbox" title="Ask Checkbox Questions">
+    Multi-select questions
+  </Card>
+  <Card href="/docs/developer/templates/how-to/ask-confirm" title="Ask Confirm Questions">
+    Yes/no questions
+  </Card>
+  <Card href="/docs/developer/templates/how-to/ask-password" title="Ask Password Questions">
+    Hidden input
+  </Card>
+  <Card href="/docs/developer/templates/how-to/ask-date" title="Ask Date Questions">
+    Date selection
+  </Card>
+</Cards>
 
 ## Input Handling
 
-- [Set Default Values](/docs/developer/templates/how-to/default-values) - Provide sensible defaults
-- [Validate User Input](/docs/developer/templates/how-to/validate-input) - Custom validation rules
-- [Use Keys](/docs/developer/templates/how-to/use-keys) - Keys and namespacing
+<Cards>
+  <Card href="/docs/developer/templates/how-to/default-values" title="Set Default Values">
+    Provide sensible defaults
+  </Card>
+  <Card href="/docs/developer/templates/how-to/validate-input" title="Validate User Input">
+    Custom validation rules
+  </Card>
+  <Card href="/docs/developer/templates/how-to/use-keys" title="Use Keys">
+    Keys and namespacing
+  </Card>
+</Cards>
 
 ## Template Features
 
-- [Include Files Conditionally](/docs/developer/templates/how-to/conditional-files) - Feature-based file inclusion
-- [Pass Images and Binaries](/docs/developer/templates/how-to/pass-images-binaries) - Handle binary files
-- [Compose Templates](/docs/developer/templates/how-to/compose-templates) - Combine multiple templates
-- [Pin Determinism](/docs/developer/templates/how-to/pin-determinism) - Reproducible generation
+<Cards>
+  <Card href="/docs/developer/templates/how-to/conditional-files" title="Include Files Conditionally">
+    Feature-based file inclusion
+  </Card>
+  <Card href="/docs/developer/templates/how-to/pass-images-binaries" title="Pass Images and Binaries">
+    Handle binary files
+  </Card>
+  <Card href="/docs/developer/templates/how-to/compose-templates" title="Compose Templates">
+    Combine multiple templates
+  </Card>
+  <Card href="/docs/developer/templates/how-to/pin-determinism" title="Pin Determinism">
+    Reproducible generation
+  </Card>
+</Cards>
 
 ## Extensions
 
-- [Use Custom Processor](/docs/developer/templates/how-to/use-custom-processor) - Beyond default templating
-- [Add Plugins](/docs/developer/templates/how-to/add-plugins) - Post-generation actions
+<Cards>
+  <Card href="/docs/developer/templates/how-to/use-custom-processor" title="Use Custom Processor">
+    Beyond default templating
+  </Card>
+  <Card href="/docs/developer/templates/how-to/add-plugins" title="Add Plugins">
+    Post-generation actions
+  </Card>
+</Cards>
 
 ## Publishing
 
-- [Push to Registry](/docs/developer/templates/how-to/push-to-registry) - Build and publish templates
-
-## Quick Reference
-
-| Task | Guide |
-|------|-------|
-| Ask multiple choice | [Checkbox](/docs/developer/templates/how-to/ask-checkbox) |
-| Ask yes/no | [Confirm](/docs/developer/templates/how-to/ask-confirm) |
-| Collect secrets | [Password](/docs/developer/templates/how-to/ask-password) |
-| Validate input | [Validation](/docs/developer/templates/how-to/validate-input) |
-| Include binary files | [Images & Binaries](/docs/developer/templates/how-to/pass-images-binaries) |
-| Publish template | [Push to Registry](/docs/developer/templates/how-to/push-to-registry) |
+<Cards>
+  <Card href="/docs/developer/templates/how-to/push-to-registry" title="Push to Registry">
+    Build and publish templates
+  </Card>
+</Cards>
 
 ## Next Steps
 
-- [SDK Reference](/docs/developer/templates/reference/sdk) - Complete API documentation
-- [Explanation](/docs/developer/templates/explanation) - Understand the concepts
+<Cards>
+  <Card href="/docs/developer/templates/reference/sdk" title="SDK Reference">
+    Complete API documentation
+  </Card>
+  <Card href="/docs/developer/templates/explanation" title="Explanation">
+    Understand the concepts
+  </Card>
+</Cards>

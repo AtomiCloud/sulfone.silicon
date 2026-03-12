@@ -4,6 +4,8 @@ description: Read and modify files in the generated directory
 ---
 
 import { Callout } from 'fumadocs-ui/components/callout';
+import { Tabs, Tab } from 'fumadocs-ui/components/tabs';
+import { Files, File, Folder } from 'fumadocs-ui/components/files';
 
 # Modify Generated Files
 
@@ -13,7 +15,7 @@ Read and modify files in the generated project directory. Plugins have full file
 
 ### Read a File
 
-```ts
+```ts plugin.ts -c
 import { StartPluginWithLambda, type CyanPluginInput, type PluginOutput } from '@atomicloud/cyan-sdk';
 import * as fs from 'fs/promises';
 import * as path from 'path';
@@ -33,7 +35,7 @@ StartPluginWithLambda(async (input: CyanPluginInput): Promise<PluginOutput> => {
 
 ### Write a File
 
-```ts
+```ts plugin.ts -c
 StartPluginWithLambda(async (input) => {
   const { directory } = input;
 
@@ -46,7 +48,7 @@ StartPluginWithLambda(async (input) => {
 
 ### Modify a File
 
-```ts
+```ts plugin.ts -c
 StartPluginWithLambda(async (input) => {
   const { directory } = input;
 
@@ -69,7 +71,7 @@ StartPluginWithLambda(async (input) => {
 
 ### Update JSON File
 
-```ts
+```ts plugin.ts -c
 StartPluginWithLambda(async (input) => {
   const { directory } = input;
 
@@ -95,7 +97,7 @@ StartPluginWithLambda(async (input) => {
 
 ### Add to Existing File
 
-```ts
+```ts plugin.ts -c
 StartPluginWithLambda(async (input) => {
   const { directory, config } = input;
   const cfg = config as { author?: string };
@@ -125,7 +127,17 @@ StartPluginWithLambda(async (input) => {
 
 ### Create New Files
 
-```ts
+<Files>
+  <File name=".gitignore" />
+  <File name=".env.example" />
+  <Folder name=".github">
+    <Folder name="workflows">
+      <File name="ci.yml" />
+    </Folder>
+  </Folder>
+</Files>
+
+```ts plugin.ts -c
 StartPluginWithLambda(async (input) => {
   const { directory } = input;
 
@@ -149,6 +161,7 @@ API_KEY=your-api-key
 
   // Create directory and file
   const githubDir = path.join(directory, '.github', 'workflows');
+
   await fs.mkdir(githubDir, { recursive: true });
 
   await fs.writeFile(
@@ -171,7 +184,7 @@ jobs:
 
 ### Delete Files
 
-```ts
+```ts plugin.ts -c
 StartPluginWithLambda(async (input) => {
   const { directory } = input;
 
@@ -197,9 +210,15 @@ StartPluginWithLambda(async (input) => {
 
 ## Using Glob Patterns
 
-Process multiple files matching a pattern using the [`glob`](https://www.npmjs.com/package/glob) npm package (install separately: `npm install glob`):
+Process multiple files matching a pattern using the [`glob`](https://www.npmjs.com/package/glob) npm package:
 
-```ts
+<Tabs groupId="package-manager" items={['npm', 'yarn', 'pnpm']} persist>
+  <Tab value="npm">npm install glob</Tab>
+  <Tab value="yarn">yarn add glob</Tab>
+  <Tab value="pnpm">pnpm add glob</Tab>
+</Tabs>
+
+```ts plugin.ts -c
 import { glob } from 'glob';
 
 StartPluginWithLambda(async (input) => {
@@ -228,7 +247,7 @@ ${content}`;
 ```
 
 <Callout type="info">
-When modifying files, be careful not to break the generated output. Test your plugin with various templates to ensure compatibility.
+All examples assume the imports shown in the first code block. When modifying files, be careful not to break the generated output. Test your plugin with various templates to ensure compatibility.
 </Callout>
 
 ## Related

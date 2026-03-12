@@ -32,7 +32,7 @@ Processors execute **in parallel** (subject to parallelism limits), then their o
 2. Template asks questions via `IInquirer` and receives `IDeterminism` for deterministic behavior
 3. Template returns `Cyan` with processors and plugins
 
-```ts
+```ts -c
 // Template index.ts - the template function signature
 import { IInquirer, IDeterminism } from '@atomicloud/cyan-sdk';
 
@@ -134,7 +134,7 @@ Plugins receive the **merged output** of all processors, not individual processo
 
 ## Example Pipeline
 
-```ts
+```ts -c
 // Template configuration
 return {
   processors: [
@@ -176,10 +176,6 @@ return {
 | Merging | Fast | File count |
 | Post-Processing (sequential) | Variable | Network (npm install) |
 
-<Callout type="info">
-Plugins can be slow (especially `npm install`). Consider making heavy operations optional via config.
-</Callout>
-
 ## Error Handling
 
 ### During Processing
@@ -200,7 +196,7 @@ Plugins can be slow (especially `npm install`). Consider making heavy operations
 
 Plugins run in the order defined:
 
-```ts
+```ts -c
 plugins: [
   { name: 'plugin-a', config: {} },  // Runs first
   { name: 'plugin-b', config: {} },  // Runs second
@@ -212,7 +208,7 @@ plugins: [
 
 Consider dependencies when ordering plugins:
 
-```ts
+```ts -c
 plugins: [
   // Git must be initialized before hooks
   { name: 'my-org/git-init', config: {} },

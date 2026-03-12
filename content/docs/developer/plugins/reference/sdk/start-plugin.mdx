@@ -3,6 +3,8 @@ title: StartPluginWithLambda
 description: Entry point for CyanPrint plugins
 ---
 
+import { Steps } from 'fumadocs-ui/components/steps';
+
 # StartPluginWithLambda
 
 Register a plugin function that handles post-processing after file generation.
@@ -25,7 +27,7 @@ function StartPluginWithLambda(
 
 ### Basic
 
-```ts
+```ts index.ts -c
 import { StartPluginWithLambda } from '@atomicloud/cyan-sdk';
 
 StartPluginWithLambda(async (input) => {
@@ -39,7 +41,7 @@ StartPluginWithLambda(async (input) => {
 
 ### With Config
 
-```ts
+```ts plugin.ts -c
 import { StartPluginWithLambda } from '@atomicloud/cyan-sdk';
 import { $ } from 'bun';
 
@@ -66,7 +68,7 @@ StartPluginWithLambda(async (input) => {
 
 ### Error Handling
 
-```ts
+```ts -c
 StartPluginWithLambda(async (input) => {
   const { directory } = input;
 
@@ -85,10 +87,21 @@ StartPluginWithLambda(async (input) => {
 
 ## How It Works
 
-1. **Plugin starts** - Container runs on port 5552
-2. **Request received** - POST `/api/plug` with `PluginInput`
-3. **Handler executes** - Your async function processes the directory
-4. **Response sent** - Returns `PluginOutput` with directory path
+<Steps>
+
+### Plugin starts
+Container runs on port 5552
+
+### Request received
+POST `/api/plug` with `PluginInput`
+
+### Handler executes
+Your async function processes the directory
+
+### Response sent
+Returns `PluginOutput` with directory path
+
+</Steps>
 
 <Mermaid chart={`sequenceDiagram
     participant Cyan as CyanPrint
@@ -105,7 +118,7 @@ StartPluginWithLambda(async (input) => {
 
 Plugins listen on port **5552** by default:
 
-```ts
+```ts -c
 // Internal server starts on port 5552
 // Handles: POST /api/plug
 ```
@@ -114,7 +127,7 @@ Plugins listen on port **5552** by default:
 
 Always return the directory path:
 
-```ts
+```ts -c
 StartPluginWithLambda(async (input) => {
   const { directory } = input;
 

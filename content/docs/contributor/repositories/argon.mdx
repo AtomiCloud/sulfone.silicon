@@ -83,7 +83,7 @@ Argon is the web-based user interface for browsing, searching, and managing Cyan
 
 ## Building
 
-```bash
+```bash -c
 # Install dependencies
 bun install
 
@@ -102,7 +102,7 @@ bun run check
 
 ## Configuration
 
-```env
+```env .env -c
 # .env
 DESCOPE_ID=your-descope-project-id
 DESCOPE_SECRET=your-descope-secret
@@ -114,7 +114,13 @@ PUBLIC_LANDSCAPE=lapras  # Options: pichu, pikachu, raichu, lapras (default: lap
 
 ### Template Card
 
-Displays template information in a card format. Note that most fields are optional:
+Displays template information in a card format:
+
+import { Callout } from 'fumadocs-ui/components/callout';
+
+<Callout type="info">
+Most fields in the template object are optional.
+</Callout>
 
 ```svelte
 <TemplateCard

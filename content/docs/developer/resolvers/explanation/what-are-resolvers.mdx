@@ -18,8 +18,7 @@ When you compose templates through:
 
 The same file may exist in multiple layers with potentially different content:
 
-```mermaid
-graph TD
+<Mermaid chart={`graph TD
     subgraph "Template Layers"
         L1[Base Template<br/>config.json v1]
         L2[Feature Template<br/>config.json v2]
@@ -27,7 +26,7 @@ graph TD
     end
 
     R[Resolver] --> M["Merged config.json"]
-```
+`} />
 
 ## How Resolvers Work
 
@@ -39,13 +38,12 @@ Resolvers receive:
 And return a single merged file.
 
 ### Example: JSON File Conflict
-```mermaid
-graph LR
+<Mermaid chart={`graph LR
     A[Layer 1<br/>a.json] --> D[Resolver]
     B[Layer 2<br/>a.json] --> D
     C[Layer 3<br/>a.json] --> D
     D --> E[Merged a.json]
-```
+`} />
 
 Layer 1: `{"name": "app", "version": "1.0"}`
 Layer 2: `{"name": "app", "version": "2.0", "features": ["auth"]}`
@@ -83,8 +81,7 @@ Resolvers and processors have different purposes:
 | **Port** | 5551 | 5553 |
 
 ## Execution Flow
-```mermaid
-sequenceDiagram
+<Mermaid chart={`sequenceDiagram
     participant T as Template
     participant P as Processor
     participant R as Resolver
@@ -93,7 +90,7 @@ sequenceDiagram
     T->>P: Process files
     P->>R: Multiple file versions
     R->>O: Single merged file
-```
+`} />
 
 ## Key Concepts
 

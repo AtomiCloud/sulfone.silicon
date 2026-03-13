@@ -22,7 +22,7 @@ The `CyanFileHelper` provides all file operations for processors. It manages rea
 
 | Method | Memory Usage | Use Case |
 |--------|--------------|----------|
-| `resolveAll()` | High | Load all files with content |
+| `resolveAll()` | High | Resolve all files: Copy-type files are written to output, returns Template-type files for processing |
 | `read(glob)` | Medium | Load specific files |
 | `get(glob)` | Low | Get file references only |
 | `readAsStream(glob)` | Low | Stream large files |
@@ -373,7 +373,7 @@ StartProcessorWithLambda(async (input, fileHelper) => {
     }
   }
 
-  return { directory: input.writeDirectory };
+  return { directory: input.writeDir };
 });
 ```
 

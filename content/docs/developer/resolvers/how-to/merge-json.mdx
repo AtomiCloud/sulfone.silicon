@@ -109,6 +109,7 @@ if __name__ == "__main__":
 
 ```cs -c
 using System.Text.Json;
+using System.Text.Json.Nodes;
 using sulfone_helium;
 using sulfone_helium.Domain.Resolver;
 
@@ -118,36 +119,39 @@ CyanEngine.StartResolver(
     {
         var sorted = input.Files.OrderBy(f => f.Origin.Layer).ToList();
 
-        var merged = new Dictionary<string, object>();
+        JsonNode merged = new JsonObject();
         foreach (var file in sorted)
         {
-            var content = JsonSerializer.Deserialize<Dictionary<string, object>>(file.Content)
-                ?? new Dictionary<string, object>();
-            DeepMerge(merged, content);
+            var content = JsonNode.Parse(file.Content) ?? new JsonObject();
+            merged = DeepMerge(merged, content);
         }
 
         return new ResolverOutput(
             input.Files.First().Path,
-            JsonSerializer.Serialize(merged, new JsonSerializerOptions { WriteIndented = true })
+            merged.ToJsonString(new JsonSerializerOptions { WriteIndented = true })
         );
     }
 );
 
-static void DeepMerge(Dictionary<string, object> target, Dictionary<string, object> source)
+static JsonNode DeepMerge(JsonNode target, JsonNode source)
 {
-    foreach (var kvp in source)
+    if (target is JsonObject targetObj && source is JsonObject sourceObj)
     {
-        if (target.TryGetValue(kvp.Key, out var existing) &&
-            existing is Dictionary<string, object> existingDict &&
-            kvp.Value is Dictionary<string, object> sourceDict)
+        var result = targetObj.DeepClone().AsObject();
+        foreach (var kvp in sourceObj)
         {
-            DeepMerge(existingDict, sourceDict);
+            if (result.TryGetPropertyValue(kvp.Key, out var existing) && existing is JsonObject && kvp.Value is JsonObject)
+            {
+                result[kvp.Key] = DeepMerge(existing, kvp.Value);
+            }
+            else
+            {
+                result[kvp.Key] = kvp.Value?.DeepClone();
+            }
         }
-        else
-        {
-            target[kvp.Key] = kvp.Value;
-        }
+        return result;
     }
+    return source.DeepClone();
 }
 ```
 

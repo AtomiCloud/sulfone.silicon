@@ -1,0 +1,127 @@
+---
+title: cyan.yaml Format
+description: Resolver metadata and configuration schema
+---
+
+import { TypeTable } from 'fumadocs-ui/components/type-table';
+import { Cards, Card } from 'fumadocs-ui/components/card';
+
+# cyan.yaml Format
+
+The `cyan.yaml` file contains metadata for publishing your resolver to the Cyan registry.
+
+## Basic Structure
+
+```yaml -c cyan.yaml
+username: your-username
+name: my-resolver
+description: Description of the resolver's purpose
+project: https://github.com/org/my-project
+source: https://github.com/org/my-resolver
+email: contact@example.com
+tags:
+  - json
+  - merge
+  - resolver
+readme: README.md
+```
+
+## Required Fields
+
+All fields in the resolver's `cyan.yaml` are required:
+
+<TypeTable
+  type={{
+    username: {
+      type: 'string',
+      description: 'Registry username or organization',
+    },
+    name: {
+      type: 'string',
+      description: 'Resolver identifier (simple name, no org prefix)',
+    },
+    description: {
+      type: 'string',
+      description: 'Brief description of functionality',
+    },
+    project: {
+      type: 'string',
+      description: 'URL to the main project or organization',
+    },
+    source: {
+      type: 'string',
+      description: "URL to the resolver's source code",
+    },
+    email: {
+      type: 'string',
+      description: 'Contact email for the resolver maintainer',
+    },
+    tags: {
+      type: 'string[]',
+      description: 'Search keywords for registry discovery',
+    },
+    readme: {
+      type: 'string',
+      description: 'Path to the README file (typically `README.md`)',
+    },
+  }}
+/>
+
+## Full Example
+```yaml -c cyan.yaml
+username: atomicloud
+name: json-merger
+description: Merge JSON files from layered templates with configurable strategies
+project: https://github.com/atomicloud/cyan-resolvers
+source: https://github.com/atomicloud/json-merger
+email: support@atomicloud.com
+tags:
+  - json
+  - merge
+  - resolver
+  - conflict
+readme: README.md
+```
+
+## Versioning
+Version is not specified in `cyan.yaml`. Versioning is managed by the Cyan registry system when you publish your resolver. Each push to the registry creates a new version.
+
+## Config Definition
+The `cyan.yaml` file does not define resolver configuration options. Configuration is defined at the template level when a template references a resolver with config values. The config is passed to the resolver at runtime via `input.config`.
+
+## Using Config in Template
+Templates reference resolvers in their `cyan.yaml` with config values
+```yaml -c
+# Template's cyan.yaml
+resolvers:
+  - resolver: org/json-merger:1
+    config:
+      arrayStrategy: concat
+      deepMerge: true
+    files:
+      - config.json
+      - package.json
+```
+
+## Best Practices
+- **Use descriptive names** - Choose a clear, descriptive resolver name
+- **Provide accurate metadata** - Help users discover and understand your resolver
+- **Include relevant tags** - Add tags that help users find your resolver in the registry
+- **Maintain a good README** - Document resolver functionality and configuration options
+- **Keep contact info current** - Use a valid email for support inquiries
+
+## Related
+<Cards>
+  <Card href="/docs/developer/resolvers/reference/project-structure" title="Project Structure">
+    File layout
+  </Card>
+  <Card href="/docs/developer/resolvers/reference/dockerfile" title="Resolver Dockerfile">
+    Container setup
+  </Card>
+  <Card href="/docs/developer/resolvers/how-to/merge-json" title="Merge JSON Files">
+    Implementation guide
+  </Card>
+  <Card href="/docs/developer/templates/reference/build-config" title="Build Configuration">
+    Docker buildx setup
+  </Card>
+</Cards>

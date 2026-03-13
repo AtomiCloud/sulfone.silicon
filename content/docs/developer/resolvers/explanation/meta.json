@@ -1,0 +1,6 @@
+{
+  "title": "Explanation",
+  "description": "Understand how resolvers work",
+  "icon": "Lightbulb",
+  "pages": ["what-are-resolvers", "resolvers-in-pipeline"]
+}

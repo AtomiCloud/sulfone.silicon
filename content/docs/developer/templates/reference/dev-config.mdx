@@ -1,0 +1,176 @@
+---
+title: Dev Configuration
+description: Configure dev mode for local template development
+---
+
+import { Callout } from 'fumadocs-ui/components/callout';
+import { TypeTable } from 'fumadocs-ui/components/type-table';
+import { Cards, Card } from 'fumadocs-ui/components/card';
+
+# Dev Configuration
+
+The `dev:` section in `cyan.yaml` configures dev mode for rapid local template development. When enabled with `cyanprint try template --dev`, it connects directly to a locally-running template server instead of building a Docker image.
+
+<Callout type="info">
+Dev mode provides **instant iteration** by skipping Docker builds. Code changes take effect immediately when you re-run the try command.
+</Callout>
+
+## Basic Structure
+
+```yaml cyan.yaml -c
+username: myorg
+name: my-template
+# ... other fields ...
+
+dev:
+  template_url: http://localhost:5550
+  blob_path: ./cyan
+```
+
+## Configuration Reference
+
+<TypeTable
+  type={{
+    template_url: {
+      type: 'string',
+      description: 'URL of your locally-running template server. Must include protocol and port.',
+      required: true,
+    },
+    blob_path: {
+      type: 'string',
+      description: 'Path to the blob directory containing template files. Can be relative to cyan.yaml or absolute.',
+      required: true,
+    },
+  }}
+/>
+
+### `template_url`
+
+The URL where your template server is accessible. The template server is typically started by running your template code locally.
+
+Common values:
+
+```yaml
+# Default port for TypeScript/JavaScript templates
+template_url: http://localhost:5550
+
+# Custom port
+template_url: http://localhost:8080
+
+# Full URL with path (if applicable)
+template_url: http://localhost:5550/api
+```
+
+<Callout type="warn">
+The template server must be running before you execute `cyanprint try template --dev`. Pre-flight validation will fail if the URL is unreachable.
+</Callout>
+
+### `blob_path`
+
+Path to the directory containing your template's blob files (static files to be copied during generation). This path is used for direct filesystem access in dev mode.
+
+```yaml
+# Relative path (recommended)
+blob_path: ./cyan
+
+# Absolute path
+blob_path: /home/user/projects/my-template/cyan
+
+# Subdirectory
+blob_path: ./template-files
+```
+
+## How Dev Mode Works
+
+```
+Normal Mode:  code ──► docker build ──► container ──► output
+Dev Mode:     code ──────────────────────────────────► output
+```
+
+| Step | Normal Mode | Dev Mode |
+|------|-------------|----------|
+| Build | Docker buildx | Skipped |
+| Template access | Container on dynamic port | Direct to template_url |
+| File access | Container filesystem | Local blob_path |
+| Iteration speed | Slow (rebuild required) | Instant |
+
+## Complete Example
+
+```yaml cyan.yaml -c
+# Organization and identity
+username: myorg
+name: node-service
+description: Production-ready Node.js microservice template
+email: team@myorg.com
+
+# Links
+project: https://docs.myorg.io/templates/node-service
+source: https://github.com/myorg/node-service-template
+readme: README.md
+
+# Discovery
+tags:
+  - nodejs
+  - microservice
+  - typescript
+
+# Processor dependencies
+processors:
+  - myorg/base-processor
+
+# Plugin dependencies
+plugins:
+  - cyan/init-git
+
+# Dev mode configuration
+dev:
+  template_url: http://localhost:5550
+  blob_path: ./cyan
+```
+
+## Usage
+
+### 1. Start Your Template Server
+
+Start your template locally (typically on port 5550):
+
+```bash -c
+cd cyan
+bun install
+bun run --watch index.ts
+```
+
+### 2. Run Try with Dev Flag
+
+```bash -c
+cyanprint try template . ./output --dev
+```
+
+The command:
+
+1. Reads the `dev:` section from `cyan.yaml`
+2. Skips Docker image building
+3. Validates that `template_url` is reachable
+4. Connects directly to your template server
+5. Uses `blob_path` for filesystem access
+
+<Callout type="warn">
+Always test in normal mode before publishing. Dev mode skips the Docker build step, which may hide issues that would appear in production.
+</Callout>
+
+## Related
+
+<Cards>
+  <Card href="/docs/developer/templates/how-to/dev-mode" title="Dev Mode How-To">
+    Step-by-step dev mode guide
+  </Card>
+  <Card href="/docs/developer/templates/reference/cyan-yaml" title="cyan.yaml Reference">
+    Full template metadata reference
+  </Card>
+  <Card href="/docs/developer/templates/reference/build-config" title="Build Configuration">
+    Docker buildx configuration
+  </Card>
+  <Card href="/docs/developer/templates/how-to/test-locally" title="Test Locally">
+    Normal mode local testing
+  </Card>
+</Cards>

@@ -1,0 +1,242 @@
+---
+title: Push to Registry
+description: Build and publish your resolver to a container registry
+---
+
+import { Steps } from 'fumadocs-ui/components/steps';
+import { Callout } from 'fumadocs-ui/components/callout';
+import { Tabs, Tab } from 'fumadocs-ui/components/tabs';
+import { Cards, Card } from 'fumadocs-ui/components/card';
+
+# Push to Registry
+
+Publish your resolver to a container registry so others can use it.
+
+## Prerequisites
+
+- Docker installed and logged in
+- Access to a container registry (Docker Hub, GitHub GHCR, etc.)
+- Resolver code ready to publish
+- Dockerfile includes `LABEL cyanprint.dev=true` (see [Resolver Dockerfile](/docs/developer/resolvers/reference/dockerfile))
+
+## Build and Push
+
+<Steps>
+
+### Tag Your Image
+
+Choose a naming convention for your resolver:
+
+```bash -c
+# Docker Hub
+docker tag my-resolver:dev username/my-resolver:latest
+
+# GitHub Container Registry
+docker tag my-resolver:dev ghcr.io/orgname/my-resolver:latest
+
+# Private registry
+docker tag my-resolver:dev registry.company.com/resolvers/my-resolver:latest
+```
+
+### Push to Registry
+
+<Tabs items={['Docker Hub', 'GitHub GHCR', 'Private Registry']}>
+  <Tab value="Docker Hub">
+
+```bash
+# Login to Docker Hub
+docker login
+
+# Push
+docker push username/my-resolver:latest
+
+# Also push a versioned tag
+docker push username/my-resolver:1.0.0
+```
+
+  </Tab>
+  <Tab value="GitHub GHCR">
+
+```bash
+# Login to GitHub Container Registry
+echo $GITHUB_TOKEN | docker login ghcr.io -u USERNAME --password-stdin
+
+# Push
+docker push ghcr.io/orgname/my-resolver:latest
+docker push ghcr.io/orgname/my-resolver:1.0.0
+```
+
+  </Tab>
+  <Tab value="Private Registry">
+
+```bash
+# Login to private registry
+docker login registry.company.com
+
+# Push
+docker push registry.company.com/resolvers/my-resolver:latest
+```
+
+  </Tab>
+</Tabs>
+
+### Verify the Push
+
+```bash -c
+# Pull the image to verify
+docker pull username/my-resolver:latest
+
+# Run a test
+docker run --rm username/my-resolver:latest
+```
+
+</Steps>
+
+<Callout type="warn">
+Pushing to a container registry is only part of the process. You must also register your resolver with the CyanPrint registry for the system to discover and use it.
+</Callout>
+
+## Naming Convention
+
+Use the `username/resolver-name` or `org/resolver-name` format for your Docker images:
+
+| Pattern | Example | Description |
+|---------|---------|-------------|
+| `org/resolver-name` | `atomi/json-merger` | Organization namespace |
+| `username/resolver-name` | `johndoe/gitignore-merger` | User namespace |
+| `registry/org/resolver-name` | `ghcr.io/atomi/resolvers/json-merger` | Full registry path |
+
+<Callout type="info">
+The system uses the `username/name[:version]` format to reference resolvers in templates. Container names are auto-generated internally by the system.
+</Callout>
+
+## Versioning
+
+### Semantic Versioning
+
+Use semantic versioning for releases:
+
+```bash -c
+# Major version (breaking changes)
+docker tag my-resolver:dev org/my-resolver:2.0.0
+
+# Minor version (new features)
+docker tag my-resolver:dev org/my-resolver:1.1.0
+
+# Patch version (bug fixes)
+docker tag my-resolver:dev org/my-resolver:1.0.1
+
+# Latest tag (current stable)
+docker tag my-resolver:dev org/my-resolver:latest
+```
+
+### Using in Templates
+
+Templates can pin to specific versions:
+
+```yaml -c
+# cyan.yaml
+resolvers:
+  - resolver: org/my-resolver:1.0.0  # Pinned version
+    config: {}
+    files:
+      - config.json
+
+  - resolver: org/my-resolver:latest  # Always latest
+    config: {}
+    files:
+      - "*.json"
+```
+
+<Callout type="info">
+Version references are exact matches or `latest`. The system does not perform semantic version range matching.
+</Callout>
+
+## Automation
+
+### GitHub Actions
+
+Create `.github/workflows/publish.yml`:
+
+```yaml -c
+name: Publish Resolver
+
+on:
+  release:
+    types: [published]
+
+jobs:
+  publish:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Set up Docker Buildx
+        uses: docker/setup-buildx-action@v3
+
+      - name: Login to GHCR
+        uses: docker/login-action@v3
+        with:
+          registry: ghcr.io
+          username: ${{ github.actor }}
+          password: ${{ secrets.GITHUB_TOKEN }}
+
+      - name: Extract version
+        id: version
+        run: echo "VERSION=${GITHUB_REF#refs/tags/}" >> $GITHUB_OUTPUT
+
+      - name: Build and push
+        uses: docker/build-push-action@v5
+        with:
+          context: .
+          push: true
+          tags: |
+            ghcr.io/${{ github.repository_owner }}/my-resolver:latest
+            ghcr.io/${{ github.repository_owner }}/my-resolver:${{ steps.version.outputs.VERSION }}
+```
+
+## Documentation
+
+Include usage documentation with your resolver:
+
+### README.md
+
+```markdown -c
+# My Resolver
+
+A CyanPrint resolver that merges JSON files from layered templates.
+
+## Configuration
+
+| Option | Type | Default | Description |
+|--------|------|---------|-------------|
+| `arrayStrategy` | `string` | `replace` | How to merge arrays: `concat`, `replace`, `distinct` |
+
+## Usage
+
+Add to your template's `cyan.yaml`:
+
+\`\`\`yaml
+resolvers:
+  - resolver: org/my-resolver:1.0.0
+    config:
+      arrayStrategy: concat
+    files:
+      - config.json
+      - package.json
+\`\`\`
+```
+
+## Related
+
+<Cards>
+  <Card href="/docs/developer/resolvers/reference/dockerfile" title="Resolver Dockerfile">
+    Container setup
+  </Card>
+  <Card href="/docs/developer/resolvers/tutorials/first-resolver" title="First Resolver">
+    Create your first resolver
+  </Card>
+  <Card href="/docs/developer/resolvers/reference/cyan-yaml" title="cyan.yaml Format">
+    Configuration reference
+  </Card>
+</Cards>

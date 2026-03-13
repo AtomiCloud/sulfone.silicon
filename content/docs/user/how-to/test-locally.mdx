@@ -1,0 +1,114 @@
+---
+title: Test Templates Locally
+description: Test a local template without publishing to the registry
+---
+
+import { Steps } from 'fumadocs-ui/components/steps';
+import { Callout } from 'fumadocs-ui/components/callout';
+
+# Test Templates Locally
+
+Use the `try` command to test a local template without publishing it to the registry. This is useful for:
+
+- Testing templates during development
+- Running templates stored on your local machine
+- Trying out template modifications quickly
+
+## Basic Usage
+
+```bash -c
+cyanprint try template <template_path> <output_path>
+```
+
+| Argument | Description |
+|----------|-------------|
+| `template_path` | Path to the template directory containing `cyan.yaml` |
+| `output_path` | Directory where the generated project will be created |
+
+## Example
+
+<Steps>
+
+### Navigate to Template Directory
+
+```bash -c
+cd ~/templates/my-template
+```
+
+### Run the Try Command
+
+```bash -c
+cyanprint try template . ./test-output
+```
+
+This will:
+1. Build the template Docker image automatically
+2. Start the CyanPrint coordinator
+3. Run the template and prompt for answers
+4. Generate the project to `./test-output`
+
+### Check the Output
+
+```bash -c
+ls ./test-output
+```
+
+</Steps>
+
+## How It Works
+
+The `try` command handles the entire template execution pipeline:
+
+1. **Builds** the template Docker image from `cyan.yaml`
+2. **Starts** a local coordinator daemon (if not running)
+3. **Executes** the template with interactive prompts
+4. **Generates** output to the specified directory
+
+<Callout type="info">
+The try command automatically starts a coordinator daemon on port 9000 if one isn't running. This daemon is stopped after the template completes.
+</Callout>
+
+## Options
+
+### Keep Containers
+
+Preserve the template container and blob volume after execution (useful for debugging):
+
+```bash -c
+cyanprint try template . ./output --keep-containers
+```
+
+### Skip Daemon Autostart
+
+If you already have a coordinator running:
+
+```bash -c
+cyanprint try template . ./output --disable-daemon-autostart
+```
+
+### Custom Coordinator
+
+Use a different coordinator endpoint:
+
+```bash -c
+cyanprint try template . ./output -c http://localhost:8080
+```
+
+## Trying Group Templates
+
+For group templates (meta-templates that combine multiple templates):
+
+```bash -c
+cyanprint try group <group_path> <output_path>
+```
+
+Group templates don't require building—they pull dependencies from the registry.
+
+<Callout type="info">
+Group templates compose multiple published templates together. They don't have a Docker image, so they don't need to be built locally.
+</Callout>
+
+## Next Steps
+
+- [Create a Project](/docs/user/how-to/create-project) - Generate from published templates
+- [Update Projects](/docs/user/how-to/update-project) - Keep generated projects up to date

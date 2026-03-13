@@ -10,8 +10,8 @@ description: Complete reference for all CyanPrint CLI commands
 | Flag                   | Default                                                    | Description              |
 | ---------------------- | ---------------------------------------------------------- | ------------------------ |
 | `-r, --registry <URL>` | `https://api.zinc.sulfone.raichu.cluster.atomi.cloud`      | Registry endpoint        |
-| `-d, --debug`          | —                                                          | Enable debug output      |
-| `--version`            | —                                                          | Print version            |
+| `-d, --debug`          | -                                                          | Enable debug output      |
+| `--version`            | -                                                          | Print version            |
 
 ### Environment Variables
 
@@ -23,10 +23,37 @@ description: Complete reference for all CyanPrint CLI commands
 
 | Command      | Alias |
 | ------------ | ----- |
+| `build`      | `b`   |
 | `create`     | `c`   |
 | `update`     | `u`   |
+| `try`        | `t`   |
 | `daemon`     | `d`   |
 | `push`       | `p`   |
+
+## `cyanprint build`
+
+Build Docker images using buildx.
+
+```bash -c
+cyanprint build <TAG> [OPTIONS]
+```
+
+### Arguments
+
+| Argument | Required | Description        |
+| -------- | -------- | ------------------ |
+| `<TAG>`  | Yes      | Build tag (e.g. v1) |
+
+### Options
+
+| Option                 | Default     | Description                               |
+| ---------------------- | ----------- | ----------------------------------------- |
+| `-c, --config <PATH>`  | `cyan.yaml` | Path to config file                       |
+| `-p, --platform <PLATFORMS>` | -     | Target platforms (comma-separated)        |
+| `-b, --builder <NAME>` | -           | Buildx builder to use                      |
+| `--no-cache`           | -           | Don't use cache                           |
+| `--dry-run`            | -           | Show commands without executing           |
+| `--folder <DIR>`       | `.`         | Working directory for the build           |
 
 ## `cyanprint create`
 
@@ -63,12 +90,81 @@ Update an existing project to the latest template version. This command uses the
 cyanprint update [PATH]
 ```
 
+### Arguments
+
+| Argument | Required | Description                      |
+| -------- | -------- | -------------------------------- |
+| `[PATH]` | No       | Project directory (default: `.`) |
+
 ### Options
 
-| Option                       | Description                   |
-| ---------------------------- | ----------------------------- |
-| `-i, --interactive`          | Select versions interactively |
-| `-c, --coordinator-endpoint` | Coordinator URL               |
+| Option                       | Default                           | Description                                      |
+| ---------------------------- | --------------------------------- | ------------------------------------------------ |
+| `-c, --coordinator-endpoint` | `http://coord.cyanprint.dev:9000` | Coordinator URL                                  |
+| `-i, --interactive`          | -                                 | Select versions interactively                    |
+| `--force`                    | -                                 | Force update even if git is dirty (skip confirmation prompt) |
+
+### Environment Variables
+
+| Variable               | Corresponding Flag           |
+| ---------------------- | ---------------------------- |
+| `CYANPRINT_COORDINATOR`| `-c, --coordinator-endpoint` |
+
+## `cyanprint try`
+
+Try a local template or group without publishing to the registry.
+
+```bash -c
+cyanprint try <COMMAND>
+```
+
+### Subcommands
+
+#### `try template`
+
+Try a local template (with build/images).
+
+```bash -c
+cyanprint try template <TEMPLATE_PATH> <OUTPUT_PATH> [OPTIONS]
+```
+
+##### Arguments
+
+| Argument         | Required | Description              |
+| ---------------- | -------- | ------------------------ |
+| `<TEMPLATE_PATH>`| Yes      | Path to template         |
+| `<OUTPUT_PATH>`  | Yes      | Output directory         |
+
+##### Options
+
+| Option                       | Default                           | Description                                      |
+| ---------------------------- | --------------------------------- | ------------------------------------------------ |
+| `--dev`                      | -                                 | Enable dev mode for local development            |
+| `--keep-containers`          | -                                 | Preserve template container and blob volume after execution |
+| `--disable-daemon-autostart` | -                                 | Skip automatic daemon start                      |
+| `-c, --coordinator-endpoint` | `http://coord.cyanprint.dev:9000` | Coordinator URL                                  |
+
+#### `try group`
+
+Try a local group template (no build, dependencies from registry).
+
+```bash -c
+cyanprint try group <TEMPLATE_PATH> <OUTPUT_PATH> [OPTIONS]
+```
+
+##### Arguments
+
+| Argument         | Required | Description              |
+| ---------------- | -------- | ------------------------ |
+| `<TEMPLATE_PATH>`| Yes      | Path to template         |
+| `<OUTPUT_PATH>`  | Yes      | Output directory         |
+
+##### Options
+
+| Option                       | Default                           | Description                 |
+| ---------------------------- | --------------------------------- | --------------------------- |
+| `--disable-daemon-autostart` | -                                 | Skip automatic daemon start |
+| `-c, --coordinator-endpoint` | `http://coord.cyanprint.dev:9000` | Coordinator URL             |
 
 ### Environment Variables
 
@@ -78,40 +174,64 @@ cyanprint update [PATH]
 
 ## `cyanprint daemon`
 
-import { Callout } from 'fumadocs-ui/components/callout';
+Manage the CyanPrint Coordinator daemon.
 
-Start the CyanPrint daemon for local development.
+```bash -c
+cyanprint daemon <COMMAND>
+```
+
+### Subcommands
+
+#### `daemon start`
+
+Start the CyanPrint Coordinator daemon.
+
+import { Callout } from 'fumadocs-ui/components/callout';
 
 <Callout type="warn">
 Docker must be installed and running before starting the daemon.
 </Callout>
 
 ```bash -c
-cyanprint daemon [VERSION]
+cyanprint daemon start [VERSION] [OPTIONS]
 ```
 
-### Options
+##### Arguments
 
-| Option          | Default                                               | Description         |
-| --------------- | ----------------------------------------------------- | ------------------- |
-| `-p, --port`    | 9000                                                  | Port to host daemon |
-| `--registry`    | `https://api.zinc.sulfone.raichu.cluster.atomi.cloud` | Registry endpoint   |
+| Argument    | Required | Description                     |
+| ----------- | -------- | ------------------------------- |
+| `[VERSION]` | No       | Coordinator version (default: `latest`) |
 
-### Prerequisites
+##### Options
 
-<Callout type="warn">
-Docker must be installed and running.
-</Callout>
+| Option          | Default                                               | Description                        |
+| --------------- | ----------------------------------------------------- | ---------------------------------- |
+| `-p, --port`    | 9000                                                  | Port to host the daemon container  |
+| `-r, --registry`| `https://api.zinc.sulfone.raichu.cluster.atomi.cloud` | Registry endpoint for the coordinator |
 
-### Environment Variables
+##### Environment Variables
 
 | Variable              | Corresponding Flag |
 | --------------------- | ------------------ |
-| `CYANPRINT_REGISTRY`  | `--registry`       |
+| `CYANPRINT_REGISTRY`  | `-r, --registry`   |
+
+#### `daemon stop`
+
+Stop the CyanPrint Coordinator daemon and cleanup.
+
+```bash -c
+cyanprint daemon stop [OPTIONS]
+```
+
+##### Options
+
+| Option       | Default | Description                        |
+| ------------ | ------- | ---------------------------------- |
+| `-p, --port` | 9000    | Port where daemon is running       |
 
 ## `cyanprint push`
 
-Push templates, processors, plugins, or groups to the registry.
+Push templates, processors, plugins, resolvers, or groups to the registry.
 
 ```bash -c
 cyanprint push [OPTIONS] <COMMAND>
@@ -119,11 +239,16 @@ cyanprint push [OPTIONS] <COMMAND>
 
 ### Options
 
-| Option                       | Default       | Description           |
-| ---------------------------- | ------------- | --------------------- |
-| `-t, --token <TOKEN>`        | —             | Authentication token  |
-| `-c, --config <CONFIG_PATH>` | `cyan.yaml`   | Path to config file   |
-| `-m, --message <MESSAGE>`    | `No description` | Publish message    |
+| Option                       | Default          | Description                               |
+| ---------------------------- | ---------------- | ----------------------------------------- |
+| `-t, --token <TOKEN>`        | -                | Authentication token                      |
+| `-c, --config <CONFIG_PATH>` | `cyan.yaml`      | Path to config file                       |
+| `-m, --message <MESSAGE>`    | `No description` | Publish message                           |
+| `--platform <PLATFORMS>`     | -                | Target platforms for build (comma-separated) |
+| `--builder <NAME>`           | -                | Buildx builder to use for build           |
+| `--no-cache`                 | -                | Don't use cache during build              |
+| `--dry-run`                  | -                | Show build commands without executing     |
+| `--folder <DIR>`             | `.`              | Working directory for the build (used with --build) |
 
 ### Environment Variables
 
@@ -138,34 +263,101 @@ cyanprint push [OPTIONS] <COMMAND>
 Push a template to the registry.
 
 ```bash -c
-cyanprint push --token <TOKEN> template <BLOB_IMAGE> <BLOB_TAG> <TEMPLATE_IMAGE> <TEMPLATE_TAG>
+cyanprint push --token <TOKEN> template [OPTIONS] [BLOB_IMAGE] [BLOB_TAG] [TEMPLATE_IMAGE] [TEMPLATE_TAG]
 ```
+
+##### Options
+
+| Option        | Description                                             |
+| ------------- | ------------------------------------------------------- |
+| `--build <TAG>` | Build with tag before pushing (requires build config in cyan.yaml) |
+
+##### Arguments
+
+| Argument         | Required | Description             |
+| ---------------- | -------- | ----------------------- |
+| `[BLOB_IMAGE]`   | No       | Blob image name         |
+| `[BLOB_TAG]`     | No       | Blob tag                |
+| `[TEMPLATE_IMAGE]` | No     | Template image name     |
+| `[TEMPLATE_TAG]` | No       | Template tag            |
 
 #### `push processor`
 
 Push a processor to the registry.
 
 ```bash -c
-cyanprint push --token <TOKEN> processor <IMAGE> <TAG>
+cyanprint push --token <TOKEN> processor [OPTIONS] [IMAGE] [TAG]
 ```
+
+##### Options
+
+| Option        | Description                                             |
+| ------------- | ------------------------------------------------------- |
+| `--build <TAG>` | Build with tag before pushing (requires build config in cyan.yaml) |
+
+##### Arguments
+
+| Argument  | Required | Description   |
+| --------- | -------- | ------------- |
+| `[IMAGE]` | No       | Image name    |
+| `[TAG]`   | No       | Image tag     |
 
 #### `push plugin`
 
 Push a plugin to the registry.
 
-```bash
-cyanprint push --token <TOKEN> plugin <IMAGE> <TAG>
+```bash -c
+cyanprint push --token <TOKEN> plugin [OPTIONS] [IMAGE] [TAG]
 ```
+
+##### Options
+
+| Option        | Description                                             |
+| ------------- | ------------------------------------------------------- |
+| `--build <TAG>` | Build with tag before pushing (requires build config in cyan.yaml) |
+
+##### Arguments
+
+| Argument  | Required | Description   |
+| --------- | -------- | ------------- |
+| `[IMAGE]` | No       | Image name    |
+| `[TAG]`   | No       | Image tag     |
+
+#### `push resolver`
+
+Push a conflict resolver artifact to the registry.
+
+```bash -c
+cyanprint push --token <TOKEN> resolver [OPTIONS] [IMAGE] [TAG]
+```
+
+##### Options
+
+| Option        | Description                                             |
+| ------------- | ------------------------------------------------------- |
+| `--build <TAG>` | Build with tag before pushing (requires build config in cyan.yaml) |
+
+##### Arguments
+
+| Argument  | Required | Description   |
+| --------- | -------- | ------------- |
+| `[IMAGE]` | No       | Image name    |
+| `[TAG]`   | No       | Image tag     |
 
 #### `push group`
 
-Push a template group (meta-templates with no Docker artifacts) to the registry.
+Push a template group (meta-template that combines other templates) to the registry.
 
-```bash
-cyanprint push --token <TOKEN> group <NAME> <TAG>
+<Callout type="info">
+Groups are config-only artifacts with no Docker images. Define the group structure in `cyan.yaml` and push without specifying images.
+</Callout>
+
+```bash -c
+cyanprint push --token <TOKEN> group
 ```
 
 ## Related
 
 - [Installation Guide](/docs/user/how-to/install)
 - [Create a Project](/docs/user/how-to/create-project)
+- [Manage the Daemon](/docs/user/how-to/manage-daemon)

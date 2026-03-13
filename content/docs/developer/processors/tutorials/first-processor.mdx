@@ -5,62 +5,168 @@ description: Create a simple processor that transforms files
 
 import { Steps } from 'fumadocs-ui/components/steps';
 import { Callout } from 'fumadocs-ui/components/callout';
+import { Files, File, Folder } from 'fumadocs-ui/components/files';
+import { Tabs, Tab } from 'fumadocs-ui/components/tabs';
+import { TypeTable } from 'fumadocs-ui/components/type-table';
 
 # Your First Processor
 
-Create a processor that transforms template files. This tutorial builds a simple uppercase transformer.
+Create a processor that transforms template files. This tutorial builds a simple uppercase transformer that works with the `try` command.
 
 ## Prerequisites
 
 - Docker installed and running
-- Node.js 18+ or Bun installed
-- Basic TypeScript knowledge
+- Runtime requirements (choose one):
+  - **TypeScript**: Node.js 18+ or Bun installed
+  - **Python**: Python 3.11+ and pip
+  - **C#**: .NET 8 SDK
 
-## Create Project
+## Initialize Project
 
-<Steps>
+<Tabs items={['TypeScript', 'Python', 'C#']} persist groupId="runtime">
+<Tab value="TypeScript">
 
-### Initialize Project
-
-Create a new directory and initialize:
-
-```bash
+```bash -c
 mkdir my-processor
 cd my-processor
 bun init -y
 bun add @atomicloud/cyan-sdk
 ```
 
+</Tab>
+<Tab value="Python">
+
+```bash -c
+mkdir my-processor
+cd my-processor
+python -m venv .venv
+source .venv/bin/activate  # On Windows: .venv\Scripts\activate
+pip install cyanprintsdk
+```
+
+</Tab>
+<Tab value="C#">
+
+```bash -c
+mkdir my-processor
+cd my-processor
+dotnet new console
+dotnet add package AtomiCloud.CyanPrint
+```
+
+</Tab>
+</Tabs>
+
+## Create Processor
+
+<Steps>
+
 ### Create Processor Logic
+
+<Tabs items={['TypeScript', 'Python', 'C#']} persist groupId="runtime">
+<Tab value="TypeScript">
 
 Create `index.ts`:
 
-```ts
+```ts index.ts -c
 import { StartProcessorWithLambda } from '@atomicloud/cyan-sdk';
 
+// !callout[/StartProcessorWithLambda/] Entry point - starts the processor server on port 5551
 StartProcessorWithLambda(async (input, fileHelper) => {
-  // Load all files into memory
+  // !callout[/fileHelper.resolveAll()/] Load all files into memory
   const files = fileHelper.resolveAll();
 
   // Transform each file
   files.forEach(file => {
-    // Transform content (example: uppercase)
+    // !callout[/file.content/] Transform content (example: uppercase)
     file.content = file.content.toUpperCase();
 
-    // Write to output directory
+    // !callout[/file.writeFile()/] Write to output directory
     file.writeFile();
   });
 
-  // Return output directory
+  // !callout[/input.writeDirectory/] Return output directory
   return { directory: input.writeDirectory };
 });
 ```
 
+</Tab>
+<Tab value="Python">
+
+Create `index.py`:
+
+```python index.py -c
+from cyanprintsdk import start_processor_with_fn
+from cyanprintsdk.domain.processor.input import ProcessorInput
+from cyanprintsdk.domain.core.fs.cyan_fs_helper import CyanFileHelper
+
+# !callout[/start_processor_with_fn/] Entry point - starts the processor server on port 5551
+async def my_processor(input: ProcessorInput, fileHelper: CyanFileHelper):
+    # !callout[/fileHelper.resolve_all()/] Load all files into memory
+    files = fileHelper.resolve_all()
+
+    # Transform each file
+    for file in files:
+        # !callout[/file.content/] Transform content (example: uppercase)
+        file.content = file.content.upper()
+
+        # !callout[/file.write_file()/] Write to output directory
+        file.write_file()
+
+    # !callout[/input.write_directory/] Return output directory
+    return {"directory": input.write_directory}
+
+start_processor_with_fn(my_processor)
+```
+
+Create `requirements.txt`:
+
+```text requirements.txt -c
+cyanprintsdk>=1.0.0
+```
+
+</Tab>
+<Tab value="C#">
+
+Create `Program.cs`:
+
+```csharp Program.cs -c
+using sulfone_helium;
+using sulfone_helium.Domain.Core.FileSystem;
+using sulfone_helium.Domain.Processor;
+
+// !callout[/StartProcessor/] Entry point - starts the processor server on port 5551
+CyanEngine.StartProcessor(args, async (input, fileHelper) =>
+{
+    // !callout[/fileHelper.ResolveAll()/] Load all files into memory
+    var files = fileHelper.ResolveAll();
+
+    // Transform each file
+    foreach (var file in files)
+    {
+        // !callout[/file.Content/] Transform content (example: uppercase)
+        file.Content = file.Content.ToUpper();
+
+        // !callout[/file.WriteFile()/] Write to output directory
+        file.WriteFile();
+    }
+
+    // !callout[/input.WriteDirectory/] Return output directory
+    return new ProcessorOutput { Directory = input.WriteDirectory };
+});
+```
+
+</Tab>
+</Tabs>
+
 ### Create Dockerfile
+
+<Tabs items={['TypeScript', 'Python', 'C#']} persist groupId="runtime">
+<Tab value="TypeScript">
 
 Create `Dockerfile`:
 
-```dockerfile
+```dockerfile Dockerfile -c
 FROM oven/bun:1.1.31
 
 WORKDIR /app
@@ -79,18 +185,95 @@ COPY . .
 CMD ["bun", "run", "index.ts"]
 ```
 
+</Tab>
+<Tab value="Python">
+
+Create `Dockerfile`:
+
+```dockerfile Dockerfile -c
+FROM python:3.11-slim
+
+WORKDIR /app
+
+# Mark as CyanPrint processor
+LABEL cyanprint.dev=true
+
+# Install dependencies
+COPY requirements.txt .
+RUN pip install --no-cache-dir -r requirements.txt
+
+# Copy processor code
+COPY . .
+
+# Run processor
+CMD ["python", "index.py"]
+```
+
+</Tab>
+<Tab value="C#">
+
+Create `Dockerfile`:
+
+```dockerfile Dockerfile -c
+FROM mcr.microsoft.com/dotnet/sdk:8.0
+
+WORKDIR /app
+
+# Mark as CyanPrint processor
+LABEL cyanprint.dev=true
+
+# Install dependencies
+COPY *.csproj .
+RUN dotnet restore
+
+# Copy processor code
+COPY . .
+
+# Run processor
+CMD ["dotnet", "run"]
+```
+
+</Tab>
+</Tabs>
+
 </Steps>
 
 ## Understanding the Code
 
-### StartProcessorWithLambda
+### Entry Point
 
-Entry point for processor logic. Receives two arguments:
+<Tabs items={['TypeScript', 'Python', 'C#']} persist groupId="runtime">
+<Tab value="TypeScript">
+
+**StartProcessorWithLambda** receives two arguments:
 
 | Argument | Type | Purpose |
 |----------|------|---------|
 | `input` | `ProcessorInput` | Contains directories, globs, and config |
 | `fileHelper` | `CyanFileHelper` | File operations API |
+
+</Tab>
+<Tab value="Python">
+
+**start_processor_with_fn** receives two arguments:
+
+| Argument | Type | Purpose |
+|----------|------|---------|
+| `input` | `ProcessorInput` | Contains directories, globs, and config |
+| `fileHelper` | `CyanFileHelper` | File operations API |
+
+</Tab>
+<Tab value="C#">
+
+**StartProcessor** receives two arguments:
+
+| Argument | Type | Purpose |
+|----------|------|---------|
+| `input` | `CyanProcessorInput` | Contains directories, globs, and config |
+| `fileHelper` | `CyanFileHelper` | File operations API |
+
+</Tab>
+</Tabs>
 
 ### CyanFileHelper
 
@@ -108,49 +291,187 @@ The file helper provides all file operations:
 
 Each file has:
 
-| Property | Type | Description |
-|----------|------|-------------|
-| `content` | `string` | File contents |
-| `relative` | `string` | Path relative to read directory |
+<TypeTable
+  type={{
+    content: {
+      type: 'string',
+      description: 'File contents',
+      required: true,
+    },
+    relative: {
+      type: 'string',
+      description: 'Path relative to read directory',
+      required: true,
+    },
+  }}
+/>
 
 | Method | Description |
 |--------|-------------|
 | `writeFile()` | Write file to output directory |
 
-## Build and Test
+## Test with Try Command
 
-### Build Docker Image
+### Build the Processor
 
-```bash
+```bash -c
 docker build -t my-processor:dev .
 ```
 
-### Test Locally
+### Create a Test Template
 
-Create a test template that uses your processor:
+Create a simple template that uses your processor:
 
-```ts
-// In template's index.ts
-return {
-  processors: [{
-    name: 'my-processor:dev',  // Your processor image
-    files: [{ root: 'templates', glob: '**/*', exclude: [], type: GlobType.Template }],
-    config: {}  // Optional config
-  }]
-};
+```bash -c
+mkdir -p ../test-template/templates
+echo "hello world" > ../test-template/templates/test.txt
+```
+
+<Tabs items={['TypeScript', 'Python', 'C#']} persist groupId="runtime">
+<Tab value="TypeScript">
+
+Create `../test-template/cyan/index.ts`:
+
+```ts ../test-template/cyan/index.ts -c
+import { StartTemplateWithLambda, GlobType } from '@atomicloud/cyan-sdk';
+
+StartTemplateWithLambda(async (i, d) => {
+  return {
+    processors: [{
+      name: 'my-processor:dev',
+      files: [{ root: 'templates', glob: '**/*', exclude: [], type: GlobType.Template }],
+      config: {}
+    }]
+  };
+});
+```
+
+</Tab>
+<Tab value="Python">
+
+Create `../test-template/cyan/index.py`:
+
+```python ../test-template/cyan/index.py -c
+from cyanprintsdk import start_template_with_fn, GlobType
+from cyanprintsdk.domain.core.cyan import Cyan, CyanProcessor, CyanGlob
+
+async def my_template(i, d):
+    return Cyan(
+        processors=[
+            CyanProcessor(
+                name="my-processor:dev",
+                files=[
+                    CyanGlob(
+                        root="templates",
+                        glob="**/*",
+                        exclude=[],
+                        type=GlobType.Template
+                    )
+                ],
+                config={}
+            )
+        ]
+    )
+
+start_template_with_fn(my_template)
+```
+
+</Tab>
+<Tab value="C#">
+
+Create `../test-template/cyan/Program.cs`:
+
+```csharp ../test-template/cyan/Program.cs -c
+using sulfone_helium;
+using sulfone_helium.Domain.Core;
+
+CyanEngine.StartTemplate(args, async (i, d) =>
+{
+    return new Cyan
+    {
+        Processors =
+        [
+            new CyanProcessor
+            {
+                Name = "my-processor:dev",
+                Files =
+                [
+                    new CyanGlob
+                    {
+                        Root = "templates",
+                        Glob = "**/*",
+                        Exclude = [],
+                        Type = GlobType.Template
+                    }
+                ],
+                Config = new { }
+            }
+        ]
+    };
+});
+```
+
+</Tab>
+</Tabs>
+
+### Run Try Command
+
+```bash -c
+cd ../test-template
+cyanprint try template . ./output
+```
+
+### Check Output
+
+```bash -c
+cat ../test-template/output/test.txt
+# Output: HELLO WORLD
 ```
 
 <Callout type="info">
-During development, use local Docker images with the `:dev` tag. Push to a registry when ready to share.
+The processor transformed `hello world` to `HELLO WORLD` during the try command execution.
 </Callout>
+
+## Project Structure
+
+<Tabs items={['TypeScript', 'Python', 'C#']} persist groupId="runtime">
+<Tab value="TypeScript">
+
+<Files>
+  <File name="index.ts" />
+  <File name="package.json" />
+  <File name="Dockerfile" />
+</Files>
+
+</Tab>
+<Tab value="Python">
+
+<Files>
+  <File name="index.py" />
+  <File name="requirements.txt" />
+  <File name="Dockerfile" />
+</Files>
+
+</Tab>
+<Tab value="C#">
+
+<Files>
+  <File name="Program.cs" />
+  <File name="my-processor.csproj" />
+  <File name="Dockerfile" />
+</Files>
+
+</Tab>
+</Tabs>
 
 ## What You Learned
 
 - How to create a processor project
-- Using `StartProcessorWithLambda` as the entry point
+- Using the processor entry point (port 5551)
 - Loading files with `resolveAll()`
 - Transforming file content
 - Writing files with `writeFile()`
+- Testing processors with the `try` command
 
 ## Next Steps
 

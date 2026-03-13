@@ -1,116 +1,437 @@
 ---
 title: Tutorial 1 - Blank Template
-description: Create your first CyanPrint template using the meta template
+description: Create your first CyanPrint template from scratch
 ---
 
 import { Steps } from 'fumadocs-ui/components/steps';
 import { Callout } from 'fumadocs-ui/components/callout';
+import { Files, File, Folder } from 'fumadocs-ui/components/files';
+import { Tabs, Tab } from 'fumadocs-ui/components/tabs';
 
 # Tutorial 1: Blank Template
 
-Create a template using the meta template. This is the starting point for all template development.
+Create a template from scratch and test it immediately using the `try` command. This is the starting point for all template development.
 
 ## Prerequisites
 
 - Docker installed and running
 - CyanPrint CLI installed
-- Node.js 18+ (for local development)
-- Bun (runtime used in Docker containers)
+- Runtime requirements (choose one):
+  - **TypeScript**: Node.js 18+ and Bun
+  - **Python**: Python 3.11+ and pip
+  - **C#**: .NET 8 SDK
 
 ## Create Project
 
 <Steps>
 
-### Generate from Meta Template
+### Create Directory Structure
 
 ```bash -c
-cyanprint create cyan/new my-first-template
-```
-
-This scaffolds a complete template project with all required files.
-
-### Navigate to Project
-
-```bash -c
+mkdir my-first-template
 cd my-first-template
+mkdir -p cyan templates
 ```
 
-### Explore the Structure
+### Create cyan.yaml
 
-The generated project includes:
+Create `cyan.yaml` with template metadata:
 
+```yaml cyan.yaml -c
+username: myuser
+name: my-first-template
+description: My first CyanPrint template
+project: https://github.com/myuser/my-first-template
+source: https://github.com/myuser/my-first-template
+email: myuser@example.com
+tags: []
+readme: README.md
+
+build:
+  registry: docker.io
+  images:
+    blob:
+      image: myuser/my-first-template-blob
+      dockerfile: cyan/Dockerfile
+      context: .
+    template:
+      image: myuser/my-first-template
+      dockerfile: cyan/template.Dockerfile
+      context: .
 ```
-my-first-template/
-├── cyan/
-│   ├── index.ts          # Template logic
-│   ├── package.json      # SDK dependencies
-│   ├── template.Dockerfile
-│   └── blob.Dockerfile
-├── cyan.yaml             # Template metadata
-└── package.json
+
+### Create Template Files
+
+Create your template content:
+
+```bash -c
+echo "# My Project" > templates/README.md
+echo "node_modules/" > templates/.gitignore
 ```
 
 </Steps>
 
-## Template Logic
+## Create Template Logic
 
-The `cyan/index.ts` file contains your template's logic:
+<Tabs items={['TypeScript', 'Python', 'C#']} persist groupId="runtime">
+<Tab value="TypeScript">
+
+Create `cyan/index.ts`:
 
 ```ts cyan/index.ts -c
 import { StartTemplateWithLambda, GlobType } from '@atomicloud/cyan-sdk';
 
 StartTemplateWithLambda(async (i, d) => {
+  // !callout[/StartTemplateWithLambda/] Entry point - starts the template server on port 5550
+  const name = await i.text('What is your project name?', 'myuser/my-first-template/name');
+
   return {
     processors: [{
       name: 'cyan/default',
       files: [{ root: 'templates', glob: '**/*', exclude: [], type: GlobType.Copy }],
-      config: { vars: {} }
+      config: { vars: { name } }
     }]
   };
 });
 ```
 
-### Understanding the Code
+Create `cyan/package.json`:
 
-| Part | Description |
-|------|-------------|
-| `StartTemplateWithLambda` | Entry point for template logic |
-| `i` | IInquirer - ask questions |
-| `d` | IDeterminism - access deterministic values via `get(key, origin)` |
-| `processors` | List of file processors to run |
-| `GlobType.Copy` | Copy files without processing |
-
-## Template Files
-
-Create your template files in `cyan/templates` (the directory name is configurable via the `root` property in your processor config):
-
-```bash -c
-mkdir -p cyan/templates
-echo "# My Project" > cyan/templates/README.md
+```json cyan/package.json -c
+{
+  "name": "my-first-template",
+  "version": "1.0.0",
+  "type": "module",
+  "dependencies": {
+    "@atomicloud/cyan-sdk": "latest"
+  }
+}
 ```
 
-This template copies `templates/README.md` to the output without any variable substitution.
+Create `cyan/Dockerfile`:
+
+```dockerfile cyan/Dockerfile -c
+FROM oven/bun:1.1.31
+
+WORKDIR /app
+
+LABEL cyanprint.dev=true
+
+COPY package.json bun.lockb* ./
+RUN bun install
+
+COPY . .
+
+CMD ["bun", "run", "index.ts"]
+```
+
+Create `cyan/template.Dockerfile`:
+
+```dockerfile cyan/template.Dockerfile -c
+FROM oven/bun:1.1.31
+
+WORKDIR /app
+
+LABEL cyanprint.dev=true
+
+COPY package.json bun.lockb* ./
+RUN bun install
+
+COPY . .
+
+CMD ["bun", "run", "index.ts"]
+```
+
+Install dependencies:
+
+```bash -c
+cd cyan && bun install && cd ..
+```
+
+</Tab>
+<Tab value="Python">
+
+Create `cyan/index.py`:
+
+```python cyan/index.py -c
+from cyanprintsdk import start_template_with_fn, GlobType
+from cyanprintsdk.domain.core.cyan import Cyan, CyanProcessor, CyanGlob
+
+async def my_template(i, d):
+    # !callout[/start_template_with_fn/] Entry point - starts the template server on port 5550
+    name = await i.text("What is your project name?", "myuser/my-first-template/name")
+
+    return Cyan(
+        processors=[
+            CyanProcessor(
+                name="cyan/default",
+                files=[
+                    CyanGlob(
+                        root="templates",
+                        glob="**/*",
+                        exclude=[],
+                        type=GlobType.Copy
+                    )
+                ],
+                config={"vars": {"name": name}}
+            )
+        ]
+    )
+
+start_template_with_fn(my_template)
+```
+
+Create `cyan/requirements.txt`:
+
+```text cyan/requirements.txt -c
+cyanprintsdk>=1.0.0
+```
+
+Create `cyan/Dockerfile`:
+
+```dockerfile cyan/Dockerfile -c
+FROM python:3.11-slim
+
+WORKDIR /app
+
+LABEL cyanprint.dev=true
+
+COPY requirements.txt .
+RUN pip install --no-cache-dir -r requirements.txt
+
+COPY . .
+
+CMD ["python", "index.py"]
+```
+
+Create `cyan/template.Dockerfile`:
+
+```dockerfile cyan/template.Dockerfile -c
+FROM python:3.11-slim
+
+WORKDIR /app
+
+LABEL cyanprint.dev=true
+
+COPY requirements.txt .
+RUN pip install --no-cache-dir -r requirements.txt
+
+COPY . .
+
+CMD ["python", "index.py"]
+```
+
+Install dependencies:
+
+```bash -c
+cd cyan && pip install -r requirements.txt && cd ..
+```
+
+</Tab>
+<Tab value="C#">
+
+Create `cyan/Program.cs`:
+
+```csharp cyan/Program.cs -c
+using sulfone_helium;
+using sulfone_helium.Domain.Core;
+
+CyanEngine.StartTemplate(args, async (i, d) =>
+{
+    // !callout[/StartTemplate/] Entry point - starts the template server on port 5550
+    var name = await i.Text("What is your project name?", "myuser/my-first-template/name");
+
+    return new Cyan
+    {
+        Processors =
+        [
+            new CyanProcessor
+            {
+                Name = "cyan/default",
+                Files =
+                [
+                    new CyanGlob
+                    {
+                        Root = "templates",
+                        Glob = "**/*",
+                        Exclude = [],
+                        Type = GlobType.Copy
+                    }
+                ],
+                Config = new { vars = new { name } }
+            }
+        ]
+    };
+});
+```
+
+Create `cyan/my-first-template.csproj`:
+
+```xml cyan/my-first-template.csproj -c
+<Project Sdk="Microsoft.NET.Sdk">
+  <PropertyGroup>
+    <OutputType>Exe</OutputType>
+    <TargetFramework>net8.0</TargetFramework>
+    <ImplicitUsings>enable</ImplicitUsings>
+    <Nullable>enable</Nullable>
+  </PropertyGroup>
+  <ItemGroup>
+    <PackageReference Include="AtomiCloud.CyanPrint" Version="*" />
+  </ItemGroup>
+</Project>
+```
+
+Create `cyan/Dockerfile`:
+
+```dockerfile cyan/Dockerfile -c
+FROM mcr.microsoft.com/dotnet/sdk:8.0
+
+WORKDIR /app
+
+LABEL cyanprint.dev=true
+
+COPY *.csproj .
+RUN dotnet restore
+
+COPY . .
+
+CMD ["dotnet", "run"]
+```
+
+Create `cyan/template.Dockerfile`:
+
+```dockerfile cyan/template.Dockerfile -c
+FROM mcr.microsoft.com/dotnet/sdk:8.0
+
+WORKDIR /app
+
+LABEL cyanprint.dev=true
+
+COPY *.csproj .
+RUN dotnet restore
+
+COPY . .
+
+CMD ["dotnet", "run"]
+```
+
+Install dependencies:
+
+```bash -c
+cd cyan && dotnet restore && cd ..
+```
+
+</Tab>
+</Tabs>
 
 ## Test Your Template
 
-Build and test locally:
+### Run the Try Command
 
-```bash -cnb
-# Build the template
-docker build -f cyan/template.Dockerfile -t my-first-template:dev .
+```bash -c
+cyanprint try template . ./test-output
+```
 
-# Run locally
-cyanprint create my-first-template:dev ../test-output
+This command will:
+1. Build the template Docker image automatically
+2. Start the coordinator daemon
+3. Prompt for your template questions
+4. Generate the project to `./test-output`
+
+### Check the Output
+
+```bash -c
+ls ./test-output
+cat ./test-output/README.md
 ```
 
 <Callout type="info">
-During development, use local Docker images. Push to registry only when ready to share.
+The try command automatically builds Docker images—you don't need to run `docker build` manually. This provides a fast development loop: write code, test, iterate.
 </Callout>
+
+## Project Structure
+
+Your final project structure:
+
+<Files>
+  <File name="cyan.yaml" />
+  <File name="README.md" />
+  <Folder name="cyan" defaultOpen>
+    <File name="index.ts" />
+    <File name="package.json" />
+    <File name="Dockerfile" />
+    <File name="template.Dockerfile" />
+  </Folder>
+  <Folder name="templates" defaultOpen>
+    <File name="README.md" />
+    <File name=".gitignore" />
+  </Folder>
+</Files>
+
+## Understanding the Code
+
+### Template Entry Point
+
+<Tabs items={['TypeScript', 'Python', 'C#']} persist groupId="runtime">
+<Tab value="TypeScript">
+
+| Part | Description |
+|------|-------------|
+| `StartTemplateWithLambda` | Entry point for template logic (port 5550) |
+| `i` | IInquirer - ask questions |
+| `d` | IDeterminism - access deterministic values |
+| `processors` | List of file processors to run |
+
+</Tab>
+<Tab value="Python">
+
+| Part | Description |
+|------|-------------|
+| `start_template_with_fn` | Entry point for template logic (port 5550) |
+| `i` | Inquirer - ask questions |
+| `d` | Determinism - access deterministic values |
+| `processors` | List of file processors to run |
+
+</Tab>
+<Tab value="C#">
+
+| Part | Description |
+|------|-------------|
+| `CyanEngine.StartTemplate` | Entry point for template logic (port 5550) |
+| `i` | IInquirer - ask questions |
+| `d` | IDeterminism - access deterministic values |
+| `Processors` | List of file processors to run |
+
+</Tab>
+</Tabs>
+
+### GlobType.Copy
+
+The `GlobType.Copy` copies files without any variable substitution—perfect for static files that don't need processing.
+
+## Development Workflow
+
+### Iterate Quickly
+
+```bash -c
+# Make changes to your template...
+
+# Test again
+rm -rf ./test-output
+cyanprint try template . ./test-output
+```
+
+### Keep Containers for Debugging
+
+```bash -c
+cyanprint try template . ./test-output --keep-containers
+```
 
 ## What You Learned
 
-- How to create a template project using the meta template
+- How to create a template project from scratch
 - The basic structure of a CyanPrint template
+- Using `try` command for fast development
 - How `GlobType.Copy` copies files without processing
 
 ## Next Steps

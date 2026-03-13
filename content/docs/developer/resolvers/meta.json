@@ -1,0 +1,6 @@
+{
+  "title": "Resolvers",
+  "description": "Resolve file conflicts from layered templates",
+  "icon": "GitMerge",
+  "pages": ["index", "tutorials", "how-to", "reference", "explanation"]
+}

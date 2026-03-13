@@ -1,0 +1,634 @@
+---
+title: Merge JSON Files
+description: Deep merge JSON files from layered templates
+---
+
+import { Tabs, Tab } from 'fumadocs-ui/components/tabs';
+import { Callout } from 'fumadocs-ui/components/callout';
+import { Cards, Card } from 'fumadocs-ui/components/card';
+
+# Merge JSON Files
+
+Handle JSON file conflicts by deep merging content from multiple template layers.
+
+## Understanding JSON Merging
+
+JSON files often need to be merged intelligently when templates are layered:
+
+- **Objects**: Deep merge by combining keys
+- **Arrays**: Strategies vary (concat, replace, or distinct)
+- **Primitives**: Later values override earlier ones
+
+## Merge Strategies
+
+### Deep Merge
+
+Recursively merge objects, keeping nested structure.
+
+<Tabs items={['TypeScript', 'Python', 'C#']}>
+  <Tab value="TypeScript">
+
+```ts -c
+import { ResolverOutput, StartResolverWithLambda } from '@atomicloud/cyan-sdk';
+
+function deepMerge(target: any, source: any): any {
+  if (typeof target !== 'object' || typeof source !== 'object') {
+    return source;
+  }
+
+  const result = { ...target };
+  for (const key of Object.keys(source)) {
+    if (key in result) {
+      result[key] = deepMerge(result[key], source[key]);
+    } else {
+      result[key] = source[key];
+    }
+  }
+  return result;
+}
+
+StartResolverWithLambda(async (input): Promise<ResolverOutput> => {
+  const sorted = [...input.files].sort(
+    (a, b) => a.origin.layer - b.origin.layer
+  );
+
+  let merged = {};
+  for (const file of sorted) {
+    const content = JSON.parse(file.content);
+    merged = deepMerge(merged, content);
+  }
+
+  return {
+    path: input.files[0].path,
+    content: JSON.stringify(merged, null, 2)
+  };
+});
+```
+
+  </Tab>
+  <Tab value="Python">
+
+```python -c
+import json
+from typing import Any
+from cyanprintsdk.domain.resolver.input import ResolverInput
+from cyanprintsdk.domain.resolver.output import ResolverOutput
+from cyanprintsdk.main import start_resolver_with_fn
+
+
+def deep_merge(target: dict, source: dict) -> dict:
+    result = target.copy()
+    for key, value in source.items():
+        if key in result and isinstance(result[key], dict) and isinstance(value, dict):
+            result[key] = deep_merge(result[key], value)
+        else:
+            result[key] = value
+    return result
+
+
+async def resolver(input: ResolverInput) -> ResolverOutput:
+    sorted_files = sorted(input.files, key=lambda f: f.origin.layer)
+
+    merged = {}
+    for file in sorted_files:
+        content = json.loads(file.content)
+        merged = deep_merge(merged, content)
+
+    return ResolverOutput(
+        path=input.files[0].path,
+        content=json.dumps(merged, indent=2)
+    )
+
+
+if __name__ == "__main__":
+    start_resolver_with_fn(resolver)
+```
+
+  </Tab>
+  <Tab value="C#">
+
+```cs -c
+using System.Text.Json;
+using sulfone_helium;
+using sulfone_helium.Domain.Resolver;
+
+CyanEngine.StartResolver(
+    args,
+    async (ResolverInput input) =>
+    {
+        var sorted = input.Files.OrderBy(f => f.Origin.Layer).ToList();
+
+        var merged = new Dictionary<string, object>();
+        foreach (var file in sorted)
+        {
+            var content = JsonSerializer.Deserialize<Dictionary<string, object>>(file.Content)
+                ?? new Dictionary<string, object>();
+            DeepMerge(merged, content);
+        }
+
+        return new ResolverOutput(
+            input.Files.First().Path,
+            JsonSerializer.Serialize(merged, new JsonSerializerOptions { WriteIndented = true })
+        );
+    }
+);
+
+static void DeepMerge(Dictionary<string, object> target, Dictionary<string, object> source)
+{
+    foreach (var kvp in source)
+    {
+        if (target.TryGetValue(kvp.Key, out var existing) &&
+            existing is Dictionary<string, object> existingDict &&
+            kvp.Value is Dictionary<string, object> sourceDict)
+        {
+            DeepMerge(existingDict, sourceDict);
+        }
+        else
+        {
+            target[kvp.Key] = kvp.Value;
+        }
+    }
+}
+```
+
+  </Tab>
+</Tabs>
+
+### Array Concat
+
+Concatenate arrays from all layers.
+
+<Tabs items={['TypeScript', 'Python', 'C#']}>
+  <Tab value="TypeScript">
+
+```ts -c
+import { ResolverOutput, StartResolverWithLambda } from '@atomicloud/cyan-sdk';
+import { createMerger } from 'smob';
+
+StartResolverWithLambda(async (input): Promise<ResolverOutput> => {
+  const sorted = [...input.files].sort(
+    (a, b) => a.origin.layer - b.origin.layer
+  );
+
+  // Use smob for array concatenation
+  const merger = createMerger({ array: true, arrayDistinct: false });
+  const merged = merger(...sorted.map(f => JSON.parse(f.content)));
+
+  return {
+    path: input.files[0].path,
+    content: JSON.stringify(merged, null, 2)
+  };
+});
+```
+
+  </Tab>
+  <Tab value="Python">
+
+```python -c
+import json
+from cyanprintsdk.domain.resolver.input import ResolverInput
+from cyanprintsdk.domain.resolver.output import ResolverOutput
+from cyanprintsdk.main import start_resolver_with_fn
+
+
+def concat_arrays(target: dict, source: dict) -> dict:
+    result = target.copy()
+    for key, value in source.items():
+        if key in result:
+            if isinstance(result[key], list) and isinstance(value, list):
+                result[key] = result[key] + value
+            elif isinstance(result[key], dict) and isinstance(value, dict):
+                result[key] = concat_arrays(result[key], value)
+            else:
+                result[key] = value
+        else:
+            result[key] = value
+    return result
+
+
+async def resolver(input: ResolverInput) -> ResolverOutput:
+    sorted_files = sorted(input.files, key=lambda f: f.origin.layer)
+
+    merged = {}
+    for file in sorted_files:
+        content = json.loads(file.content)
+        merged = concat_arrays(merged, content)
+
+    return ResolverOutput(
+        path=input.files[0].path,
+        content=json.dumps(merged, indent=2)
+    )
+
+
+if __name__ == "__main__":
+    start_resolver_with_fn(resolver)
+```
+
+  </Tab>
+  <Tab value="C#">
+
+```cs -c
+using System.Text.Json;
+using sulfone_helium;
+using sulfone_helium.Domain.Resolver;
+
+CyanEngine.StartResolver(
+    args,
+    async (ResolverInput input) =>
+    {
+        var sorted = input.Files.OrderBy(f => f.Origin.Layer).ToList();
+
+        var merged = new Dictionary<string, object>();
+        foreach (var file in sorted)
+        {
+            var content = JsonSerializer.Deserialize<Dictionary<string, object>>(file.Content)
+                ?? new Dictionary<string, object>();
+            ConcatArrays(merged, content);
+        }
+
+        return new ResolverOutput(
+            input.Files.First().Path,
+            JsonSerializer.Serialize(merged, new JsonSerializerOptions { WriteIndented = true })
+        );
+    }
+);
+
+static void ConcatArrays(Dictionary<string, object> target, Dictionary<string, object> source)
+{
+    foreach (var kvp in source)
+    {
+        if (target.TryGetValue(kvp.Key, out var existing))
+        {
+            if (existing is JsonElement existingEl && existingEl.ValueKind == JsonValueKind.Array &&
+                kvp.Value is JsonElement sourceEl && sourceEl.ValueKind == JsonValueKind.Array)
+            {
+                var combined = existingEl.EnumerateArray().Concat(sourceEl.EnumerateArray()).ToList();
+                target[kvp.Key] = combined;
+            }
+            else if (existing is Dictionary<string, object> existingDict &&
+                     kvp.Value is Dictionary<string, object> sourceDict)
+            {
+                ConcatArrays(existingDict, sourceDict);
+            }
+            else
+            {
+                target[kvp.Key] = kvp.Value;
+            }
+        }
+        else
+        {
+            target[kvp.Key] = kvp.Value;
+        }
+    }
+}
+```
+
+  </Tab>
+</Tabs>
+
+### Distinct Arrays
+
+Merge arrays but remove duplicates.
+
+<Tabs items={['TypeScript', 'Python', 'C#']}>
+  <Tab value="TypeScript">
+
+```ts -c
+import { ResolverOutput, StartResolverWithLambda } from '@atomicloud/cyan-sdk';
+import { createMerger } from 'smob';
+
+StartResolverWithLambda(async (input): Promise<ResolverOutput> => {
+  const sorted = [...input.files].sort(
+    (a, b) => a.origin.layer - b.origin.layer
+  );
+
+  // Use smob for distinct array concatenation
+  const merger = createMerger({ array: true, arrayDistinct: true });
+  const merged = merger(...sorted.map(f => JSON.parse(f.content)));
+
+  return {
+    path: input.files[0].path,
+    content: JSON.stringify(merged, null, 2)
+  };
+});
+```
+
+  </Tab>
+  <Tab value="Python">
+
+```python -c
+import json
+from cyanprintsdk.domain.resolver.input import ResolverInput
+from cyanprintsdk.domain.resolver.output import ResolverOutput
+from cyanprintsdk.main import start_resolver_with_fn
+
+
+def distinct_arrays(target: dict, source: dict) -> dict:
+    result = target.copy()
+    for key, value in source.items():
+        if key in result:
+            if isinstance(result[key], list) and isinstance(value, list):
+                combined = result[key] + value
+                # Remove duplicates while preserving order
+                seen = set()
+                unique = []
+                for item in combined:
+                    item_key = json.dumps(item, sort_keys=True) if isinstance(item, (dict, list)) else str(item)
+                    if item_key not in seen:
+                        seen.add(item_key)
+                        unique.append(item)
+                result[key] = unique
+            elif isinstance(result[key], dict) and isinstance(value, dict):
+                result[key] = distinct_arrays(result[key], value)
+            else:
+                result[key] = value
+        else:
+            result[key] = value
+    return result
+
+
+async def resolver(input: ResolverInput) -> ResolverOutput:
+    sorted_files = sorted(input.files, key=lambda f: f.origin.layer)
+
+    merged = {}
+    for file in sorted_files:
+        content = json.loads(file.content)
+        merged = distinct_arrays(merged, content)
+
+    return ResolverOutput(
+        path=input.files[0].path,
+        content=json.dumps(merged, indent=2)
+    )
+
+
+if __name__ == "__main__":
+    start_resolver_with_fn(resolver)
+```
+
+  </Tab>
+  <Tab value="C#">
+
+```cs -c
+using System.Text.Json;
+using sulfone_helium;
+using sulfone_helium.Domain.Resolver;
+
+CyanEngine.StartResolver(
+    args,
+    async (ResolverInput input) =>
+    {
+        var sorted = input.Files.OrderBy(f => f.Origin.Layer).ToList();
+
+        var merged = new Dictionary<string, object>();
+        foreach (var file in sorted)
+        {
+            var content = JsonSerializer.Deserialize<Dictionary<string, object>>(file.Content)
+                ?? new Dictionary<string, object>();
+            DistinctArrays(merged, content);
+        }
+
+        return new ResolverOutput(
+            input.Files.First().Path,
+            JsonSerializer.Serialize(merged, new JsonSerializerOptions { WriteIndented = true })
+        );
+    }
+);
+
+static void DistinctArrays(Dictionary<string, object> target, Dictionary<string, object> source)
+{
+    foreach (var kvp in source)
+    {
+        if (target.TryGetValue(kvp.Key, out var existing))
+        {
+            if (existing is JsonElement existingEl && existingEl.ValueKind == JsonValueKind.Array &&
+                kvp.Value is JsonElement sourceEl && sourceEl.ValueKind == JsonValueKind.Array)
+            {
+                var combined = existingEl.EnumerateArray()
+                    .Concat(sourceEl.EnumerateArray())
+                    .Distinct()
+                    .ToList();
+                target[kvp.Key] = combined;
+            }
+            else if (existing is Dictionary<string, object> existingDict &&
+                     kvp.Value is Dictionary<string, object> sourceDict)
+            {
+                DistinctArrays(existingDict, sourceDict);
+            }
+            else
+            {
+                target[kvp.Key] = kvp.Value;
+            }
+        }
+        else
+        {
+            target[kvp.Key] = kvp.Value;
+        }
+    }
+}
+```
+
+  </Tab>
+</Tabs>
+
+## Using Config
+
+Configure merge strategy via template config.
+
+<Tabs items={['TypeScript', 'Python', 'C#']}>
+  <Tab value="TypeScript">
+
+```ts -c
+import { ResolverOutput, StartResolverWithLambda } from '@atomicloud/cyan-sdk';
+import { createMerger } from 'smob';
+
+StartResolverWithLambda(async (input): Promise<ResolverOutput> => {
+  const config = input.config as {
+    arrayStrategy: 'concat' | 'replace' | 'distinct';
+  };
+
+  // Validate config
+  const validStrategies = ['concat', 'replace', 'distinct'];
+  if (!validStrategies.includes(config.arrayStrategy)) {
+    throw new Error(`arrayStrategy must be one of: ${validStrategies.join(', ')}`);
+  }
+
+  // Configure merger based on strategy
+  const mergerConfig = {
+    concat: { array: true, arrayDistinct: false },
+    replace: { array: false, arrayDistinct: false },
+    distinct: { array: true, arrayDistinct: true }
+  }[config.arrayStrategy];
+
+  const merger = createMerger(mergerConfig);
+  const sorted = [...input.files].sort(
+    (a, b) => a.origin.layer - b.origin.layer
+  );
+  const merged = merger(...sorted.map(f => JSON.parse(f.content)));
+
+  return {
+    path: input.files[0].path,
+    content: JSON.stringify(merged, null, 2)
+  };
+});
+```
+
+  </Tab>
+  <Tab value="Python">
+
+```python -c
+import json
+from typing import Any, Dict
+from cyanprintsdk.domain.resolver.input import ResolverInput
+from cyanprintsdk.domain.resolver.output import ResolverOutput
+from cyanprintsdk.main import start_resolver_with_fn
+
+
+def merge_with_strategy(target: dict, source: dict, strategy: str) -> dict:
+    result = target.copy()
+    for key, value in source.items():
+        if key in result:
+            if isinstance(result[key], list) and isinstance(value, list):
+                if strategy == 'concat':
+                    result[key] = result[key] + value
+                elif strategy == 'distinct':
+                    combined = result[key] + value
+                    seen = set()
+                    unique = []
+                    for item in combined:
+                        item_key = json.dumps(item, sort_keys=True) if isinstance(item, (dict, list)) else str(item)
+                        if item_key not in seen:
+                            seen.add(item_key)
+                            unique.append(item)
+                    result[key] = unique
+                # 'replace' - do nothing, keep existing
+            elif isinstance(result[key], dict) and isinstance(value, dict):
+                result[key] = merge_with_strategy(result[key], value, strategy)
+            else:
+                result[key] = value
+        else:
+            result[key] = value
+    return result
+
+
+async def resolver(input: ResolverInput) -> ResolverOutput:
+    config = input.config
+    strategy = config.get('arrayStrategy', 'replace')
+
+    if strategy not in ['concat', 'replace', 'distinct']:
+        raise ValueError(f"arrayStrategy must be one of: concat, replace, distinct")
+
+    sorted_files = sorted(input.files, key=lambda f: f.origin.layer)
+
+    merged = {}
+    for file in sorted_files:
+        content = json.loads(file.content)
+        merged = merge_with_strategy(merged, content, strategy)
+
+    return ResolverOutput(
+        path=input.files[0].path,
+        content=json.dumps(merged, indent=2)
+    )
+
+
+if __name__ == "__main__":
+    start_resolver_with_fn(resolver)
+```
+
+  </Tab>
+  <Tab value="C#">
+
+```cs -c
+using System.Text.Json;
+using sulfone_helium;
+using sulfone_helium.Domain.Resolver;
+
+CyanEngine.StartResolver(
+    args,
+    async (ResolverInput input) =>
+    {
+        var strategy = input.Config.TryGetValue("arrayStrategy", out var stratObj)
+            ? stratObj?.ToString() ?? "replace"
+            : "replace";
+
+        if (!new[] { "concat", "replace", "distinct" }.Contains(strategy))
+        {
+            throw new InvalidOperationException($"arrayStrategy must be one of: concat, replace, distinct");
+        }
+
+        var sorted = input.Files.OrderBy(f => f.Origin.Layer).ToList();
+        var merged = new Dictionary<string, object>();
+
+        foreach (var file in sorted)
+        {
+            var content = JsonSerializer.Deserialize<Dictionary<string, object>>(file.Content)
+                ?? new Dictionary<string, object>();
+            MergeWithStrategy(merged, content, strategy);
+        }
+
+        return new ResolverOutput(
+            input.Files.First().Path,
+            JsonSerializer.Serialize(merged, new JsonSerializerOptions { WriteIndented = true })
+        );
+    }
+);
+
+static void MergeWithStrategy(Dictionary<string, object> target, Dictionary<string, object> source, string strategy)
+{
+    foreach (var kvp in source)
+    {
+        if (target.TryGetValue(kvp.Key, out var existing))
+        {
+            if (existing is JsonElement existingEl && existingEl.ValueKind == JsonValueKind.Array &&
+                kvp.Value is JsonElement sourceEl && sourceEl.ValueKind == JsonValueKind.Array)
+            {
+                if (strategy == "concat")
+                {
+                    target[kvp.Key] = existingEl.EnumerateArray().Concat(sourceEl.EnumerateArray()).ToList();
+                }
+                else if (strategy == "distinct")
+                {
+                    target[kvp.Key] = existingEl.EnumerateArray()
+                        .Concat(sourceEl.EnumerateArray())
+                        .Distinct()
+                        .ToList();
+                }
+                // 'replace' - keep existing
+            }
+            else if (existing is Dictionary<string, object> existingDict &&
+                     kvp.Value is Dictionary<string, object> sourceDict)
+            {
+                MergeWithStrategy(existingDict, sourceDict, strategy);
+            }
+            else
+            {
+                target[kvp.Key] = kvp.Value;
+            }
+        }
+        else
+        {
+            target[kvp.Key] = kvp.Value;
+        }
+    }
+}
+```
+
+  </Tab>
+</Tabs>
+
+<Callout type="info">
+Configure the merge strategy in your template's `cyan.yaml` file. See [cyan.yaml Reference](/docs/developer/resolvers/reference/cyan-yaml) for details.
+</Callout>
+
+## Related
+
+<Cards>
+  <Card href="/docs/developer/resolvers/how-to/merge-text" title="Merge Text Files">
+    Handle text-based file conflicts
+  </Card>
+  <Card href="/docs/developer/resolvers/reference/sdk/input-output" title="Resolver Input/Output">
+    Full API reference
+  </Card>
+  <Card href="/docs/developer/resolvers/reference/cyan-yaml" title="cyan.yaml Format">
+    Configuration reference
+  </Card>
+</Cards>

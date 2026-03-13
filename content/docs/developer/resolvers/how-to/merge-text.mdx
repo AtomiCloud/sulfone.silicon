@@ -1,0 +1,657 @@
+---
+title: Merge Text Files
+description: Handle text file conflicts from layered templates
+---
+
+import { Tabs, Tab } from 'fumadocs-ui/components/tabs';
+import { Callout } from 'fumadocs-ui/components/callout';
+import { Cards, Card } from 'fumadocs-ui/components/card';
+
+# Merge Text Files
+
+Handle text-based file conflicts by combining content from multiple template layers.
+
+## Understanding Text Merging
+
+Text files (.gitignore, Dockerfile, scripts) often need to be merged when templates are layered:
+
+- **Line-based**: Add unique lines from each layer
+- **Section-based**: Merge by named sections
+- **Append**: Add content to end of file
+
+## Line-Based Merge
+
+Combine lines from all layers, removing duplicates.
+
+<Tabs items={['TypeScript', 'Python', 'C#']}>
+  <Tab value="TypeScript">
+
+```ts index.ts -c
+import { ResolverOutput, StartResolverWithLambda } from '@atomicloud/cyan-sdk';
+
+StartResolverWithLambda(async (input): Promise<ResolverOutput> => {
+  // Collect all lines from all files
+  const allLines: string[] = [];
+
+  // Sort by layer (lower layer = higher priority)
+  const sorted = [...input.files].sort(
+    (a, b) => a.origin.layer - b.origin.layer
+  );
+
+  for (const file of sorted) {
+    const lines = file.content.split('\n');
+    allLines.push(...lines);
+  }
+
+  // Remove duplicates while preserving order
+  const seen = new Set<string>();
+  const uniqueLines: string[] = [];
+  for (const line of allLines) {
+    const trimmed = line.trim();
+    // Skip empty lines and comments in dedup check
+    const key = trimmed === '' || trimmed.startsWith('#') ? line : trimmed;
+    if (!seen.has(key)) {
+      seen.add(key);
+      uniqueLines.push(line);
+    }
+  }
+
+  return {
+    path: input.files[0].path,
+    content: uniqueLines.join('\n')
+  };
+});
+```
+
+  </Tab>
+  <Tab value="Python">
+
+```python main.py -c
+from cyanprintsdk.domain.resolver.input import ResolverInput
+from cyanprintsdk.domain.resolver.output import ResolverOutput
+from cyanprintsdk.main import start_resolver_with_fn
+
+
+async def resolver(input: ResolverInput) -> ResolverOutput:
+    # Sort by layer (lower layer = higher priority)
+    sorted_files = sorted(input.files, key=lambda f: f.origin.layer)
+
+    # Collect all lines from all files
+    all_lines: list[str] = []
+    for file in sorted_files:
+        lines = file.content.split('\n')
+        all_lines.extend(lines)
+
+    # Remove duplicates while preserving order
+    seen = set()
+    unique_lines: list[str] = []
+    for line in all_lines:
+        trimmed = line.strip()
+        # Skip empty lines and comments in dedup check
+        key = line if (not trimmed or trimmed.startswith('#')) else trimmed
+        if key not in seen:
+            seen.add(key)
+            unique_lines.append(line)
+
+    return ResolverOutput(
+        path=input.files[0].path,
+        content='\n'.join(unique_lines)
+    )
+
+
+if __name__ == "__main__":
+    start_resolver_with_fn(resolver)
+```
+
+  </Tab>
+  <Tab value="C#">
+
+```cs Program.cs -c
+using sulfone_helium;
+using sulfone_helium.Domain.Resolver;
+
+CyanEngine.StartResolver(
+    args,
+    async (ResolverInput input) =>
+    {
+        // Sort by layer (lower layer = higher priority)
+        var sorted = input.Files.OrderBy(f => f.Origin.Layer).ToList();
+
+        // Collect all lines from all files
+        var allLines = new List<string>();
+        foreach (var file in sorted)
+        {
+            allLines.AddRange(file.Content.Split('\n'));
+        }
+
+        // Remove duplicates while preserving order
+        var seen = new HashSet<string>();
+        var uniqueLines = new List<string>();
+        foreach (var line in allLines)
+        {
+            var trimmed = line.Trim();
+            // Skip empty lines and comments in dedup check
+            var key = string.IsNullOrEmpty(trimmed) || trimmed.StartsWith("#")
+                ? line : trimmed;
+            if (seen.Add(key))
+            {
+                uniqueLines.Add(line);
+            }
+        }
+
+        return new ResolverOutput(
+            input.Files.First().Path,
+            string.Join("\n", uniqueLines)
+        );
+    }
+);
+```
+
+  </Tab>
+</Tabs>
+
+## Section-Based Merge
+
+Merge files by named sections using markers.
+
+<Tabs items={['TypeScript', 'Python', 'C#']}>
+  <Tab value="TypeScript">
+
+```ts index.ts -c
+import { ResolverOutput, StartResolverWithLambda } from '@atomicloud/cyan-sdk';
+
+interface SectionedFile {
+  [section: string]: string[];
+}
+
+function parseSections(content: string): SectionedFile {
+  const sections: SectionedFile = { '_header_': [] };
+  let currentSection = '_header_';
+
+  for (const line of content.split('\n')) {
+    const match = line.match(/^##\s*([\w-]+)\s*##/);
+    if (match) {
+      currentSection = match[1];
+      sections[currentSection] = [];
+    } else {
+      if (!sections[currentSection]) {
+        sections[currentSection] = [];
+      }
+      sections[currentSection].push(line);
+    }
+  }
+
+  return sections;
+}
+
+function mergeSections(target: SectionedFile, source: SectionedFile): SectionedFile {
+  const result = { ...target };
+
+  for (const [section, lines] of Object.entries(source)) {
+    if (result[section]) {
+      // Merge lines, removing duplicates
+      const combined = [...result[section], ...lines];
+      const seen = new Set<string>();
+      result[section] = combined.filter(line => {
+        const key = line.trim();
+        if (seen.has(key)) return false;
+        seen.add(key);
+        return true;
+      });
+    } else {
+      result[section] = [...lines];
+    }
+  }
+
+  return result;
+}
+
+StartResolverWithLambda(async (input): Promise<ResolverOutput> => {
+  const sorted = [...input.files].sort(
+    (a, b) => a.origin.layer - b.origin.layer
+  );
+
+  let merged: SectionedFile = {};
+
+  for (const file of sorted) {
+    const sections = parseSections(file.content);
+    merged = mergeSections(merged, sections);
+  }
+
+  // Reconstruct file content
+  const output: string[] = [];
+
+  // Add header first
+  if (merged['_header_']?.length) {
+    output.push(...merged['_header_']);
+    delete merged['_header_'];
+  }
+
+  // Add other sections
+  for (const [section, lines] of Object.entries(merged)) {
+    output.push(`## ${section} ##`);
+    output.push(...lines);
+  }
+
+  return {
+    path: input.files[0].path,
+    content: output.join('\n')
+  };
+});
+```
+
+  </Tab>
+  <Tab value="Python">
+
+```python main.py -c
+from typing import Dict, List
+from cyanprintsdk.domain.resolver.input import ResolverInput
+from cyanprintsdk.domain.resolver.output import ResolverOutput
+from cyanprintsdk.main import start_resolver_with_fn
+
+
+def parse_sections(content: str) -> Dict[str, List[str]]:
+    sections: Dict[str, List[str]] = {"_header_": []}
+    current_section = "_header_"
+
+    for line in content.split('\n'):
+        import re
+        match = re.match(r'^##\s*([\w-]+)\s*##', line)
+        if match:
+            current_section = match.group(1)
+            sections[current_section] = []
+        else:
+            if current_section not in sections:
+                sections[current_section] = []
+            sections[current_section].append(line)
+
+    return sections
+
+
+def merge_sections(target: Dict[str, List[str]], source: Dict[str, List[str]]) -> Dict[str, List[str]]:
+    result = dict(target)
+
+    for section, lines in source.items():
+        if section in result:
+            # Merge lines, removing duplicates
+            combined = result[section] + lines
+            seen = set()
+            result[section] = [line for line in combined
+                               if not (line.strip() in seen or seen.add(line.strip()))]  # type: ignore
+        else:
+            result[section] = list(lines)
+
+    return result
+
+
+async def resolver(input: ResolverInput) -> ResolverOutput:
+    sorted_files = sorted(input.files, key=lambda f: f.origin.layer)
+
+    merged: Dict[str, List[str]] = {}
+    for file in sorted_files:
+        sections = parse_sections(file.content)
+        merged = merge_sections(merged, sections)
+
+    # Reconstruct file content
+    output: List[str] = []
+
+    # Add header first
+    if merged.get("_header_"):
+        output.extend(merged["_header_"])
+        del merged["_header_"]
+
+    # Add other sections
+    for section, lines in merged.items():
+        output.append(f"## {section} ##")
+        output.extend(lines)
+
+    return ResolverOutput(
+        path=input.files[0].path,
+        content='\n'.join(output)
+    )
+
+
+if __name__ == "__main__":
+    start_resolver_with_fn(resolver)
+```
+
+  </Tab>
+  <Tab value="C#">
+
+```cs Program.cs -c
+using System.Text.RegularExpressions;
+using sulfone_helium;
+using sulfone_helium.Domain.Resolver;
+
+public record SectionedFile(Dictionary<string, List<string>> Sections);
+
+public class TextMerger
+{
+    public static Dictionary<string, List<string>> ParseSections(string content)
+    {
+        var sections = new Dictionary<string, List<string>> { ["_header_"] = new List<string>() };
+        var currentSection = "_header_";
+
+        foreach (var line in content.Split('\n'))
+        {
+            var match = Regex.Match(line, @"^##\s*([\w-]+)\s*##");
+            if (match.Success)
+            {
+                currentSection = match.Groups[1].Value;
+                sections[currentSection] = new List<string>();
+            }
+            else
+            {
+                if (!sections.ContainsKey(currentSection))
+                    sections[currentSection] = new List<string>();
+                sections[currentSection].Add(line);
+            }
+        }
+
+        return sections;
+    }
+
+    public static Dictionary<string, List<string>> MergeSections(
+        Dictionary<string, List<string>> target,
+        Dictionary<string, List<string>> source)
+    {
+        var result = new Dictionary<string, List<string>>(target);
+
+        foreach (var (section, lines) in source)
+        {
+            if (result.TryGetValue(section, out var existingLines))
+            {
+                var combined = existingLines.Concat(lines);
+                var seen = new HashSet<string>();
+                result[section] = combined.Where(line => seen.Add(line.Trim())).ToList();
+            }
+            else
+            {
+                result[section] = new List<string>(lines);
+            }
+        }
+
+        return result;
+    }
+}
+
+CyanEngine.StartResolver(
+    args,
+    async (ResolverInput input) =>
+    {
+        var sorted = input.Files.OrderBy(f => f.Origin.Layer).ToList();
+
+        var merged = new Dictionary<string, List<string>>();
+        foreach (var file in sorted)
+        {
+            var sections = TextMerger.ParseSections(file.Content);
+            merged = TextMerger.MergeSections(merged, sections);
+        }
+
+        // Reconstruct file content
+        var output = new List<string>();
+
+        // Add header first
+        if (merged.TryGetValue("_header_", out var headerLines))
+        {
+            output.AddRange(headerLines);
+            merged.Remove("_header_");
+        }
+
+        // Add other sections
+        foreach (var (section, lines) in merged)
+        {
+            output.Add($"## {section} ##");
+            output.AddRange(lines);
+        }
+
+        return new ResolverOutput(
+            input.Files.First().Path,
+            string.Join("\n", output)
+        );
+    }
+);
+```
+
+  </Tab>
+</Tabs>
+
+<Callout type="info">
+Section markers use the format `## section-name ##`. Lines before the first marker go into a special `_header_` section.
+</Callout>
+
+## Append Strategy
+
+Simply append content from each layer.
+
+<Tabs items={['TypeScript', 'Python', 'C#']}>
+  <Tab value="TypeScript">
+
+```ts index.ts -c
+import { ResolverOutput, StartResolverWithLambda } from '@atomicloud/cyan-sdk';
+
+StartResolverWithLambda(async (input): Promise<ResolverOutput> => {
+  const sorted = [...input.files].sort(
+    (a, b) => a.origin.layer - b.origin.layer
+  );
+
+  const parts: string[] = [];
+  for (const file of sorted) {
+    parts.push(file.content);
+  }
+
+  return {
+    path: input.files[0].path,
+    content: parts.join('\n\n# --- Layer Separator ---\n\n')
+  };
+});
+```
+
+  </Tab>
+  <Tab value="Python">
+
+```python main.py -c
+from cyanprintsdk.domain.resolver.input import ResolverInput
+from cyanprintsdk.domain.resolver.output import ResolverOutput
+from cyanprintsdk.main import start_resolver_with_fn
+
+
+async def resolver(input: ResolverInput) -> ResolverOutput:
+    sorted_files = sorted(input.files, key=lambda f: f.origin.layer)
+
+    parts = [file.content for file in sorted_files]
+
+    return ResolverOutput(
+        path=input.files[0].path,
+        content='\n\n# --- Layer Separator ---\n\n'.join(parts)
+    )
+
+
+if __name__ == "__main__":
+    start_resolver_with_fn(resolver)
+```
+
+  </Tab>
+  <Tab value="C#">
+
+```cs Program.cs -c
+using sulfone_helium;
+using sulfone_helium.Domain.Resolver;
+
+CyanEngine.StartResolver(
+    args,
+    async (ResolverInput input) =>
+    {
+        var sorted = input.Files.OrderBy(f => f.Origin.Layer).ToList();
+        var parts = sorted.Select(f => f.Content);
+
+        return new ResolverOutput(
+            input.Files.First().Path,
+            string.Join("\n\n# --- Layer Separator ---\n\n", parts)
+        );
+    }
+);
+```
+
+  </Tab>
+</Tabs>
+
+## Example: .gitignore Resolver
+
+A common use case is merging `.gitignore` files:
+
+<Tabs items={['TypeScript', 'Python', 'C#']}>
+  <Tab value="TypeScript">
+
+```ts index.ts -c
+import { ResolverOutput, StartResolverWithLambda } from '@atomicloud/cyan-sdk';
+
+StartResolverWithLambda(async (input): Promise<ResolverOutput> => {
+  // Collect all patterns
+  const patterns: string[] = [];
+
+  const sorted = [...input.files].sort(
+    (a, b) => a.origin.layer - b.origin.layer
+  );
+
+  for (const file of sorted) {
+    const lines = file.content.split('\n');
+    for (const line of lines) {
+      const trimmed = line.trim();
+      // Skip empty lines and comments
+      if (trimmed && !trimmed.startsWith('#')) {
+        patterns.push(trimmed);
+      }
+    }
+  }
+
+  // Deduplicate while preserving order
+  const seen = new Set<string>();
+  const uniquePatterns: string[] = [];
+  for (const pattern of patterns) {
+    if (!seen.has(pattern)) {
+      seen.add(pattern);
+      uniquePatterns.push(pattern);
+    }
+  }
+
+  // Group by category (optional enhancement)
+  const output = `# Auto-generated .gitignore\n\n${uniquePatterns.join('\n')}\n`;
+
+  return {
+    path: input.files[0].path,
+    content: output
+  };
+});
+```
+
+  </Tab>
+  <Tab value="Python">
+
+```python main.py -c
+from cyanprintsdk.domain.resolver.input import ResolverInput
+from cyanprintsdk.domain.resolver.output import ResolverOutput
+from cyanprintsdk.main import start_resolver_with_fn
+
+
+async def resolver(input: ResolverInput) -> ResolverOutput:
+    # Collect all patterns
+    patterns: list[str] = []
+
+    sorted_files = sorted(input.files, key=lambda f: f.origin.layer)
+
+    for file in sorted_files:
+        for line in file.content.split('\n'):
+            trimmed = line.strip()
+            # Skip empty lines and comments
+            if trimmed and not trimmed.startswith('#'):
+                patterns.append(trimmed)
+
+    # Deduplicate while preserving order
+    seen = set()
+    unique_patterns: list[str] = []
+    for pattern in patterns:
+        if pattern not in seen:
+            seen.add(pattern)
+            unique_patterns.append(pattern)
+
+    # Group by category (optional enhancement)
+    output = f"# Auto-generated .gitignore\n\n{chr(10).join(unique_patterns)}\n"
+
+    return ResolverOutput(
+        path=input.files[0].path,
+        content=output
+    )
+
+
+if __name__ == "__main__":
+    start_resolver_with_fn(resolver)
+```
+
+  </Tab>
+  <Tab value="C#">
+
+```cs Program.cs -c
+using sulfone_helium;
+using sulfone_helium.Domain.Resolver;
+
+CyanEngine.StartResolver(
+    args,
+    async (ResolverInput input) =>
+    {
+        // Collect all patterns
+        var patterns = new List<string>();
+
+        var sorted = input.Files.OrderBy(f => f.Origin.Layer).ToList();
+
+        foreach (var file in sorted)
+        {
+            foreach (var line in file.Content.Split('\n'))
+            {
+                var trimmed = line.Trim();
+                // Skip empty lines and comments
+                if (!string.IsNullOrEmpty(trimmed) && !trimmed.StartsWith("#"))
+                {
+                    patterns.Add(trimmed);
+                }
+            }
+        }
+
+        // Deduplicate while preserving order
+        var seen = new HashSet<string>();
+        var uniquePatterns = new List<string>();
+        foreach (var pattern in patterns)
+        {
+            if (seen.Add(pattern))
+            {
+                uniquePatterns.Add(pattern);
+            }
+        }
+
+        // Group by category (optional enhancement)
+        var output = $"# Auto-generated .gitignore\n\n{string.Join("\n", uniquePatterns)}\n";
+
+        return new ResolverOutput(
+            input.Files.First().Path,
+            output
+        );
+    }
+);
+```
+
+  </Tab>
+</Tabs>
+
+## Related
+
+<Cards>
+  <Card href="/docs/developer/resolvers/how-to/merge-json" title="Merge JSON Files">
+    Handle JSON file conflicts
+  </Card>
+  <Card href="/docs/developer/resolvers/reference/sdk/input-output" title="Resolver Input/Output">
+    Full API reference
+  </Card>
+  <Card href="/docs/developer/resolvers/explanation/what-are-resolvers" title="What Are Resolvers">
+    Understand resolver concepts
+  </Card>
+</Cards>

@@ -57,6 +57,25 @@ yum install cyanprint
 </Step>
 <Step>
 
+### Start the Daemon
+
+<Callout type="warn">
+Docker must be installed and running before starting the daemon.
+</Callout>
+
+```bash -c
+cyanprint daemon start
+```
+
+This starts the CyanPrint Coordinator locally on port 9000.
+
+<Callout type="info">
+The CLI can also use a remote coordinator. The `create` command defaults to `http://coord.cyanprint.dev:9000`. Starting a local daemon is optional for basic usage.
+</Callout>
+
+</Step>
+<Step>
+
 ### Create Project
 
 ```bash -c

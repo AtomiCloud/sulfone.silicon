@@ -1,0 +1,188 @@
+---
+title: Project Structure
+description: Standard file layout for resolver projects
+---
+
+import { Files, File, Folder } from 'fumadocs-ui/components/files';
+import { Callout } from 'fumadocs-ui/components/callout';
+import { Cards, Card } from 'fumadocs-ui/components/card';
+
+# Project Structure
+
+A resolver project follows a standard layout for consistency and ease of development.
+
+## Basic Structure
+
+<Files>
+  <Folder name="my-resolver" defaultOpen>
+    <File name="index.ts" />
+    <File name="package.json" />
+    <File name="bun.lock" />
+    <File name="Dockerfile" />
+    <File name="cyan.yaml" />
+    <File name="tsconfig.json" />
+    <Folder name="src">
+      <File name="mergers.ts" />
+      <File name="utils.ts" />
+    </Folder>
+  </Folder>
+</Files>
+
+## File Descriptions
+
+### `index.ts`
+
+The main entry point using `StartResolverWithLambda`:
+
+```ts index.ts -c
+import { ResolverOutput, StartResolverWithLambda } from '@atomicloud/cyan-sdk';
+
+StartResolverWithLambda(async (input): Promise<ResolverOutput> => {
+  // Sort files by layer
+  const sorted = [...input.files].sort(
+    (a, b) => a.origin.layer - b.origin.layer
+  );
+
+  // Merge content
+  let merged = {};
+  for (const file of sorted) {
+    merged = { ...merged, ...JSON.parse(file.content) };
+  }
+
+  return {
+    path: input.files[0].path,
+    content: JSON.stringify(merged, null, 2)
+  };
+});
+```
+
+### `package.json`
+
+Define dependencies and scripts:
+
+```json package.json -c
+{
+  "name": "my-resolver",
+  "version": "1.0.0",
+  "type": "module",
+  "scripts": {
+    "start": "bun run index.ts"
+  },
+  "dependencies": {
+    "@atomicloud/cyan-sdk": "^1.0.0"
+  },
+  "devDependencies": {
+    "@types/bun": "latest"
+  }
+}
+```
+
+### `Dockerfile`
+
+Container definition for the resolver:
+
+```dockerfile Dockerfile -c
+FROM oven/bun:1.1.30
+
+WORKDIR /app
+
+# Required: Mark as CyanPrint resolver
+LABEL cyanprint.dev=true
+
+# Install dependencies
+COPY package.json .
+COPY bun.lock .
+RUN bun install
+
+# Copy resolver code
+COPY . .
+
+# Run resolver
+CMD ["bun", "run", "index.ts"]
+```
+
+<Callout type="warn">
+The `LABEL cyanprint.dev=true` line is **required** for the container to be recognized as a CyanPrint resolver.
+</Callout>
+
+### `cyan.yaml`
+
+Metadata for registry publishing:
+
+```yaml cyan.yaml -c
+username: your-username
+name: my-resolver
+description: JSON file resolver for layered templates
+project: https://github.com/org/my-project
+source: https://github.com/org/my-resolver
+email: contact@example.com
+tags:
+  - json
+  - merge
+  - resolver
+readme: README.md
+```
+
+### `tsconfig.json`
+
+TypeScript configuration
+
+```json tsconfig.json -c
+{
+  "compilerOptions": {
+    "target": "ES2022",
+    "module": "ESNext",
+    "moduleResolution": "bundler",
+    "strict": true,
+    "skipLibCheck": true,
+    "esModuleInterop": true
+  },
+  "include": ["*.ts", "src/**/*.ts"]
+}
+```
+
+## Optional Directories
+
+### `src/`
+
+Organize larger resolvers into modules
+
+<Files>
+  <Folder name="src" defaultOpen>
+    <Folder name="strategies">
+      <File name="deep-merge.ts" />
+      <File name="concat.ts" />
+      <File name="distinct.ts" />
+    </Folder>
+    <Folder name="utils">
+      <File name="json-parser.ts" />
+      <File name="validators.ts" />
+    </Folder>
+    <File name="index.ts" />
+  </Folder>
+</Files>
+
+### `tests/`
+
+Unit tests for resolver logic
+
+<Files>
+  <Folder name="tests" defaultOpen>
+    <File name="merge.test.ts" />
+    <File name="utils.test.ts" />
+  </Folder>
+</Files>
+
+## Related
+
+<Cards>
+  <Card href="/docs/developer/resolvers/reference/dockerfile" title="Resolver Dockerfile">
+    Docker configuration details
+  </Card>
+  <Card href="/docs/developer/resolvers/reference/cyan-yaml" title="cyan.yaml Format">
+    Metadata format specification
+  </Card>
+  <Card href="/docs/developer/resolvers/tutorials/first-resolver" title="First Resolver">
+    Step-by-step tutorial
+  </Card>
+</Cards>

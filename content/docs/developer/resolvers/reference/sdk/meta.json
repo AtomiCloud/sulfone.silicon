@@ -1,0 +1,6 @@
+{
+  "title": "SDK Reference",
+  "description": "Resolver SDK API documentation",
+  "icon": "Code",
+  "pages": ["index", "start-resolver", "input-output"]
+}

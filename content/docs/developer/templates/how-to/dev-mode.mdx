@@ -1,0 +1,176 @@
+---
+title: Dev Mode for Templates
+description: Enable hot-reloading during template development
+---
+
+import { Callout } from 'fumadocs-ui/components/callout';
+import { Tabs, Tab } from 'fumadocs-ui/components/tabs';
+
+# Dev Mode for Templates
+
+Dev mode enables hot-reloading during template development. Instead of building Docker images on every change, the coordinator reads template files directly from your filesystem.
+
+## When to Use Dev Mode
+
+- **Rapid iteration** - No rebuild needed between code changes
+- **Live debugging** - See changes instantly
+- **Template development** - Writing and testing new templates
+
+## How It Works
+
+| Mode | Build Required | Code Updates | Use Case |
+|------|---------------|--------------|----------|
+| Normal | Yes (Docker build) | Rebuild required | Testing final result |
+| Dev | No | Hot-reload | Active development |
+
+```
+Normal Mode:  code ──► docker build ──► container ──► output
+Dev Mode:     code ──────────────────────────────────► output
+```
+
+## Setup
+
+### 1. Add Dev Configuration
+
+Add a `dev` section to your `cyan.yaml`:
+
+```yaml cyan.yaml -c
+username: myuser
+name: my-template
+description: My template
+# ... other fields ...
+
+dev:
+  blob_path: ./cyan
+  template_url: http://localhost:5550
+```
+
+See [Dev Configuration Reference](/docs/developer/templates/reference/dev-config) for complete field documentation.
+
+### 2. Start Template Server
+
+Run your template locally with hot-reload:
+
+<Tabs items={['TypeScript', 'Python', 'C#']} persist groupId="runtime">
+<Tab value="TypeScript">
+
+```bash -c
+cd cyan
+bun install
+bun run --watch index.ts
+```
+
+</Tab>
+<Tab value="Python">
+
+```bash -c
+cd cyan
+pip install -r requirements.txt
+python index.py
+```
+
+For hot-reload, use a file watcher:
+
+```bash -c
+pip install watchdog
+watchmedo auto-restart -d . -p "*.py" -- python index.py
+```
+
+</Tab>
+<Tab value="C#">
+
+```bash -c
+cd cyan
+dotnet watch run
+```
+
+</Tab>
+</Tabs>
+
+### 3. Run Try with Dev Flag
+
+```bash -c
+cyanprint try template . ./output --dev
+```
+
+## Development Workflow
+
+### Typical Dev Cycle
+
+1. **Start** the template server locally
+2. **Run** `cyanprint try template . ./output --dev`
+3. **Answer** the template prompts
+4. **Review** generated output
+5. **Edit** template code
+6. **Repeat** from step 2
+
+### Example Session
+
+```bash -c
+# Terminal 1: Start template server
+cd cyan && bun run --watch index.ts
+
+# Terminal 2: Run try command
+cyanprint try template . ./output --dev
+# ... answer prompts ...
+ls ./output
+
+# Make changes to index.ts
+# Server auto-restarts
+
+# Run again
+rm -rf ./output
+cyanprint try template . ./output --dev
+```
+
+## Comparison: Normal vs Dev Mode
+
+### Normal Mode
+
+```bash -c
+cyanprint try template . ./output
+```
+
+- Builds Docker images
+- Full isolation
+- Slower iteration
+- Tests production-like behavior
+
+### Dev Mode
+
+```bash -c
+cyanprint try template . ./output --dev
+```
+
+- No Docker build
+- Direct filesystem access
+- Fast iteration
+- Requires local template server
+
+<Callout type="warn">
+Dev mode skips the Docker build step. Always test in normal mode before publishing to ensure your template works correctly in production.
+ </Callout>
+
+## Troubleshooting
+
+### Template Server Not Running
+
+```
+Error: Failed to connect to template at http://localhost:5550
+```
+
+**Solution**: Start your template server before running the try command.
+
+### Blob Path Not Found
+```
+Error: Blob path does not exist: ./cyan
+```
+
+**Solution**: Ensure `dev.blob_path` in `cyan.yaml` points to the correct directory.
+
+## Next Steps
+
+- [Dev Configuration](/docs/developer/templates/reference/dev-config) - Full dev config reference
+- [Test Locally](/docs/developer/templates/how-to/test-locally) - Normal mode testing
+- [Push to Registry](/docs/developer/templates/how-to/push-to-registry) - Publish your template
+- [Template Reference](/docs/developer/templates/reference/cyan-yaml) - Full cyan.yaml specification

@@ -426,6 +426,16 @@ Create a test template that uses your resolver, then run:
 cyanprint try template ./test-template ./output
 ```
 
+## Automated Testing
+
+Set up snapshot tests to verify your resolver produces consistent output:
+
+```bash -c
+cyanprint test resolver .
+```
+
+Create a `test.cyan.yaml` with multi-origin input fixtures and expected snapshots. See [Automated Testing](/docs/developer/resolvers/how-to/automated-testing) for the full guide.
+
 ## What You Learned
 
 - How to create a resolver project
@@ -433,6 +443,7 @@ cyanprint try template ./test-template ./output
 - Accessing file versions and their origins
 - Merging content from multiple layers
 - Returning a single merged file
+- Setting up automated snapshot tests
 
 ## Next Steps
 
@@ -447,5 +458,8 @@ Learn more about resolver capabilities:
   </Card>
   <Card href="/docs/developer/resolvers/reference/sdk/input-output" title="Resolver Input/Output">
     Full API reference
+  </Card>
+  <Card href="/docs/developer/resolvers/how-to/automated-testing" title="Automated Testing">
+    Snapshot-based testing for resolvers
   </Card>
 </Cards>

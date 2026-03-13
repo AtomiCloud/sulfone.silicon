@@ -1,0 +1,179 @@
+---
+title: Automated Testing
+description: Set up snapshot-based automated testing for your resolvers
+---
+
+import { Steps } from 'fumadocs-ui/components/steps';
+import { Callout } from 'fumadocs-ui/components/callout';
+import { Files, File, Folder } from 'fumadocs-ui/components/files';
+
+# Automated Testing
+
+The `test` command runs automated snapshot-based tests for your resolvers. Define test cases in `test.cyan.yaml` with multi-origin file inputs that simulate conflicts from layered templates, then compare the merged output against expected snapshots.
+
+## Quick Start
+
+<Steps>
+
+### Create Test Configuration
+
+Create `test.cyan.yaml` in your resolver project root:
+
+```yaml -c
+tests:
+  - name: json-deep-merge
+    expected:
+      type: snapshot
+      value:
+        path: ./snapshots/json-deep-merge
+    config: {}
+    resolver_inputs:
+      - path: ./inputs/template-a
+        origin:
+          template: template-a
+          layer: 0
+      - path: ./inputs/template-b
+        origin:
+          template: template-b
+          layer: 1
+```
+
+### Create Input Fixtures
+
+Create directories for each template origin with conflicting files:
+
+```bash -c
+mkdir -p inputs/template-a inputs/template-b
+```
+
+Each directory should contain the files that template would produce, creating a conflict scenario for your resolver.
+
+### Run Tests
+
+```bash -c
+cyanprint test resolver .
+```
+
+On the first run, use `--update-snapshots` to generate initial expected output:
+
+```bash -c
+cyanprint test resolver . --update-snapshots
+```
+
+</Steps>
+
+## Understanding `test.cyan.yaml`
+
+Each test case defines multi-origin inputs and expected merged output:
+
+```yaml -c
+tests:
+  - name: three-way-merge
+    expected:
+      type: snapshot
+      value:
+        path: ./snapshots/three-way-merge
+    config:
+      strategy: deep
+    resolver_inputs:
+      - path: ./inputs/base
+        origin:
+          template: base-template
+          layer: 0
+      - path: ./inputs/feature-a
+        origin:
+          template: feature-a
+          layer: 1
+      - path: ./inputs/feature-b
+        origin:
+          template: feature-b
+          layer: 2
+```
+
+### Fields
+
+| Field             | Required | Description |
+| ----------------- | -------- | ----------- |
+| `name`            | Yes      | Unique test case identifier |
+| `expected`        | Yes      | Snapshot path or inline expected value |
+| `resolver_inputs` | Yes      | List of file sets from different template origins |
+| `config`          | No       | Runtime configuration passed to the resolver |
+
+### Resolver Inputs
+
+Each entry in `resolver_inputs` represents files from a specific template:
+
+| Field              | Description |
+| ------------------ | ----------- |
+| `path`             | Directory containing files from this template |
+| `origin.template`  | Template identifier this file set came from |
+| `origin.layer`     | Layer index in composition order (0 = base, higher = overlay) |
+
+The layer ordering determines conflict resolution priority — higher layers overlay lower layers, matching how layered template composition works in production.
+
+## Project Structure
+
+<Files>
+  <File name="cyan.yaml" />
+  <File name="test.cyan.yaml" />
+  <Folder name="inputs" defaultOpen>
+    <Folder name="template-a" defaultOpen>
+      <File name="package.json" />
+      <File name="config.json" />
+    </Folder>
+    <Folder name="template-b" defaultOpen>
+      <File name="package.json" />
+      <File name="config.json" />
+    </Folder>
+  </Folder>
+  <Folder name="snapshots" defaultOpen>
+    <Folder name="json-deep-merge" defaultOpen>
+      <File name="package.json" />
+      <File name="config.json" />
+    </Folder>
+  </Folder>
+  <Folder name="cyan" defaultOpen>
+    <File name="index.ts" />
+    <File name="Dockerfile" />
+    <File name="package.json" />
+  </Folder>
+</Files>
+
+## Running Tests
+
+```bash -c
+# Run all tests
+cyanprint test resolver .
+
+# Run a specific test
+cyanprint test resolver . --test json-deep-merge
+
+# Run in parallel
+cyanprint test resolver . --parallel 4
+
+# Update snapshots after intentional changes
+cyanprint test resolver . --update-snapshots
+```
+
+<Callout type="info">
+When using `--update-snapshots`, resolver tests run sequentially regardless of the `--parallel` flag to ensure consistent snapshot generation.
+</Callout>
+
+## Snapshot Comparison Rules
+
+| File Type        | Comparison Method                             |
+| ---------------- | --------------------------------------------- |
+| `.json` files    | Deep comparison (field order ignored)         |
+| Other text files | Exact string match (trailing whitespace trimmed) |
+| Binary files     | Skipped (reported but not compared)           |
+
+## CI/CD Integration
+
+```bash -c
+cyanprint test resolver . --junit test-results.xml --disable-daemon-autostart
+```
+
+## Next Steps
+
+- [CLI Commands Reference](/docs/user/reference/cli-commands) — Full command options and flags
+- [Push to Registry](/docs/developer/resolvers/how-to/push-to-registry) — Publish your resolver

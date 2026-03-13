@@ -464,6 +464,16 @@ The processor transformed `hello world` to `HELLO WORLD` during the try command 
 </Tab>
 </Tabs>
 
+## Automated Testing
+
+Set up snapshot tests to verify your processor produces consistent output:
+
+```bash -c
+cyanprint test processor .
+```
+
+Create a `test.cyan.yaml` with input fixtures and expected snapshots. See [Automated Testing](/docs/developer/processors/how-to/automated-testing) for the full guide.
+
 ## What You Learned
 
 - How to create a processor project
@@ -472,6 +482,7 @@ The processor transformed `hello world` to `HELLO WORLD` during the try command 
 - Transforming file content
 - Writing files with `writeFile()`
 - Testing processors with the `try` command
+- Setting up automated snapshot tests
 
 ## Next Steps
 
@@ -480,3 +491,4 @@ Learn more about file operations:
 - [Resolve All Files](/docs/developer/processors/how-to/resolve-all-files) - Load all files
 - [Lazy Load Files](/docs/developer/processors/how-to/lazy-load-files) - Efficient loading
 - [CyanFileHelper API](/docs/developer/processors/reference/sdk/file-helper) - Full API reference
+- [Automated Testing](/docs/developer/processors/how-to/automated-testing) - Snapshot-based testing

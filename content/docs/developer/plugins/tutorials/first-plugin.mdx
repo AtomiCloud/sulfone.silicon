@@ -551,6 +551,16 @@ ls node_modules  # If installDeps was true
 The `try` command builds and runs your plugin automatically. After file generation completes, the plugin initializes git and installs dependencies.
 </Callout>
 
+## Automated Testing
+
+Set up snapshot tests to verify your plugin produces consistent output:
+
+```bash -c
+cyanprint test plugin .
+```
+
+Create a `test.cyan.yaml` with input fixtures and expected snapshots. See [Automated Testing](/docs/developer/plugins/how-to/automated-testing) for the full guide.
+
 ## What You Learned
 
 - How to create a plugin project
@@ -559,6 +569,7 @@ The `try` command builds and runs your plugin automatically. After file generati
 - Accessing plugin configuration
 - Returning the directory path
 - Testing plugins with the `try` command
+- Setting up automated snapshot tests
 
 ## Next Steps
 
@@ -573,5 +584,8 @@ Learn more about plugin capabilities:
   </Card>
   <Card href="/docs/developer/plugins/reference/sdk/input-output" title="Plugin Input/Output">
     Full API reference
+  </Card>
+  <Card href="/docs/developer/plugins/how-to/automated-testing" title="Automated Testing">
+    Snapshot-based testing for plugins
   </Card>
 </Cards>

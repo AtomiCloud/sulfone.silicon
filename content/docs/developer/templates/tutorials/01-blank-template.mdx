@@ -427,15 +427,37 @@ cyanprint try template . ./test-output
 cyanprint try template . ./test-output --keep-containers
 ```
 
+## Automated Testing
+
+Once your template works with `try`, set up automated snapshot tests:
+
+```bash -c
+# Generate test cases from your template's Q&A tree
+cyanprint test init .
+```
+
+This creates `test.cyan.yaml` and `fixtures/expected/` with snapshot test cases. Run them anytime:
+
+```bash -c
+cyanprint test template .
+```
+
+<Callout type="info">
+Automated tests verify your template produces consistent output across changes. See [Automated Testing](/docs/developer/templates/how-to/automated-testing) for the full guide.
+</Callout>
+
 ## What You Learned
 
 - How to create a template project from scratch
 - The basic structure of a CyanPrint template
 - Using `try` command for fast development
 - How `GlobType.Copy` copies files without processing
+- Setting up automated snapshot tests with `test init`
 
 ## Next Steps
 
 In the next tutorial, you'll learn how to add variable substitution to process template files:
 
 [**Next: Adding Variables**](/docs/developer/templates/tutorials/02-adding-variables)
+
+For comprehensive testing strategies, see the [Automated Testing](/docs/developer/templates/how-to/automated-testing) how-to guide.

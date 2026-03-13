@@ -29,6 +29,7 @@ description: Complete reference for all CyanPrint CLI commands
 | `try`        | `t`   |
 | `daemon`     | `d`   |
 | `push`       | `p`   |
+| `test`       | `te`  |
 
 ## `cyanprint build`
 
@@ -355,6 +356,156 @@ Groups are config-only artifacts with no Docker images. Define the group structu
 ```bash -c
 cyanprint push --token <TOKEN> group
 ```
+
+## `cyanprint test`
+
+Automated snapshot-based testing for templates, processors, plugins, and resolvers. Unlike `try` (interactive development testing), `test` runs automated test cases defined in `test.cyan.yaml` and compares output against expected snapshots.
+
+```bash -c
+cyanprint test <COMMAND>
+```
+
+### Subcommands
+
+#### `test init`
+
+Auto-generate test cases by walking a template's Q&A tree. For each question, all possible answer branches are explored to produce test combinations.
+
+<Callout type="info">
+`test init` is only available for templates. Processors, plugins, and resolvers require manually creating `test.cyan.yaml`.
+</Callout>
+
+```bash -c
+cyanprint test init [PATH] [OPTIONS]
+```
+
+##### Arguments
+
+| Argument | Required | Description                              |
+| -------- | -------- | ---------------------------------------- |
+| `[PATH]` | No       | Path to template directory (default: `.`) |
+
+##### Options
+
+| Option                         | Default                           | Description                                    |
+| ------------------------------ | --------------------------------- | ---------------------------------------------- |
+| `--max-combinations <N>`       | `30`                              | Maximum test combinations to generate          |
+| `--text-seed <VALUE>`          | `"dummy"`                         | Seed value for Text question answers           |
+| `--password-seed <VALUE>`      | `"secret"`                        | Seed value for Password question answers       |
+| `--date-seed <VALUE>`          | today's date                      | Seed value for Date question answers (YYYY-MM-DD) |
+| `-i, --interactive`            | -                                 | Interactively select which branches to explore |
+| `-p, --parallel <N>`           | `1`                               | Parallel test cases for snapshot generation    |
+| `-o, --output <DIR>`           | `.cyan_output`                    | Output directory for test results              |
+| `--config <PATH>`              | `cyan.yaml`                       | Path to build config file                      |
+| `-c, --coordinator-endpoint`   | `http://coord.cyanprint.dev:9000` | Coordinator URL                                |
+| `--disable-daemon-autostart`   | -                                 | Skip automatic daemon start                    |
+
+#### `test template`
+
+Run snapshot tests for a template.
+
+```bash -c
+cyanprint test template [PATH] [OPTIONS]
+```
+
+##### Arguments
+
+| Argument | Required | Description                              |
+| -------- | -------- | ---------------------------------------- |
+| `[PATH]` | No       | Path to template directory (default: `.`) |
+
+##### Options
+
+| Option                         | Default                           | Description                               |
+| ------------------------------ | --------------------------------- | ----------------------------------------- |
+| `--test <NAME>`                | -                                 | Run only a specific test by name          |
+| `--parallel <N>`               | `1`                               | Number of parallel test cases             |
+| `--update-snapshots`           | -                                 | Update expected snapshots with actual output |
+| `-o, --output <DIR>`           | `.cyan_output`                    | Output directory for test results         |
+| `--config <PATH>`              | `cyan.yaml`                       | Path to build config file                 |
+| `--junit <PATH>`               | -                                 | Write JUnit XML report to file            |
+| `-c, --coordinator-endpoint`   | `http://coord.cyanprint.dev:9000` | Coordinator URL                           |
+| `--disable-daemon-autostart`   | -                                 | Skip automatic daemon start               |
+
+#### `test processor`
+
+Run snapshot tests for a processor.
+
+```bash -c
+cyanprint test processor [PATH] [OPTIONS]
+```
+
+Arguments and options are the same as `test template`.
+
+#### `test plugin`
+
+Run snapshot tests for a plugin.
+
+```bash -c
+cyanprint test plugin [PATH] [OPTIONS]
+```
+
+Arguments and options are the same as `test template`.
+
+#### `test resolver`
+
+Run snapshot tests for a resolver.
+
+```bash -c
+cyanprint test resolver [PATH] [OPTIONS]
+```
+
+Arguments and options are the same as `test template`.
+
+### Environment Variables
+
+| Variable               | Corresponding Flag           |
+| ---------------------- | ---------------------------- |
+| `CYANPRINT_COORDINATOR`| `-c, --coordinator-endpoint` |
+
+### Test Configuration (`test.cyan.yaml`)
+
+Test cases are defined in a `test.cyan.yaml` file at the project root:
+
+```yaml -c
+tests:
+  - name: my-test-case
+    expected:
+      type: snapshot
+      value:
+        path: ./fixtures/expected/my-test-case
+    # Template-specific fields:
+    answer_state:
+      project_name:
+        type: String
+        value: "test-project"
+    deterministic_state:
+      seed: "12345"
+    validate:
+      - "bun install --dry-run"
+    # Processor-specific fields:
+    input: ./fixtures/input
+    config: {}
+    globs:
+      - pattern: "**/*.ts"
+        type: Template
+    # Resolver-specific fields:
+    resolver_inputs:
+      - path: ./inputs/template-a
+        origin:
+          template: template-a
+          layer: 0
+```
+
+### Snapshot Comparison Rules
+
+| File Type        | Comparison Method                             |
+| ---------------- | --------------------------------------------- |
+| `.json` files    | Deep comparison (field order ignored)         |
+| Other text files | Exact string match (trailing whitespace trimmed) |
+| Binary files     | Skipped (reported but not compared)           |
+
+Extra files in actual output or missing files from expected output cause test failure.
 
 ## Related
 

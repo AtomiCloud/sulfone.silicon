@@ -3,6 +3,7 @@
   "icon": "ListChecks",
   "pages": [
     "test-locally",
+    "automated-testing",
     "dev-mode",
     "ask-checkbox",
     "ask-confirm",

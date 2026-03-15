@@ -1,5 +1,5 @@
 {
   "title": "How-To Guides",
   "icon": "ListChecks",
-  "pages": ["install", "manage-daemon", "create-project", "update-project", "browse-templates", "test-locally"]
+  "pages": ["install", "manage-daemon", "create-project", "update-project", "browse-templates"]
 }

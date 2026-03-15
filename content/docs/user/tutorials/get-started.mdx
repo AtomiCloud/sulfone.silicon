@@ -17,11 +17,15 @@ Create your first CyanPrint project in under a minute.
 
 ### Install CLI
 
-<Tabs groupId="installer" items={['Nix', 'Brew', 'APT', 'YUM']} persist>
+<Tabs groupId="installer" items={['Nix', 'Brew', 'Scoop', 'APT', 'YUM']} persist>
 <Tab value="Nix">
 
 ```bash -c
+# Run directly without installing
 nix shell github:AtomiCloud/sulfone.iridium
+
+# Or install permanently
+nix profile install github:AtomiCloud/sulfone.iridium
 ```
 
 </Tab>
@@ -32,17 +36,27 @@ brew install AtomiCloud/tap/cyanprint
 ```
 
 </Tab>
+<Tab value="Scoop">
+
+```bash -c
+scoop bucket add cyanprint https://github.com/AtomiCloud/scoop-bucket
+scoop install cyanprint
+```
+
+</Tab>
 <Tab value="APT">
 
 ```bash -c
-sudo apt-add-repository "deb [trusted=yes] https://apt.fury.io/atomicloud/ /"
-sudo apt update && sudo apt install cyanprint
+sudo apt install software-properties-common -y
+sudo apt-add-repository "deb [trusted=yes] https://apt.fury.io/AtomiCloud/ /" -y
+sudo apt update -y
+sudo apt install cyanprint
 ```
 
 </Tab>
 <Tab value="YUM">
 
-```bash -c
+```bash
 sudo sh -c 'echo "[fury]
 name=AtomiCloud Repo
 baseurl=https://yum.fury.io/atomicloud/
@@ -54,24 +68,7 @@ yum install cyanprint
 </Tab>
 </Tabs>
 
-</Step>
-<Step>
-
-### Start the Daemon
-
-<Callout type="warn">
-Docker must be installed and running before starting the daemon.
-</Callout>
-
-```bash -c
-cyanprint daemon start
-```
-
-This starts the CyanPrint Coordinator locally on port 9000.
-
-<Callout type="info">
-The CLI can also use a remote coordinator. The `create` command defaults to `http://coord.cyanprint.dev:9000`. Starting a local daemon is optional for basic usage.
-</Callout>
+For version pinning and more details, see the [full installation guide](/docs/user/how-to/install).
 
 </Step>
 <Step>

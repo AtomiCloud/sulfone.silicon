@@ -13,7 +13,7 @@ export default function Layout({ children }: { children: ReactNode }) {
         tabs: {
           transform: (option, node) => ({
             ...option,
-            icon: node.icon,
+            icon: <span data-tab-section={String(option.title ?? '').toLowerCase()}>{node.icon}</span>,
           }),
         },
       }}

@@ -34,9 +34,26 @@ export const mark: AnnotationHandler = {
 }
 
 function getColor(annotation?: { query?: string }) {
-  const n = Number(annotation?.query || "2") % colors.length
-  return colors[n] || annotation?.query
+  const query = annotation?.query?.trim() || ""
+  // If query is a number, use it as index into colors array
+  const n = Number(query)
+  if (!isNaN(n) && query !== "") {
+    return colors[Math.abs(n) % colors.length]
+  }
+  // If query is a valid CSS color (starts with # or is a named color), use it
+  if (query.startsWith("#") || cssColorNames.includes(query.toLowerCase())) {
+    return query
+  }
+  // Default to first color for any other query (including descriptions)
+  return colors[0]
 }
+
+// Common CSS color names for validation
+const cssColorNames = [
+  "red", "orange", "yellow", "green", "blue", "purple", "pink", "brown", "black", "white",
+  "cyan", "magenta", "lime", "olive", "maroon", "navy", "teal", "aqua", "fuchsia", "silver",
+  "gray", "grey", "transparent", "currentcolor"
+]
 
 const colors = [
   "#22c55e",

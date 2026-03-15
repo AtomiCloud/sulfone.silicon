@@ -11,17 +11,6 @@ The CyanPrint command-line interface (CLI) is the primary way users interact wit
 
 [github.com/AtomiCloud/sulfone.iridium](https://github.com/AtomiCloud/sulfone.iridium)
 
-## Workspace Structure
-
-Iridium is a Rust workspace containing 4 crates:
-
-| Crate | Purpose |
-| ----- | ------- |
-| cyanprint | Main CLI binary with commands |
-| cyanprompt | Interactive prompt handling |
-| cyanregistry | Registry client for Zinc API |
-| cyancoordinator | Coordinator client for Boron communication |
-
 ## Tech Stack
 
 | Technology | Purpose |
@@ -33,120 +22,10 @@ Iridium is a Rust workspace containing 4 crates:
 | Bollard | Docker client for container management |
 | Inquire | Interactive CLI prompts |
 
-## Key Files
+## Overview
 
-| Path | Description |
-| ---- | ----------- |
-| `cyanprint/src/main.rs` | Application entry point |
-| `cyanprint/src/commands.rs` | CLI command definitions |
-| `cyanprint/src/run.rs` | Template execution logic |
-| `cyanprint/src/update.rs` | Update command implementation |
-| `cyanprint/src/coord.rs` | Coordinator client communication |
-| `cyanprint/src/update/` | Update logic submodules |
-| `cyanregistry/src/` | Registry client for Zinc API |
-| `cyancoordinator/src/` | Coordinator client for Boron |
+Iridium is a Rust workspace containing 4 crates: `cyanprint` (main CLI binary), `cyanprompt` (interactive prompt handling), `cyanregistry` (registry client for Zinc API), and `cyancoordinator` (coordinator client for Boron communication). It provides commands for creating projects from templates, updating existing projects, pushing artifacts to the registry, and managing the local daemon.
 
-## Commands
+## Getting Started
 
-The CLI provides the following main commands:
-
-```bash -c
-# Create a new project from a template
-cyanprint create <template-ref> [path]
-
-# Create with custom coordinator endpoint
-cyanprint create <template-ref> --coordinator-endpoint <url>
-
-# Update an existing project
-cyanprint update [path]
-
-# Update interactively (select specific versions)
-cyanprint update --interactive
-
-# Push artifacts to the registry
-cyanprint push template <blob_image> <blob_tag> <template_image> <template_tag> --config <path> --token <token>
-cyanprint push group --config <path> --token <token>
-cyanprint push plugin <image> <tag> --config <path> --token <token>
-cyanprint push processor <image> <tag> --config <path> --token <token>
-
-# Run the daemon locally
-cyanprint daemon [version] [--port <port>] [--registry <url>]
-
-# Enable debug output (available on all commands)
-cyanprint -d create <template-ref>
-cyanprint --debug update
-```
-
-## Architecture
-
-<Mermaid chart={`flowchart LR
-    A[User] --> B[CLI Parser]
-    B --> C{Command}
-    C -->|create| D[Template Resolver]
-    C -->|update| E[Update Handler]
-    C -->|push| F[Registry Client]
-    C -->|daemon| G[Docker Manager]
-    D --> H[Coordinator Client]
-    E --> H
-    H --> I[Boron Containers]
-    F --> J[Zinc API]
-    G --> I
-`} />
-
-## Building
-
-```bash -c
-# Debug build
-cargo build
-
-# Release build
-cargo build --release
-
-# Run tests
-cargo test
-
-# Run with logging
-RUST_LOG=debug cargo run -- create <template-ref>
-```
-
-## Configuration
-
-Iridium is configured via environment variables and command-line flags:
-
-| Environment Variable | Description | Default |
-| ------------------- | ----------- | ------- |
-| `CYANPRINT_REGISTRY` | Zinc registry URL | `https://api.zinc.sulfone.raichu.cluster.atomi.cloud` |
-| `CYANPRINT_COORDINATOR` | Coordinator endpoint | `http://coord.cyanprint.dev:9000` |
-| `CYAN_TOKEN` | Authentication token | (none) |
-
-Example usage:
-
-```bash -c
-# Set custom registry
-export CYANPRINT_REGISTRY=https://custom-registry.example.com
-
-# Set authentication token
-export CYAN_TOKEN=your-auth-token
-
-# Use custom coordinator for create command
-cyanprint create <template-ref> --coordinator-endpoint http://localhost:9000
-```
-
-## Contributing
-
-When contributing to Iridium:
-
-import { Steps, Step } from 'fumadocs-ui/components/steps';
-
-<Steps>
-  <Step>### Follow Rust Best Practices
-  Follow Rust best practices and idiomatic code</Step>
-  <Step>### Run Clippy
-  Run `cargo clippy` and address all warnings</Step>
-  <Step>### Run Tests
-  Ensure `cargo test` passes</Step>
-  <Step>### Update Documentation
-  Update documentation for new commands</Step>
-  <Step>### Add Integration Tests
-  Add integration tests for new features</Step>
-</Steps>
+See the repository README for setup and contributing instructions.

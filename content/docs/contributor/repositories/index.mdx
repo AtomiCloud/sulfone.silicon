@@ -40,10 +40,10 @@ CyanPrint is organized as a monorepo-style project with separate repositories fo
 | ---------- | ---------- | ------- | ------ |
 | [sulfone.iridium](https://github.com/AtomiCloud/sulfone.iridium) | Rust, Clap, Tokio | CLI tool for end users | Active |
 | [sulfone.boron](https://github.com/AtomiCloud/sulfone.boron) | Go 1.24, Gin, urfave/cli, Docker | Execution coordinator | Active |
-| [sulfone.zinc](https://github.com/AtomiCloud/sulfone.zinc) | F#/.NET 8, ASP.NET Core, Entity Framework Core | Registry API server | Active |
+| [sulfone.zinc](https://github.com/AtomiCloud/sulfone.zinc) | C#/.NET 8, ASP.NET Core, Entity Framework Core | Registry API server | Active |
 | [sulfone.argon](https://github.com/AtomiCloud/sulfone.argon) | TypeScript, Svelte, SvelteKit, Tailwind CSS | Web UI for registry | Active |
 | [sulfone.helium](https://github.com/AtomiCloud/sulfone.helium) | TypeScript, Python, C# | SDKs for template development | Active |
-| [sulfone.silicon](https://github.com/AtomiCloud/sulfone.silicon) | TypeScript, Next.js | Documentation site | Active |
+| [sulfone.silicon](https://github.com/AtomiCloud/sulfone.silicon) | TypeScript, Fumadocs, CodeHike | Documentation site | Active |
 
 ## Repository Details
 
@@ -71,7 +71,7 @@ The execution coordinator that manages container-based template execution.
 
 The registry API that stores template metadata and handles authentication.
 
-- **Language**: F#
+- **Language**: C#
 - **Framework**: .NET 8, ASP.NET Core, Entity Framework Core
 - **Key Features**: Template registry, versioning, authentication
 
@@ -101,14 +101,10 @@ Multi-language SDKs for developing templates, processors, and plugins.
 To contribute to any CyanPrint repository:
 
 <Steps>
-  <Step>### Fork the Repository
-  Fork the repository on GitHub</Step>
-  <Step>### Clone Locally
-  Clone your fork locally</Step>
-  <Step>### Follow Setup Instructions
-  Follow the setup instructions in the repository's README</Step>
-  <Step>### Submit Changes
-  Make your changes and submit a pull request</Step>
+  <Step>Fork the repository on GitHub</Step>
+  <Step>Clone your fork locally</Step>
+  <Step>Follow the setup instructions in the repository's README</Step>
+  <Step>Make your changes and submit a pull request</Step>
 </Steps>
 
 For detailed setup instructions, see the [Development Setup Guide](/docs/contributor/development/setup).
@@ -133,7 +129,7 @@ Each repository has its own contributing guidelines, but general principles appl
     Go-based execution coordinator for templates
   </Card>
   <Card href="/docs/contributor/repositories/zinc" title="Zinc (Registry API)">
-    F# registry API server
+    C# registry API server
   </Card>
   <Card href="/docs/contributor/repositories/argon" title="Argon (Web UI)">
     SvelteKit web interface for template browsing

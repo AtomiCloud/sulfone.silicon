@@ -19,10 +19,15 @@ import { className as classNameHandler } from "./annotations/classname"
 import { cn } from "@/lib/utils"
 import type { CSSProperties } from "react"
 
+// Type guard to check if code is already highlighted
+function isHighlighted(code: RawCode | HighlightedCode): code is HighlightedCode {
+  return 'tokens' in code && Array.isArray(code.tokens)
+}
 
-
-export async function InlineCode({ codeblock }: { codeblock: RawCode }) {
-  const highlighted = await highlight(codeblock, "github-from-css")
+export async function InlineCode({ codeblock }: { codeblock: RawCode | HighlightedCode }) {
+  const highlighted = isHighlighted(codeblock)
+    ? codeblock
+    : await highlight(codeblock, "github-from-css")
   return (
     <Inline
       code={highlighted}
@@ -36,15 +41,18 @@ export async function Code({
   codeblock,
   ...rest
 }: {
-  codeblock: RawCode
+  codeblock: RawCode | HighlightedCode
   className?: string
   style?: React.CSSProperties
   extraHandlers?: AnnotationHandler[]
 }) {
-  const { flags } = extractFlags(codeblock)
-  const highlighted = await highlight(codeblock, "github-from-css", {
-    annotationPrefix: flags.includes("p") ? "!!" : undefined,
-  })
+  // If already highlighted by remarkCodeHike, use it directly
+  // Otherwise highlight at runtime (fallback for raw code)
+  const highlighted = isHighlighted(codeblock)
+    ? codeblock
+    : await highlight(codeblock, "github-from-css", {
+        annotationPrefix: extractFlags(codeblock).flags.includes("p") ? "!!" : undefined,
+      })
   return <HighCode highlighted={highlighted} {...rest} />
 }
 

@@ -3,11 +3,9 @@ title: Boron
 description: The CyanPrint execution coordinator
 ---
 
-import { Steps, Step } from 'fumadocs-ui/components/steps';
-
 # sulfone.boron
 
-Boron is execution coordinator that manages container-based template execution. It handles container lifecycle, template warming, processor/plugin execution, and file operations.
+Boron is the execution coordinator that manages container-based template execution. It handles container lifecycle, template warming, processor/plugin execution, and file operations.
 
 ## Repository
 
@@ -21,151 +19,11 @@ Boron is execution coordinator that manages container-based template execution. 
 | Gin | HTTP/REST framework |
 | urfave/cli | CLI framework |
 | Docker | Container management |
-| google/uuid | UUID generation |
 
-## Key Files
+## Overview
 
-| Path | Description |
-| ---- | ----------- |
-| `main.go` | Application entry point with CLI configuration |
-| `server.go` | Gin HTTP server and route definitions |
-| `model.go` | Data models |
-| `docker_executor/` | Docker container execution management |
+Boron exposes a REST HTTP API on port 9000 that orchestrates Docker containers for template execution. It manages several container types (template, processor, plugin, merger) and uses CPU-based parallelism for execution. The coordinator handles container lifecycle, workspace isolation via Docker volumes, and resource cleanup.
 
-## Architecture
+## Getting Started
 
-<Mermaid chart={`
-flowchart TB
-    subgraph "Boron Service"
-        API[REST HTTP API<br/>Gin :9000] --> EXEC[Executor Pool]
-        EXEC --> WARM[Warm Container Pool]
-        EXEC --> RUN[Run Containers]
-    end
-
-    subgraph "Container Types"
-        RUN --> TPL[Template Container]
-        RUN --> PROC[Processor Container]
-        RUN --> PLUG[Plugin Container]
-        RUN --> MERGE[Merger Container]
-    end
-
-    subgraph "Docker Network"
-        TPL --> NET[cyanprint network]
-        PROC --> NET
-        PLUG --> NET
-        MERGE --> NET
-    end
-
-    REG[Zinc Registry] --> EXEC
-`} />
-
-## API
-
-Boron exposes a REST HTTP API on port 9000:
-
-| Method | Endpoint | Description |
-| ------ | -------- | ----------- |
-| GET | `/` | Health check |
-| POST | `/executor` | Start a new execution session |
-| DELETE | `/executor/:sessionId` | Stop and remove execution session |
-| POST | `/executor/:sessionId` | Execute in existing session |
-| POST | `/executor/:sessionId/warm` | Warm executor for session |
-| POST | `/template/warm` | Warm template containers |
-| POST | `/merge/:sessionId` | Merge execution results |
-| POST | `/zip` | Create ZIP archive |
-| POST | `/proxy/template/:cyanId/api/template/init` | Proxy template initialization |
-| POST | `/proxy/template/:cyanId/api/template/validate` | Proxy template validation |
-
-## Container Lifecycle
-
-<Mermaid chart={`
-stateDiagram-v2
-    [*] --> Warm: Pre-warm container
-    Warm --> Start: Execute request
-    Start --> Execute: Run container
-    Execute --> Clean: Completion
-    Clean --> [*]
-    Execute --> Error: Failure
-    Error --> Clean
-`} />
-
-## Resource Management
-
-Boron uses CPU-based parallelism for execution:
-
-```go filename="parallelism.go" -n
-// Parallelism is based on available CPUs
-cpu := runtime.NumCPU()
-```
-
-Execution is managed through a `ParallelismLimit` mechanism rather than explicit resource limits per container.
-
-## Building
-
-```bash filename="shell" -c
-# Build
-go build
-
-# Run tests
-go test ./...
-
-# Run locally (requires Docker)
-go run . start --registry <registry-endpoint>
-```
-
-## Configuration
-
-Boron uses CLI flags for configuration:
-
-```bash -c
-sulfone-boron start --registry <zinc-registry-endpoint>
-```
-
-The `--registry` flag specifies the Zinc registry endpoint for container image resolution.
-
-## Container Types
-
-Boron manages several container types:
-
-| Type | Purpose |
-| ---- | ------- |
-| Template | Main template execution |
-| Processor | Post-processing operations |
-| Plugin | Plugin extensions |
-| Merger | Result merging operations |
-
-## Volume Management
-
-Boron manages Docker volumes for workspace isolation between execution sessions using a `DockerVolumeReference` system.
-
-## Contributing
-
-When contributing to Boron:
-
-<Steps>
-  <Step>
-    ### Follow Best Practices
-
-    Follow Go best practices for goroutine handling
-  </Step>
-  <Step>
-    ### Test Container Isolation
-
-    Test container isolation thoroughly using Gin framework
-  </Step>
-  <Step>
-    ### Handle Resource Cleanup
-
-    Handle resource cleanup in error paths
-  </Step>
-  <Step>
-    ### Add Logging
-
-    Add appropriate logging for new features
-  </Step>
-  <Step>
-    ### Document API Changes
-
-    Document API changes in REST endpoint definitions
-  </Step>
-</Steps>
+See the repository README for setup and contributing instructions.

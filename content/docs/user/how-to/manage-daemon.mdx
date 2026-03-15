@@ -8,11 +8,23 @@ import { Callout } from 'fumadocs-ui/components/callout';
 
 # Manage the Daemon
 
-The CyanPrint Coordinator daemon is a Docker container that handles template execution locally. Use the daemon commands to start and stop it.
+CyanPrint has a hosted coordinator at `http://coord.cyanprint.dev:9000` which is used by default — you don't need to run anything locally to create projects.
+
+However, you may want to host the coordinator locally for security or privacy reasons (e.g., to keep template execution on your own machine).
 
 <Callout type="warn">
 Docker must be installed and running before using daemon commands.
 </Callout>
+
+## Export Coordinator Endpoint
+
+When running a local daemon, override the default hosted endpoint:
+
+```bash -c
+export CYANPRINT_COORDINATOR=http://localhost:9000
+```
+
+This tells the CLI to use your local coordinator instead of the hosted one.
 
 ## Start the Daemon
 
@@ -138,4 +150,3 @@ cyanprint daemon stop
 ## Next Steps
 
 - [Create a Project](/docs/user/how-to/create-project) - Generate from templates
-- [Test Templates Locally](/docs/user/how-to/test-locally) - Try local templates without publishing

@@ -4,7 +4,6 @@ description: Standard directory layout for plugin projects
 ---
 
 import { Files, File, Folder } from 'fumadocs-ui/components/files';
-import { Callout } from 'fumadocs-ui/components/callout';
 import { Cards, Card } from 'fumadocs-ui/components/card';
 
 # Plugin Project Structure
@@ -102,7 +101,7 @@ node_modules
 
 Documentation for your plugin:
 
-```markdown README.md
+```markdown README.md -c
 # My Plugin
 
 Description of what the plugin does.
@@ -158,7 +157,7 @@ For complex plugins, organize code into multiple files:
 
 ### index.ts
 
-```ts index.ts
+```ts index.ts -c
 import { StartPluginWithLambda } from '@atomicloud/cyan-sdk';
 import { initGit } from './lib/git';
 import { installDeps } from './lib/npm';
@@ -179,7 +178,7 @@ StartPluginWithLambda(async (input) => {
 
 ### lib/git.ts
 
-```ts lib/git.ts
+```ts lib/git.ts -c
 import { $ } from 'bun';
 
 export async function initGit(directory: string, config: { git?: boolean }) {

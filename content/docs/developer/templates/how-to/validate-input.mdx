@@ -45,7 +45,7 @@ const name = await i.text({
 
 ### Length Constraints
 
-```ts
+```ts -c
 const username = await i.text({
   type: QuestionType.Text,
   id: 'user.name',
@@ -61,7 +61,7 @@ const username = await i.text({
 
 ### Pattern Matching
 
-```ts
+```ts -c
 const projectName = await i.text({
   type: QuestionType.Text,
   id: 'project.name',
@@ -79,7 +79,7 @@ const projectName = await i.text({
 
 ### Email Validation
 
-```ts
+```ts -c
 const email = await i.text({
   type: QuestionType.Text,
   id: 'user.email',
@@ -97,7 +97,7 @@ const email = await i.text({
 
 ### URL Validation
 
-```ts
+```ts -c
 const website = await i.text({
   type: QuestionType.Text,
   id: 'project.website',
@@ -117,7 +117,7 @@ const website = await i.text({
 
 ### Number Range
 
-```ts
+```ts -c
 const port = await i.text({
   type: QuestionType.Text,
   id: 'server.port',
@@ -135,7 +135,7 @@ const port = await i.text({
 
 ### Password Strength
 
-```ts
+```ts -c
 const password = await i.password({
   type: QuestionType.Password,
   id: 'user.password',
@@ -169,7 +169,7 @@ For `select`, `checkbox`, and `confirm` questions, validation is not needed sinc
 
 ## Combining Validation with Defaults
 
-```ts
+```ts -c
 const projectName = await i.text({
   type: QuestionType.Text,
   id: 'project.name',

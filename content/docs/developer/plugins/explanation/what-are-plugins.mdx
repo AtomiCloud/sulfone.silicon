@@ -3,7 +3,6 @@ title: What Are Plugins?
 description: Understanding plugins and their role in CyanPrint
 ---
 
-import { Callout } from 'fumadocs-ui/components/callout';
 import { TypeTable } from 'fumadocs-ui/components/type-table';
 import { Cards, Card } from 'fumadocs-ui/components/card';
 
@@ -153,7 +152,7 @@ StartPluginWithLambda(async (input: CyanPluginInput): Promise<PluginOutput> => {
 
 Run code formatters:
 
-```ts
+```ts -c
 import { $ } from 'bun';
 import { StartPluginWithLambda } from '@atomicloud/cyan-sdk';
 import type { CyanPluginInput, PluginOutput } from '@atomicloud/cyan-sdk';
@@ -174,7 +173,7 @@ StartPluginWithLambda(async (input: CyanPluginInput): Promise<PluginOutput> => {
 
 Run build steps:
 
-```ts
+```ts -c
 import { $ } from 'bun';
 import { StartPluginWithLambda } from '@atomicloud/cyan-sdk';
 import type { CyanPluginInput, PluginOutput } from '@atomicloud/cyan-sdk';

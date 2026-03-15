@@ -13,7 +13,7 @@ Keys control answer reuse across questions and templates. Understanding keys is 
 
 Every question has an `id` parameter that serves as its **key**:
 
-```ts
+```ts -c
 const name = await i.text('Project name?', 'project.name', 'Enter name');
 //                                    ^^^^^^^^^^^^^
 //                                    This is the key
@@ -23,7 +23,7 @@ const name = await i.text('Project name?', 'project.name', 'Enter name');
 
 If multiple questions share the same key, they receive the **same answer**:
 
-```ts
+```ts -c
 // First question - user enters "my-project"
 const name1 = await i.text('Project name?', 'project.name', 'Enter name');
 
@@ -41,7 +41,7 @@ The user is only prompted once for each unique key. Subsequent questions with th
 
 Prevent collisions with other templates by namespacing:
 
-```ts
+```ts -c
 // Good: namespaced keys
 const name = await i.text('Name?', 'my-template.project.name', '...');
 const version = await i.text('Version?', 'my-template.project.version', '...');
@@ -77,7 +77,7 @@ Keys persist across template composition. Use this intentionally:
 
 Share answers between templates when desired:
 
-```ts
+```ts -c
 // Template A - sets the project name
 const name = await i.text('Project name?', 'global.project.name', '...');
 
@@ -90,7 +90,7 @@ const name = await i.text('Project name?', 'global.project.name', '...');
 
 Use unique prefixes to avoid accidental sharing:
 
-```ts
+```ts -c
 // Database template
 const dbName = await i.text('Database name?', 'db-template.database.name', '...');
 
@@ -102,7 +102,7 @@ const apiName = await i.text('API name?', 'api-template.api.name', '...');
 
 Follow a consistent naming pattern:
 
-```ts
+```ts -c
 // Pattern: {template-name}.{category}.{field}
 
 // Template-specific
@@ -121,7 +121,7 @@ const orgName = await i.text('Organization?', 'global.organization.name', '...')
 
 ### Confirming Values
 
-```ts
+```ts -c
 // Ask once
 const email = await i.text('Email?', 'user.email', 'Your email');
 
@@ -135,7 +135,7 @@ const confirmEmail = await i.confirm(
 
 ### Step-by-Step Collection
 
-```ts
+```ts -c
 // Collect in stages, referencing earlier answers
 const projectName = await i.text('Project name?', 'project.name', '...');
 const componentName = await i.text(

@@ -3,6 +3,9 @@ title: The Cyan Configuration Object
 description: Understanding the structure returned by templates
 ---
 
+import { Callout } from 'fumadocs-ui/components/callout';
+import { Mermaid } from '@/components/mdx/mermaid';
+
 # The Cyan Configuration Object
 
 The configuration object returned by `StartTemplateWithLambda` is the heart of every template. It defines processors, files, and plugins.
@@ -140,9 +143,9 @@ files: [
 ]
 ```
 
-:::note
+<Callout type="info">
 To skip files, use the `exclude` array in your file group rather than a separate ignore type. The `GlobType` enum only has `Template` (0) and `Copy` (1) values.
-:::
+</Callout>
 
 ### Processing Order
 

@@ -3,7 +3,7 @@ title: Architecture
 description: CyanPrint system architecture and container communication
 ---
 
-import { Callout } from 'fumadocs-ui/components/callout';
+import { Steps, Step } from 'fumadocs-ui/components/steps';
 
 # Architecture Overview
 
@@ -71,11 +71,43 @@ CyanPrint uses a containerized architecture where each artifact runs in its own 
 
 ### Step-by-Step
 
-1. **Discovery** - CLI queries the registry for template metadata
-2. **Initialization** - Coordinator starts the template container
-3. **Collection** - Template collects user input and returns a Cyan config
-4. **Processing** - Processor transforms files using the config
-5. **Delivery** - Coordinator returns processed files to the CLI
+<Steps>
+<Step>
+
+### Discovery
+
+CLI queries the registry for template metadata
+
+</Step>
+<Step>
+
+### Initialization
+
+Coordinator starts the template container
+
+</Step>
+<Step>
+
+### Collection
+
+Template collects user input and returns a Cyan config
+
+</Step>
+<Step>
+
+### Processing
+
+Processor transforms files using the config
+
+</Step>
+<Step>
+
+### Delivery
+
+Coordinator returns processed files to the CLI
+
+</Step>
+</Steps>
 
 ## Container Communication
 

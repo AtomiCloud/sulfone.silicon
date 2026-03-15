@@ -12,13 +12,12 @@ import { Cards, Card } from 'fumadocs-ui/components/card';
 Resolvers are the third step in the template generation pipeline, after processors but before plugins.
 
 ## Pipeline Overview
-```mermaid
-graph LR
+<Mermaid chart={`graph LR
     A[Template<br/>User Input] --> B[Processor<br/>Transform Files]
     B --> C{Resolver<br/>Merge Conflicts}
     C --> D[Plugin<br/>Post-Process]
     D --> E[Final Output]
-```
+`} />
 
 ## Execution Order
 

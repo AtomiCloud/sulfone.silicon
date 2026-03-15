@@ -5,7 +5,7 @@ description: Entry point functions for starting resolvers
 
 import { Tabs, Tab } from 'fumadocs-ui/components/tabs';
 import { TypeTable } from 'fumadocs-ui/components/type-table';
-import { Callout } from 'fumadocs-ui/components/callout';
+import { Mermaid } from '@/components/mdx/mermaid';
 import { Cards, Card } from 'fumadocs-ui/components/card';
 
 # StartResolver Functions
@@ -105,11 +105,13 @@ The resolver server:
 
 ## Request/Response Flow
 
-```mermaid
+<Mermaid
+  chart="
 graph LR
     A[Template Engine] -->|/api/resolve| B[Resolver Logic]
     B -->|ResolverOutput| C[Template Engine]
-```
+"
+/>
 
 <Callout type="info">
 The SDK handles all HTTP server setup and routing automatically. You only need to implement the resolver logic function.

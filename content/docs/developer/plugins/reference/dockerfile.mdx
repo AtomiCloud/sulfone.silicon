@@ -3,15 +3,13 @@ title: Plugin Dockerfile
 description: Container configuration for CyanPrint plugins
 ---
 
-import { Callout } from 'fumadocs-ui/components/callout';
-
 # Plugin Dockerfile
 
 Every plugin runs in a Docker container. The Dockerfile defines the runtime environment.
 
 ## Basic Dockerfile
 
-```dockerfile
+```dockerfile -c
 FROM oven/bun:1.0.11
 
 WORKDIR /app
@@ -37,7 +35,7 @@ CMD ["bun", "run", "index.ts"]
 
 Use a Bun or Node.js base image:
 
-```dockerfile
+```dockerfile -c
 # Bun (recommended)
 FROM oven/bun:1.0.11
 
@@ -52,7 +50,7 @@ FROM oven/bun:1.0.11-alpine
 
 The `cyanprint.dev=true` label identifies the image as a CyanPrint component. The executor uses this label to filter and discover CyanPrint plugin images via the Docker API:
 
-```dockerfile
+```dockerfile -c
 LABEL cyanprint.dev=true
 ```
 
@@ -60,7 +58,7 @@ LABEL cyanprint.dev=true
 
 Set a consistent working directory:
 
-```dockerfile
+```dockerfile -c
 WORKDIR /app
 ```
 
@@ -68,7 +66,7 @@ WORKDIR /app
 
 Define how the plugin runs:
 
-```dockerfile
+```dockerfile -c
 # Using Bun
 CMD ["bun", "run", "index.ts"]
 
@@ -85,7 +83,7 @@ CMD ["npx", "tsx", "index.ts"]
 
 Multi-stage builds can reduce final image size by copying only the necessary artifacts:
 
-```dockerfile
+```dockerfile -c
 # Build stage
 FROM oven/bun:1.0.11 AS builder
 
@@ -121,7 +119,7 @@ Multi-stage builds add complexity. For most plugins, a simple single-stage build
 The `apt-get` command works with Debian-based images. For Alpine images, use `apk add` instead.
 </Callout>
 
-```dockerfile
+```dockerfile -c
 FROM oven/bun:1.0.11
 
 WORKDIR /app
@@ -144,7 +142,7 @@ CMD ["bun", "run", "index.ts"]
 
 ### Minimal Image
 
-```dockerfile
+```dockerfile -c
 FROM oven/bun:1.0.11-alpine
 
 WORKDIR /app
@@ -164,7 +162,7 @@ CMD ["bun", "run", "index.ts"]
 
 Create a `.dockerignore` file to exclude unnecessary files. Here is a comprehensive template:
 
-```text
+```text -c
 # Dependencies (must include to exclude)
 node_modules
 
@@ -214,7 +212,7 @@ Keep images small for faster pulls. Plugins are downloaded on every generation. 
 
 Pass environment variables to the plugin:
 
-```dockerfile
+```dockerfile -c
 FROM oven/bun:1.0.11
 
 WORKDIR /app
@@ -237,7 +235,7 @@ CMD ["bun", "run", "index.ts"]
 
 Plugins communicate on port 5552 and serve the `POST /api/plug` endpoint:
 
-```dockerfile
+```dockerfile -c
 # Expose plugin port (informational)
 EXPOSE 5552
 ```

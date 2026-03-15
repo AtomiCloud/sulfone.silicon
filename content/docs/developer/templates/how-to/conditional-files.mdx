@@ -11,7 +11,7 @@ Include or exclude files based on user input for customizable templates.
 
 Use conditional logic to add file groups:
 
-```ts
+```ts -c
 const files = [];
 
 // Always include base files
@@ -39,7 +39,7 @@ return {
 
 ## Complete Example
 
-```ts
+```ts -c
 import { StartTemplateWithLambda, GlobType } from '@atomicloud/cyan-sdk';
 
 StartTemplateWithLambda(async (i, d) => {
@@ -154,7 +154,7 @@ cyan/templates/
 
 Clean syntax for conditional additions. Use array spread for a functional style, or the `push` method shown earlier for an imperative approach:
 
-```ts
+```ts -c
 const files = [
   // Base files
   { root: 'templates/base', glob: '**/*', exclude: [], type: GlobType.Template },
@@ -178,7 +178,7 @@ const files = [
 
 Conditionally exclude files. This is an alternative approach to adding separate file groups — instead of including different directories, you include everything and exclude unwanted files:
 
-```ts
+```ts -c
 const exclude = [];
 
 if (!typescript) {

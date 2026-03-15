@@ -4,7 +4,6 @@ description: How to pin determinism for reproducible template generation
 ---
 
 import { Callout } from 'fumadocs-ui/components/callout';
-import { Steps } from 'fumadocs-ui/components/steps';
 
 # How to Pin Determinism
 
@@ -110,11 +109,23 @@ const id = d.seq('id');
 
 ## Update Workflow
 
-<Steps>
-1. **Initial generation** - Pin is created and stored
-2. **Template update** - Pin is reused
-3. **Deterministic values** - Same values generated
-</Steps>
+<div className="fd-steps">
+<div className="fd-step">
+
+**Initial generation** - Pin is created and stored
+
+</div>
+<div className="fd-step">
+
+**Template update** - Pin is reused
+
+</div>
+<div className="fd-step">
+
+**Deterministic values** - Same values generated
+
+</div>
+</div>
 
 <Mermaid chart={`graph LR
     A[Template v1.0] --> B[Generate Project]

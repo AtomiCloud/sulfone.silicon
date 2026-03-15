@@ -48,10 +48,18 @@ StartProcessorWithLambda(async (input, fileHelper) => {
 
 ## VirtualFileStream Properties
 
-| Property | Type | Description |
-|----------|------|-------------|
-| `reader` | `fs.ReadStream` | Node.js read stream for input |
-| `writer` | `fs.WriteStream` | Node.js write stream for output |
+<TypeTable
+  type={{
+    reader: {
+      type: 'fs.ReadStream',
+      description: 'Node.js read stream for input',
+    },
+    writer: {
+      type: 'fs.WriteStream',
+      description: 'Node.js write stream for output',
+    },
+  }}
+/>
 
 <Callout type="info">
 VirtualFileStream exposes raw Node.js streams. Use standard Node.js stream APIs to read from `reader` and write to `writer`.
@@ -59,7 +67,7 @@ VirtualFileStream exposes raw Node.js streams. Use standard Node.js stream APIs 
 
 ## Example: Line-by-Line Processing
 
-```ts
+```ts filename="processor.ts" -c
 StartProcessorWithLambda(async (input, fileHelper) => {
   const streams = fileHelper.readAsStream({ root: 'data', glob: '**/*.csv' });
 
@@ -89,7 +97,7 @@ StartProcessorWithLambda(async (input, fileHelper) => {
 
 ## Example: Binary File Processing
 
-```ts
+```ts filename="processor.ts" -c
 StartProcessorWithLambda(async (input, fileHelper) => {
   const streams = fileHelper.readAsStream({ root: 'images', glob: '**/*' });
 
@@ -117,7 +125,7 @@ StartProcessorWithLambda(async (input, fileHelper) => {
 
 ## Example: Transform While Streaming
 
-```ts
+```ts filename="processor.ts" -c
 import { Transform } from 'stream';
 
 StartProcessorWithLambda(async (input, fileHelper) => {
@@ -151,6 +159,14 @@ Streaming requires accumulating content before writing. For truly massive files 
 
 ## Related
 
-- [Resolve All Files](/docs/developer/processors/how-to/resolve-all-files) - Load all at once
-- [Copy Files](/docs/developer/processors/how-to/copy-files) - Copy without loading
-- [CyanFileHelper API](/docs/developer/processors/reference/sdk/file-helper) - Full API reference
+<Cards>
+  <Card href="/docs/developer/processors/how-to/resolve-all-files" title="Resolve All Files">
+    Load all at once
+  </Card>
+  <Card href="/docs/developer/processors/how-to/copy-files" title="Copy Files">
+    Copy without loading
+  </Card>
+  <Card href="/docs/developer/processors/reference/sdk/file-helper" title="CyanFileHelper API">
+    Full API reference
+  </Card>
+</Cards>

@@ -7,6 +7,7 @@ import { Files, File, Folder } from 'fumadocs-ui/components/files';
 import { Steps, Step } from 'fumadocs-ui/components/steps';
 import { Callout } from 'fumadocs-ui/components/callout';
 import { Cards, Card } from 'fumadocs-ui/components/card';
+import { Mermaid } from '@/components/mdx/mermaid';
 
 # 3-Way Merge
 
@@ -58,16 +59,41 @@ Each generation stores its base state:
 ### Update Process
 
 <Steps>
-  <Step>### Read base
-  Load original generated files</Step>
-  <Step>### Read ours
-  Load current project files</Step>
-  <Step>### Generate theirs
-  Run new template version</Step>
-  <Step>### Merge
-  Combine all three versions</Step>
-  <Step>### Report conflicts
-  Flag unresolved changes</Step>
+  <Step>
+
+  ### Read base
+
+  Load original generated files
+
+  </Step>
+  <Step>
+
+  ### Read ours
+
+  Load current project files
+
+  </Step>
+  <Step>
+
+  ### Generate theirs
+
+  Run new template version
+
+  </Step>
+  <Step>
+
+  ### Merge
+
+  Combine all three versions
+
+  </Step>
+  <Step>
+
+  ### Report conflicts
+
+  Flag unresolved changes
+
+  </Step>
 </Steps>
 
 ### Merge Algorithm

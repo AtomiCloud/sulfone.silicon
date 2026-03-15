@@ -5,7 +5,6 @@ description: How to use custom processors in your templates
 
 import { Callout } from 'fumadocs-ui/components/callout';
 import { Cards, Card } from 'fumadocs-ui/components/card';
-import { Steps, Step } from 'fumadocs-ui/components/steps';
 
 # How to Use a Custom Processor
 
@@ -26,7 +25,7 @@ Processors handle file transformation. The default processor (`cyan/default`) us
 
 Specify the processor name:
 
-```ts
+```ts -c
 return {
   processors: [
     {
@@ -46,7 +45,7 @@ return {
 
 Combine multiple processors for different file types:
 
-```ts
+```ts -c
 return {
   processors: [
     // Default processor for most files
@@ -78,7 +77,7 @@ return {
 
 Pass configuration to your processor:
 
-```ts
+```ts -c
 {
   name: 'myorg/custom-processor',
   files: [/* ... */],
@@ -111,7 +110,7 @@ See [Processor Development](/docs/developer/processors) for creating your own pr
 
 ## Example: Handlebars Processor
 
-```ts
+```ts -c
 return {
   processors: [{
     name: 'myorg/handlebars-processor',
@@ -146,7 +145,7 @@ Template file with Handlebars syntax:
 
 ## Example: Code Generation Processor
 
-```ts
+```ts -c
 return {
   processors: [{
     name: 'myorg/prisma-processor',

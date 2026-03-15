@@ -3,8 +3,6 @@ title: Why Processors Exist
 description: Understanding the purpose and use cases for custom processors
 ---
 
-import { Callout } from 'fumadocs-ui/components/callout';
-
 # Why Processors Exist
 
 Processors exist because different projects need different file transformation strategies. The default processor covers common cases, but custom processors enable specialized needs.
@@ -60,7 +58,8 @@ import { StartProcessorWithLambda, GlobType } from '@atomicloud/cyan-sdk';
 
 // GraphQL schema → TypeScript types (illustrative example)
 StartProcessorWithLambda(async (input, fileHelper) => {
-  const schemas = fileHelper.read({ // !mark Reads all GraphQL schema files from the 'schemas' directory
+  // !callout[/fileHelper.read/] Reads all GraphQL schema files from the 'schemas' directory
+  const schemas = fileHelper.read({
     root: 'schemas',
     glob: '**/*.graphql',
     exclude: [],
@@ -70,7 +69,8 @@ StartProcessorWithLambda(async (input, fileHelper) => {
   for (const schema of schemas) {
     // generateTypeScript is a user-defined function
     const types = generateTypeScript(schema.content);
-    schema.relative = schema.relative.replace('.graphql', '.generated.ts'); // !mark Changes output file extension
+    // !callout[/\.generated\.ts/] Changes output file extension
+    schema.relative = schema.relative.replace('.graphql', '.generated.ts');
     schema.content = types;
     schema.writeFile();
   }
@@ -95,9 +95,11 @@ StartProcessorWithLambda(async (input, fileHelper) => {
 
   for (const file of files) {
     // parseTypeScript, addDeprecationComments, printTypeScript are user-defined
-    const ast = parseTypeScript(file.content); // !mark Parse source to AST
+    // !callout[/parseTypeScript/] Parse source to AST
+    const ast = parseTypeScript(file.content);
     addDeprecationComments(ast);
-    file.content = printTypeScript(ast); // !mark Convert AST back to code
+    // !callout[/printTypeScript/] Convert AST back to code
+    file.content = printTypeScript(ast);
     file.writeFile();
   }
 
@@ -113,7 +115,8 @@ import { StartProcessorWithLambda } from '@atomicloud/cyan-sdk';
 // Process based on config (illustrative example)
 StartProcessorWithLambda(async (input, fileHelper) => {
   const config = input.config as { env: 'dev' | 'prod' };
-  const files = fileHelper.resolveAll(); // !mark Copies Copy-type files, then returns Template-type files
+  // !callout[/resolveAll/] Copies Copy-type files, then returns Template-type files
+  const files = fileHelper.resolveAll();
 
   for (const file of files) {
     if (config.env === 'prod') {
@@ -147,7 +150,8 @@ import { GlobType } from '@atomicloud/cyan-sdk';
 
 // In template configuration - this is part of a template's return statement
 return {
-  processors: [ // !mark Array of processor stages, executed in order
+  // !callout[/processors/] Array of processor stages, executed in order
+  processors: [
     // Stage 1: Preprocess
     {
       name: 'custom/preprocessor',

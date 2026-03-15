@@ -4,6 +4,8 @@ description: Load all files into memory with full content
 ---
 
 import { Callout } from 'fumadocs-ui/components/callout';
+import { TypeTable } from 'fumadocs-ui/components/type-table';
+import { Cards, Card } from 'fumadocs-ui/components/card';
 
 # Resolve All Files
 
@@ -22,7 +24,7 @@ Use `resolveAll()` to load all files matching the processor's globs into memory.
 
 ## Usage
 
-```ts -c
+```ts filename="processor.ts" -c
 import { StartProcessorWithLambda } from '@atomicloud/cyan-sdk';
 
 StartProcessorWithLambda(async (input, fileHelper) => {
@@ -46,14 +48,34 @@ StartProcessorWithLambda(async (input, fileHelper) => {
 
 ## VirtualFile Properties
 
-| Property | Type | Description |
-|----------|------|-------------|
-| `content` | `string` | Full file contents |
-| `relative` | `string` | Path relative to read directory |
-| `baseRead` | `string` | Base read directory path |
-| `baseWrite` | `string` | Base write directory path |
-| `read` | `string` | Full read path (getter: baseRead + relative) |
-| `write` | `string` | Full write path (getter: baseWrite + relative) |
+<TypeTable
+  type={{
+    content: {
+      type: 'string',
+      description: 'Full file contents',
+    },
+    relative: {
+      type: 'string',
+      description: 'Path relative to read directory',
+    },
+    baseRead: {
+      type: 'string',
+      description: 'Base read directory path',
+    },
+    baseWrite: {
+      type: 'string',
+      description: 'Base write directory path',
+    },
+    read: {
+      type: 'string',
+      description: 'Full read path (getter: baseRead + relative)',
+    },
+    write: {
+      type: 'string',
+      description: 'Full write path (getter: baseWrite + relative)',
+    },
+  }}
+/>
 
 ## VirtualFile Methods
 
@@ -63,7 +85,7 @@ StartProcessorWithLambda(async (input, fileHelper) => {
 
 ## Example: Variable Substitution
 
-```ts -c
+```ts filename="processor.ts" -c
 StartProcessorWithLambda(async (input, fileHelper) => {
   const files = fileHelper.resolveAll();
   const config = input.config as { vars: Record<string, string> };
@@ -82,7 +104,7 @@ StartProcessorWithLambda(async (input, fileHelper) => {
 
 ## Example: Filter and Transform
 
-```ts -c
+```ts filename="processor.ts" -c
 StartProcessorWithLambda(async (input, fileHelper) => {
   const files = fileHelper.resolveAll();
 
@@ -106,6 +128,14 @@ StartProcessorWithLambda(async (input, fileHelper) => {
 
 ## Related
 
-- [Lazy Load Files](/docs/developer/processors/how-to/lazy-load-files) - Load files on demand
-- [Stream Large Files](/docs/developer/processors/how-to/stream-large-files) - Memory-efficient streaming
-- [CyanFileHelper API](/docs/developer/processors/reference/sdk/file-helper) - Full API reference
+<Cards>
+  <Card href="/docs/developer/processors/how-to/lazy-load-files" title="Lazy Load Files">
+    Load files on demand
+  </Card>
+  <Card href="/docs/developer/processors/how-to/stream-large-files" title="Stream Large Files">
+    Memory-efficient streaming
+  </Card>
+  <Card href="/docs/developer/processors/reference/sdk/file-helper" title="CyanFileHelper API">
+    Full API reference
+  </Card>
+</Cards>

@@ -4,6 +4,7 @@ description: Copy files without loading into memory
 ---
 
 import { Callout } from 'fumadocs-ui/components/callout';
+import { Tabs, Tab } from 'fumadocs-ui/components/tabs';
 
 # Copy Files Directly
 
@@ -22,6 +23,9 @@ Use `copy()` to transfer files from input to output without loading or transform
 </Callout>
 
 ## Usage
+
+<Tabs items={['TypeScript', 'Python', 'C#']}>
+<Tab value="TypeScript">
 
 ```ts filename="processor.ts" -c
 import { StartProcessorWithLambda } from '@atomicloud/cyan-sdk';
@@ -45,7 +49,69 @@ StartProcessorWithLambda(async (input, fileHelper) => {
 });
 ```
 
+</Tab>
+<Tab value="Python">
+
+```python filename="processor.py" -c
+from cyanprintsdk import start_processor_with_fn
+from cyanprintsdk.domain.processor.input import ProcessorInput
+from cyanprintsdk.domain.core.fs.cyan_fs_helper import CyanFileHelper
+
+async def my_processor(input: ProcessorInput, fileHelper: CyanFileHelper):
+    # Process text files that need transformation
+    text_files = fileHelper.read(root='templates', glob='**/*.md')
+
+    for file in text_files:
+        file.content = process_content(file.content)
+        file.write_file()
+
+    # Copy static assets directly - no loading needed
+    fileHelper.copy(root='static', glob='**/*')
+
+    # Copy images without loading
+    fileHelper.copy(root='assets', glob='**/*.{png,jpg,svg}')
+
+    return {'directory': input.write_directory}
+
+start_processor_with_fn(my_processor)
+```
+
+</Tab>
+<Tab value="C#">
+
+```csharp filename="Processor.cs" -c
+using sulfone_helium;
+using sulfone_helium.Domain.Core.FileSystem;
+using sulfone_helium.Domain.Processor;
+
+CyanEngine.StartProcessor(args, async (input, fileHelper) =>
+{
+    // Process text files that need transformation
+    var textFiles = fileHelper.Read(root: "templates", glob: "**/*.md");
+
+    foreach (var file in textFiles)
+    {
+        file.Content = ProcessContent(file.Content);
+        file.WriteFile();
+    }
+
+    // Copy static assets directly - no loading needed
+    fileHelper.Copy(root: "static", glob: "**/*");
+
+    // Copy images without loading
+    fileHelper.Copy(root: "assets", glob: "**/*.{png,jpg,svg}");
+
+    return new ProcessorOutput { Directory = input.WriteDirectory };
+});
+```
+
+</Tab>
+</Tabs>
+
 ## Copy with Glob Patterns
+
+<Tabs items={['TypeScript', 'Python', 'C#']}>
+<Tab value="TypeScript">
 
 ```ts filename="processor.ts" -c
 StartProcessorWithLambda(async (input, fileHelper) => {
@@ -66,9 +132,69 @@ StartProcessorWithLambda(async (input, fileHelper) => {
 });
 ```
 
+</Tab>
+<Tab value="Python">
+
+```python filename="processor.py" -c
+from cyanprintsdk import start_processor_with_fn
+from cyanprintsdk.domain.processor.input import ProcessorInput
+from cyanprintsdk.domain.core.fs.cyan_fs_helper import CyanFileHelper
+
+async def my_processor(input: ProcessorInput, fileHelper: CyanFileHelper):
+    # Copy specific file types
+    fileHelper.copy(root='fonts', glob='**/*.{woff,woff2,ttf}')
+
+    # Copy entire directory
+    fileHelper.copy(root='public', glob='**/*')
+
+    # Copy with exclusions
+    fileHelper.copy(
+        root='media',
+        glob='**/*',
+        exclude=['**/*.tmp', '**/*.bak']
+    )
+
+    return {'directory': input.write_directory}
+
+start_processor_with_fn(my_processor)
+```
+
+</Tab>
+<Tab value="C#">
+
+```csharp filename="Processor.cs" -c
+using sulfone_helium;
+using sulfone_helium.Domain.Core.FileSystem;
+using sulfone_helium.Domain.Processor;
+
+CyanEngine.StartProcessor(args, async (input, fileHelper) =>
+{
+    // Copy specific file types
+    fileHelper.Copy(root: "fonts", glob: "**/*.{woff,woff2,ttf}");
+
+    // Copy entire directory
+    fileHelper.Copy(root: "public", glob: "**/*");
+
+    // Copy with exclusions
+    fileHelper.Copy(
+        root: "media",
+        glob: "**/*",
+        exclude: new[] { "**/*.tmp", "**/*.bak" }
+    );
+
+    return new ProcessorOutput { Directory = input.WriteDirectory };
+});
+```
+
+</Tab>
+</Tabs>
+
 ## Example: Mixed Processing
 
 Combine processing and copying in the same processor:
+
+<Tabs items={['TypeScript', 'Python', 'C#']}>
+<Tab value="TypeScript">
 
 ```ts filename="processor.ts" -c
 interface ProcessorConfig {
@@ -98,7 +224,88 @@ StartProcessorWithLambda(async (input, fileHelper) => {
 });
 ```
 
+</Tab>
+<Tab value="Python">
+
+```python filename="processor.py" -c
+from cyanprintsdk import start_processor_with_fn
+from cyanprintsdk.domain.processor.input import ProcessorInput
+from cyanprintsdk.domain.core.fs.cyan_fs_helper import CyanFileHelper
+from typing import TypedDict
+
+class ProcessorConfig(TypedDict, total=False):
+    transformDocs: bool
+
+async def my_processor(input: ProcessorInput, fileHelper: CyanFileHelper):
+    config: ProcessorConfig = input.config or {}
+
+    if config.get('transformDocs'):
+        # Process documentation files
+        docs = fileHelper.read(root='docs', glob='**/*.md')
+        for file in docs:
+            file.content = add_table_of_contents(file.content)
+            file.write_file()
+    else:
+        # Copy docs unchanged
+        fileHelper.copy(root='docs', glob='**/*.md')
+
+    # Always copy these without processing
+    fileHelper.copy(root='images', glob='**/*')
+    fileHelper.copy(root='styles', glob='**/*.css')
+
+    return {'directory': input.write_directory}
+
+start_processor_with_fn(my_processor)
+```
+
+</Tab>
+<Tab value="C#">
+
+```csharp filename="Processor.cs" -c
+using sulfone_helium;
+using sulfone_helium.Domain.Core.FileSystem;
+using sulfone_helium.Domain.Processor;
+
+public class ProcessorConfig
+{
+    public bool TransformDocs { get; set; }
+}
+
+CyanEngine.StartProcessor(args, async (input, fileHelper) =>
+{
+    var config = input.Config.Deserialize<ProcessorConfig>();
+
+    if (config.TransformDocs)
+    {
+        // Process documentation files
+        var docs = fileHelper.Read(root: "docs", glob: "**/*.md");
+        foreach (var file in docs)
+        {
+            file.Content = AddTableOfContents(file.Content);
+            file.WriteFile();
+        }
+    }
+    else
+    {
+        // Copy docs unchanged
+        fileHelper.Copy(root: "docs", glob: "**/*.md");
+    }
+
+    // Always copy these without processing
+    fileHelper.Copy(root: "images", glob: "**/*");
+    fileHelper.Copy(root: "styles", glob: "**/*.css");
+
+    return new ProcessorOutput { Directory = input.WriteDirectory };
+});
+```
+
+</Tab>
+</Tabs>
+
 ## Example: Binary Assets
+
+<Tabs items={['TypeScript', 'Python', 'C#']}>
+<Tab value="TypeScript">
 
 ```ts filename="processor.ts" -c
 StartProcessorWithLambda(async (input, fileHelper) => {
@@ -118,6 +325,65 @@ StartProcessorWithLambda(async (input, fileHelper) => {
   return { directory: input.writeDir };
 });
 ```
+
+</Tab>
+<Tab value="Python">
+
+```python filename="processor.py" -c
+import json
+from cyanprintsdk import start_processor_with_fn
+from cyanprintsdk.domain.processor.input import ProcessorInput
+from cyanprintsdk.domain.core.fs.cyan_fs_helper import CyanFileHelper
+
+async def my_processor(input: ProcessorInput, fileHelper: CyanFileHelper):
+    # Process configuration files
+    configs = fileHelper.read(root='config', glob='**/*.{json,yaml}')
+    for file in configs:
+        data = json.loads(file.content)
+        apply_defaults(data)
+        file.content = json.dumps(data, indent=2)
+        file.write_file()
+
+    # Copy all binaries without touching them
+    fileHelper.copy(root='binaries', glob='**/*')
+    fileHelper.copy(root='node_modules', glob='**/*')
+
+    return {'directory': input.write_directory}
+
+start_processor_with_fn(my_processor)
+```
+
+</Tab>
+<Tab value="C#">
+
+```csharp filename="Processor.cs" -c
+using System.Text.Json;
+using sulfone_helium;
+using sulfone_helium.Domain.Core.FileSystem;
+using sulfone_helium.Domain.Processor;
+
+CyanEngine.StartProcessor(args, async (input, fileHelper) =>
+{
+    // Process configuration files
+    var configs = fileHelper.Read(root: "config", glob: "**/*.{json,yaml}");
+    foreach (var file in configs)
+    {
+        var data = JsonSerializer.Deserialize<Dictionary<string, object>>(file.Content);
+        ApplyDefaults(data);
+        file.Content = JsonSerializer.Serialize(data, new JsonSerializerOptions { WriteIndented = true });
+        file.WriteFile();
+    }
+
+    // Copy all binaries without touching them
+    fileHelper.Copy(root: "binaries", glob: "**/*");
+    fileHelper.Copy(root: "node_modules", glob: "**/*");
+
+    return new ProcessorOutput { Directory = input.WriteDirectory };
+});
+```
+
+</Tab>
+</Tabs>
 
 ## Performance Comparison
 

@@ -3,7 +3,8 @@ title: Test Templates Locally
 description: Test your template during development without publishing
 ---
 
-import { Steps } from 'fumadocs-ui/components/steps';
+import { Steps, Step } from 'fumadocs-ui/components/steps';
+import { Tabs, Tab } from 'fumadocs-ui/components/tabs';
 import { Callout } from 'fumadocs-ui/components/callout';
 import { Files, File, Folder } from 'fumadocs-ui/components/files';
 
@@ -13,7 +14,7 @@ The `try` command lets you test templates during development without publishing 
 
 ## Basic Usage
 
-```bash -c
+```bash
 cyanprint try template <template_path> <output_path>
 ```
 
@@ -25,6 +26,7 @@ cyanprint try template <template_path> <output_path>
 ## Quick Start
 
 <Steps>
+<Step>
 
 ### Create Template Directory
 
@@ -40,9 +42,12 @@ cyanprint try template <template_path> <output_path>
   </Folder>
 </Files>
 
+</Step>
+<Step>
+
 ### Run Try Command
 
-```bash -c
+```bash
 cyanprint try template . ./output
 ```
 
@@ -53,12 +58,16 @@ This command will:
 3. Prompt for template questions
 4. Generate the project
 
+</Step>
+<Step>
+
 ### Check Output
 
-```bash -c
+```bash
 ls ./output
 ```
 
+</Step>
 </Steps>
 
 ## How It Works
@@ -84,7 +93,7 @@ The try command builds images automatically—you don't need to run `docker buil
 
 Preserve containers after execution for debugging:
 
-```bash -c
+```bash
 cyanprint try template . ./output --keep-containers
 ```
 
@@ -97,7 +106,7 @@ Useful when:
 
 Use an already-running coordinator:
 
-```bash -c
+```bash
 cyanprint try template . ./output --disable-daemon-autostart
 ```
 
@@ -105,7 +114,7 @@ cyanprint try template . ./output --disable-daemon-autostart
 
 Connect to a different coordinator endpoint:
 
-```bash -c
+```bash
 cyanprint try template . ./output -c http://coordinator.example.com:9000
 ```
 
@@ -118,7 +127,7 @@ cyanprint try template . ./output -c http://coordinator.example.com:9000
 3. **Review** generated files in `./output`
 4. **Iterate** by modifying code and re-running
 
-```bash -c
+```bash
 # After making changes
 rm -rf ./output
 cyanprint try template . ./output
@@ -132,19 +141,56 @@ For hot-reloading during development, see [Dev Mode](/docs/developer/templates/h
 
 Create multiple output directories to test different configurations:
 
-```bash -c
+<Tabs items={['TypeScript', 'Python', 'C#']}>
+<Tab value="TypeScript">
+
+Test with TypeScript configuration:
+
+```bash
 # Test with TypeScript configuration
 cyanprint try template . ./output-ts
 
-# Test with different answers
-cyanprint try template . ./output-python
+# Review TypeScript output
+ls ./output-ts
+cat ./output-ts/package.json
 ```
+
+</Tab>
+<Tab value="Python">
+
+Test with Python configuration:
+
+```bash
+# Test with Python configuration
+cyanprint try template . ./output-python
+
+# Review Python output
+ls ./output-python
+cat ./output-python/pyproject.toml
+```
+
+</Tab>
+<Tab value="C#">
+
+Test with C# configuration:
+
+```bash
+# Test with C# configuration
+cyanprint try template . ./output-csharp
+
+# Review C# output
+ls ./output-csharp
+cat ./output-csharp/Project.csproj
+```
+
+</Tab>
+</Tabs>
 
 ## Trying Group Templates
 
 Group templates (meta-templates) combine multiple published templates:
 
-```bash -c
+```bash
 cyanprint try group <group_path> <output_path>
 ```
 

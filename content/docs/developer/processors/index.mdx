@@ -4,6 +4,7 @@ description: Create custom file transformers for CyanPrint templates
 ---
 
 import { Cards, Card } from 'fumadocs-ui/components/card';
+import { Tabs, Tab } from 'fumadocs-ui/components/tabs';
 
 # Processor Development
 
@@ -92,6 +93,9 @@ Processors should be pure functions - same input always produces same output. Th
 
 Here's a minimal processor that uppercases all file content:
 
+<Tabs items={['TypeScript', 'Python', 'C#']}>
+  <Tab value="TypeScript">
+
 ```ts index.ts -c
 import { StartProcessorWithLambda } from '@atomicloud/cyan-sdk';
 
@@ -106,6 +110,52 @@ StartProcessorWithLambda(async (input, fileHelper) => {
   return { directory: input.writeDir };
 });
 ```
+
+  </Tab>
+  <Tab value="Python">
+
+```python main.py -c
+from cyanprintsdk.processor import start_processor_with_fn
+from cyanprintsdk.protocol import ProcessorInput, ProcessorOutput
+
+async def processor(input: ProcessorInput, file_helper) -> ProcessorOutput:
+    files = file_helper.resolve_all()
+
+    for file in files:
+        file.content = file.content.upper()
+        file.write_file()
+
+    return ProcessorOutput(directory=input.write_dir)
+
+processor_main = start_processor_with_fn(processor)
+```
+
+  </Tab>
+  <Tab value="C#">
+
+```csharp Processor.cs -c
+using CyanPrintSDK;
+
+public static class Processor
+{
+    [ProcessorMain]
+    public static async Task<ProcessorOutput> Run(ProcessorInput input, CyanFileHelper fileHelper)
+    {
+        var files = fileHelper.ResolveAll();
+
+        foreach (var file in files)
+        {
+            file.Content = file.Content.ToUpper();
+            file.WriteFile();
+        }
+
+        return new ProcessorOutput { Directory = input.WriteDir };
+    }
+}
+```
+
+  </Tab>
+</Tabs>
 
 ## Next Steps
 

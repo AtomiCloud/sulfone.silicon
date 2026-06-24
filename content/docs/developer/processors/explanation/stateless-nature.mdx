@@ -4,6 +4,7 @@ description: Understanding why processors are stateless and what that means
 ---
 
 import { Callout } from 'fumadocs-ui/components/callout';
+import { Tabs, Tab } from 'fumadocs-ui/components/tabs';
 
 # Stateless Nature
 
@@ -33,7 +34,7 @@ output = processor(input, fileHelper)
 
 Processors should not:
 
-| ❌ Don't Do | ✅ Do Instead |
+| Don't Do | Do Instead |
 |------------|--------------|
 | Write to external databases | Return all data in output |
 | Make network requests | Use config for external data |
@@ -79,50 +80,161 @@ Stateless processors can be:
 
 ### What You CAN Do
 
-```ts -c
-import { StartProcessorWithLambda } from '@atomicloud/cyan-sdk';
+<Tabs items={['TypeScript', 'Python', 'C#']}>
+  <Tab value="TypeScript">
+    ```ts -c
+    import { StartProcessorWithLambda } from '@atomicloud/cyan-sdk';
 
-StartProcessorWithLambda(async (input, fileHelper) => {
-  // ✅ Read files through fileHelper
-  const files = fileHelper.resolveAll();
+    StartProcessorWithLambda(async (input, fileHelper) => {
+      // ✅ Read files through fileHelper
+      const files = fileHelper.resolveAll();
 
-  // ✅ Transform content (example transformation)
-  files.forEach(file => {
-    file.content = file.content.toUpperCase(); // or any transform
-  });
+      // ✅ Transform content (example transformation)
+      files.forEach(file => {
+        file.content = file.content.toUpperCase(); // or any transform
+      });
 
-  // ✅ Use config from template
-  const config = input.config as MyConfig;
+      // ✅ Use config from template
+      const config = input.config as MyConfig;
 
-  // ✅ Write output files
-  files.forEach(file => file.writeFile());
+      // ✅ Write output files
+      files.forEach(file => file.writeFile());
 
-  return { directory: input.writeDir };
-});
-```
+      return { directory: input.writeDir };
+    });
+    ```
+  </Tab>
+
+  <Tab value="Python">
+    ```python -c
+    from atomicloud_cyan_sdk import start_processor_with_fn
+
+    def start_processor_with_fn(input, file_helper):
+        # ✅ Read files through file_helper
+        files = file_helper.resolve_all()
+
+        # ✅ Transform content (example transformation)
+        for file in files:
+            file.content = file.content.upper()  # or any transform
+
+        # ✅ Use config from template
+        config = input.config  # type: MyConfig
+
+        # ✅ Write output files
+        for file in files:
+            file.write_file()
+
+        return {'directory': input.write_dir}
+    ```
+  </Tab>
+
+  <Tab value="C#">
+    ```csharp -c
+    using Atomicloud.CyanSdk;
+
+    [ProcessorMain]
+    public async Task<ProcessorResult> RunAsync(ProcessorInput input, CyanFileHelper fileHelper)
+    {
+        // ✅ Read files through fileHelper
+        var files = fileHelper.ResolveAll();
+
+        // ✅ Transform content (example transformation)
+        foreach (var file in files)
+        {
+            file.Content = file.Content.ToUpper(); // or any transform
+        }
+
+        // ✅ Use config from template
+        var config = input.Config as MyConfig;
+
+        // ✅ Write output files
+        foreach (var file in files)
+        {
+            file.WriteFile();
+        }
+
+        return new ProcessorResult { Directory = input.WriteDir };
+    }
+    ```
+  </Tab>
+</Tabs>
 
 ### What You CAN'T Do
 
-```ts -c
-import { StartProcessorWithLambda } from '@atomicloud/cyan-sdk';
+<Tabs items={['TypeScript', 'Python', 'C#']}>
+  <Tab value="TypeScript">
+    ```ts -c
+    import { StartProcessorWithLambda } from '@atomicloud/cyan-sdk';
 
-StartProcessorWithLambda(async (input, fileHelper) => {
-  // ❌ Don't access filesystem directly
-  // fs.readFileSync('/etc/passwd')
+    StartProcessorWithLambda(async (input, fileHelper) => {
+      // ❌ Don't access filesystem directly
+      // fs.readFileSync('/etc/passwd')
 
-  // ❌ Don't make network calls
-  // await fetch('https://api.example.com/data')
+      // ❌ Don't make network calls
+      // await fetch('https://api.example.com/data')
 
-  // ❌ Don't write outside output directory
-  // fs.writeFileSync('/tmp/cache', data)
+      // ❌ Don't write outside output directory
+      // fs.writeFileSync('/tmp/cache', data)
 
-  // ❌ Don't use global state
-  // globalCache.set('key', value)
+      // ❌ Don't use global state
+      // globalCache.set('key', value)
 
-  // ❌ Don't access environment for secrets
-  // process.env.DATABASE_URL
-});
-```
+      // ❌ Don't access environment for secrets
+      // process.env.DATABASE_URL
+    });
+    ```
+  </Tab>
+
+  <Tab value="Python">
+    ```python -c
+    from atomicloud_cyan_sdk import start_processor_with_fn
+
+    def start_processor_with_fn(input, file_helper):
+        # ❌ Don't access filesystem directly
+        # open('/etc/passwd').read()
+
+        # ❌ Don't make network calls
+        # requests.get('https://api.example.com/data')
+
+        # ❌ Don't write outside output directory
+        # open('/tmp/cache', 'w').write(data)
+
+        # ❌ Don't use global state
+        # global_cache['key'] = value
+
+        # ❌ Don't access environment for secrets
+        # os.environ['DATABASE_URL']
+        pass
+    ```
+  </Tab>
+
+  <Tab value="C#">
+    ```csharp -c
+    using Atomicloud.CyanSdk;
+
+    [ProcessorMain]
+    public async Task<ProcessorResult> RunAsync(ProcessorInput input, CyanFileHelper fileHelper)
+    {
+        // ❌ Don't access filesystem directly
+        // File.ReadAllText("/etc/passwd");
+
+        // ❌ Don't make network calls
+        // await httpClient.GetAsync("https://api.example.com/data");
+
+        // ❌ Don't write outside output directory
+        // File.WriteAllText("/tmp/cache", data);
+
+        // ❌ Don't use global state
+        // GlobalCache.Set("key", value);
+
+        // ❌ Don't access environment for secrets
+        // Environment.GetEnvironmentVariable("DATABASE_URL");
+
+        return new ProcessorResult { Directory = input.WriteDir };
+    }
+    ```
+  </Tab>
+</Tabs>
 
 <Callout type="warn">
 Processors that violate stateless principles may work in development but fail in production environments with stricter isolation.
@@ -134,90 +246,275 @@ Processors that violate stateless principles may work in development but fail in
 
 Instead of fetching data, have the template pass it:
 
-```ts -c
-// Template provides all needed data
-return {
-  processors: [{
-    name: 'myorg/my-processor',
-    files: [{ root: 'templates', glob: '**/*', exclude: [], type: GlobType.Template }],
-    config: {
-      // All data comes from config
-      apiUrl: 'https://api.example.com',
-      version: '1.0.0',
-      features: ['auth', 'api']
+<Tabs items={['TypeScript', 'Python', 'C#']}>
+  <Tab value="TypeScript">
+    ```ts -c
+    // Template provides all needed data
+    return {
+      processors: [{
+        name: 'myorg/my-processor',
+        files: [{ root: 'templates', glob: '**/*', exclude: [], type: GlobType.Template }],
+        config: {
+          // All data comes from config
+          apiUrl: 'https://api.example.com',
+          version: '1.0.0',
+          features: ['auth', 'api']
+        }
+      }]
+    };
+    ```
+  </Tab>
+
+  <Tab value="Python">
+    ```python -c
+    # Template provides all needed data
+    return {
+        'processors': [{
+            'name': 'myorg/my-processor',
+            'files': [{'root': 'templates', 'glob': '**/*', 'exclude': [], 'type': GlobType.Template}],
+            'config': {
+                # All data comes from config
+                'apiUrl': 'https://api.example.com',
+                'version': '1.0.0',
+                'features': ['auth', 'api']
+            }
+        }]
     }
-  }]
-};
-```
+    ```
+  </Tab>
+
+  <Tab value="C#">
+    ```csharp -c
+    // Template provides all needed data
+    return new TemplateResult
+    {
+        Processors = new[]
+        {
+            new ProcessorConfig
+            {
+                Name = "myorg/my-processor",
+                Files = new[] { new FileGlob { Root = "templates", Glob = "**/*", Exclude = Array.Empty<string>(), Type = GlobType.Template } },
+                Config = new
+                {
+                    // All data comes from config
+                    ApiUrl = "https://api.example.com",
+                    Version = "1.0.0",
+                    Features = new[] { "auth", "api" }
+                }
+            }
+        }
+    };
+    ```
+  </Tab>
+</Tabs>
 
 ### Avoid External Dependencies
 
-```ts -c
-// ❌ Bad: External dependency
-import { fetchUserData } from 'external-api';
+<Tabs items={['TypeScript', 'Python', 'C#']}>
+  <Tab value="TypeScript">
+    ```ts -c
+    // ❌ Bad: External dependency
+    import { fetchUserData } from 'external-api';
 
-// ✅ Good: Self-contained
-function transformContent(content: string, config: Config): string {
-  // Pure transformation
-  return content.replace(/{{name}}/g, config.name);
-}
-```
+    // ✅ Good: Self-contained
+    function transformContent(content: string, config: Config): string {
+      // Pure transformation
+      return content.replace(/{{name}}/g, config.name);
+    }
+    ```
+  </Tab>
+
+  <Tab value="Python">
+    ```python -c
+    # ❌ Bad: External dependency
+    from external_api import fetch_user_data
+
+    # ✅ Good: Self-contained
+    def transform_content(content: str, config: Config) -> str:
+        # Pure transformation
+        return content.replace('{{name}}', config.name)
+    ```
+  </Tab>
+
+  <Tab value="C#">
+    ```csharp -c
+    // ❌ Bad: External dependency
+    using ExternalApi;
+
+    // ✅ Good: Self-contained
+    public string TransformContent(string content, Config config)
+    {
+        // Pure transformation
+        return content.Replace("{{name}}", config.Name);
+    }
+    ```
+  </Tab>
+</Tabs>
 
 ### Use Deterministic Algorithms
 
-```ts -c
-// ❌ Bad: Non-deterministic
-file.content = content + Date.now();
+<Tabs items={['TypeScript', 'Python', 'C#']}>
+  <Tab value="TypeScript">
+    ```ts -c
+    // ❌ Bad: Non-deterministic
+    file.content = content + Date.now();
 
-// ✅ Good: Deterministic
-file.content = content + config.timestamp;
-```
+    // ✅ Good: Deterministic
+    file.content = content + config.timestamp;
+    ```
+  </Tab>
+
+  <Tab value="Python">
+    ```python -c
+    # ❌ Bad: Non-deterministic
+    file.content = content + str(time.time())
+
+    # ✅ Good: Deterministic
+    file.content = content + config.timestamp
+    ```
+  </Tab>
+
+  <Tab value="C#">
+    ```csharp -c
+    // ❌ Bad: Non-deterministic
+    file.Content = content + DateTime.Now;
+
+    // ✅ Good: Deterministic
+    file.Content = content + config.Timestamp;
+    ```
+  </Tab>
+</Tabs>
 
 ## Testing Stateless Processors
 
 Stateless processors are easy to test. Since they're pure functions of their inputs, you can test by providing mock inputs and verifying outputs:
 
-```ts -c
-import { StartProcessorWithLambda } from '@atomicloud/cyan-sdk';
+<Tabs items={['TypeScript', 'Python', 'C#']}>
+  <Tab value="TypeScript">
+    ```ts -c
+    import { StartProcessorWithLambda } from '@atomicloud/cyan-sdk';
 
-// Test helper to capture processor behavior
-async function runProcessorWithMocks(config: MyConfig, mockFiles: MockFile[]) {
-  const mockFileHelper = createMockFileHelper(mockFiles);
-  const mockInput = {
-    readDir: '/input',
-    writeDir: '/output',
-    globs: [],
-    config
-  };
+    // Test helper to capture processor behavior
+    async function runProcessorWithMocks(config: MyConfig, mockFiles: MockFile[]) {
+      const mockFileHelper = createMockFileHelper(mockFiles);
+      const mockInput = {
+        readDir: '/input',
+        writeDir: '/output',
+        globs: [],
+        config
+      };
 
-  // Execute processor with mocks
-  const processor = StartProcessorWithLambda(async (input, fileHelper) => {
-    const files = fileHelper.resolveAll();
-    files.forEach(file => {
-      file.content = file.content.replace(/{{name}}/g, (input.config as MyConfig).name);
-      file.writeFile();
+      // Execute processor with mocks
+      const processor = StartProcessorWithLambda(async (input, fileHelper) => {
+        const files = fileHelper.resolveAll();
+        files.forEach(file => {
+          file.content = file.content.replace(/{{name}}/g, (input.config as MyConfig).name);
+          file.writeFile();
+        });
+        return { directory: input.writeDir };
+      });
+
+      // Same input always produces same output
+      return processor(mockInput, mockFileHelper);
+    }
+
+    describe('my-processor', () => {
+      it('transforms content consistently', async () => {
+        const config = { name: 'World' };
+        const mockFiles = [{ path: 'test.txt', content: 'Hello {{name}}' }];
+
+        const result1 = await runProcessorWithMocks(config, mockFiles);
+        const result2 = await runProcessorWithMocks(config, mockFiles);
+
+        expect(result1.directory).toBe(result2.directory);
+        // Verify transformed content
+        expect(mockFiles[0].content).toBe('Hello World');
+      });
     });
-    return { directory: input.writeDir };
-  });
+    ```
+  </Tab>
 
-  // Same input always produces same output
-  return processor(mockInput, mockFileHelper);
-}
+  <Tab value="Python">
+    ```python -c
+    from atomicloud_cyan_sdk import start_processor_with_fn
+    import pytest
 
-describe('my-processor', () => {
-  it('transforms content consistently', async () => {
-    const config = { name: 'World' };
-    const mockFiles = [{ path: 'test.txt', content: 'Hello {{name}}' }];
+    # Test helper to capture processor behavior
+    async def run_processor_with_mocks(config: dict, mock_files: list):
+        mock_file_helper = create_mock_file_helper(mock_files)
+        mock_input = {
+            'read_dir': '/input',
+            'write_dir': '/output',
+            'globs': [],
+            'config': config
+        }
 
-    const result1 = await runProcessorWithMocks(config, mockFiles);
-    const result2 = await runProcessorWithMocks(config, mockFiles);
+        # Execute processor with mocks
+        def processor(input, file_helper):
+            files = file_helper.resolve_all()
+            for file in files:
+                file.content = file.content.replace('{{name}}', input.config['name'])
+                file.write_file()
+            return {'directory': input.write_dir}
 
-    expect(result1.directory).toBe(result2.directory);
-    // Verify transformed content
-    expect(mockFiles[0].content).toBe('Hello World');
-  });
-});
-```
+        # Same input always produces same output
+        return processor(mock_input, mock_file_helper)
+
+    class TestMyProcessor:
+        def test_transforms_content_consistently(self):
+            config = {'name': 'World'}
+            mock_files = [{'path': 'test.txt', 'content': 'Hello {{name}}'}]
+
+            result1 = run_processor_with_mocks(config, mock_files)
+            result2 = run_processor_with_mocks(config, mock_files)
+
+            assert result1['directory'] == result2['directory']
+            # Verify transformed content
+            assert mock_files[0]['content'] == 'Hello World'
+    ```
+  </Tab>
+
+  <Tab value="C#">
+    ```csharp -c
+    using Atomicloud.CyanSdk;
+    using Xunit;
+
+    // Test helper to capture processor behavior
+    public async Task<ProcessorResult> RunProcessorWithMocks(MyConfig config, List<MockFile> mockFiles)
+    {
+        var mockFileHelper = CreateMockFileHelper(mockFiles);
+        var mockInput = new ProcessorInput
+        {
+            ReadDir = "/input",
+            WriteDir = "/output",
+            Globs = Array.Empty<FileGlob>(),
+            Config = config
+        };
+
+        // Execute processor with mocks
+        // Same input always produces same output
+        return await new MyProcessor().RunAsync(mockInput, mockFileHelper);
+    }
+
+    public class MyProcessorTests
+    {
+        [Fact]
+        public async Task TransformsContentConsistently()
+        {
+            var config = new MyConfig { Name = "World" };
+            var mockFiles = new List<MockFile> { new MockFile { Path = "test.txt", Content = "Hello {{name}}" } };
+
+            var result1 = await RunProcessorWithMocks(config, mockFiles);
+            var result2 = await RunProcessorWithMocks(config, mockFiles);
+
+            Assert.Equal(result1.Directory, result2.Directory);
+            // Verify transformed content
+            Assert.Equal("Hello World", mockFiles[0].Content);
+        }
+    }
+    ```
+  </Tab>
+</Tabs>
 
 <Callout type="info">
 For integration testing, consider using the actual SDK with temporary directories to verify end-to-end behavior.
@@ -227,7 +524,7 @@ For integration testing, consider using the actual SDK with temporary directorie
 
 | Benefit | Description |
 |---------|-------------|
-| **Reproducibility** | Same input → same output |
+| **Reproducibility** | Same input -> same output |
 | **Testability** | Easy to unit test |
 | **Security** | Isolated execution |
 | **Scalability** | Parallel processing |

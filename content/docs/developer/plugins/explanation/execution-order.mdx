@@ -3,6 +3,8 @@ title: Execution Order
 description: Understanding the order of operations in the CyanPrint pipeline
 ---
 
+import { Tabs, Tab } from 'fumadocs-ui/components/tabs';
+
 # Execution Order
 
 Understanding the execution order helps you decide where to place your logic - in a processor or a plugin.
@@ -30,6 +32,9 @@ Processors execute **in parallel** (subject to parallelism limits), then their o
 2. Template asks questions via `IInquirer` and receives `IDeterminism` for deterministic behavior
 3. Template returns `Cyan` with processors and plugins
 
+<Tabs items={['TypeScript', 'Python', 'C#']}>
+  <Tab value="TypeScript">
+
 ```ts -c
 // Template index.ts - the template function signature
 import { IInquirer, IDeterminism } from '@atomicloud/cyan-sdk';
@@ -49,6 +54,66 @@ export default async function(i: IInquirer, d: IDeterminism) {
   };
 }
 ```
+
+  </Tab>
+  <Tab value="Python">
+
+```python -c
+# Template main.py - the template function signature
+from cyanprintsdk.main import start_template_with_fn
+from cyanprintsdk.protocol import IInquirer, IDeterminism, Cyan
+
+async def template(i: IInquirer, d: IDeterminism) -> Cyan:
+    return Cyan(
+        processors=[
+            CyanProcessor(
+                name='my-processor',
+                files=[/* CyanGlob configuration */],
+                config={/* processor-specific config */}
+            )
+        ],
+        plugins=[
+            CyanPlugin(name='my-plugin', config={/* plugin config */})
+        ]
+    )
+
+template_main = start_template_with_fn(template)
+```
+
+  </Tab>
+  <Tab value="C#">
+
+```csharp -c
+// Template.cs - the template function signature
+using CyanPrintSDK;
+
+public static class Template
+{
+    [TemplateMain]
+    public static async Task<Cyan> Run(IInquirer i, IDeterminism d)
+    {
+        return new Cyan
+        {
+            Processors = new[]
+            {
+                new CyanProcessor
+                {
+                    Name = "my-processor",
+                    Files = new List<CyanGlob> { /* CyanGlob configuration */ },
+                    Config = new Dictionary<string, object> { /* config */ }
+                }
+            },
+            Plugins = new[]
+            {
+                new CyanPlugin { Name = "my-plugin", Config = new Dictionary<string, object>() }
+            }
+        };
+    }
+}
+```
+
+  </Tab>
+</Tabs>
 
 ### Phase 2: Processing (Processors)
 
@@ -132,6 +197,9 @@ Plugins receive the **merged output** of all processors, not individual processo
 
 ## Example Pipeline
 
+<Tabs items={['TypeScript', 'Python', 'C#']}>
+  <Tab value="TypeScript">
+
 ```ts -c
 // Template configuration
 return {
@@ -153,6 +221,74 @@ return {
   ]
 };
 ```
+
+  </Tab>
+  <Tab value="Python">
+
+```python -c
+# Template configuration
+return Cyan(
+    processors=[
+        CyanProcessor(
+            name='cyan/default',
+            files=[CyanGlob(glob='**/*', exclude=['node_modules/**'])],
+            config={}
+        ),
+        CyanProcessor(
+            name='custom/formatter',
+            files=[
+                CyanGlob(glob='**/*.ts', exclude=[]),
+                CyanGlob(glob='**/*.tsx', exclude=[])
+            ],
+            config={'formatter': 'prettier'}
+        ),
+    ],
+    plugins=[
+        CyanPlugin(name='my-org/git-init', config={}),
+        CyanPlugin(name='my-org/npm-install', config={}),
+    ]
+)
+```
+
+  </Tab>
+  <Tab value="C#">
+
+```csharp -c
+// Template configuration
+return new Cyan
+{
+    Processors = new[]
+    {
+        new CyanProcessor
+        {
+            Name = "cyan/default",
+            Files = new List<CyanGlob>
+            {
+                new CyanGlob { Glob = "**/*", Exclude = new List<string> { "node_modules/**" } }
+            },
+            Config = new Dictionary<string, object>()
+        },
+        new CyanProcessor
+        {
+            Name = "custom/formatter",
+            Files = new List<CyanGlob>
+            {
+                new CyanGlob { Glob = "**/*.ts", Exclude = new List<string>() },
+                new CyanGlob { Glob = "**/*.tsx", Exclude = new List<string>() }
+            },
+            Config = new Dictionary<string, object> { ["formatter"] = "prettier" }
+        }
+    },
+    Plugins = new[]
+    {
+        new CyanPlugin { Name = "my-org/git-init", Config = new Dictionary<string, object>() },
+        new CyanPlugin { Name = "my-org/npm-install", Config = new Dictionary<string, object>() }
+    }
+};
+```
+
+  </Tab>
+</Tabs>
 
 <Mermaid chart={`graph TD
     A[Template Files] --> B[Processors Run in Parallel]

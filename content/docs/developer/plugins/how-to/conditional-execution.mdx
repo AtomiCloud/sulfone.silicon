@@ -4,6 +4,7 @@ description: Run plugin logic based on configuration
 ---
 
 import { Callout } from 'fumadocs-ui/components/callout';
+import { Tabs, Tab } from 'fumadocs-ui/components/tabs';
 
 # Conditional Execution
 
@@ -12,6 +13,9 @@ Run plugin logic based on configuration from the template. This allows templates
 ## Using Config
 
 The `config` property passed to plugins contains configuration defined in the template:
+
+<Tabs items={['TypeScript', 'Python', 'C#']}>
+<Tab value="TypeScript">
 
 ```ts plugin.ts -c
 import { StartPluginWithLambda } from '@atomicloud/cyan-sdk';
@@ -58,9 +62,119 @@ StartPluginWithLambda(async (input) => {
 });
 ```
 
+</Tab>
+<Tab value="Python">
+
+```py plugin.py -c
+from cyan_sdk import start_plugin_with_fn
+import subprocess
+import os
+
+def run_command(cmd, cwd=None):
+    subprocess.run(cmd, shell=True, cwd=cwd, check=True, capture_output=True)
+
+@start_plugin_with_fn
+def main(input_data):
+    directory = input_data["directory"]
+    config = input_data.get("config", {})
+
+    # Git initialization
+    if config.get("git"):
+        run_command("git init", cwd=directory)
+        run_command("git add .", cwd=directory)
+        run_command('git commit -m "Initial commit"', cwd=directory)
+
+    # Install dependencies
+    if config.get("install_deps"):
+        pm = config.get("package_manager", "npm")
+        run_command(f"{pm} install", cwd=directory)
+
+    # Run formatter
+    formatter = config.get("formatter")
+    if formatter == "prettier":
+        run_command("npx prettier --write .", cwd=directory)
+    elif formatter == "biome":
+        run_command("npx biome format --write .", cwd=directory)
+
+    # Run build
+    if config.get("run_build"):
+        run_command("npm run build --if-present", cwd=directory)
+
+    return {"directory": directory}
+```
+
+</Tab>
+<Tab value="C#">
+
+```csharp Plugin.cs -c
+using CyanSdk;
+using System.Diagnostics;
+
+[PluginMain]
+public static class Plugin
+{
+    public static async Task<PluginOutput> Main(PluginInput input)
+    {
+        var directory = input.Directory;
+        var cfg = input.Config;
+
+        // Git initialization
+        if (cfg.TryGetValue("git", out var git) && (bool)git)
+        {
+            RunCommand($"git -C {directory} init");
+            RunCommand($"git -C {directory} add .");
+            RunCommand($"git -C {directory} commit -m \"Initial commit\"");
+        }
+
+        // Install dependencies
+        if (cfg.TryGetValue("installDeps", out var installDeps) && (bool)installDeps)
+        {
+            var pm = cfg.TryGetValue("packageManager", out var pmValue) ? pmValue.ToString() : "npm";
+            RunCommand($"cd {directory} && {pm} install");
+        }
+
+        // Run formatter
+        if (cfg.TryGetValue("formatter", out var formatter))
+        {
+            if (formatter.ToString() == "prettier")
+                RunCommand($"cd {directory} && npx prettier --write .");
+            else if (formatter.ToString() == "biome")
+                RunCommand($"cd {directory} && npx biome format --write .");
+        }
+
+        // Run build
+        if (cfg.TryGetValue("runBuild", out var runBuild) && (bool)runBuild)
+        {
+            RunCommand($"cd {directory} && npm run build --if-present");
+        }
+
+        return new PluginOutput { Directory = directory };
+    }
+
+    private static void RunCommand(string command)
+    {
+        var parts = command.Split(' ');
+        var process = Process.Start(new ProcessStartInfo
+        {
+            FileName = parts[0],
+            Arguments = string.Join(" ", parts.Skip(1)),
+            RedirectStandardOutput = true,
+            RedirectStandardError = true
+        });
+        process.WaitForExit();
+    }
+}
+```
+
+</Tab>
+</Tabs>
+
 ## Template Configuration
 
 Configure the plugin in your template's `index.ts` file. The plugin configuration is defined programmatically in the return statement of your template's main function:
+
+<Tabs items={['TypeScript', 'Python', 'C#']}>
+<Tab value="TypeScript">
 
 ```ts template/index.ts -c
 import type { Cyan } from '@atomicloud/cyan-sdk';
@@ -88,6 +202,74 @@ export default async function (i: IInquirer, d: IDeterminism): Promise<Cyan> {
 }
 ```
 
+</Tab>
+<Tab value="Python">
+
+```py template/index.py -c
+from cyan_sdk import Cyan, PluginConfig
+
+# In your template's index.py
+def main(inquirer, determinism):
+    # ... prompt users for answers using inquirer ...
+
+    return Cyan(
+        processors=[
+            # ... processors
+        ],
+        plugins=[PluginConfig(
+            name='myorg/setup-plugin',
+            config={
+                'git': True,
+                'install_deps': True,           # or use answers['install_deps']
+                'package_manager': 'bun',       # or use answers['package_manager']
+                'formatter': 'biome',
+                'run_build': False
+            }
+        )]
+    )
+```
+
+</Tab>
+<Tab value="C#">
+
+```csharp Template/Index.cs -c
+using CyanSdk;
+
+public static class Template
+{
+    public static async Task<Cyan> Main(IInquirer inquirer, IDeterminism determinism)
+    {
+        // ... prompt users for answers using inquirer ...
+
+        return new Cyan
+        {
+            Processors = new List<Processor>
+            {
+                // ... processors
+            },
+            Plugins = new List<PluginConfig>
+            {
+                new PluginConfig
+                {
+                    Name = "myorg/setup-plugin",
+                    Config = new Dictionary<string, object>
+                    {
+                        ["git"] = true,
+                        ["installDeps"] = true,           // or use answers.InstallDeps
+                        ["packageManager"] = "bun",       // or use answers.PackageManager
+                        ["formatter"] = "biome",
+                        ["runBuild"] = false
+                    }
+                }
+            }
+        };
+    }
+}
+```
+
+</Tab>
+</Tabs>
+
 ## Advanced Patterns
 
 <Callout type="info">
@@ -95,6 +277,9 @@ The code examples below use Bun's shell template syntax (`await $`command``) whi
 </Callout>
 
 ### Feature Flags
+
+<Tabs items={['TypeScript', 'Python', 'C#']}>
+<Tab value="TypeScript">
 
 ```ts plugin.ts -c
 import fs from 'node:fs';
@@ -147,7 +332,120 @@ StartPluginWithLambda(async (input) => {
 });
 ```
 
+</Tab>
+<Tab value="Python">
+
+```py plugin.py -c
+from cyan_sdk import start_plugin_with_fn
+import subprocess
+import os
+import json
+
+def run_command(cmd, cwd=None):
+    subprocess.run(cmd, shell=True, cwd=cwd, check=True, capture_output=True)
+
+@start_plugin_with_fn
+def main(input_data):
+    directory = input_data["directory"]
+    config = input_data.get("config", {})
+    features = config.get("features", {})
+
+    if features.get("eslint"):
+        run_command("cd {} && npm install -D eslint".format(directory))
+        # Create .eslintrc.json
+        with open(os.path.join(directory, ".eslintrc.json"), "w") as f:
+            json.dump({"extends": ["eslint:recommended"]}, f, indent=2)
+
+    if features.get("prettier"):
+        run_command("cd {} && npm install -D prettier".format(directory))
+
+    if features.get("testing"):
+        run_command("cd {} && npm install -D vitest".format(directory))
+
+    if features.get("ci"):
+        # Create GitHub Actions workflow
+        workflows_dir = os.path.join(directory, ".github", "workflows")
+        os.makedirs(workflows_dir, exist_ok=True)
+        with open(os.path.join(workflows_dir, "ci.yml"), "w") as f:
+            f.write("name: CI\non: [push]\njobs:\n  test:\n    runs-on: ubuntu-latest\n    steps:\n      - uses: actions/checkout@v4\n      - run: npm ci\n      - run: npm test\n")
+
+    return {"directory": directory}
+```
+
+</Tab>
+<Tab value="C#">
+
+```csharp Plugin.cs -c
+using CyanSdk;
+using System.Diagnostics;
+using System.IO;
+using System.Text.Json;
+
+[PluginMain]
+public static class Plugin
+{
+    public static async Task<PluginOutput> Main(PluginInput input)
+    {
+        var directory = input.Directory;
+        var features = input.Config.TryGetValue("features", out var f)
+            ? f as Dictionary<string, object>
+            : new Dictionary<string, object>();
+
+        if (features.TryGetValue("eslint", out var eslint) && (bool)eslint)
+        {
+            RunCommand($"cd {directory} && npm install -D eslint");
+            var eslintConfig = new { extends = new[] { "eslint:recommended" } };
+            File.WriteAllText(
+                Path.Combine(directory, ".eslintrc.json"),
+                JsonSerializer.Serialize(eslintConfig, new JsonSerializerOptions { WriteIndented = true })
+            );
+        }
+
+        if (features.TryGetValue("prettier", out var prettier) && (bool)prettier)
+        {
+            RunCommand($"cd {directory} && npm install -D prettier");
+        }
+
+        if (features.TryGetValue("testing", out var testing) && (bool)testing)
+        {
+            RunCommand($"cd {directory} && npm install -D vitest");
+        }
+
+        if (features.TryGetValue("ci", out var ci) && (bool)ci)
+        {
+            var workflowsDir = Path.Combine(directory, ".github", "workflows");
+            Directory.CreateDirectory(workflowsDir);
+            File.WriteAllText(
+                Path.Combine(workflowsDir, "ci.yml"),
+                "name: CI\non: [push]\njobs:\n  test:\n    runs-on: ubuntu-latest\n    steps:\n      - uses: actions/checkout@v4\n      - run: npm ci\n      - run: npm test\n"
+            );
+        }
+
+        return new PluginOutput { Directory = directory };
+    }
+
+    private static void RunCommand(string command)
+    {
+        var parts = command.Split(' ');
+        var process = Process.Start(new ProcessStartInfo
+        {
+            FileName = parts[0],
+            Arguments = string.Join(" ", parts.Skip(1)),
+            RedirectStandardOutput = true,
+            RedirectStandardError = true
+        });
+        process.WaitForExit();
+    }
+}
+```
+
+</Tab>
+</Tabs>
+
 ### Conditional Based on Project Type
+
+<Tabs items={['TypeScript', 'Python', 'C#']}>
+<Tab value="TypeScript">
 
 ```ts plugin.ts -c
 import { StartPluginWithLambda } from '@atomicloud/cyan-sdk';
@@ -179,7 +477,94 @@ StartPluginWithLambda(async (input) => {
 });
 ```
 
+</Tab>
+<Tab value="Python">
+
+```py plugin.py -c
+from cyan_sdk import start_plugin_with_fn
+import subprocess
+
+def run_command(cmd, cwd=None):
+    subprocess.run(cmd, shell=True, cwd=cwd, check=True, capture_output=True)
+
+@start_plugin_with_fn
+def main(input_data):
+    directory = input_data["directory"]
+    config = input_data.get("config", {})
+
+    project_type = config.get("project_type")
+
+    if project_type == "nextjs":
+        run_command("cd {} && npm install next react react-dom".format(directory))
+    elif project_type == "react":
+        run_command("cd {} && npm install react react-dom".format(directory))
+    elif project_type == "node":
+        # Minimal setup for node
+        pass
+    elif project_type == "cli":
+        run_command("cd {} && npm install commander".format(directory))
+
+    return {"directory": directory}
+```
+
+</Tab>
+<Tab value="C#">
+
+```csharp Plugin.cs -c
+using CyanSdk;
+using System.Diagnostics;
+
+[PluginMain]
+public static class Plugin
+{
+    public static async Task<PluginOutput> Main(PluginInput input)
+    {
+        var directory = input.Directory;
+        var projectType = input.Config.TryGetValue("projectType", out var pt)
+            ? pt.ToString()
+            : null;
+
+        switch (projectType)
+        {
+            case "nextjs":
+                RunCommand($"cd {directory} && npm install next react react-dom");
+                break;
+            case "react":
+                RunCommand($"cd {directory} && npm install react react-dom");
+                break;
+            case "node":
+                // Minimal setup for node
+                break;
+            case "cli":
+                RunCommand($"cd {directory} && npm install commander");
+                break;
+        }
+
+        return new PluginOutput { Directory = directory };
+    }
+
+    private static void RunCommand(string command)
+    {
+        var parts = command.Split(' ');
+        var process = Process.Start(new ProcessStartInfo
+        {
+            FileName = parts[0],
+            Arguments = string.Join(" ", parts.Skip(1)),
+            RedirectStandardOutput = true,
+            RedirectStandardError = true
+        });
+        process.WaitForExit();
+    }
+}
+```
+
+</Tab>
+</Tabs>
+
 ### Using Defaults
+
+<Tabs items={['TypeScript', 'Python', 'C#']}>
+<Tab value="TypeScript">
 
 ```ts plugin.ts -c
 import { StartPluginWithLambda } from '@atomicloud/cyan-sdk';
@@ -204,6 +589,83 @@ StartPluginWithLambda(async (input) => {
   return { directory };
 });
 ```
+
+</Tab>
+<Tab value="Python">
+
+```py plugin.py -c
+from cyan_sdk import start_plugin_with_fn
+import subprocess
+
+def run_command(cmd, cwd=None):
+    subprocess.run(cmd, shell=True, cwd=cwd, check=True, capture_output=True)
+
+@start_plugin_with_fn
+def main(input_data):
+    directory = input_data["directory"]
+    config = input_data.get("config", {})
+
+    # Provide defaults for all config options
+    defaults = {
+        "git": True,
+        "install_deps": True,
+        "package_manager": "npm",
+        "formatter": "none",
+    }
+    cfg = {**defaults, **config}
+
+    if cfg["git"]:
+        run_command("git -C {} init".format(directory))
+
+    return {"directory": directory}
+```
+
+</Tab>
+<Tab value="C#">
+
+```csharp Plugin.cs -c
+using CyanSdk;
+using System.Diagnostics;
+
+[PluginMain]
+public static class Plugin
+{
+    public static async Task<PluginOutput> Main(PluginInput input)
+    {
+        var directory = input.Directory;
+        var config = input.Config;
+
+        // Provide defaults for all config options
+        var git = config.TryGetValue("git", out var g) ? (bool)g : true;
+        var installDeps = config.TryGetValue("installDeps", out var i) ? (bool)i : true;
+        var packageManager = config.TryGetValue("packageManager", out var pm) ? pm.ToString() : "npm";
+        var formatter = config.TryGetValue("formatter", out var f) ? f.ToString() : "none";
+
+        if (git)
+        {
+            RunCommand($"git -C {directory} init");
+        }
+
+        return new PluginOutput { Directory = directory };
+    }
+
+    private static void RunCommand(string command)
+    {
+        var parts = command.Split(' ');
+        var process = Process.Start(new ProcessStartInfo
+        {
+            FileName = parts[0],
+            Arguments = string.Join(" ", parts.Skip(1)),
+            RedirectStandardOutput = true,
+            RedirectStandardError = true
+        });
+        process.WaitForExit();
+    }
+}
+```
+
+</Tab>
+</Tabs>
 
 <Callout type="info">
 Always provide sensible defaults for optional configuration. Templates should work without specifying every option.

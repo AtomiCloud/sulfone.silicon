@@ -4,6 +4,7 @@ description: When to use plugins versus processors
 ---
 
 import { Cards, Card } from 'fumadocs-ui/components/card';
+import { Tabs, Tab } from 'fumadocs-ui/components/tabs';
 
 # Plugins vs Processors
 
@@ -32,6 +33,9 @@ Processors transform file content. They operate on individual files during the g
 
 ### Processor Example
 
+<Tabs items={['TypeScript', 'Python', 'C#']}>
+  <Tab value="TypeScript">
+
 ```ts index.ts -c
 import { StartProcessorWithLambda } from '@atomicloud/cyan-sdk';
 
@@ -47,6 +51,54 @@ StartProcessorWithLambda(async (input, fileHelper) => {
   return { directory: input.writeDir };
 });
 ```
+
+  </Tab>
+  <Tab value="Python">
+
+```python main.py -c
+from cyanprintsdk.processor import start_processor_with_fn
+from cyanprintsdk.protocol import ProcessorInput, ProcessorOutput
+
+async def processor(input: ProcessorInput, file_helper) -> ProcessorOutput:
+    files = file_helper.resolve_all()
+
+    for file in files:
+        # Transform file content
+        file.content = file.content.replace('var__name__', 'MyProject')
+        file.write_file()
+
+    return ProcessorOutput(directory=input.write_dir)
+
+processor_main = start_processor_with_fn(processor)
+```
+
+  </Tab>
+  <Tab value="C#">
+
+```csharp Processor.cs -c
+using CyanPrintSDK;
+
+public static class Processor
+{
+    [ProcessorMain]
+    public static async Task<ProcessorOutput> Run(ProcessorInput input, CyanFileHelper fileHelper)
+    {
+        var files = fileHelper.ResolveAll();
+
+        foreach (var file in files)
+        {
+            // Transform file content
+            file.Content = file.Content.Replace("var__name__", "MyProject");
+            file.WriteFile();
+        }
+
+        return new ProcessorOutput { Directory = input.WriteDir };
+    }
+}
+```
+
+  </Tab>
+</Tabs>
 
 ### Key Points
 
@@ -67,6 +119,9 @@ Plugins run operations after all files are generated. They have full access to t
 - Set up development tooling
 
 ### Plugin Example
+
+<Tabs items={['TypeScript', 'Python', 'C#']}>
+  <Tab value="TypeScript">
 
 ```ts index.ts -c
 import { StartPluginWithLambda } from '@atomicloud/cyan-sdk';
@@ -90,6 +145,70 @@ StartPluginWithLambda(async (input) => {
   return { directory };
 });
 ```
+
+  </Tab>
+  <Tab value="Python">
+
+```python main.py -c
+import os
+import json
+from cyanprintsdk.plugin import start_plugin_with_fn
+from cyanprintsdk.protocol import PluginInput, PluginOutput
+
+async def plugin(input: PluginInput) -> PluginOutput:
+    directory = input.directory
+
+    # Create files or modify the generated output
+    git_dir = os.path.join(directory, '.git')
+    if not os.path.exists(git_dir):
+        os.makedirs(git_dir, exist_ok=True)
+        # Initialize git structure...
+
+    # Write configuration files
+    config_path = os.path.join(directory, 'config.json')
+    with open(config_path, 'w') as f:
+        json.dump({'initialized': True}, f)
+
+    return PluginOutput(directory=directory)
+
+plugin_main = start_plugin_with_fn(plugin)
+```
+
+  </Tab>
+  <Tab value="C#">
+
+```csharp Plugin.cs -c
+using CyanPrintSDK;
+using System.IO;
+using System.Text.Json;
+
+public static class Plugin
+{
+    [PluginMain]
+    public static async Task<PluginOutput> Run(PluginInput input)
+    {
+        var directory = input.Directory;
+
+        // Create files or modify the generated output
+        var gitDir = Path.Combine(directory, ".git");
+        if (!Directory.Exists(gitDir))
+        {
+            Directory.CreateDirectory(gitDir);
+            // Initialize git structure...
+        }
+
+        // Write configuration files
+        var configPath = Path.Combine(directory, "config.json");
+        var config = new { initialized = true };
+        await File.WriteAllTextAsync(configPath, JsonSerializer.Serialize(config));
+
+        return new PluginOutput { Directory = directory };
+    }
+}
+```
+
+  </Tab>
+</Tabs>
 
 ### Key Points
 
@@ -144,6 +263,9 @@ StartPluginWithLambda(async (input) => {
 
 Many templates need both processors and plugins:
 
+<Tabs items={['TypeScript', 'Python', 'C#']}>
+  <Tab value="TypeScript">
+
 ```ts index.ts -c
 // In template's index.ts
 return {
@@ -161,6 +283,71 @@ return {
   }]
 };
 ```
+
+  </Tab>
+  <Tab value="Python">
+
+```python main.py -c
+# In template's main.py
+return Cyan(
+    processors=[
+        CyanProcessor(
+            name='cyan/default',  # Transform templates
+            files=[CyanGlob(root='templates', glob='**/*', type=GlobType.TEMPLATE)],
+            config={'vars': {'name': name, 'version': version}}
+        )
+    ],
+    plugins=[
+        CyanPlugin(
+            name='atomi/setup-plugin',  # Post-processing
+            config={
+                'git': True,
+                'installDeps': True
+            }
+        )
+    ]
+)
+```
+
+  </Tab>
+  <Tab value="C#">
+
+```csharp Template.cs -c
+// In Template.cs
+return new Cyan
+{
+    Processors = new[]
+    {
+        new CyanProcessor
+        {
+            Name = "cyan/default",  // Transform templates
+            Files = new List<CyanGlob>
+            {
+                new CyanGlob { Root = "templates", Glob = "**/*", Type = GlobType.Template }
+            },
+            Config = new Dictionary<string, object>
+            {
+                ["vars"] = new Dictionary<string, string> { ["name"] = name, ["version"] = version }
+            }
+        }
+    },
+    Plugins = new[]
+    {
+        new CyanPlugin
+        {
+            Name = "atomi/setup-plugin",  // Post-processing
+            Config = new Dictionary<string, object>
+            {
+                ["git"] = true,
+                ["installDeps"] = true
+            }
+        }
+    }
+};
+```
+
+  </Tab>
+</Tabs>
 
 ### Typical Workflow
 

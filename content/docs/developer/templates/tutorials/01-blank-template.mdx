@@ -3,48 +3,43 @@ title: Tutorial 1 - Blank Template
 description: Create your first CyanPrint template from scratch
 ---
 
-import { Steps } from 'fumadocs-ui/components/steps';
+import { Steps, Step } from 'fumadocs-ui/components/steps';
 import { Files, File, Folder } from 'fumadocs-ui/components/files';
 import { Tabs, Tab } from 'fumadocs-ui/components/tabs';
 
 # Tutorial 1: Blank Template
 
-Create a template from scratch and test it immediately using the `try` command. This is the starting point for all template development.
+Create a minimal working template from scratch and test it with `cyanprint try`.
 
 ## Prerequisites
 
 - Docker installed and running
 - CyanPrint CLI installed
-- Runtime requirements (choose one):
+- Choose one runtime:
   - **TypeScript**: Node.js 18+ and Bun
   - **Python**: Python 3.11+ and pip
   - **C#**: .NET 8 SDK
 
-## Create Project
-
 <Steps>
+<Step>
 
-### Create Directory Structure
+### Create project structure
 
-```bash -c
-mkdir my-first-template
-cd my-first-template
+```bash
+mkdir my-first-template && cd my-first-template
 mkdir -p cyan templates
+echo "# My Project" > templates/README.md
 ```
+
+</Step>
+<Step>
 
 ### Create cyan.yaml
 
-Create `cyan.yaml` with template metadata:
-
-```yaml cyan.yaml -c
+```yaml cyan.yaml
 username: myuser
 name: my-first-template
 description: My first CyanPrint template
-project: https://github.com/myuser/my-first-template
-source: https://github.com/myuser/my-first-template
-email: myuser@example.com
-tags: []
-readme: README.md
 
 build:
   registry: docker.io
@@ -52,36 +47,25 @@ build:
     blob:
       image: myuser/my-first-template-blob
       dockerfile: cyan/Dockerfile
-      context: .
     template:
       image: myuser/my-first-template
       dockerfile: cyan/template.Dockerfile
-      context: .
 ```
 
-### Create Template Files
+</Step>
+<Step>
 
-Create your template content:
-
-```bash -c
-echo "# My Project" > templates/README.md
-echo "node_modules/" > templates/.gitignore
-```
-
-</Steps>
-
-## Create Template Logic
+### Create template logic
 
 <Tabs items={['TypeScript', 'Python', 'C#']} persist groupId="runtime">
 <Tab value="TypeScript">
 
 Create `cyan/index.ts`:
 
-```ts cyan/index.ts -c
-import { StartTemplateWithLambda, GlobType } from '@atomicloud/cyan-sdk';
+```ts cyan/index.ts
+import { startTemplateWithFn, GlobType } from '@atomicloud/cyan-sdk';
 
-StartTemplateWithLambda(async (i, d) => {
-  // !callout[/StartTemplateWithLambda/] Entry point - starts the template server on port 5550
+startTemplateWithFn(async (i, d) => {
   const name = await i.text('What is your project name?', 'myuser/my-first-template/name');
 
   return {
@@ -96,10 +80,9 @@ StartTemplateWithLambda(async (i, d) => {
 
 Create `cyan/package.json`:
 
-```json cyan/package.json -c
+```json cyan/package.json
 {
   "name": "my-first-template",
-  "version": "1.0.0",
   "type": "module",
   "dependencies": {
     "@atomicloud/cyan-sdk": "latest"
@@ -107,43 +90,21 @@ Create `cyan/package.json`:
 }
 ```
 
-Create `cyan/Dockerfile`:
+Create `cyan/Dockerfile` and `cyan/template.Dockerfile`:
 
-```dockerfile cyan/Dockerfile -c
+```dockerfile cyan/Dockerfile
 FROM oven/bun:1.1.31
-
 WORKDIR /app
-
 LABEL cyanprint.dev=true
-
 COPY package.json bun.lockb* ./
 RUN bun install
-
 COPY . .
-
-CMD ["bun", "run", "index.ts"]
-```
-
-Create `cyan/template.Dockerfile`:
-
-```dockerfile cyan/template.Dockerfile -c
-FROM oven/bun:1.1.31
-
-WORKDIR /app
-
-LABEL cyanprint.dev=true
-
-COPY package.json bun.lockb* ./
-RUN bun install
-
-COPY . .
-
 CMD ["bun", "run", "index.ts"]
 ```
 
 Install dependencies:
 
-```bash -c
+```bash
 cd cyan && bun install && cd ..
 ```
 
@@ -152,12 +113,11 @@ cd cyan && bun install && cd ..
 
 Create `cyan/index.py`:
 
-```python cyan/index.py -c
+```python cyan/index.py
 from cyanprintsdk import start_template_with_fn, GlobType
 from cyanprintsdk.domain.core.cyan import Cyan, CyanProcessor, CyanGlob
 
 async def my_template(i, d):
-    # !callout[/start_template_with_fn/] Entry point - starts the template server on port 5550
     name = await i.text("What is your project name?", "myuser/my-first-template/name")
 
     return Cyan(
@@ -165,12 +125,7 @@ async def my_template(i, d):
             CyanProcessor(
                 name="cyan/default",
                 files=[
-                    CyanGlob(
-                        root="templates",
-                        glob="**/*",
-                        exclude=[],
-                        type=GlobType.Copy
-                    )
+                    CyanGlob(root="templates", glob="**/*", exclude=[], type=GlobType.Copy)
                 ],
                 config={"vars": {"name": name}}
             )
@@ -182,47 +137,25 @@ start_template_with_fn(my_template)
 
 Create `cyan/requirements.txt`:
 
-```text cyan/requirements.txt -c
+```text cyan/requirements.txt
 cyanprintsdk>=1.0.0
 ```
 
-Create `cyan/Dockerfile`:
+Create `cyan/Dockerfile` and `cyan/template.Dockerfile`:
 
-```dockerfile cyan/Dockerfile -c
+```dockerfile cyan/Dockerfile
 FROM python:3.11-slim
-
 WORKDIR /app
-
 LABEL cyanprint.dev=true
-
 COPY requirements.txt .
 RUN pip install --no-cache-dir -r requirements.txt
-
 COPY . .
-
-CMD ["python", "index.py"]
-```
-
-Create `cyan/template.Dockerfile`:
-
-```dockerfile cyan/template.Dockerfile -c
-FROM python:3.11-slim
-
-WORKDIR /app
-
-LABEL cyanprint.dev=true
-
-COPY requirements.txt .
-RUN pip install --no-cache-dir -r requirements.txt
-
-COPY . .
-
 CMD ["python", "index.py"]
 ```
 
 Install dependencies:
 
-```bash -c
+```bash
 cd cyan && pip install -r requirements.txt && cd ..
 ```
 
@@ -231,13 +164,12 @@ cd cyan && pip install -r requirements.txt && cd ..
 
 Create `cyan/Program.cs`:
 
-```csharp cyan/Program.cs -c
+```csharp cyan/Program.cs
 using sulfone_helium;
 using sulfone_helium.Domain.Core;
 
 CyanEngine.StartTemplate(args, async (i, d) =>
 {
-    // !callout[/StartTemplate/] Entry point - starts the template server on port 5550
     var name = await i.Text("What is your project name?", "myuser/my-first-template/name");
 
     return new Cyan
@@ -266,7 +198,7 @@ CyanEngine.StartTemplate(args, async (i, d) =>
 
 Create `cyan/my-first-template.csproj`:
 
-```xml cyan/my-first-template.csproj -c
+```xml cyan/my-first-template.csproj
 <Project Sdk="Microsoft.NET.Sdk">
   <PropertyGroup>
     <OutputType>Exe</OutputType>
@@ -280,81 +212,51 @@ Create `cyan/my-first-template.csproj`:
 </Project>
 ```
 
-Create `cyan/Dockerfile`:
+Create `cyan/Dockerfile` and `cyan/template.Dockerfile`:
 
-```dockerfile cyan/Dockerfile -c
+```dockerfile cyan/Dockerfile
 FROM mcr.microsoft.com/dotnet/sdk:8.0
-
 WORKDIR /app
-
 LABEL cyanprint.dev=true
-
 COPY *.csproj .
 RUN dotnet restore
-
 COPY . .
-
-CMD ["dotnet", "run"]
-```
-
-Create `cyan/template.Dockerfile`:
-
-```dockerfile cyan/template.Dockerfile -c
-FROM mcr.microsoft.com/dotnet/sdk:8.0
-
-WORKDIR /app
-
-LABEL cyanprint.dev=true
-
-COPY *.csproj .
-RUN dotnet restore
-
-COPY . .
-
 CMD ["dotnet", "run"]
 ```
 
 Install dependencies:
 
-```bash -c
+```bash
 cd cyan && dotnet restore && cd ..
 ```
 
 </Tab>
 </Tabs>
 
-## Test Your Template
+</Step>
+<Step>
 
-### Run the Try Command
+### Test your template
 
-```bash -c
+```bash
 cyanprint try template . ./test-output
 ```
 
-This command will:
-1. Build the template Docker image automatically
-2. Start the coordinator daemon
-3. Prompt for your template questions
-4. Generate the project to `./test-output`
+This builds the Docker image, starts the coordinator, prompts for your questions, and generates the project.
 
-### Check the Output
+Check the output:
 
-```bash -c
-ls ./test-output
+```bash
 cat ./test-output/README.md
 ```
 
-<Callout type="info">
-The try command automatically builds Docker images—you don't need to run `docker build` manually. This provides a fast development loop: write code, test, iterate.
-</Callout>
+</Step>
+</Steps>
 
 ## Project Structure
 
-Your final project structure:
-
 <Files>
   <File name="cyan.yaml" />
-  <File name="README.md" />
   <Folder name="cyan" defaultOpen>
     <File name="index.ts" />
     <File name="package.json" />
@@ -363,22 +265,19 @@ Your final project structure:
   </Folder>
   <Folder name="templates" defaultOpen>
     <File name="README.md" />
-    <File name=".gitignore" />
   </Folder>
 </Files>
 
-## Understanding the Code
-
-### Template Entry Point
+## Key Concepts
 
 <Tabs items={['TypeScript', 'Python', 'C#']} persist groupId="runtime">
 <Tab value="TypeScript">
 
 | Part | Description |
 |------|-------------|
-| `StartTemplateWithLambda` | Entry point for template logic (port 5550) |
-| `i` | IInquirer - ask questions |
-| `d` | IDeterminism - access deterministic values |
+| `startTemplateWithFn` | Entry point - starts template server on port 5550 |
+| `i` | Inquirer - ask user questions (`text`, `select`, etc.) |
+| `d` | Determinism - access deterministic values |
 | `processors` | List of file processors to run |
 
 </Tab>
@@ -386,8 +285,8 @@ Your final project structure:
 
 | Part | Description |
 |------|-------------|
-| `start_template_with_fn` | Entry point for template logic (port 5550) |
-| `i` | Inquirer - ask questions |
+| `start_template_with_fn` | Entry point - starts template server on port 5550 |
+| `i` | Inquirer - ask user questions (`text`, `select`, etc.) |
 | `d` | Determinism - access deterministic values |
 | `processors` | List of file processors to run |
 
@@ -396,67 +295,17 @@ Your final project structure:
 
 | Part | Description |
 |------|-------------|
-| `CyanEngine.StartTemplate` | Entry point for template logic (port 5550) |
-| `i` | IInquirer - ask questions |
-| `d` | IDeterminism - access deterministic values |
+| `CyanEngine.StartTemplate` | Entry point - starts template server on port 5550 |
+| `i` | Inquirer - ask user questions (`Text`, `Select`, etc.) |
+| `d` | Determinism - access deterministic values |
 | `Processors` | List of file processors to run |
 
 </Tab>
 </Tabs>
 
-### GlobType.Copy
-
-The `GlobType.Copy` copies files without any variable substitution—perfect for static files that don't need processing.
-
-## Development Workflow
-
-### Iterate Quickly
-
-```bash -c
-# Make changes to your template...
-
-# Test again
-rm -rf ./test-output
-cyanprint try template . ./test-output
-```
-
-### Keep Containers for Debugging
-
-```bash -c
-cyanprint try template . ./test-output --keep-containers
-```
-
-## Automated Testing
-
-Once your template works with `try`, set up automated snapshot tests:
-
-```bash -c
-# Generate test cases from your template's Q&A tree
-cyanprint test init .
-```
-
-This creates `test.cyan.yaml` and `fixtures/expected/` with snapshot test cases. Run them anytime:
-
-```bash -c
-cyanprint test template .
-```
-
-<Callout type="info">
-Automated tests verify your template produces consistent output across changes. See [Automated Testing](/docs/developer/templates/how-to/automated-testing) for the full guide.
-</Callout>
-
-## What You Learned
-
-- How to create a template project from scratch
-- The basic structure of a CyanPrint template
-- Using `try` command for fast development
-- How `GlobType.Copy` copies files without processing
-- Setting up automated snapshot tests with `test init`
+`GlobType.Copy` copies files without variable substitution—perfect for static files.
 
 ## Next Steps
 
-In the next tutorial, you'll learn how to add variable substitution to process template files:
-
-[**Next: Adding Variables**](/docs/developer/templates/tutorials/02-adding-variables)
-
-For comprehensive testing strategies, see the [Automated Testing](/docs/developer/templates/how-to/automated-testing) how-to guide.
+- [**Tutorial 2: Adding Variables**](/docs/developer/templates/tutorials/02-adding-variables) - Learn variable substitution
+- [**Automated Testing**](/docs/developer/templates/how-to/automated-testing) - Set up snapshot tests

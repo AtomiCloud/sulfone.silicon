@@ -3,6 +3,8 @@ title: Validate User Input
 description: How to validate user input with custom rules
 ---
 
+import { Tabs, Tab } from 'fumadocs-ui/components/tabs';
+
 # How to Validate User Input
 
 Validation ensures users provide correct and usable input before template generation.
@@ -11,29 +13,69 @@ Validation ensures users provide correct and usable input before template genera
 
 Use the `validate` function in the object form:
 
+<Tabs items={['TypeScript', 'Python', 'C#']} persist groupId="runtime">
+<Tab value="TypeScript">
+
 ```ts -c
 const name = await i.text({
   type: QuestionType.Text,
   id: 'project.name',
   message: 'Project name?',
   desc: 'Enter name',
+  // !callout[/validate/] Return error string or null for valid
   validate: (input) => {
     if (!input) return 'Name is required';
-    return null;  // null means valid
+    return null;
   }
 });
 ```
+
+</Tab>
+<Tab value="Python">
+
+```python -c
+name = await i.text({
+  "type": QuestionType.Text,
+  "id": "project.name",
+  "message": "Project name?",
+  "desc": "Enter name",
+  # !callout[/validate/] Return error string or None for valid
+  "validate": lambda input: "Name is required" if not input else None
+})
+```
+
+</Tab>
+<Tab value="C#">
+
+```csharp -c
+var name = await i.Text(new TextQuestion
+{
+    Type = QuestionType.Text,
+    Id = "project.name",
+    Message = "Project name?",
+    Desc = "Enter name",
+    // !callout[/Validate/] Return error string or null for valid
+    Validate = (input) => string.IsNullOrEmpty(input) ? "Name is required" : null
+});
+```
+
+</Tab>
+</Tabs>
 
 ## Validation Patterns
 
 ### Required Field
 
+<Tabs items={['TypeScript', 'Python', 'C#']} persist groupId="runtime">
+<Tab value="TypeScript">
+
 ```ts -c
 const name = await i.text({
   type: QuestionType.Text,
   id: 'project.name',
   message: 'Project name?',
   desc: 'Enter name',
+  // !callout[/!input/] Check for empty or whitespace-only input
   validate: (input) => {
     if (!input || input.trim() === '') {
       return 'This field is required';
@@ -43,7 +85,42 @@ const name = await i.text({
 });
 ```
 
+</Tab>
+<Tab value="Python">
+
+```python -c
+name = await i.text({
+    "type": QuestionType.Text,
+    "id": "project.name",
+    "message": "Project name?",
+    "desc": "Enter name",
+    # !callout[/not input.strip()/] Check for empty or whitespace-only input
+    "validate": lambda input: "This field is required" if not input or not input.strip() else None
+})
+```
+
+</Tab>
+<Tab value="C#">
+
+```csharp -c
+var name = await i.Text(new TextQuestion
+{
+    Type = QuestionType.Text,
+    Id = "project.name",
+    Message = "Project name?",
+    Desc = "Enter name",
+    // !callout[/IsNullOrWhiteSpace/] Check for empty or whitespace-only input
+    Validate = (input) => string.IsNullOrWhiteSpace(input) ? "This field is required" : null
+});
+```
+
+</Tab>
+</Tabs>
+
 ### Length Constraints
+
+<Tabs items={['TypeScript', 'Python', 'C#']} persist groupId="runtime">
+<Tab value="TypeScript">
 
 ```ts -c
 const username = await i.text({
@@ -52,14 +129,60 @@ const username = await i.text({
   message: 'Username?',
   desc: '3-20 characters',
   validate: (input) => {
+    // !callout[/length < 3/] Check minimum length first
     if (input.length < 3) return 'Minimum 3 characters';
+    // !callout[/length > 20/] Then check maximum length
     if (input.length > 20) return 'Maximum 20 characters';
     return null;
   }
 });
 ```
 
+</Tab>
+<Tab value="Python">
+
+```python -c
+username = await i.text({
+    "type": QuestionType.Text,
+    "id": "user.name",
+    "message": "Username?",
+    "desc": "3-20 characters",
+    # !callout[/len(input) < 3/] Check minimum length first
+    "validate": lambda input: (
+        "Minimum 3 characters" if len(input) < 3 else
+        "Maximum 20 characters" if len(input) > 20 else None
+    )
+})
+```
+
+</Tab>
+<Tab value="C#">
+
+```csharp -c
+var username = await i.Text(new TextQuestion
+{
+    Type = QuestionType.Text,
+    Id = "user.name",
+    Message = "Username?",
+    Desc = "3-20 characters",
+    Validate = (input) =>
+    {
+        // !callout[/Length < 3/] Check minimum length first
+        if (input.Length < 3) return "Minimum 3 characters";
+        // !callout[/Length > 20/] Then check maximum length
+        if (input.Length > 20) return "Maximum 20 characters";
+        return null;
+    }
+});
+```
+
+</Tab>
+</Tabs>
+
 ### Pattern Matching
+
+<Tabs items={['TypeScript', 'Python', 'C#']} persist groupId="runtime">
+<Tab value="TypeScript">
 
 ```ts -c
 const projectName = await i.text({
@@ -67,6 +190,7 @@ const projectName = await i.text({
   id: 'project.name',
   message: 'Project name?',
   desc: 'Lowercase, numbers, hyphens only',
+  // !callout[/^[a-z][a-z0-9-]*$/] Must start with letter, then lowercase/numbers/hyphens
   validate: (input) => {
     if (!/^[a-z][a-z0-9-]*$/.test(input)) {
       return 'Use lowercase letters, numbers, and hyphens. Must start with a letter.';
@@ -77,7 +201,48 @@ const projectName = await i.text({
 });
 ```
 
+</Tab>
+<Tab value="Python">
+
+```python -c
+import re
+
+project_name = await i.text({
+    "type": QuestionType.Text,
+    "id": "project.name",
+    "message": "Project name?",
+    "desc": "Lowercase, numbers, hyphens only",
+    # !callout[/^[a-z][a-z0-9-]*$/] Must start with letter, then lowercase/numbers/hyphens
+    "validate": lambda input: None if re.match(r'^[a-z][a-z0-9-]*$', input) else "Use lowercase letters, numbers, and hyphens. Must start with a letter.",
+    "default": "my-project"
+})
+```
+
+</Tab>
+<Tab value="C#">
+
+```csharp -c
+var projectName = await i.Text(new TextQuestion
+{
+    Type = QuestionType.Text,
+    Id = "project.name",
+    Message = "Project name?",
+    Desc = "Lowercase, numbers, hyphens only",
+    // !callout[/^[a-z][a-z0-9-]*$/] Must start with letter, then lowercase/numbers/hyphens
+    Validate = (input) => Regex.IsMatch(input, @"^[a-z][a-z0-9-]*$")
+        ? null
+        : "Use lowercase letters, numbers, and hyphens. Must start with a letter.",
+    Default = "my-project"
+});
+```
+
+</Tab>
+</Tabs>
+
 ### Email Validation
+
+<Tabs items={['TypeScript', 'Python', 'C#']} persist groupId="runtime">
+<Tab value="TypeScript">
 
 ```ts -c
 const email = await i.text({
@@ -85,6 +250,7 @@ const email = await i.text({
   id: 'user.email',
   message: 'Email?',
   desc: 'Your email address',
+  // !callout[/emailRegex/] Simple email pattern validation
   validate: (input) => {
     const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
     if (!emailRegex.test(input)) {
@@ -95,7 +261,46 @@ const email = await i.text({
 });
 ```
 
+</Tab>
+<Tab value="Python">
+
+```python -c
+import re
+
+email = await i.text({
+    "type": QuestionType.Text,
+    "id": "user.email",
+    "message": "Email?",
+    "desc": "Your email address",
+    # !callout[/emailRegex/] Simple email pattern validation
+    "validate": lambda input: None if re.match(r'^[^\s@]+@[^\s@]+\.[^\s@]+$', input) else "Please enter a valid email address"
+})
+```
+
+</Tab>
+<Tab value="C#">
+
+```csharp -c
+var email = await i.Text(new TextQuestion
+{
+    Type = QuestionType.Text,
+    Id = "user.email",
+    Message = "Email?",
+    Desc = "Your email address",
+    // !callout[/EmailRegex/] Simple email pattern validation
+    Validate = (input) => Regex.IsMatch(input, @"^[^\s@]+@[^\s@]+\.[^\s@]+$")
+        ? null
+        : "Please enter a valid email address"
+});
+```
+
+</Tab>
+</Tabs>
+
 ### URL Validation
+
+<Tabs items={['TypeScript', 'Python', 'C#']} persist groupId="runtime">
+<Tab value="TypeScript">
 
 ```ts -c
 const website = await i.text({
@@ -104,7 +309,8 @@ const website = await i.text({
   message: 'Website URL?',
   desc: 'Optional website',
   validate: (input) => {
-    if (!input) return null;  // Optional field
+    // !callout[/!input/] Allow empty input (optional field)
+    if (!input) return null;
     try {
       new URL(input);
       return null;
@@ -115,7 +321,52 @@ const website = await i.text({
 });
 ```
 
+</Tab>
+<Tab value="Python">
+
+```python -c
+from urllib.parse import urlparse
+
+website = await i.text({
+    "type": QuestionType.Text,
+    "id": "project.website",
+    "message": "Website URL?",
+    "desc": "Optional website",
+    # !callout[/not input/] Allow empty input (optional field)
+    "validate": lambda input: None if not input else (
+        None if urlparse(input).scheme and urlparse(input).netloc
+        else "Please enter a valid URL (including https://)"
+    )
+})
+```
+
+</Tab>
+<Tab value="C#">
+
+```csharp -c
+var website = await i.Text(new TextQuestion
+{
+    Type = QuestionType.Text,
+    Id = "project.website",
+    Message = "Website URL?",
+    Desc = "Optional website",
+    Validate = (input) =>
+    {
+        // !callout[/IsNullOrEmpty/] Allow empty input (optional field)
+        if (string.IsNullOrEmpty(input)) return null;
+        if (Uri.TryCreate(input, UriKind.Absolute, out _)) return null;
+        return "Please enter a valid URL (including https://)";
+    }
+});
+```
+
+</Tab>
+</Tabs>
+
 ### Number Range
+
+<Tabs items={['TypeScript', 'Python', 'C#']} persist groupId="runtime">
+<Tab value="TypeScript">
 
 ```ts -c
 const port = await i.text({
@@ -126,14 +377,62 @@ const port = await i.text({
   default: '3000',
   validate: (input) => {
     const num = parseInt(input, 10);
+    // !callout[/isNaN/] Must be a valid number
     if (isNaN(num)) return 'Please enter a number';
+    // !callout[/num < 1024/] Check valid port range
     if (num < 1024 || num > 65535) return 'Port must be between 1024 and 65535';
     return null;
   }
 });
 ```
 
+</Tab>
+<Tab value="Python">
+
+```python -c
+port = await i.text({
+    "type": QuestionType.Text,
+    "id": "server.port",
+    "message": "Port number?",
+    "desc": "1024-65535",
+    "default": "3000",
+    # !callout[/not input.isdigit()/] Must be a valid number
+    "validate": lambda input: (
+        "Please enter a number" if not input.isdigit() else
+        "Port must be between 1024 and 65535" if not (1024 <= int(input) <= 65535) else None
+    )
+})
+```
+
+</Tab>
+<Tab value="C#">
+
+```csharp -c
+var port = await i.Text(new TextQuestion
+{
+    Type = QuestionType.Text,
+    Id = "server.port",
+    Message = "Port number?",
+    Desc = "1024-65535",
+    Default = "3000",
+    Validate = (input) =>
+    {
+        // !callout[/!int.TryParse/] Must be a valid number
+        if (!int.TryParse(input, out var num)) return "Please enter a number";
+        // !callout[/num < 1024/] Check valid port range
+        if (num < 1024 || num > 65535) return "Port must be between 1024 and 65535";
+        return null;
+    }
+});
+```
+
+</Tab>
+</Tabs>
+
 ### Password Strength
+
+<Tabs items={['TypeScript', 'Python', 'C#']} persist groupId="runtime">
+<Tab value="TypeScript">
 
 ```ts -c
 const password = await i.password({
@@ -142,15 +441,76 @@ const password = await i.password({
   message: 'Password?',
   desc: 'Strong password required',
   validate: (input) => {
+    // !callout[/length < 8/] Check minimum length
     if (input.length < 8) return 'Minimum 8 characters';
+    // !callout[/[A-Z]/] Require uppercase letter
     if (!/[A-Z]/.test(input)) return 'Include an uppercase letter';
+    // !callout[/[a-z]/] Require lowercase letter
     if (!/[a-z]/.test(input)) return 'Include a lowercase letter';
+    // !callout[/[0-9]/] Require number
     if (!/[0-9]/.test(input)) return 'Include a number';
+    // !callout[/[^A-Za-z0-9]/] Require special character
     if (!/[^A-Za-z0-9]/.test(input)) return 'Include a special character';
     return null;
   }
 });
 ```
+
+</Tab>
+<Tab value="Python">
+
+```python -c
+import re
+
+password = await i.password({
+    "type": QuestionType.Password,
+    "id": "user.password",
+    "message": "Password?",
+    "desc": "Strong password required",
+    # !callout[/len(input) < 8/] Check minimum length
+    "validate": lambda input: (
+        "Minimum 8 characters" if len(input) < 8 else
+        # !callout[/[A-Z]/] Require uppercase letter
+        "Include an uppercase letter" if not re.search(r'[A-Z]', input) else
+        # !callout[/[a-z]/] Require lowercase letter
+        "Include a lowercase letter" if not re.search(r'[a-z]', input) else
+        # !callout[/[0-9]/] Require number
+        "Include a number" if not re.search(r'[0-9]', input) else
+        # !callout[/[^A-Za-z0-9]/] Require special character
+        "Include a special character" if not re.search(r'[^A-Za-z0-9]', input) else None
+    )
+})
+```
+
+</Tab>
+<Tab value="C#">
+
+```csharp -c
+var password = await i.Password(new PasswordQuestion
+{
+    Type = QuestionType.Password,
+    Id = "user.password",
+    Message = "Password?",
+    Desc = "Strong password required",
+    Validate = (input) =>
+    {
+        // !callout[/Length < 8/] Check minimum length
+        if (input.Length < 8) return "Minimum 8 characters";
+        // !callout[/[A-Z]/] Require uppercase letter
+        if (!Regex.IsMatch(input, @"[A-Z]")) return "Include an uppercase letter";
+        // !callout[/[a-z]/] Require lowercase letter
+        if (!Regex.IsMatch(input, @"[a-z]")) return "Include a lowercase letter";
+        // !callout[/[0-9]/] Require number
+        if (!Regex.IsMatch(input, @"[0-9]")) return "Include a number";
+        // !callout[/[^A-Za-z0-9]/] Require special character
+        if (!Regex.IsMatch(input, @"[^A-Za-z0-9]")) return "Include a special character";
+        return null;
+    }
+});
+```
+
+</Tab>
+</Tabs>
 
 ## Supported Question Types
 
@@ -169,12 +529,16 @@ For `select`, `checkbox`, and `confirm` questions, validation is not needed sinc
 
 ## Combining Validation with Defaults
 
+<Tabs items={['TypeScript', 'Python', 'C#']} persist groupId="runtime">
+<Tab value="TypeScript">
+
 ```ts -c
 const projectName = await i.text({
   type: QuestionType.Text,
   id: 'project.name',
   message: 'Project name?',
   desc: 'Lowercase, hyphens allowed',
+  // !mark[/default/] Pre-filled default value
   default: 'my-project',
   validate: (input) => {
     if (!input) return 'Name is required';
@@ -186,6 +550,53 @@ const projectName = await i.text({
   }
 });
 ```
+
+</Tab>
+<Tab value="Python">
+
+```python -c
+import re
+
+project_name = await i.text({
+    "type": QuestionType.Text,
+    "id": "project.name",
+    "message": "Project name?",
+    "desc": "Lowercase, hyphens allowed",
+    # !mark[/"default"/] Pre-filled default value
+    "default": "my-project",
+    "validate": lambda input: (
+        "Name is required" if not input else
+        "Use lowercase letters, numbers, and hyphens. Start with a letter." if not re.match(r'^[a-z][a-z0-9-]*$', input) else
+        "Name too long (max 50 chars)" if len(input) > 50 else None
+    )
+})
+```
+
+</Tab>
+<Tab value="C#">
+
+```csharp -c
+var projectName = await i.Text(new TextQuestion
+{
+    Type = QuestionType.Text,
+    Id = "project.name",
+    Message = "Project name?",
+    Desc = "Lowercase, hyphens allowed",
+    // !mark[/Default/] Pre-filled default value
+    Default = "my-project",
+    Validate = (input) =>
+    {
+        if (string.IsNullOrEmpty(input)) return "Name is required";
+        if (!Regex.IsMatch(input, @"^[a-z][a-z0-9-]*$"))
+            return "Use lowercase letters, numbers, and hyphens. Start with a letter.";
+        if (input.Length > 50) return "Name too long (max 50 chars)";
+        return null;
+    }
+});
+```
+
+</Tab>
+</Tabs>
 
 ## Related
 

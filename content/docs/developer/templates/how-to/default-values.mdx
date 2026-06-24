@@ -3,6 +3,7 @@ title: Set Default Values
 description: How to set default values for questions
 ---
 
+import { Tabs, Tab } from 'fumadocs-ui/components/tabs';
 import { Callout } from 'fumadocs-ui/components/callout';
 
 # How to Set Default Values
@@ -13,19 +14,51 @@ Default values improve user experience by providing sensible starting points.
 
 Shorthand forms don't support defaults. Use the object form for default values:
 
-```ts -c
-// Shorthand - no default support
-const name = await i.text('Name?', 'project.name', 'Enter name');
+<Tabs items={['TypeScript', 'Python', 'C#']}>
+  <Tab value="TypeScript">
+    ```ts
+    // Shorthand - no default support
+    const name = await i.text('Name?', 'project.name', 'Enter name');
 
-// Object form - supports default
-const name = await i.text({
-  type: QuestionType.Text,
-  id: 'project.name',
-  message: 'Name?',
-  desc: 'Enter project name',
-  default: 'my-project'  // Default value
-});
-```
+    // Object form - supports default // !callout
+    const name = await i.text({
+      type: QuestionType.Text,
+      id: 'project.name',
+      message: 'Name?',
+      desc: 'Enter project name',
+      default: 'my-project'  // Default value // !mark
+    });
+    ```
+  </Tab>
+
+  <Tab value="Python">
+    ```python
+    # Shorthand - no default support
+    name = await i.text('Name?', 'project.name', 'Enter name')
+
+    # Object form - supports default // !callout
+    name = await i.text(
+        'Name?',
+        'project.name',
+        TextQ(desc='Enter project name', default='my-project')  # Default value // !mark
+    )
+    ```
+  </Tab>
+
+  <Tab value="C#">
+    ```csharp
+    // Shorthand - no default support
+    var name = await i.Text("Name?", "project.name", "Enter name");
+
+    // Object form - supports default // !callout
+    var name = await i.Text("Name?", "project.name", new TextQ
+    {
+        Desc = "Enter project name",
+        Default = "my-project"  // Default value // !mark
+    });
+    ```
+  </Tab>
+</Tabs>
 
 ## Default by Question Type
 
@@ -36,54 +69,150 @@ The `text()` question type supports two ways to set initial values:
 - `default`: A fallback value used when no user input is provided
 - `initial`: A pre-filled value that appears in the input field (user can edit)
 
-```ts -c
-const name = await i.text({
-  type: QuestionType.Text,
-  id: 'project.name',
-  message: 'Project name?',
-  desc: 'Enter name',
-  default: 'my-project'  // Fallback if user provides no input
-});
-```
+<Tabs items={['TypeScript', 'Python', 'C#']}>
+  <Tab value="TypeScript">
+    ```ts
+    const name = await i.text({
+      type: QuestionType.Text,
+      id: 'project.name',
+      message: 'Project name?',
+      desc: 'Enter name',
+      default: 'my-project'  // Fallback if user provides no input // !mark
+    });
+    ```
 
-Using `initial` for pre-filled input:
+    Using `initial` for pre-filled input:
 
-```ts -c
-const name = await i.text({
-  type: QuestionType.Text,
-  id: 'project.name',
-  message: 'Project name?',
-  desc: 'Enter name',
-  initial: 'my-project'  // Pre-filled in input field, user can edit
-});
-```
+    ```ts
+    const name = await i.text({
+      type: QuestionType.Text,
+      id: 'project.name',
+      message: 'Project name?',
+      desc: 'Enter name',
+      initial: 'my-project'  // Pre-filled in input field, user can edit // !mark
+    });
+    ```
+  </Tab>
+
+  <Tab value="Python">
+    ```python
+    name = await i.text(
+        'Project name?',
+        'project.name',
+        TextQ(desc='Enter name', default='my-project')  # Fallback if user provides no input // !mark
+    )
+    ```
+
+    Using `initial` for pre-filled input:
+
+    ```python
+    name = await i.text(
+        'Project name?',
+        'project.name',
+        TextQ(desc='Enter name', initial='my-project')  # Pre-filled in input field, user can edit // !mark
+    )
+    ```
+  </Tab>
+
+  <Tab value="C#">
+    ```csharp
+    var name = await i.Text("Project name?", "project.name", new TextQ
+    {
+        Desc = "Enter name",
+        Default = "my-project"  // Fallback if user provides no input // !mark
+    });
+    ```
+
+    Using `Initial` for pre-filled input:
+
+    ```csharp
+    var name = await i.Text("Project name?", "project.name", new TextQ
+    {
+        Desc = "Enter name",
+        Initial = "my-project"  // Pre-filled in input field, user can edit // !mark
+    });
+    ```
+  </Tab>
+</Tabs>
 
 ### Confirm
 
-```ts -c
-const typescript = await i.confirm({
-  type: QuestionType.Confirm,
-  id: 'project.typescript',
-  message: 'Use TypeScript?',
-  desc: 'Add TypeScript config',
-  default: true  // true or false
-});
-```
+<Tabs items={['TypeScript', 'Python', 'C#']}>
+  <Tab value="TypeScript">
+    ```ts
+    const typescript = await i.confirm({
+      type: QuestionType.Confirm,
+      id: 'project.typescript',
+      message: 'Use TypeScript?',
+      desc: 'Add TypeScript config',
+      default: true  // true or false // !mark
+    });
+    ```
+  </Tab>
+
+  <Tab value="Python">
+    ```python
+    typescript = await i.confirm(
+        'Use TypeScript?',
+        'project.typescript',
+        ConfirmQ(desc='Add TypeScript config', default=True)  # True or False // !mark
+    )
+    ```
+  </Tab>
+
+  <Tab value="C#">
+    ```csharp
+    var typescript = await i.Confirm("Use TypeScript?", "project.typescript", new ConfirmQ
+    {
+        Desc = "Add TypeScript config",
+        Default = true  // true or false // !mark
+    });
+    ```
+  </Tab>
+</Tabs>
 
 ### Date
 
 The `dateSelect()` method accepts a `Date` object for the `default` property, but returns the selected date as a **string** (ISO format):
 
-```ts -c
-const startDate = await i.dateSelect({
-  type: QuestionType.DateSelect,
-  id: 'project.start',
-  message: 'Start date?',
-  desc: 'Project start',
-  default: new Date()  // Date object as input
-});
-// startDate is a string, e.g., "2024-01-15"
-```
+<Tabs items={['TypeScript', 'Python', 'C#']}>
+  <Tab value="TypeScript">
+    ```ts
+    const startDate = await i.dateSelect({
+      type: QuestionType.DateSelect,
+      id: 'project.start',
+      message: 'Start date?',
+      desc: 'Project start',
+      default: new Date()  // Date object as input // !mark
+    });
+    // startDate is a string, e.g., "2024-01-15" // !callout
+    ```
+  </Tab>
+
+  <Tab value="Python">
+    ```python
+    from datetime import datetime
+
+    start_date = await i.date_select(
+        'Start date?',
+        'project.start',
+        DateSelectQ(desc='Project start', default=datetime.now())  # datetime object as input // !mark
+    )
+    # start_date is a string, e.g., "2024-01-15" // !callout
+    ```
+  </Tab>
+
+  <Tab value="C#">
+    ```csharp
+    var startDate = await i.DateSelect("Start date?", "project.start", new DateSelectQ
+    {
+        Desc = "Project start",
+        Default = DateTime.Now  // DateTime object as input // !mark
+    });
+    // startDate is a string, e.g., "2024-01-15" // !callout
+    ```
+  </Tab>
+</Tabs>
 
 <Callout type="warn">
   `select()` and `checkbox()` question types do **not** support the `default` property. Users must make an active selection for these question types.
@@ -93,84 +222,46 @@ const startDate = await i.dateSelect({
 
 Calculate defaults dynamically:
 
-```ts -c
-const projectName = await i.text({
-  type: QuestionType.Text,
-  id: 'project.name',
-  message: 'Project name?',
-  desc: 'Enter name',
-  default: process.cwd().split('/').pop() || 'my-project'  // Current directory name
-});
-```
+<Tabs items={['TypeScript', 'Python', 'C#']}>
+  <Tab value="TypeScript">
+    ```ts
+    const projectName = await i.text({
+      type: QuestionType.Text,
+      id: 'project.name',
+      message: 'Project name?',
+      desc: 'Enter name',
+      default: process.cwd().split('/').pop() || 'my-project'  // Current directory name // !mark
+    });
+    ```
+  </Tab>
 
-```ts -c
-// Default to one month from now
-const defaultDeadline = new Date();
-defaultDeadline.setMonth(defaultDeadline.getMonth() + 1);
+  <Tab value="Python">
+    ```python
+    import os
 
-const deadline = await i.dateSelect({
-  type: QuestionType.DateSelect,
-  id: 'project.deadline',
-  message: 'Deadline?',
-  desc: 'Target date',
-  default: defaultDeadline
-});
-// deadline is returned as a string (ISO format)
-```
+    project_name = await i.text(
+        'Project name?',
+        'project.name',
+        TextQ(
+            desc='Enter name',
+            default=os.path.basename(os.getcwd()) or 'my-project'  # Current directory name // !mark
+        )
+    )
+    ```
+  </Tab>
 
-## Conditional Defaults
+  <Tab value="C#">
+    ```csharp
+    using System.IO;
 
-Set defaults based on previous answers. Note that `confirm()` and `text()` support defaults, but `select()` and `checkbox()` do not:
-
-```ts
-const typescript = await i.confirm({
-  type: QuestionType.Confirm,
-  id: 'project.typescript',
-  message: 'Use TypeScript?',
-  desc: 'Add TypeScript config',
-  default: true
-});
-
-// Conditional default for a text question based on previous answer
-const configExt = await i.text({
-  type: QuestionType.Text,
-  id: 'project.configExt',
-  message: 'Config file extension?',
-  desc: 'Enter extension',
-  default: typescript ? '.ts' : '.js'  // Conditional default
-});
-```
-
-For `select()` and `checkbox()` questions, users must make an active selection since these types do not support defaults:
-
-```ts
-const framework = await i.select({
-  type: QuestionType.Select,
-  id: 'project.framework',
-  message: 'Framework?',
-  desc: 'Choose framework',
-  options: ['React', 'Vue', 'Svelte']
-  // Note: No default - user must select
-});
-
-// Based on framework choice, suggest but don't pre-select testing tool
-const testFramework = await i.select({
-  type: QuestionType.Select,
-  id: 'project.testing',
-  message: 'Test framework?',
-  desc: 'Choose testing tool',
-  options: framework === 'Vue' ? ['Vitest', 'Jest', 'Mocha'] : ['Jest', 'Vitest', 'Mocha']
-  // Note: No default - user must select
-});
-```
-
-## Best Practices
-
-1. **Be opinionated** - Provide sensible defaults for common choices
-2. **Document defaults** - Make it clear what the default is
-3. **Consider context** - Defaults should match the project type
-4. **Allow override** - Users should always be able to change the default
-5. **Know the limits** - Only `text()`, `confirm()`, and `dateSelect()` support defaults; `select()` and `checkbox()` do not
+    var projectName = await i.Text("Project name?", "project.name", new TextQ
+    {
+        Desc = "Enter name",
+        Default = Path.GetFileName(Directory.GetCurrentDirectory()) ?? "my-project"  // Current directory name // !mark
+    });
+    ```
+  </Tab>
+</Tabs>
 
 ## Related
 

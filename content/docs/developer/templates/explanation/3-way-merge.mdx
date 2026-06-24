@@ -202,14 +202,16 @@ When both user and template change the same content:
 
 ## Determinism and Updates
 
-The pin system ensures IDs remain consistent across updates:
+The deterministic state system ensures IDs remain consistent across updates:
 
 ```ts
 // v1.0 generation
-const projectId = d.uuid(); // "abc-123"
+const projectId = d.get('project-id', () => crypto.randomUUID());
+// Returns: "abc-123"
 
-// v2.0 update with same pin
-const projectId = d.uuid(); // "abc-123" - same!
+// v2.0 update - same key returns same value
+const projectId = d.get('project-id', () => crypto.randomUUID());
+// Returns: "abc-123" - same!
 ```
 
 This allows:

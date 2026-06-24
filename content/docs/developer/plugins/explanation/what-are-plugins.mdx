@@ -5,6 +5,7 @@ description: Understanding plugins and their role in CyanPrint
 
 import { TypeTable } from 'fumadocs-ui/components/type-table';
 import { Cards, Card } from 'fumadocs-ui/components/card';
+import { Tabs, Tab } from 'fumadocs-ui/components/tabs';
 
 # What Are Plugins?
 
@@ -130,6 +131,9 @@ Read more in [Plugins vs Processors](/docs/developer/plugins/explanation/plugins
 
 Initialize the project environment:
 
+<Tabs items={['TypeScript', 'Python', 'C#']}>
+  <Tab value="TypeScript">
+
 ```ts plugin.ts -c
 import { $ } from 'bun';
 import { StartPluginWithLambda } from '@atomicloud/cyan-sdk';
@@ -148,9 +152,61 @@ StartPluginWithLambda(async (input: CyanPluginInput): Promise<PluginOutput> => {
 });
 ```
 
+  </Tab>
+  <Tab value="Python">
+
+```python plugin.py -c
+import subprocess
+from cyan_sdk import start_plugin_with_fn
+from cyan_sdk.types import CyanPluginInput, PluginOutput
+
+@start_plugin_with_fn
+async def setup_plugin(input: CyanPluginInput) -> PluginOutput:
+    # Extract directory from input
+    directory = input.directory
+
+    # Run shell commands
+    subprocess.run(["git", "-C", directory, "init"], capture_output=True)
+    subprocess.run(["npm", "install"], cwd=directory, capture_output=True)
+
+    # Always return the directory for pipeline continuity
+    return PluginOutput(directory=directory)
+```
+
+  </Tab>
+  <Tab value="C#">
+
+```csharp Plugin.cs -c
+using CyanSdk;
+using CyanSdk.Types;
+
+[PluginMain]
+public static class SetupPlugin
+{
+    public static async Task<PluginOutput> Run(CyanPluginInput input)
+    {
+        // Extract directory from input
+        var directory = input.Directory;
+
+        // Run shell commands
+        await Shell.Exec($"git -C {directory} init");
+        await Shell.Exec($"cd {directory} && npm install");
+
+        // Always return the directory for pipeline continuity
+        return new PluginOutput(directory);
+    }
+}
+```
+
+  </Tab>
+</Tabs>
+
 ### Formatter Plugin
 
 Run code formatters:
+
+<Tabs items={['TypeScript', 'Python', 'C#']}>
+  <Tab value="TypeScript">
 
 ```ts -c
 import { $ } from 'bun';
@@ -169,9 +225,67 @@ StartPluginWithLambda(async (input: CyanPluginInput): Promise<PluginOutput> => {
 });
 ```
 
+  </Tab>
+  <Tab value="Python">
+
+```python -c
+import subprocess
+from cyan_sdk import start_plugin_with_fn
+from cyan_sdk.types import CyanPluginInput, PluginOutput
+from typing import TypedDict
+
+class PluginConfig(TypedDict, total=False):
+    formatter: str
+
+@start_plugin_with_fn
+async def formatter_plugin(input: CyanPluginInput) -> PluginOutput:
+    directory = input.directory
+    config: PluginConfig = input.config
+
+    if config.get("formatter") == "prettier":
+        subprocess.run(
+            ["npx", "prettier", "--write", "."],
+            cwd=directory,
+            capture_output=True
+        )
+
+    return PluginOutput(directory=directory)
+```
+
+  </Tab>
+  <Tab value="C#">
+
+```csharp -c
+using CyanSdk;
+using CyanSdk.Types;
+
+[PluginMain]
+public static class FormatterPlugin
+{
+    public static async Task<PluginOutput> Run(CyanPluginInput input)
+    {
+        var directory = input.Directory;
+        var config = input.Config as dynamic;
+
+        if (config?.formatter == "prettier")
+        {
+            await Shell.Exec($"cd {directory} && npx prettier --write .");
+        }
+
+        return new PluginOutput(directory);
+    }
+}
+```
+
+  </Tab>
+</Tabs>
+
 ### Build Plugin
 
 Run build steps:
+
+<Tabs items={['TypeScript', 'Python', 'C#']}>
+  <Tab value="TypeScript">
 
 ```ts -c
 import { $ } from 'bun';
@@ -189,6 +303,61 @@ StartPluginWithLambda(async (input: CyanPluginInput): Promise<PluginOutput> => {
   return { directory };
 });
 ```
+
+  </Tab>
+  <Tab value="Python">
+
+```python -c
+import subprocess
+from cyan_sdk import start_plugin_with_fn
+from cyan_sdk.types import CyanPluginInput, PluginOutput
+from typing import TypedDict
+
+class BuildConfig(TypedDict, total=False):
+    build: bool
+
+@start_plugin_with_fn
+async def build_plugin(input: CyanPluginInput) -> PluginOutput:
+    directory = input.directory
+    config: BuildConfig = input.config
+
+    if config.get("build", False):
+        subprocess.run(
+            ["npm", "run", "build"],
+            cwd=directory,
+            capture_output=True
+        )
+
+    return PluginOutput(directory=directory)
+```
+
+  </Tab>
+  <Tab value="C#">
+
+```csharp -c
+using CyanSdk;
+using CyanSdk.Types;
+
+[PluginMain]
+public static class BuildPlugin
+{
+    public static async Task<PluginOutput> Run(CyanPluginInput input)
+    {
+        var directory = input.Directory;
+        var config = input.Config as dynamic;
+
+        if (config?.build == true)
+        {
+            await Shell.Exec($"cd {directory} && npm run build");
+        }
+
+        return new PluginOutput(directory);
+    }
+}
+```
+
+  </Tab>
+</Tabs>
 
 ## Design Philosophy
 

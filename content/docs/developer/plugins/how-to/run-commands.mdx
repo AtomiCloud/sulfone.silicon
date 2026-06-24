@@ -19,6 +19,9 @@ Bun provides a convenient shell API using template literals:
 Bun Shell is specific to the Bun runtime. If you're using Node.js, skip to the [Node.js child_process](#using-nodejs-child_process) section.
 </Callout>
 
+<Tabs items={['TypeScript', 'Python', 'C#']}>
+  <Tab value="TypeScript">
+
 ```ts -c
 import { PluginOutput, StartPluginWithLambda } from '@atomicloud/cyan-sdk';
 import { $ } from 'bun';
@@ -39,6 +42,77 @@ StartPluginWithLambda(async (input): Promise<PluginOutput> => {
 });
 ```
 
+  </Tab>
+  <Tab value="Python">
+
+```python -c
+import subprocess
+from cyan_sdk import PluginOutput, StartPluginWithLambda
+
+@StartPluginWithLambda
+async def main(input_data) -> PluginOutput:
+    directory = input_data.directory
+
+    # Initialize git
+    subprocess.run(['git', '-C', directory, 'init'], check=True)
+
+    # Add all files
+    subprocess.run(['git', '-C', directory, 'add', '.'], check=True)
+
+    # Create initial commit
+    subprocess.run(['git', '-C', directory, 'commit', '-m', 'Initial commit'], check=True)
+
+    return PluginOutput(directory=directory)
+```
+
+  </Tab>
+  <Tab value="C#">
+
+```csharp -c
+using System.Diagnostics;
+using CyanSdk;
+
+public class Plugin
+{
+    public static async Task<PluginOutput> Run(PluginInput input)
+    {
+        var directory = input.Directory;
+
+        // Initialize git
+        await RunCommand("git", $"-C {directory} init");
+
+        // Add all files
+        await RunCommand("git", $"-C {directory} add .");
+
+        // Create initial commit
+        await RunCommand("git", $"-C {directory} commit -m \"Initial commit\"");
+
+        return new PluginOutput { Directory = directory };
+    }
+
+    private static Task RunCommand(string command, string args)
+    {
+        var tcs = new TaskCompletionSource<bool>();
+        var process = new Process
+        {
+            StartInfo = new ProcessStartInfo
+            {
+                FileName = command,
+                Arguments = args,
+                RedirectStandardOutput = true,
+                RedirectStandardError = true
+            }
+        };
+        process.Exited += (s, e) => tcs.SetResult(true);
+        process.Start();
+        return tcs.Task;
+    }
+}
+```
+
+  </Tab>
+</Tabs>
+
 ### Bun Shell Features
 
 | Feature | Example | Description |
@@ -50,6 +124,9 @@ StartPluginWithLambda(async (input): Promise<PluginOutput> => {
 | Redirects | `` $`cmd > file.txt` `` | Output redirection |
 
 ### Capturing Output
+
+<Tabs items={['TypeScript', 'Python', 'C#']}>
+  <Tab value="TypeScript">
 
 ```ts -c
 import { PluginOutput, StartPluginWithLambda } from '@atomicloud/cyan-sdk';
@@ -68,7 +145,74 @@ StartPluginWithLambda(async (input): Promise<PluginOutput> => {
 });
 ```
 
+  </Tab>
+  <Tab value="Python">
+
+```python -c
+import subprocess
+from cyan_sdk import PluginOutput, StartPluginWithLambda
+
+@StartPluginWithLambda
+async def main(input_data) -> PluginOutput:
+    directory = input_data.directory
+
+    # Capture command output
+    result = subprocess.run(
+        ['git', '-C', directory, 'rev-parse', 'HEAD'],
+        capture_output=True,
+        text=True,
+        check=True
+    )
+    commit_hash = result.stdout.strip()
+
+    print('Current commit:', commit_hash)
+
+    return PluginOutput(directory=directory)
+```
+
+  </Tab>
+  <Tab value="C#">
+
+```csharp -c
+using System.Diagnostics;
+using CyanSdk;
+
+public class Plugin
+{
+    public static async Task<PluginOutput> Run(PluginInput input)
+    {
+        var directory = input.Directory;
+
+        // Capture command output
+        var process = new Process
+        {
+            StartInfo = new ProcessStartInfo
+            {
+                FileName = "git",
+                Arguments = $"-C {directory} rev-parse HEAD",
+                RedirectStandardOutput = true,
+                RedirectStandardError = true,
+                UseShellExecute = false
+            }
+        };
+        process.Start();
+        var commitHash = (await process.StandardOutput.ReadToEndAsync()).Trim();
+        await process.WaitForExitAsync();
+
+        Console.WriteLine($"Current commit: {commitHash}");
+
+        return new PluginOutput { Directory = directory };
+    }
+}
+```
+
+  </Tab>
+</Tabs>
+
 ### Handling Errors
+
+<Tabs items={['TypeScript', 'Python', 'C#']}>
+  <Tab value="TypeScript">
 
 ```ts -c
 import { PluginOutput, StartPluginWithLambda } from '@atomicloud/cyan-sdk';
@@ -87,6 +231,74 @@ StartPluginWithLambda(async (input): Promise<PluginOutput> => {
   return { directory };
 });
 ```
+
+  </Tab>
+  <Tab value="Python">
+
+```python -c
+import subprocess
+from cyan_sdk import PluginOutput, StartPluginWithLambda
+
+@StartPluginWithLambda
+async def main(input_data) -> PluginOutput:
+    directory = input_data.directory
+
+    try:
+        subprocess.run(['git', '-C', directory, 'status'], check=True)
+    except subprocess.CalledProcessError as error:
+        # Git not initialized or other error
+        print('Git status failed:', error)
+
+    return PluginOutput(directory=directory)
+```
+
+  </Tab>
+  <Tab value="C#">
+
+```csharp -c
+using System.Diagnostics;
+using CyanSdk;
+
+public class Plugin
+{
+    public static async Task<PluginOutput> Run(PluginInput input)
+    {
+        var directory = input.Directory;
+
+        try
+        {
+            var process = new Process
+            {
+                StartInfo = new ProcessStartInfo
+                {
+                    FileName = "git",
+                    Arguments = $"-C {directory} status",
+                    RedirectStandardOutput = true,
+                    RedirectStandardError = true,
+                    UseShellExecute = false
+                }
+            };
+            process.Start();
+            await process.WaitForExitAsync();
+
+            if (process.ExitCode != 0)
+            {
+                throw new Exception($"Command failed with exit code {process.ExitCode}");
+            }
+        }
+        catch (Exception error)
+        {
+            // Git not initialized or other error
+            Console.WriteLine($"Git status failed: {error}");
+        }
+
+        return new PluginOutput { Directory = directory };
+    }
+}
+```
+
+  </Tab>
+</Tabs>
 
 ## Using Node.js child_process
 
@@ -174,6 +386,9 @@ StartPluginWithLambda(async (input): Promise<PluginOutput> => {
 
 ### Package Manager Commands
 
+<Tabs items={['TypeScript', 'Python', 'C#']}>
+  <Tab value="TypeScript">
+
 ```ts -c
 import { PluginOutput, StartPluginWithLambda } from '@atomicloud/cyan-sdk';
 import { $ } from 'bun';
@@ -196,7 +411,80 @@ StartPluginWithLambda(async (input): Promise<PluginOutput> => {
 });
 ```
 
+  </Tab>
+  <Tab value="Python">
+
+```python -c
+import subprocess
+from cyan_sdk import PluginOutput, StartPluginWithLambda
+
+@StartPluginWithLambda
+async def main(input_data) -> PluginOutput:
+    directory = input_data.directory
+    config = input_data.config or {}
+    pm = config.get('packageManager', 'npm')
+
+    commands = {
+        'npm': ['npm', 'install'],
+        'bun': ['bun', 'install'],
+        'yarn': ['yarn', 'install'],
+        'pnpm': ['pnpm', 'install']
+    }
+
+    subprocess.run(commands[pm], cwd=directory, check=True)
+
+    return PluginOutput(directory=directory)
+```
+
+  </Tab>
+  <Tab value="C#">
+
+```csharp -c
+using System.Diagnostics;
+using CyanSdk;
+
+public class Plugin
+{
+    public static async Task<PluginOutput> Run(PluginInput input)
+    {
+        var directory = input.Directory;
+        var config = input.Config ?? new Dictionary<string, object>();
+        var pm = config.TryGetValue("packageManager", out var pmObj) ? pmObj.ToString() : "npm";
+
+        var commands = new Dictionary<string, (string, string)>
+        {
+            ["npm"] = ("npm", "install"),
+            ["bun"] = ("bun", "install"),
+            ["yarn"] = ("yarn", "install"),
+            ["pnpm"] = ("pnpm", "install")
+        };
+
+        var (cmd, args) = commands[pm];
+        var process = new Process
+        {
+            StartInfo = new ProcessStartInfo
+            {
+                FileName = cmd,
+                Arguments = args,
+                WorkingDirectory = directory,
+                UseShellExecute = false
+            }
+        };
+        process.Start();
+        await process.WaitForExitAsync();
+
+        return new PluginOutput { Directory = directory };
+    }
+}
+```
+
+  </Tab>
+</Tabs>
+
 ### Git Operations
+
+<Tabs items={['TypeScript', 'Python', 'C#']}>
+  <Tab value="TypeScript">
 
 ```ts -c
 import { PluginOutput, StartPluginWithLambda } from '@atomicloud/cyan-sdk';
@@ -220,7 +508,85 @@ StartPluginWithLambda(async (input): Promise<PluginOutput> => {
 });
 ```
 
+  </Tab>
+  <Tab value="Python">
+
+```python -c
+import subprocess
+from cyan_sdk import PluginOutput, StartPluginWithLambda
+
+@StartPluginWithLambda
+async def main(input_data) -> PluginOutput:
+    directory = input_data.directory
+
+    # Initialize
+    subprocess.run(['git', '-C', directory, 'init'], check=True)
+
+    # Configure user (from env or config)
+    subprocess.run(['git', '-C', directory, 'config', 'user.email', 'bot@example.com'], check=True)
+    subprocess.run(['git', '-C', directory, 'config', 'user.name', 'CyanPrint Bot'], check=True)
+
+    # Add and commit
+    subprocess.run(['git', '-C', directory, 'add', '.'], check=True)
+    subprocess.run(['git', '-C', directory, 'commit', '-m', 'Initial commit from CyanPrint'], check=True)
+
+    return PluginOutput(directory=directory)
+```
+
+  </Tab>
+  <Tab value="C#">
+
+```csharp -c
+using System.Diagnostics;
+using CyanSdk;
+
+public class Plugin
+{
+    public static async Task<PluginOutput> Run(PluginInput input)
+    {
+        var directory = input.Directory;
+
+        // Initialize
+        await RunGitCommand(directory, "init");
+
+        // Configure user (from env or config)
+        await RunGitCommand(directory, "config user.email \"bot@example.com\"");
+        await RunGitCommand(directory, "config user.name \"CyanPrint Bot\"");
+
+        // Add and commit
+        await RunGitCommand(directory, "add .");
+        await RunGitCommand(directory, "commit -m \"Initial commit from CyanPrint\"");
+
+        return new PluginOutput { Directory = directory };
+    }
+
+    private static Task RunGitCommand(string directory, string args)
+    {
+        var tcs = new TaskCompletionSource<bool>();
+        var process = new Process
+        {
+            StartInfo = new ProcessStartInfo
+            {
+                FileName = "git",
+                Arguments = $"-C {directory} {args}",
+                UseShellExecute = false
+            }
+        };
+        process.Exited += (s, e) => tcs.SetResult(true);
+        process.EnableRaisingEvents = true;
+        process.Start();
+        return tcs.Task;
+    }
+}
+```
+
+  </Tab>
+</Tabs>
+
 ### Running Build Tools
+
+<Tabs items={['TypeScript', 'Python', 'C#']}>
+  <Tab value="TypeScript">
 
 ```ts -c
 import { PluginOutput, StartPluginWithLambda } from '@atomicloud/cyan-sdk';
@@ -245,6 +611,93 @@ StartPluginWithLambda(async (input): Promise<PluginOutput> => {
   return { directory };
 });
 ```
+
+  </Tab>
+  <Tab value="Python">
+
+```python -c
+import subprocess
+from cyan_sdk import PluginOutput, StartPluginWithLambda
+
+@StartPluginWithLambda
+async def main(input_data) -> PluginOutput:
+    directory = input_data.directory
+
+    # Run linter (npm run --if-present requires npm 7+)
+    subprocess.run(['npm', 'run', 'lint', '--if-present'], cwd=directory, check=True)
+
+    # Run tests (optional)
+    try:
+        subprocess.run(
+            ['npm', 'test', '--if-present'],
+            cwd=directory,
+            check=True,
+            capture_output=True
+        )
+    except subprocess.CalledProcessError:
+        print('Tests skipped or failed')
+
+    # Build
+    subprocess.run(['npm', 'run', 'build', '--if-present'], cwd=directory, check=True)
+
+    return PluginOutput(directory=directory)
+```
+
+  </Tab>
+  <Tab value="C#">
+
+```csharp -c
+using System.Diagnostics;
+using CyanSdk;
+
+public class Plugin
+{
+    public static async Task<PluginOutput> Run(PluginInput input)
+    {
+        var directory = input.Directory;
+
+        // Run linter (npm run --if-present requires npm 7+)
+        await RunNpmCommand(directory, "run lint --if-present");
+
+        // Run tests (optional)
+        try
+        {
+            await RunNpmCommand(directory, "test --if-present");
+        }
+        catch
+        {
+            Console.WriteLine("Tests skipped or failed");
+        }
+
+        // Build
+        await RunNpmCommand(directory, "run build --if-present");
+
+        return new PluginOutput { Directory = directory };
+    }
+
+    private static Task RunNpmCommand(string directory, string args)
+    {
+        var tcs = new TaskCompletionSource<bool>();
+        var process = new Process
+        {
+            StartInfo = new ProcessStartInfo
+            {
+                FileName = "npm",
+                Arguments = args,
+                WorkingDirectory = directory,
+                UseShellExecute = false
+            }
+        };
+        process.Exited += (s, e) => tcs.SetResult(true);
+        process.EnableRaisingEvents = true;
+        process.Start();
+        return tcs.Task;
+    }
+}
+```
+
+  </Tab>
+</Tabs>
 
 <Callout type="warn">
 The `--if-present` flag for npm scripts requires npm version 7 or later. For older npm versions, you'll need to check if the script exists before running it.

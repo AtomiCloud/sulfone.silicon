@@ -4,6 +4,7 @@ description: Create post-processing plugins for CyanPrint templates
 ---
 
 import { Cards, Card } from 'fumadocs-ui/components/card';
+import { Tabs, Tab } from 'fumadocs-ui/components/tabs';
 
 # Plugin Development
 
@@ -118,7 +119,10 @@ Deep dives into plugin concepts:
 
 Here's a minimal plugin that initializes git and installs dependencies:
 
-```ts
+<Tabs items={['TypeScript', 'Python', 'C#']}>
+  <Tab value="TypeScript">
+
+```ts -c
 import { StartPluginWithLambda } from '@atomicloud/cyan-sdk';
 import { $ } from 'bun';
 
@@ -137,6 +141,70 @@ StartPluginWithLambda(async (input) => {
   return { directory };
 });
 ```
+
+  </Tab>
+  <Tab value="Python">
+
+```python -c
+import asyncio
+import subprocess
+from cyanprintsdk.plugin import start_plugin_with_fn
+from cyanprintsdk.protocol import PluginInput, PluginOutput
+
+async def run_plugin(input: PluginInput) -> PluginOutput:
+    cfg = input.config or {}
+    directory = input.directory
+
+    # Initialize git repository
+    subprocess.run(['git', 'init'], cwd=directory, capture_output=True)
+
+    # Optionally install dependencies
+    if cfg.get('installDeps'):
+        subprocess.run(['npm', 'install'], cwd=directory, capture_output=True)
+
+    return PluginOutput(directory=directory)
+
+plugin_main = start_plugin_with_fn(run_plugin)
+```
+
+  </Tab>
+  <Tab value="C#">
+
+```csharp -c
+using CyanPrintSDK;
+using System.Diagnostics;
+
+public static class Plugin
+{
+    [PluginMain]
+    public static async Task<PluginOutput> Run(PluginInput input)
+    {
+        var cfg = input.Config;
+        var directory = input.Directory;
+
+        // Initialize git repository
+        await RunCommand("git", "init", directory);
+
+        // Optionally install dependencies
+        if (cfg.TryGetValue("installDeps", out var installDeps) && installDeps == "true")
+        {
+            await RunCommand("npm", "install", directory);
+        }
+
+        return new PluginOutput { Directory = directory };
+    }
+
+    private static Task RunCommand(string cmd, string args, string cwd)
+    {
+        var psi = new ProcessStartInfo(cmd, args) { WorkingDirectory = cwd };
+        Process.Start(psi)?.WaitForExit();
+        return Task.CompletedTask;
+    }
+}
+```
+
+  </Tab>
+</Tabs>
 
 ## Next Steps
 

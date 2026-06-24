@@ -5,6 +5,7 @@ description: Type definitions for processor interfaces
 
 import { TypeTable } from 'fumadocs-ui/components/type-table';
 import { Cards, Card } from 'fumadocs-ui/components/card';
+import { Tabs, Tab } from 'fumadocs-ui/components/tabs';
 
 # Processor Input/Output
 
@@ -57,6 +58,9 @@ interface CyanProcessorInput {
 
 ### Usage
 
+<Tabs items={['TypeScript', 'Python', 'C#']}>
+  <Tab value="TypeScript">
+
 ```ts -c
 StartProcessorWithLambda(async (input, fileHelper) => {
   console.log('Reading from:', input.readDir);
@@ -68,6 +72,39 @@ StartProcessorWithLambda(async (input, fileHelper) => {
   return { directory: input.writeDir };
 });
 ```
+
+  </Tab>
+  <Tab value="Python">
+
+```python -c
+async def handler(input, file_helper):
+    print(f"Reading from: {input.read_dir}")
+    print(f"Writing to: {input.write_dir}")
+    print(f"Globs: {input.globs}")
+    print(f"Config: {input.config}")
+
+    # Always return write_dir
+    return {"directory": input.write_dir}
+```
+
+  </Tab>
+  <Tab value="C#">
+
+```csharp -c
+await Processor.StartAsync(async (input, fileHelper) =>
+{
+    Console.WriteLine($"Reading from: {input.ReadDir}");
+    Console.WriteLine($"Writing to: {input.WriteDir}");
+    Console.WriteLine($"Globs: {input.Globs}");
+    Console.WriteLine($"Config: {input.Config}");
+
+    // Always return WriteDir
+    return new ProcessorOutput { Directory = input.WriteDir };
+});
+```
+
+  </Tab>
+</Tabs>
 
 ---
 
@@ -96,6 +133,9 @@ interface ProcessorOutput {
 
 ### Usage
 
+<Tabs items={['TypeScript', 'Python', 'C#']}>
+  <Tab value="TypeScript">
+
 ```ts -c
 StartProcessorWithLambda(async (input, fileHelper) => {
   // ... processing ...
@@ -104,6 +144,33 @@ StartProcessorWithLambda(async (input, fileHelper) => {
   return { directory: input.writeDir };
 });
 ```
+
+  </Tab>
+  <Tab value="Python">
+
+```python -c
+async def handler(input, file_helper):
+    # ... processing ...
+
+    # Must return the write directory
+    return {"directory": input.write_dir}
+```
+
+  </Tab>
+  <Tab value="C#">
+
+```csharp -c
+await Processor.StartAsync(async (input, fileHelper) =>
+{
+    // ... processing ...
+
+    // Must return the write directory
+    return new ProcessorOutput { Directory = input.WriteDir };
+});
+```
+
+  </Tab>
+</Tabs>
 
 ---
 
@@ -242,6 +309,9 @@ The `config` property is typed as `unknown`. Cast to your expected type:
 
 ### Definitions
 
+<Tabs items={['TypeScript', 'Python', 'C#']}>
+  <Tab value="TypeScript">
+
 ```ts -c
 // In your processor
 interface MyProcessorConfig {
@@ -264,7 +334,58 @@ StartProcessorWithLambda(async (input, fileHelper) => {
 });
 ```
 
+  </Tab>
+  <Tab value="Python">
+
+```python -c
+from dataclasses import dataclass
+from typing import Optional, Literal
+
+# In your processor
+@dataclass
+class MyProcessorConfig:
+    # Define expected config shape
+    transform_type: Literal['uppercase', 'lowercase']
+    include_header: bool
+    custom_prefix: Optional[str] = None
+
+async def handler(input, file_helper):
+    # Cast to your type with defaults
+    config_data = input.config or {}
+    config = MyProcessorConfig(
+        transform_type=config_data.get('transform_type', 'uppercase'),
+        include_header=config_data.get('include_header', False),
+        custom_prefix=config_data.get('custom_prefix')
+    )
+```
+
+  </Tab>
+  <Tab value="C#">
+
+```csharp -c
+// In your processor
+public class MyProcessorConfig
+{
+    // Define expected config shape
+    public string TransformType { get; set; } = "uppercase";
+    public bool IncludeHeader { get; set; } = false;
+    public string? CustomPrefix { get; set; }
+}
+
+await Processor.StartAsync(async (input, fileHelper) =>
+{
+    // Cast to your type with defaults
+    var config = input.Config as MyProcessorConfig ?? new MyProcessorConfig();
+});
+```
+
+  </Tab>
+</Tabs>
+
 ### Complex Config
+
+<Tabs items={['TypeScript', 'Python', 'C#']}>
+  <Tab value="TypeScript">
 
 ```ts -c
 interface ProcessorConfig {
@@ -287,9 +408,72 @@ interface ProcessorConfig {
 }
 ```
 
+  </Tab>
+  <Tab value="Python">
+
+```python -c
+from dataclasses import dataclass
+from typing import Optional, List
+
+@dataclass
+class FormattingConfig:
+    indent: int
+    newline: str  # 'lf' or 'crlf'
+
+@dataclass
+class ProcessorConfig:
+    # Simple types
+    enabled: bool
+    max_size: int
+    output_path: str
+
+    # Arrays
+    include_patterns: List[str]
+
+    # Nested objects
+    formatting: FormattingConfig
+
+    # Optional properties
+    custom_handler: Optional[str] = None
+```
+
+  </Tab>
+  <Tab value="C#">
+
+```csharp -c
+public class FormattingConfig
+{
+    public int Indent { get; set; }
+    public string Newline { get; set; }  // "lf" or "crlf"
+}
+
+public class ProcessorConfig
+{
+    // Simple types
+    public bool Enabled { get; set; }
+    public int MaxSize { get; set; }
+    public string OutputPath { get; set; }
+
+    // Arrays
+    public List<string> IncludePatterns { get; set; }
+
+    // Nested objects
+    public FormattingConfig Formatting { get; set; }
+
+    // Optional properties
+    public string? CustomHandler { get; set; }
+}
+```
+
+  </Tab>
+</Tabs>
+
 ---
 
 ## Full Example
+
+<Tabs items={['TypeScript', 'Python', 'C#']}>
+  <Tab value="TypeScript">
 
 ```ts -c
 import { StartProcessorWithLambda } from '@atomicloud/cyan-sdk';
@@ -336,6 +520,111 @@ StartProcessorWithLambda(async (input, fileHelper) => {
   return { directory: input.writeDir };
 });
 ```
+
+  </Tab>
+  <Tab value="Python">
+
+```python -c
+import json
+from dataclasses import dataclass
+from typing import Optional
+from atomicloud_cyan_sdk import start_processor_with_lambda
+
+# Define your config type
+@dataclass
+class MarkdownConfig:
+    generate_toc: bool = False
+    heading_anchors: bool = True
+    max_depth: Optional[int] = None
+
+async def handler(input, file_helper):
+    # Parse config with defaults
+    config_data = input.config or {}
+    config = MarkdownConfig(
+        generate_toc=config_data.get('generate_toc', False),
+        heading_anchors=config_data.get('heading_anchors', True),
+        max_depth=config_data.get('max_depth')
+    )
+
+    # Log input information
+    print("Processor Input:")
+    print(f"  Read directory: {input.read_dir}")
+    print(f"  Write directory: {input.write_dir}")
+    print(f"  Globs: {json.dumps(input.globs, indent=2)}")
+    print(f"  Config: {json.dumps(config.__dict__, indent=2)}")
+
+    # Load files based on globs
+    files = file_helper.resolve_all()
+
+    # Process files
+    for file in files:
+        if config.generate_toc:
+            file.content = add_table_of_contents(file.content, config.max_depth)
+
+        if config.heading_anchors:
+            file.content = add_heading_anchors(file.content)
+
+        file.write_file()
+
+    # Return output
+    return {"directory": input.write_dir}
+
+start_processor_with_lambda(handler)
+```
+
+  </Tab>
+  <Tab value="C#">
+
+```csharp -c
+using AtomiLoud.CyanSdk;
+using System.Text.Json;
+
+// Define your config type
+public class MarkdownConfig
+{
+    public bool GenerateToc { get; set; } = false;
+    public bool HeadingAnchors { get; set; } = true;
+    public int? MaxDepth { get; set; }
+}
+
+await Processor.StartAsync(async (input, fileHelper) =>
+{
+    // Parse config with defaults
+    var config = input.Config as MarkdownConfig ?? new MarkdownConfig();
+
+    // Log input information
+    Console.WriteLine("Processor Input:");
+    Console.WriteLine($"  Read directory: {input.ReadDir}");
+    Console.WriteLine($"  Write directory: {input.WriteDir}");
+    Console.WriteLine($"  Globs: {JsonSerializer.Serialize(input.Globs, new JsonSerializerOptions { WriteIndented = true })}");
+    Console.WriteLine($"  Config: {JsonSerializer.Serialize(config, new JsonSerializerOptions { WriteIndented = true })}");
+
+    // Load files based on globs
+    var files = fileHelper.ResolveAll();
+
+    // Process files
+    foreach (var file in files)
+    {
+        if (config.GenerateToc)
+        {
+            file.Content = AddTableOfContents(file.Content, config.MaxDepth);
+        }
+
+        if (config.HeadingAnchors)
+        {
+            file.Content = AddHeadingAnchors(file.Content);
+        }
+
+        file.WriteFile();
+    }
+
+    // Return output
+    return new ProcessorOutput { Directory = input.WriteDir };
+});
+```
+
+  </Tab>
+</Tabs>
 
 ## Related
 

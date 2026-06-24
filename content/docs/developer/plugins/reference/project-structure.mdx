@@ -5,6 +5,7 @@ description: Standard directory layout for plugin projects
 
 import { Files, File, Folder } from 'fumadocs-ui/components/files';
 import { Cards, Card } from 'fumadocs-ui/components/card';
+import { Tabs, Tab } from 'fumadocs-ui/components/tabs';
 
 # Plugin Project Structure
 
@@ -32,17 +33,60 @@ Always commit `bun.lockb` to ensure reproducible builds across environments.
 
 The entry point containing plugin logic:
 
-```ts index.ts -c
-import { StartPluginWithLambda } from '@atomicloud/cyan-sdk';
+<Tabs items={['TypeScript', 'Python', 'C#']}>
+  <Tab value="TypeScript">
 
-StartPluginWithLambda(async (input) => {
-  const { directory, config } = input;
+  ```ts index.ts -c
+  import { StartPluginWithLambda } from '@atomicloud/cyan-sdk';
 
-  // Plugin logic here
+  StartPluginWithLambda(async (input) => {
+    const { directory, config } = input;
 
-  return { directory };
-});
-```
+    // Plugin logic here
+
+    return { directory };
+  });
+  ```
+
+  </Tab>
+  <Tab value="Python">
+
+  ```py main.py -c
+  from atomicloud_cyan_sdk import start_plugin_with_fn, PluginInput, PluginOutput
+
+  @start_plugin_with_fn
+  async def main(input: PluginInput) -> PluginOutput:
+      directory = input.directory
+      config = input.config
+
+      # Plugin logic here
+
+      return {'directory': directory}
+  ```
+
+  </Tab>
+  <Tab value="C#">
+
+  ```csharp Plugin.cs -c
+  using Atomicloud.Cyan.Sdk;
+
+  [PluginMain]
+  public static class Plugin
+  {
+      public static async Task<PluginOutput> Main(PluginInput input)
+      {
+          var directory = input.Directory;
+          var config = input.Config;
+
+          // Plugin logic here
+
+          return new PluginOutput { Directory = directory };
+      }
+  }
+  ```
+
+  </Tab>
+</Tabs>
 
 ### package.json
 
@@ -157,37 +201,127 @@ For complex plugins, organize code into multiple files:
 
 ### index.ts
 
-```ts index.ts -c
-import { StartPluginWithLambda } from '@atomicloud/cyan-sdk';
-import { initGit } from './lib/git';
-import { installDeps } from './lib/npm';
-import { createFiles } from './lib/files';
-import type { PluginConfig } from './types/config';
+<Tabs items={['TypeScript', 'Python', 'C#']}>
+  <Tab value="TypeScript">
 
-StartPluginWithLambda(async (input) => {
-  const { directory, config } = input;
-  const cfg = config as PluginConfig;
+  ```ts index.ts -c
+  import { StartPluginWithLambda } from '@atomicloud/cyan-sdk';
+  import { initGit } from './lib/git';
+  import { installDeps } from './lib/npm';
+  import { createFiles } from './lib/files';
+  import type { PluginConfig } from './types/config';
 
-  await initGit(directory, cfg);
-  await installDeps(directory, cfg);
-  await createFiles(directory, cfg);
+  StartPluginWithLambda(async (input) => {
+    const { directory, config } = input;
+    const cfg = config as PluginConfig;
 
-  return { directory };
-});
-```
+    await initGit(directory, cfg);
+    await installDeps(directory, cfg);
+    await createFiles(directory, cfg);
+
+    return { directory };
+  });
+  ```
+
+  </Tab>
+  <Tab value="Python">
+
+  ```py main.py -c
+  from atomicloud_cyan_sdk import start_plugin_with_fn, PluginInput, PluginOutput
+  from lib.git import init_git
+  from lib.npm import install_deps
+  from lib.files import create_files
+
+  @start_plugin_with_fn
+  async def main(input: PluginInput) -> PluginOutput:
+      directory = input.directory
+      config = input.config
+
+      await init_git(directory, config)
+      await install_deps(directory, config)
+      await create_files(directory, config)
+
+      return {'directory': directory}
+  ```
+
+  </Tab>
+  <Tab value="C#">
+
+  ```csharp Plugin.cs -c
+  using Atomicloud.Cyan.Sdk;
+  using System.Text.Json;
+
+  [PluginMain]
+  public static class Plugin
+  {
+      public static async Task<PluginOutput> Main(PluginInput input)
+      {
+          var directory = input.Directory;
+          var config = JsonSerializer.Deserialize<PluginConfig>(
+              input.Config.ToString()
+          );
+
+          await GitHelper.InitGit(directory, config);
+          await NpmHelper.InstallDeps(directory, config);
+          await FileHelper.CreateFiles(directory, config);
+
+          return new PluginOutput { Directory = directory };
+      }
+  }
+  ```
+
+  </Tab>
+</Tabs>
 
 ### lib/git.ts
 
-```ts lib/git.ts -c
-import { $ } from 'bun';
+<Tabs items={['TypeScript', 'Python', 'C#']}>
+  <Tab value="TypeScript">
 
-export async function initGit(directory: string, config: { git?: boolean }) {
-  if (config.git) {
-    await $`git -C ${directory} init`.quiet();
-    await $`git -C ${directory} add .`.quiet();
+  ```ts lib/git.ts -c
+  import { $ } from 'bun';
+
+  export async function initGit(directory: string, config: { git?: boolean }) {
+    if (config.git) {
+      await $`git -C ${directory} init`.quiet();
+      await $`git -C ${directory} add .`.quiet();
+    }
   }
-}
-```
+  ```
+
+  </Tab>
+  <Tab value="Python">
+
+  ```py lib/git.py -c
+  import subprocess
+
+  async def init_git(directory: str, config: dict):
+      if config.get('git'):
+          subprocess.run(['git', '-C', directory, 'init'], capture_output=True)
+          subprocess.run(['git', '-C', directory, 'add', '.'], capture_output=True)
+  ```
+
+  </Tab>
+  <Tab value="C#">
+
+  ```csharp GitHelper.cs -c
+  using System.Diagnostics;
+
+  public static class GitHelper
+  {
+      public static async Task InitGit(string directory, PluginConfig config)
+      {
+          if (config?.Git == true)
+          {
+              Process.Start("git", $"-C {directory} init")?.WaitForExit();
+              Process.Start("git", $"-C {directory} add .")?.WaitForExit();
+          }
+      }
+  }
+  ```
+
+  </Tab>
+</Tabs>
 
 ## Related
 

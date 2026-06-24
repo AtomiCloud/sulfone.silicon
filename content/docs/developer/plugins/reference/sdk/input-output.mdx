@@ -17,12 +17,42 @@ The input object passed to the plugin handler.
 
 ### Definition
 
-```ts types.ts -c
-interface CyanPluginInput {
-  directory: string;
-  config: unknown;
-}
-```
+<Tabs items={['TypeScript', 'Python', 'C#']}>
+  <Tab value="TypeScript">
+
+  ```ts types.ts -c
+  interface CyanPluginInput {
+    directory: string;
+    config: unknown;
+  }
+  ```
+
+  </Tab>
+  <Tab value="Python">
+
+  ```py types.py -c
+  from dataclasses import dataclass
+  from typing import Any
+
+  @dataclass
+  class PluginInput:
+      directory: str
+      config: Any
+  ```
+
+  </Tab>
+  <Tab value="C#">
+
+  ```csharp Types.cs -c
+  public class PluginInput
+  {
+      public string Directory { get; set; }
+      public object Config { get; set; }
+  }
+  ```
+
+  </Tab>
+</Tabs>
 
 ### Properties
 
@@ -49,16 +79,55 @@ interface CyanPluginInput {
 
 ### Usage
 
-```ts plugin.ts -c
-import { StartPluginWithLambda, type CyanPluginInput, type PluginOutput } from '@atomicloud/cyan-sdk';
+<Tabs items={['TypeScript', 'Python', 'C#']}>
+  <Tab value="TypeScript">
 
-StartPluginWithLambda(async (input) => {
-  console.log('Directory:', input.directory);
-  console.log('Config:', input.config);
+  ```ts plugin.ts -c
+  import { StartPluginWithLambda, type CyanPluginInput, type PluginOutput } from '@atomicloud/cyan-sdk';
 
-  return { directory: input.directory };
-});
-```
+  StartPluginWithLambda(async (input) => {
+    console.log('Directory:', input.directory);
+    console.log('Config:', input.config);
+
+    return { directory: input.directory };
+  });
+  ```
+
+  </Tab>
+  <Tab value="Python">
+
+  ```py plugin.py -c
+  from atomicloud_cyan_sdk import start_plugin_with_fn, PluginInput, PluginOutput
+
+  @start_plugin_with_fn
+  async def main(input: PluginInput) -> PluginOutput:
+      print('Directory:', input.directory)
+      print('Config:', input.config)
+
+      return {'directory': input.directory}
+  ```
+
+  </Tab>
+  <Tab value="C#">
+
+  ```csharp Plugin.cs -c
+  using Atomicloud.Cyan.Sdk;
+
+  [PluginMain]
+  public static class Plugin
+  {
+      public static async Task<PluginOutput> Main(PluginInput input)
+      {
+          Console.WriteLine($"Directory: {input.Directory}");
+          Console.WriteLine($"Config: {input.Config}");
+
+          return new PluginOutput { Directory = input.Directory };
+      }
+  }
+  ```
+
+  </Tab>
+</Tabs>
 
 ---
 
@@ -68,11 +137,38 @@ The return value from the plugin handler.
 
 ### Definition
 
-```ts types.ts -c
-interface PluginOutput {
-  directory: string;
-}
-```
+<Tabs items={['TypeScript', 'Python', 'C#']}>
+  <Tab value="TypeScript">
+
+  ```ts types.ts -c
+  interface PluginOutput {
+    directory: string;
+  }
+  ```
+
+  </Tab>
+  <Tab value="Python">
+
+  ```py types.py -c
+  from dataclasses import dataclass
+
+  @dataclass
+  class PluginOutput:
+      directory: str
+  ```
+
+  </Tab>
+  <Tab value="C#">
+
+  ```csharp Types.cs -c
+  public class PluginOutput
+  {
+      public string Directory { get; set; }
+  }
+  ```
+
+  </Tab>
+</Tabs>
 
 ### Properties
 
@@ -88,14 +184,46 @@ interface PluginOutput {
 
 ### Usage
 
-```ts plugin.ts -c
-StartPluginWithLambda(async (input) => {
-  // ... processing ...
+<Tabs items={['TypeScript', 'Python', 'C#']}>
+  <Tab value="TypeScript">
 
-  // Must return the directory
-  return { directory: input.directory };
-});
-```
+  ```ts plugin.ts -c
+  StartPluginWithLambda(async (input) => {
+    // ... processing ...
+
+    // Must return the directory
+    return { directory: input.directory };
+  });
+  ```
+
+  </Tab>
+  <Tab value="Python">
+
+  ```py plugin.py -c
+  @start_plugin_with_fn
+  async def main(input: PluginInput) -> PluginOutput:
+      # ... processing ...
+
+      # Must return the directory
+      return {'directory': input.directory}
+  ```
+
+  </Tab>
+  <Tab value="C#">
+
+  ```csharp Plugin.cs -c
+  [PluginMain]
+  public static async Task<PluginOutput> Main(PluginInput input)
+  {
+      // ... processing ...
+
+      // Must return the directory
+      return new PluginOutput { Directory = input.Directory };
+  }
+  ```
+
+  </Tab>
+</Tabs>
 
 ---
 
@@ -107,40 +235,59 @@ StartPluginWithLambda(async (input) => {
 
 ### Definition
 
-```ts config.ts -c
-// Define your config type
-interface MyPluginConfig {
-  git?: boolean;
-  installDeps?: boolean;
-  packageManager?: 'npm' | 'bun' | 'yarn' | 'pnpm';
-}
-```
+<Tabs items={['TypeScript', 'Python', 'C#']}>
+  <Tab value="TypeScript">
+
+  ```ts config.ts -c
+  // Define your config type
+  interface MyPluginConfig {
+    git?: boolean;
+    installDeps?: boolean;
+    packageManager?: 'npm' | 'bun' | 'yarn' | 'pnpm';
+  }
+  ```
+
+  </Tab>
+  <Tab value="Python">
+
+  ```py config.py -c
+  from dataclasses import dataclass
+  from typing import Literal, Optional
+
+  @dataclass
+  class MyPluginConfig:
+      git: Optional[bool] = None
+      installDeps: Optional[bool] = None
+      packageManager: Optional[Literal['npm', 'bun', 'yarn', 'pnpm']] = None
+  ```
+
+  </Tab>
+  <Tab value="C#">
+
+  ```csharp Config.cs -c
+  public class MyPluginConfig
+  {
+      public bool? Git { get; set; }
+      public bool? InstallDeps { get; set; }
+      public string? PackageManager { get; set; } // "npm", "bun", "yarn", "pnpm"
+  }
+  ```
+
+  </Tab>
+</Tabs>
 
 ### Config Options
 
-<Tabs items={['Direct Cast', 'With Defaults']}>
-  <Tab value="Direct Cast">
+<Tabs items={['TypeScript', 'Python', 'C#']}>
+  <Tab value="TypeScript">
 
   ```ts plugin.ts -c
   StartPluginWithLambda(async (input) => {
     // Cast to your type
     const config = input.config as MyPluginConfig;
 
-    if (config.git) {
-      // ...
-    }
-
-    return { directory: input.directory };
-  });
-  ```
-
-  </Tab>
-  <Tab value="With Defaults">
-
-  ```ts plugin.ts -c
-  StartPluginWithLambda(async (input) => {
-    // Provide defaults and merge with incoming config
-    const config: MyPluginConfig = {
+    // Or with defaults
+    const configWithDefaults: MyPluginConfig = {
       git: true,
       installDeps: false,
       packageManager: 'npm',
@@ -156,90 +303,345 @@ interface MyPluginConfig {
   ```
 
   </Tab>
+  <Tab value="Python">
+
+  ```py plugin.py -c
+  from atomicloud_cyan_sdk import start_plugin_with_fn, PluginInput, PluginOutput
+
+  @start_plugin_with_fn
+  async def main(input: PluginInput) -> PluginOutput:
+      # Cast to your type
+      config = MyPluginConfig(**input.config)
+
+      # Or with defaults
+      defaults = {'git': True, 'installDeps': False, 'packageManager': 'npm'}
+      merged = {**defaults, **input.config}
+      config = MyPluginConfig(**merged)
+
+      if config.git:
+          # ...
+
+      return {'directory': input.directory}
+  ```
+
+  </Tab>
+  <Tab value="C#">
+
+  ```csharp Plugin.cs -c
+  using Atomicloud.Cyan.Sdk;
+  using System.Text.Json;
+
+  [PluginMain]
+  public static class Plugin
+  {
+      public static async Task<PluginOutput> Main(PluginInput input)
+      {
+          // Cast to your type
+          var config = JsonSerializer.Deserialize<MyPluginConfig>(
+              input.Config.ToString()
+          ) ?? new MyPluginConfig();
+
+          // Or with defaults
+          config.Git ??= true;
+          config.InstallDeps ??= false;
+          config.PackageManager ??= "npm";
+
+          if (config.Git == true)
+          {
+              // ...
+          }
+
+          return new PluginOutput { Directory = input.Directory };
+      }
+  }
+  ```
+
+  </Tab>
 </Tabs>
 
 ### Complex Config
 
-```ts config.ts -c
-interface PluginConfig {
-  // Simple types
-  enabled: boolean;
-  timeout: number;
-  outputPath: string;
+<Tabs items={['TypeScript', 'Python', 'C#']}>
+  <Tab value="TypeScript">
 
-  // Arrays
-  commands: string[];
+  ```ts config.ts -c
+  interface PluginConfig {
+    // Simple types
+    enabled: boolean;
+    timeout: number;
+    outputPath: string;
 
-  // Nested objects
-  git: {
-    init: boolean;
-    initialCommit: boolean;
-    message: string;
-  };
+    // Arrays
+    commands: string[];
 
-  // Optional properties
-  formatter?: 'prettier' | 'biome';
-}
-```
+    // Nested objects
+    git: {
+      init: boolean;
+      initialCommit: boolean;
+      message: string;
+    };
+
+    // Optional properties
+    formatter?: 'prettier' | 'biome';
+  }
+  ```
+
+  </Tab>
+  <Tab value="Python">
+
+  ```py config.py -c
+  from dataclasses import dataclass, field
+  from typing import Literal, Optional, List
+
+  @dataclass
+  class GitConfig:
+      init: bool
+      initialCommit: bool
+      message: str
+
+  @dataclass
+  class PluginConfig:
+      # Simple types
+      enabled: bool
+      timeout: int
+      outputPath: str
+
+      # Arrays
+      commands: List[str] = field(default_factory=list)
+
+      # Nested objects
+      git: Optional[GitConfig] = None
+
+      # Optional properties
+      formatter: Optional[Literal['prettier', 'biome']] = None
+  ```
+
+  </Tab>
+  <Tab value="C#">
+
+  ```csharp Config.cs -c
+  public class GitConfig
+  {
+      public bool Init { get; set; }
+      public bool InitialCommit { get; set; }
+      public string Message { get; set; }
+  }
+
+  public class PluginConfig
+  {
+      // Simple types
+      public bool Enabled { get; set; }
+      public int Timeout { get; set; }
+      public string OutputPath { get; set; }
+
+      // Arrays
+      public List<string> Commands { get; set; } = new();
+
+      // Nested objects
+      public GitConfig? Git { get; set; }
+
+      // Optional properties
+      public string? Formatter { get; set; } // "prettier" or "biome"
+  }
+  ```
+
+  </Tab>
+</Tabs>
 
 ---
 
 ## Full Example
 
-```ts plugin.ts -c
-import { StartPluginWithLambda, type CyanPluginInput, type PluginOutput } from '@atomicloud/cyan-sdk';
-import { $ } from 'bun';
-import * as fs from 'fs/promises';
-import * as path from 'path';
+<Tabs items={['TypeScript', 'Python', 'C#']}>
+  <Tab value="TypeScript">
 
-// Define your config type
-interface SetupConfig {
-  git?: boolean;
-  installDeps?: boolean;
-  packageManager?: 'npm' | 'bun' | 'yarn' | 'pnpm';
-  createReadme?: boolean;
-  readmeContent?: string;
-}
+  ```ts plugin.ts -c
+  import { StartPluginWithLambda, type CyanPluginInput, type PluginOutput } from '@atomicloud/cyan-sdk';
+  import { $ } from 'bun';
+  import * as fs from 'fs/promises';
+  import * as path from 'path';
 
-StartPluginWithLambda(async (input) => {
-  const { directory } = input;
-
-  // Parse config with defaults
-  const config: SetupConfig = {
-    git: true,
-    installDeps: false,
-    packageManager: 'npm',
-    createReadme: true,
-    ...(input.config as Partial<SetupConfig>)
-  };
-
-  // Log input information
-  console.log('Plugin Input:');
-  console.log('  Directory:', directory);
-  console.log('  Config:', JSON.stringify(config, null, 2));
-
-  // Initialize git
-  if (config.git) {
-    await $`git -C ${directory} init`.quiet();
-    await $`git -C ${directory} add .`.quiet();
+  // Define your config type
+  interface SetupConfig {
+    git?: boolean;
+    installDeps?: boolean;
+    packageManager?: 'npm' | 'bun' | 'yarn' | 'pnpm';
+    createReadme?: boolean;
+    readmeContent?: string;
   }
 
-  // Install dependencies
-  if (config.installDeps) {
-    const pm = config.packageManager;
-    await $`cd ${directory} && ${pm} install`.quiet();
+  StartPluginWithLambda(async (input) => {
+    const { directory } = input;
+
+    // Parse config with defaults
+    const config: SetupConfig = {
+      git: true,
+      installDeps: false,
+      packageManager: 'npm',
+      createReadme: true,
+      ...(input.config as Partial<SetupConfig>)
+    };
+
+    // Log input information
+    console.log('Plugin Input:');
+    console.log('  Directory:', directory);
+    console.log('  Config:', JSON.stringify(config, null, 2));
+
+    // Initialize git
+    if (config.git) {
+      await $`git -C ${directory} init`.quiet();
+      await $`git -C ${directory} add .`.quiet();
+    }
+
+    // Install dependencies
+    if (config.installDeps) {
+      const pm = config.packageManager;
+      await $`cd ${directory} && ${pm} install`.quiet();
+    }
+
+    // Create README
+    if (config.createReadme) {
+      const readmePath = path.join(directory, 'README.md');
+      await fs.writeFile(readmePath, config.readmeContent || '# Project\n');
+    }
+
+    // Return output
+    return { directory };
+  });
+  ```
+
+  </Tab>
+  <Tab value="Python">
+
+  ```py plugin.py -c
+  from atomicloud_cyan_sdk import start_plugin_with_fn, PluginInput, PluginOutput
+  import subprocess
+  import os
+  from dataclasses import dataclass, field
+  from typing import Literal, Optional
+
+  @dataclass
+  class SetupConfig:
+      git: bool = True
+      installDeps: bool = False
+      packageManager: Literal['npm', 'bun', 'yarn', 'pnpm'] = 'npm'
+      createReadme: bool = True
+      readmeContent: str = '# Project\n'
+
+  @start_plugin_with_fn
+  async def main(input: PluginInput) -> PluginOutput:
+      directory = input.directory
+
+      # Parse config with defaults
+      defaults = SetupConfig()
+      config = SetupConfig(
+          git=input.config.get('git', defaults.git),
+          installDeps=input.config.get('installDeps', defaults.installDeps),
+          packageManager=input.config.get('packageManager', defaults.packageManager),
+          createReadme=input.config.get('createReadme', defaults.createReadme),
+          readmeContent=input.config.get('readmeContent', defaults.readmeContent)
+      )
+
+      # Log input information
+      print('Plugin Input:')
+      print(f'  Directory: {directory}')
+      print(f'  Config: {config}')
+
+      # Initialize git
+      if config.git:
+          subprocess.run(['git', '-C', directory, 'init'], capture_output=True)
+          subprocess.run(['git', '-C', directory, 'add', '.'], capture_output=True)
+
+      # Install dependencies
+      if config.installDeps:
+          subprocess.run(['cd', directory, '&&', config.packageManager, 'install'], capture_output=True)
+
+      # Create README
+      if config.createReadme:
+          readme_path = os.path.join(directory, 'README.md')
+          with open(readme_path, 'w') as f:
+              f.write(config.readmeContent)
+
+      # Return output
+      return {'directory': directory}
+  ```
+
+  </Tab>
+  <Tab value="C#">
+
+  ```csharp Plugin.cs -c
+  using Atomicloud.Cyan.Sdk;
+  using System.Diagnostics;
+  using System.Text.Json;
+
+  public class SetupConfig
+  {
+      public bool Git { get; set; } = true;
+      public bool InstallDeps { get; set; } = false;
+      public string PackageManager { get; set; } = "npm";
+      public bool CreateReadme { get; set; } = true;
+      public string ReadmeContent { get; set; } = "# Project\n";
   }
 
-  // Create README
-  if (config.createReadme) {
-    const readmePath = path.join(directory, 'README.md');
-    await fs.writeFile(readmePath, config.readmeContent || '# Project\n');
-  }
+  [PluginMain]
+  public static class Plugin
+  {
+      public static async Task<PluginOutput> Main(PluginInput input)
+      {
+          var directory = input.Directory;
 
-  // Return output
-  return { directory };
-});
-```
+          // Parse config with defaults
+          var config = new SetupConfig();
+          if (input.Config != null)
+          {
+              var json = JsonDocument.Parse(input.Config.ToString());
+              var root = json.RootElement;
+
+              if (root.TryGetProperty("git", out var git))
+                  config.Git = git.GetBoolean();
+              if (root.TryGetProperty("installDeps", out var installDeps))
+                  config.InstallDeps = installDeps.GetBoolean();
+              if (root.TryGetProperty("packageManager", out var pm))
+                  config.PackageManager = pm.GetString() ?? "npm";
+              if (root.TryGetProperty("createReadme", out var createReadme))
+                  config.CreateReadme = createReadme.GetBoolean();
+              if (root.TryGetProperty("readmeContent", out var readmeContent))
+                  config.ReadmeContent = readmeContent.GetString() ?? "# Project\n";
+          }
+
+          // Log input information
+          Console.WriteLine("Plugin Input:");
+          Console.WriteLine($"  Directory: {directory}");
+          Console.WriteLine($"  Config: Git={config.Git}, InstallDeps={config.InstallDeps}");
+
+          // Initialize git
+          if (config.Git)
+          {
+              Process.Start("git", $"-C {directory} init")?.WaitForExit();
+              Process.Start("git", $"-C {directory} add .")?.WaitForExit();
+          }
+
+          // Install dependencies
+          if (config.InstallDeps)
+          {
+              Process.Start(config.PackageManager, $"install --prefix {directory}")?.WaitForExit();
+          }
+
+          // Create README
+          if (config.CreateReadme)
+          {
+              var readmePath = Path.Combine(directory, "README.md");
+              await File.WriteAllTextAsync(readmePath, config.ReadmeContent);
+          }
+
+          // Return output
+          return new PluginOutput { Directory = directory };
+      }
+  }
+  ```
+
+  </Tab>
+</Tabs>
 
 ## Related
 

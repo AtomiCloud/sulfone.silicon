@@ -4,6 +4,7 @@ description: SDK reference for CyanPrint plugin development
 ---
 
 import { Cards, Card } from 'fumadocs-ui/components/card';
+import { Tabs, Tab } from 'fumadocs-ui/components/tabs';
 
 # Plugin SDK
 
@@ -21,28 +22,72 @@ The plugin SDK is minimal by design. Plugins receive a directory containing gene
 
 ### Key Components
 
-| Component | Purpose |
-|-----------|---------|
-| `StartPluginWithLambda` | Entry point for plugin logic |
-| `CyanPluginInput` | Input data passed to plugin (alias: `PluginInput`) |
-| `PluginOutput` | Return value from plugin |
+| Language | Entry Point | Input Type | Output Type |
+|----------|-------------|------------|-------------|
+| TypeScript | `StartPluginWithLambda` | `CyanPluginInput` / `PluginInput` | `PluginOutput` |
+| Python | `@start_plugin_with_fn` | `PluginInput` | `PluginOutput` |
+| C# | `[PluginMain]` attribute | `PluginInput` | `PluginOutput` |
 
 ### Quick Example
 
-```ts plugin.ts -c
-import { StartPluginWithLambda } from '@atomicloud/cyan-sdk';
-import { $ } from 'bun';
+<Tabs items={['TypeScript', 'Python', 'C#']}>
+  <Tab value="TypeScript">
+    ```ts plugin.ts -c
+    import { StartPluginWithLambda } from '@atomicloud/cyan-sdk';
+    import { $ } from 'bun';
 
-StartPluginWithLambda(async (input) => {
-  const { directory, config } = input;
+    StartPluginWithLambda(async (input) => {
+      const { directory, config } = input;
 
-  // Run commands
-  await $`git -C ${directory} init`.quiet();
+      // Run commands
+      await $`git -C ${directory} init`.quiet();
 
-  // Return directory
-  return { directory };
-});
-```
+      // Return directory
+      return { directory };
+    });
+    ```
+  </Tab>
+
+  <Tab value="Python">
+    ```py plugin.py -c
+    from atomicloud_cyan_sdk import start_plugin_with_fn
+
+    @start_plugin_with_fn
+    async def main(input: PluginInput) -> PluginOutput:
+        directory = input.directory
+        config = input.config
+
+        # Run commands
+        # subprocess.run(["git", "-C", directory, "init"])
+
+        # Return directory
+        return {"directory": directory}
+    ```
+  </Tab>
+
+  <Tab value="C#">
+    ```csharp Plugin.cs -c
+    using Atomicloud.Cyan.Sdk;
+    using System.Diagnostics;
+
+    [PluginMain]
+    public static class Plugin
+    {
+        public static async Task<PluginOutput> Main(PluginInput input)
+        {
+            var directory = input.Directory;
+            var config = input.Config;
+
+            // Run commands
+            // Process.Start("git", $"-C {directory} init")?.WaitForExit();
+
+            // Return directory
+            return new PluginOutput { Directory = directory };
+        }
+    }
+    ```
+  </Tab>
+</Tabs>
 
 ## SDK Reference
 

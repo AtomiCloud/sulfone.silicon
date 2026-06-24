@@ -3,6 +3,7 @@ title: Tutorial 4 - Asking Questions
 description: Collect user input to customize generated projects
 ---
 
+import { Tabs, Tab } from 'fumadocs-ui/components/tabs';
 import { Cards, Card } from 'fumadocs-ui/components/card';
 
 # Tutorial 4: Asking Questions
@@ -13,82 +14,235 @@ Collect user input to customize the generated project. Questions make templates 
 
 The `i` parameter provides methods to ask different question types:
 
-```ts -c
-StartTemplateWithLambda(async (i, d) => {
-  // i is the IInquirer interface
-  const name = await i.text('Project name?', 'project.name', 'Enter name');
-  // ...
-});
-```
+<Tabs items={['TypeScript', 'Python', 'C#']}>
+  <Tab value="TypeScript">
+    ```ts
+    StartTemplateWithLambda(async (i, d) => {
+      // i is the IInquirer interface
+      const name = await i.text('Project name?', 'project.name', 'Enter name');
+      // ...
+    });
+    ```
+  </Tab>
+
+  <Tab value="Python">
+    ```python
+    def template(i: Inquirer, d: DirectoryTree) -> dict:
+        # i is the Inquirer interface
+        name = i.text('Project name?', 'project.name', 'Enter name')
+        # ...
+    ```
+  </Tab>
+
+  <Tab value="C#">
+    ```csharp
+    StartTemplate.WithLambda(async (i, d) => {
+        // i is the IInquirer interface
+        var name = await i.Text("Project name?", "project.name", "Enter name");
+        // ...
+    });
+    ```
+  </Tab>
+</Tabs>
 
 ## Adding Questions
 
 Combine multiple question types for a rich setup experience:
 
-```ts
-import { StartTemplateWithLambda, GlobType } from '@atomicloud/cyan-sdk';
+<Tabs items={['TypeScript', 'Python', 'C#']}>
+  <Tab value="TypeScript">
+    ```ts
+    import { StartTemplateWithLambda, GlobType } from '@atomicloud/cyan-sdk';
 
-StartTemplateWithLambda(async (i, d) => {
-  // Text input
-  const name = await i.text('Project name?', 'project.name', 'Enter project name');
+    StartTemplateWithLambda(async (i, d) => {
+      // Text input
+      const name = await i.text('Project name?', 'my-template.name', 'Enter project name');
 
-  // Single select
-  const license = await i.select(
-    'License?',
-    ['MIT', 'Apache-2.0', 'GPL-3.0'],
-    'project.license',
-    'Choose license'
-  );
+      // Boolean confirmation
+      const docker = await i.confirm('Add Docker?', 'my-template.docker', 'Include Dockerfile');
 
-  // Boolean confirmation
-  const docker = await i.confirm('Add Docker?', 'project.docker', 'Include Dockerfile');
+      // Multi-select
+      const features = await i.checkbox(
+        'Features?',
+        ['TypeScript', 'ESLint', 'Prettier', 'Testing'],
+        'my-template.features',
+        'Select features'
+      );
 
-  // Multi-select
-  const features = await i.checkbox(
-    'Features?',
-    ['TypeScript', 'ESLint', 'Prettier', 'Testing'],
-    'project.features',
-    'Select features'
-  );
+      return {
+        processors: [{
+          name: 'cyan/default',
+          files: [{ root: 'templates', glob: '**/*', exclude: [], type: GlobType.Template }],
+          config: {
+            vars: {
+              name,
+              docker: docker ? 'yes' : 'no',
+              features: features.join(', ')
+            }
+          }
+        }]
+      };
+    });
+    ```
+  </Tab>
 
-  return {
-    processors: [{
-      name: 'cyan/default',
-      files: [{ root: 'templates', glob: '**/*', exclude: [], type: GlobType.Template }],
-      config: {
-        vars: {
-          name,
-          license,
-          docker,
-          features: features.join(', ')
+  <Tab value="Python">
+    ```python
+    from cyan import Inquirer, DirectoryTree
+    from cyan import GlobType
+
+    def template(i: Inquirer, d: DirectoryTree) -> dict:
+        # Text input
+        name = i.text('Project name?', 'my-template.name', 'Enter project name')
+
+        # Boolean confirmation
+        docker = i.confirm('Add Docker?', 'my-template.docker', 'Include Dockerfile')
+
+        # Multi-select
+        features = i.checkbox(
+            'Features?',
+            ['TypeScript', 'ESLint', 'Prettier', 'Testing'],
+            'my-template.features',
+            'Select features'
+        )
+
+        return {
+            'processors': [{
+                'name': 'cyan/default',
+                'files': [{'root': 'templates', 'glob': '**/*', 'exclude': [], 'type': GlobType.Template}],
+                'config': {
+                    'vars': {
+                        'name': name,
+                        'docker': 'yes' if docker else 'no',
+                        'features': ', '.join(features)
+                    }
+                }
+            }]
         }
-      }
-    }]
-  };
-});
-```
+    ```
+  </Tab>
+
+  <Tab value="C#">
+    ```csharp
+    using Atomiq.Cloud.Cyan;
+
+    StartTemplate.WithLambda(async (i, d) => {
+        // Text input
+        var name = await i.Text("Project name?", "my-template.name", "Enter project name");
+
+        // Boolean confirmation
+        var docker = await i.Confirm("Add Docker?", "my-template.docker", "Include Dockerfile");
+
+        // Multi-select
+        var features = await i.Checkbox(
+            "Features?",
+            new[] { "TypeScript", "ESLint", "Prettier", "Testing" },
+            "my-template.features",
+            "Select features"
+        );
+
+        return new {
+            processors = new[] {
+                new {
+                    name = "cyan/default",
+                    files = new[] {
+                        new { root = "templates", glob = "**/*", exclude = Array.Empty<string>(), type = GlobType.Template }
+                    },
+                    config = new {
+                        vars = new {
+                            name,
+                            docker = docker ? "yes" : "no",
+                            features = string.Join(", ", features)
+                        }
+                    }
+                }
+            }
+        };
+    });
+    ```
+  </Tab>
+</Tabs>
 
 ## Question Types
 
-| Method | Returns | Example Use |
-|--------|---------|-------------|
-| `text()` | `string` | Project name, author |
-| `select()` | `string` | License, framework choice |
-| `confirm()` | `boolean` | Yes/no decisions |
-| `checkbox()` | `string[]` | Feature selection |
-| `password()` | `string` | Secrets, API keys |
-| `dateSelect()` | `string` | Dates, deadlines |
+<Tabs items={['TypeScript', 'Python', 'C#']}>
+  <Tab value="TypeScript">
+    | Method | Returns | Example Use |
+    |--------|---------|-------------|
+    | `text()` | `string` | Project name, author |
+    | `select()` | `string` | License, framework choice |
+    | `confirm()` | `boolean` | Yes/no decisions |
+    | `checkbox()` | `string[]` | Feature selection |
+    | `password()` | `string` | Secrets, API keys |
+    | `dateSelect()` | `string` | Dates, deadlines |
+  </Tab>
 
-## Keys Concept
+  <Tab value="Python">
+    | Method | Returns | Example Use |
+    |--------|---------|-------------|
+    | `text()` | `str` | Project name, author |
+    | `select()` | `str` | License, framework choice |
+    | `confirm()` | `bool` | Yes/no decisions |
+    | `checkbox()` | `list[str]` | Feature selection |
+    | `password()` | `str` | Secrets, API keys |
+    | `date_select()` | `str` | Dates, deadlines |
+  </Tab>
 
-The `id` parameter (second argument) is the **key**. Keys enable answer reuse:
+  <Tab value="C#">
+    | Method | Returns | Example Use |
+    |--------|---------|-------------|
+    | `Text()` | `string` | Project name, author |
+    | `Select()` | `string` | License, framework choice |
+    | `Confirm()` | `bool` | Yes/no decisions |
+    | `Checkbox()` | `string[]` | Feature selection |
+    | `Password()` | `string` | Secrets, API keys |
+    | `DateSelect()` | `string` | Dates, deadlines |
+  </Tab>
+</Tabs>
 
-```ts
-// Both questions get the same answer!
-const name1 = await i.text('Project name?', 'name', '...');
-const name2 = await i.text('Confirm name?', 'name', '...');
-// name1 === name2 (same key = same answer)
-```
+For detailed usage of each question type, see the How-to guides:
+
+<Cards>
+  <Card href="/docs/developer/templates/how-to/ask-text" title="Ask Text Questions" />
+  <Card href="/docs/developer/templates/how-to/ask-select" title="Ask Select Questions" />
+  <Card href="/docs/developer/templates/how-to/ask-confirm" title="Ask Confirm Questions" />
+  <Card href="/docs/developer/templates/how-to/ask-checkbox" title="Ask Checkbox Questions" />
+  <Card href="/docs/developer/templates/how-to/ask-password" title="Ask Password Questions" />
+  <Card href="/docs/developer/templates/how-to/ask-date" title="Ask Date Questions" />
+</Cards>
+
+## Question IDs (Keys)
+
+The second argument is the **question ID** (also called a key). Keys enable answer reuse:
+
+<Tabs items={['TypeScript', 'Python', 'C#']}>
+  <Tab value="TypeScript">
+    ```ts
+    // Both questions get the same answer!
+    const name1 = await i.text('Project name?', 'name', '...');
+    const name2 = await i.text('Confirm name?', 'name', '...');
+    // name1 === name2 (same key = same answer)
+    ```
+  </Tab>
+
+  <Tab value="Python">
+    ```python
+    # Both questions get the same answer!
+    name1 = i.text('Project name?', 'name', '...')
+    name2 = i.text('Confirm name?', 'name', '...')
+    # name1 == name2 (same key = same answer)
+    ```
+  </Tab>
+
+  <Tab value="C#">
+    ```csharp
+    // Both questions get the same answer!
+    var name1 = await i.Text("Project name?", "name", "...");
+    var name2 = await i.Text("Confirm name?", "name", "...");
+    // name1 == name2 (same key = same answer)
+    ```
+  </Tab>
+</Tabs>
 
 ### Namespacing Your Keys
 
@@ -96,124 +250,100 @@ const name2 = await i.text('Confirm name?', 'name', '...');
 Always namespace your keys to prevent collisions when templates are composed.
 </Callout>
 
-```ts
-// Good: namespaced keys
-const name = await i.text('Project name?', 'my-template.project.name', '...');
-const version = await i.text('Version?', 'my-template.project.version', '...');
+<Tabs items={['TypeScript', 'Python', 'C#']}>
+  <Tab value="TypeScript">
+    ```ts
+    // Good: namespaced keys
+    const name = await i.text('Project name?', 'my-template.project.name', '...');
 
-// Bad: generic keys that might collide
-const name = await i.text('Project name?', 'name', '...');
-```
+    // Bad: generic keys that might collide
+    const name = await i.text('Project name?', 'name', '...');
+    ```
+  </Tab>
 
-### Why Namespacing Matters
+  <Tab value="Python">
+    ```python
+    # Good: namespaced keys
+    name = i.text('Project name?', 'my-template.project.name', '...')
 
-When users compose multiple templates, non-namespaced keys can cause conflicts:
+    # Bad: generic keys that might collide
+    name = i.text('Project name?', 'name', '...')
+    ```
+  </Tab>
 
-```ts
-// Template A
-const name = await i.text('Name?', 'name', '...');
+  <Tab value="C#">
+    ```csharp
+    // Good: namespaced keys
+    var name = await i.Text("Project name?", "my-template.project.name", "...");
 
-// Template B (composed with A)
-const name = await i.text('Name?', 'name', '...'); // Gets A's answer!
-```
+    // Bad: generic keys that might collide
+    var name = await i.Text("Project name?", "name", "...");
+    ```
+  </Tab>
+</Tabs>
 
-With namespacing:
-
-```ts
-// Template A
-const name = await i.text('Name?', 'template-a.name', '...');
-
-// Template B (composed with A)
-const name = await i.text('Name?', 'template-b.name', '...'); // Independent answer
-```
+For a detailed explanation of how question namespacing works and why it matters, see the [Question Namespacing](/docs/developer/templates/concepts/question-namespacing) concept guide.
 
 ## Using Answers in Templates
 
 Pass collected answers to processor config:
 
-```ts
-config: {
-  vars: {
-    name,                    // Project name
-    license,                 // Selected license
-    docker: docker ? 'yes' : 'no',  // Conditional value
-    features: features.join(', ')   // Array to string
-  }
-}
-```
+<Tabs items={['TypeScript', 'Python', 'C#']}>
+  <Tab value="TypeScript">
+    ```ts
+    config: {
+      vars: {
+        name,                          // Project name
+        docker: docker ? 'yes' : 'no', // Conditional value
+        features: features.join(', ')  // Array to string
+      }
+    }
+    ```
+  </Tab>
+
+  <Tab value="Python">
+    ```python
+    'config': {
+        'vars': {
+            'name': name,
+            'docker': 'yes' if docker else 'no',
+            'features': ', '.join(features)
+        }
+    }
+    ```
+  </Tab>
+
+  <Tab value="C#">
+    ```csharp
+    config = new {
+        vars = new {
+            name,
+            docker = docker ? "yes" : "no",
+            features = string.Join(", ", features)
+        }
+    }
+    ```
+  </Tab>
+</Tabs>
 
 Use in template files:
 
 ```markdown
 # var__name__
 
-## License
+## Docker Support
 
-This project is licensed under the **var__license__** license.
+This project includes Docker: **var__docker__**
 
 ## Features
 
 This project includes: var__features__
 ```
 
-## Conditional Templates
-
-Use boolean answers for conditional content:
-
-```ts
-config: {
-  vars: {
-    name,
-    hasDocker: docker ? 'true' : 'false'
-  }
-}
-```
-
-## Complete Example
-
-```ts
-import { StartTemplateWithLambda, GlobType } from '@atomicloud/cyan-sdk';
-
-StartTemplateWithLambda(async (i, d) => {
-  // Collect all user input
-  const name = await i.text('Project name?', 'my-template.name', 'Enter name');
-  const description = await i.text('Description?', 'my-template.desc', 'Brief description');
-  const license = await i.select('License?', ['MIT', 'Apache-2.0'], 'my-template.license', 'Choose');
-  const typescript = await i.confirm('TypeScript?', 'my-template.typescript', 'Use TypeScript');
-  const features = await i.checkbox(
-    'Features?',
-    ['ESLint', 'Prettier', 'Testing', 'CI/CD'],
-    'my-template.features',
-    'Select'
-  );
-
-  return {
-    processors: [{
-      name: 'cyan/default',
-      files: [
-        { root: 'templates', glob: '**/*.md', exclude: [], type: GlobType.Template },
-        { root: 'templates', glob: '**/*.json', exclude: [], type: GlobType.Template },
-        { root: 'templates', glob: '**/*.ts', exclude: [], type: GlobType.Template },
-        { root: 'templates', glob: '**/*.png', exclude: [], type: GlobType.Copy }
-      ],
-      config: {
-        vars: {
-          name,
-          description,
-          license,
-          typescript: typescript ? 'true' : 'false',
-          features: features.join(', ')
-        }
-      }
-    }]
-  };
-});
-```
-
 ## What You Learned
 
-- How to use basic question types: text, select, confirm, checkbox
-- What keys are and how they enable answer reuse
+- How to use basic question types: text, confirm, checkbox
+- What question IDs are and how they enable answer reuse
 - Why namespacing keys is important
 - How to use answers in template files
 

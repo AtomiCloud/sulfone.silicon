@@ -4,6 +4,7 @@ description: How to use keys for consistent answers across questions and templat
 ---
 
 import { Callout } from 'fumadocs-ui/components/callout';
+import { Tabs, Tab } from 'fumadocs-ui/components/tabs';
 
 # How to Use Keys
 
@@ -13,25 +14,70 @@ Keys control answer reuse across questions and templates. Understanding keys is 
 
 Every question has an `id` parameter that serves as its **key**:
 
-```ts -c
-const name = await i.text('Project name?', 'project.name', 'Enter name');
-//                                    ^^^^^^^^^^^^^
-//                                    This is the key
-```
+<Tabs items={['TypeScript', 'Python', 'C#']}>
+  <Tab value="TypeScript">
+    ```ts
+    const name = await i.text('Project name?', 'project.name', 'Enter name');
+    // !mark[/'project.name'/] This is the key
+    ```
+  </Tab>
+
+  <Tab value="Python">
+    ```python
+    name = i.text('Project name?', 'project.name', 'Enter name')
+    # !mark[/'project.name'/] This is the key
+    ```
+  </Tab>
+
+  <Tab value="C#">
+    ```csharp
+    var name = await i.Text("Project name?", "project.name", "Enter name");
+    // !mark[/"project.name"/] This is the key
+    ```
+  </Tab>
+</Tabs>
 
 ### Same Key = Same Answer
 
 If multiple questions share the same key, they receive the **same answer**:
 
-```ts -c
-// First question - user enters "my-project"
-const name1 = await i.text('Project name?', 'project.name', 'Enter name');
+<Tabs items={['TypeScript', 'Python', 'C#']}>
+  <Tab value="TypeScript">
+    ```ts
+    // First question - user enters "my-project"
+    const name1 = await i.text('Project name?', 'project.name', 'Enter name');
 
-// Second question with same key - automatically gets "my-project"
-const name2 = await i.text('Confirm name?', 'project.name', '...');
+    // Second question with same key - automatically gets "my-project"
+    const name2 = await i.text('Confirm name?', 'project.name', '...');
 
-console.log(name1 === name2); // true
-```
+    console.log(name1 === name2); // true
+    ```
+  </Tab>
+
+  <Tab value="Python">
+    ```python
+    # First question - user enters "my-project"
+    name1 = i.text('Project name?', 'project.name', 'Enter name')
+
+    # Second question with same key - automatically gets "my-project"
+    name2 = i.text('Confirm name?', 'project.name', '...')
+
+    print(name1 == name2)  # True
+    ```
+  </Tab>
+
+  <Tab value="C#">
+    ```csharp
+    // First question - user enters "my-project"
+    var name1 = await i.Text("Project name?", "project.name", "Enter name");
+
+    // Second question with same key - automatically gets "my-project"
+    var name2 = await i.Text("Confirm name?", "project.name", "...");
+
+    Console.WriteLine(name1 == name2); // true
+    ```
+  </Tab>
+</Tabs>
 
 <Callout type="info">
 The user is only prompted once for each unique key. Subsequent questions with the same key receive the cached answer.
@@ -41,15 +87,43 @@ The user is only prompted once for each unique key. Subsequent questions with th
 
 Prevent collisions with other templates by namespacing:
 
-```ts -c
-// Good: namespaced keys
-const name = await i.text('Name?', 'my-template.project.name', '...');
-const version = await i.text('Version?', 'my-template.project.version', '...');
+<Tabs items={['TypeScript', 'Python', 'C#']}>
+  <Tab value="TypeScript">
+    ```ts
+    // Good: namespaced keys
+    const name = await i.text('Name?', 'my-template.project.name', '...');
+    const version = await i.text('Version?', 'my-template.project.version', '...');
 
-// Bad: generic keys that might collide
-const name = await i.text('Name?', 'name', '...');
-const version = await i.text('Version?', 'version', '...');
-```
+    // Bad: generic keys that might collide
+    const name = await i.text('Name?', 'name', '...');
+    const version = await i.text('Version?', 'version', '...');
+    ```
+  </Tab>
+
+  <Tab value="Python">
+    ```python
+    # Good: namespaced keys
+    name = i.text('Name?', 'my-template.project.name', '...')
+    version = i.text('Version?', 'my-template.project.version', '...')
+
+    # Bad: generic keys that might collide
+    name = i.text('Name?', 'name', '...')
+    version = i.text('Version?', 'version', '...')
+    ```
+  </Tab>
+
+  <Tab value="C#">
+    ```csharp
+    // Good: namespaced keys
+    var name = await i.Text("Name?", "my-template.project.name", "...");
+    var version = await i.Text("Version?", "my-template.project.version", "...");
+
+    // Bad: generic keys that might collide
+    var name = await i.Text("Name?", "name", "...");
+    var version = await i.Text("Version?", "version", "...");
+    ```
+  </Tab>
+</Tabs>
 
 ### Why Namespacing Matters
 
@@ -77,73 +151,221 @@ Keys persist across template composition. Use this intentionally:
 
 Share answers between templates when desired:
 
-```ts -c
-// Template A - sets the project name
-const name = await i.text('Project name?', 'global.project.name', '...');
+<Tabs items={['TypeScript', 'Python', 'C#']}>
+  <Tab value="TypeScript">
+    ```ts
+    // Template A - sets the project name
+    const name = await i.text('Project name?', 'global.project.name', '...');
 
-// Template B - uses the same name without asking again
-const name = await i.text('Project name?', 'global.project.name', '...');
-// Template B gets Template A's answer
-```
+    // Template B - uses the same name without asking again
+    const name = await i.text('Project name?', 'global.project.name', '...');
+    // !callout[/global.project.name/] Template B gets Template A's answer
+    ```
+  </Tab>
+
+  <Tab value="Python">
+    ```python
+    # Template A - sets the project name
+    name = i.text('Project name?', 'global.project.name', '...')
+
+    # Template B - uses the same name without asking again
+    name = i.text('Project name?', 'global.project.name', '...')
+    # !callout[/global.project.name/] Template B gets Template A's answer
+    ```
+  </Tab>
+
+  <Tab value="C#">
+    ```csharp
+    // Template A - sets the project name
+    var name = await i.Text("Project name?", "global.project.name", "...");
+
+    // Template B - uses the same name without asking again
+    var name = await i.Text("Project name?", "global.project.name", "...");
+    // !callout[/global.project.name/] Template B gets Template A's answer
+    ```
+  </Tab>
+</Tabs>
 
 ### Avoiding Collisions
 
 Use unique prefixes to avoid accidental sharing:
 
-```ts -c
-// Database template
-const dbName = await i.text('Database name?', 'db-template.database.name', '...');
+<Tabs items={['TypeScript', 'Python', 'C#']}>
+  <Tab value="TypeScript">
+    ```ts
+    // Database template
+    const dbName = await i.text('Database name?', 'db-template.database.name', '...');
 
-// API template - won't get db-template's answer
-const apiName = await i.text('API name?', 'api-template.api.name', '...');
-```
+    // API template - won't get db-template's answer
+    const apiName = await i.text('API name?', 'api-template.api.name', '...');
+    ```
+  </Tab>
+
+  <Tab value="Python">
+    ```python
+    # Database template
+    db_name = i.text('Database name?', 'db-template.database.name', '...')
+
+    # API template - won't get db-template's answer
+    api_name = i.text('API name?', 'api-template.api.name', '...')
+    ```
+  </Tab>
+
+  <Tab value="C#">
+    ```csharp
+    // Database template
+    var dbName = await i.Text("Database name?", "db-template.database.name", "...");
+
+    // API template - won't get db-template's answer
+    var apiName = await i.Text("API name?", "api-template.api.name", "...");
+    ```
+  </Tab>
+</Tabs>
 
 ## Key Naming Convention
 
 Follow a consistent naming pattern:
 
-```ts -c
-// Pattern: {template-name}.{category}.{field}
+<Tabs items={['TypeScript', 'Python', 'C#']}>
+  <Tab value="TypeScript">
+    ```ts
+    // Pattern: {template-name}.{category}.{field}
 
-// Template-specific
-const name = await i.text('Name?', 'node-template.project.name', '...');
-const version = await i.text('Version?', 'node-template.project.version', '...');
+    // Template-specific
+    const name = await i.text('Name?', 'node-template.project.name', '...');
+    const version = await i.text('Version?', 'node-template.project.version', '...');
 
-// Category-specific (shared within template)
-const dbHost = await i.text('Host?', 'node-template.database.host', '...');
-const dbPort = await i.text('Port?', 'node-template.database.port', '...');
+    // Category-specific (shared within template)
+    const dbHost = await i.text('Host?', 'node-template.database.host', '...');
+    const dbPort = await i.text('Port?', 'node-template.database.port', '...');
 
-// Global (shared across templates)
-const orgName = await i.text('Organization?', 'global.organization.name', '...');
-```
+    // Global (shared across templates)
+    const orgName = await i.text('Organization?', 'global.organization.name', '...');
+    ```
+  </Tab>
+
+  <Tab value="Python">
+    ```python
+    # Pattern: {template-name}.{category}.{field}
+
+    # Template-specific
+    name = i.text('Name?', 'node-template.project.name', '...')
+    version = i.text('Version?', 'node-template.project.version', '...')
+
+    # Category-specific (shared within template)
+    db_host = i.text('Host?', 'node-template.database.host', '...')
+    db_port = i.text('Port?', 'node-template.database.port', '...')
+
+    # Global (shared across templates)
+    org_name = i.text('Organization?', 'global.organization.name', '...')
+    ```
+  </Tab>
+
+  <Tab value="C#">
+    ```csharp
+    // Pattern: {template-name}.{category}.{field}
+
+    // Template-specific
+    var name = await i.Text("Name?", "node-template.project.name", "...");
+    var version = await i.Text("Version?", "node-template.project.version", "...");
+
+    // Category-specific (shared within template)
+    var dbHost = await i.Text("Host?", "node-template.database.host", "...");
+    var dbPort = await i.Text("Port?", "node-template.database.port", "...");
+
+    // Global (shared across templates)
+    var orgName = await i.Text("Organization?", "global.organization.name", "...");
+    ```
+  </Tab>
+</Tabs>
 
 ## Common Patterns
 
 ### Confirming Values
 
-```ts -c
-// Ask once
-const email = await i.text('Email?', 'user.email', 'Your email');
+<Tabs items={['TypeScript', 'Python', 'C#']}>
+  <Tab value="TypeScript">
+    ```ts
+    // Ask once
+    const email = await i.text('Email?', 'user.email', 'Your email');
 
-// Confirm without re-prompting
-const confirmEmail = await i.confirm(
-  `Use ${email} for notifications?`,
-  'user.email',  // Same key - already has answer
-  'Confirm email'
-);
-```
+    // Confirm without re-prompting
+    const confirmEmail = await i.confirm(
+      `Use ${email} for notifications?`,
+      'user.email',  // !mark Same key - already has answer
+      'Confirm email'
+    );
+    ```
+  </Tab>
+
+  <Tab value="Python">
+    ```python
+    # Ask once
+    email = i.text('Email?', 'user.email', 'Your email')
+
+    # Confirm without re-prompting
+    confirm_email = i.confirm(
+        f'Use {email} for notifications?',
+        'user.email',  # !mark Same key - already has answer
+        'Confirm email'
+    )
+    ```
+  </Tab>
+
+  <Tab value="C#">
+    ```csharp
+    // Ask once
+    var email = await i.Text("Email?", "user.email", "Your email");
+
+    // Confirm without re-prompting
+    var confirmEmail = await i.Confirm(
+        $"Use {email} for notifications?",
+        "user.email",  // !mark Same key - already has answer
+        "Confirm email"
+    );
+    ```
+  </Tab>
+</Tabs>
 
 ### Step-by-Step Collection
 
-```ts -c
-// Collect in stages, referencing earlier answers
-const projectName = await i.text('Project name?', 'project.name', '...');
-const componentName = await i.text(
-  'Main component name?',
-  'project.name',  // Same as project name by default
-  'Defaults to project name'
-);
-```
+<Tabs items={['TypeScript', 'Python', 'C#']}>
+  <Tab value="TypeScript">
+    ```ts
+    // Collect in stages, referencing earlier answers
+    const projectName = await i.text('Project name?', 'project.name', '...');
+    const componentName = await i.text(
+      'Main component name?',
+      'project.name',  // !mark Same as project name by default
+      'Defaults to project name'
+    );
+    ```
+  </Tab>
+
+  <Tab value="Python">
+    ```python
+    # Collect in stages, referencing earlier answers
+    project_name = i.text('Project name?', 'project.name', '...')
+    component_name = i.text(
+        'Main component name?',
+        'project.name',  # !mark Same as project name by default
+        'Defaults to project name'
+    )
+    ```
+  </Tab>
+
+  <Tab value="C#">
+    ```csharp
+    // Collect in stages, referencing earlier answers
+    var projectName = await i.Text("Project name?", "project.name", "...");
+    var componentName = await i.Text(
+        "Main component name?",
+        "project.name",  // !mark Same as project name by default
+        "Defaults to project name"
+    );
+    ```
+  </Tab>
+</Tabs>
 
 ## Best Practices
 

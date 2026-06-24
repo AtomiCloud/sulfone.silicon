@@ -55,8 +55,8 @@ CyanPrint uses a containerized architecture where each artifact runs in its own 
     participant CLI
     participant Registry
     participant Coordinator
-    participant Template_5550
-    participant Processor_5551
+    participant Template
+    participant Processor
 
     User->>CLI: cyanprint create atomi/template
     CLI->>Registry: GET /api/v1/Template/slug/atomi/template/versions/latest

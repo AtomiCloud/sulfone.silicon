@@ -4,6 +4,8 @@ description: How to pin determinism for reproducible template generation
 ---
 
 import { Callout } from 'fumadocs-ui/components/callout';
+import { Tabs, Tab } from 'fumadocs-ui/components/tabs';
+import { Mermaid } from '@/components/mdx/mermaid';
 
 # How to Pin Determinism
 
@@ -11,132 +13,388 @@ Pin determinism to ensure reproducible template generation. This is essential fo
 
 ## The Determinism Problem
 
-Templates generate deterministic values (UUIDs, timestamps) that change on every run:
+Templates often need to generate values like UUIDs or timestamps that would normally change on every run:
+
+<Tabs items={['TypeScript', 'Python', 'C#']}>
+  <Tab value="TypeScript">
 
 ```ts template.ts
-const id = d.uuid();  // Different every time!
+// This would be different every time!
+const id = crypto.randomUUID();
+const now = Date.now();
 ```
 
-When updating a previously generated project, new IDs would break references.
+  </Tab>
+  <Tab value="Python">
 
-## Solution: Pin Values
+```python template.py
+# This would be different every time!
+import uuid
+import time
 
-### Using the Pin Parameter
+id = str(uuid.uuid4())
+now = int(time.time())
+```
 
-When generating, store and reuse the pin:
+  </Tab>
+  <Tab value="C#">
+
+```csharp Template.cs
+// This would be different every time!
+var id = Guid.NewGuid().ToString();
+var now = DateTimeOffset.UtcNow.ToUnixTimeMilliseconds();
+```
+
+  </Tab>
+</Tabs>
+
+When updating a previously generated project, new IDs would break all references.
+
+## Solution: Use IDeterminism
+
+The `d` parameter (implementing `IDeterminism`) caches values on first generation and reuses them on updates.
+
+### The Interface
+
+<Tabs items={['TypeScript', 'Python', 'C#']}>
+  <Tab value="TypeScript">
+
+```ts
+interface IDeterminism {
+  get(key: string, origin: () => string): string;
+}
+```
+
+  </Tab>
+  <Tab value="Python">
+
+```python
+class IDeterminism(ABC):
+    @abstractmethod
+    def get(self, key: str, origin: Callable[[], str]) -> str:
+        pass
+```
+
+  </Tab>
+  <Tab value="C#">
+
+```csharp
+interface IDeterminism
+{
+    string Get(string key, Func<string> origin);
+}
+```
+
+  </Tab>
+</Tabs>
+
+### How It Works
+
+The `get()` method implements a cache-through pattern:
+
+1. **First generation**: If the key doesn't exist, calls `origin()` and stores the result
+2. **Subsequent generations**: Returns the cached value for that key
+
+<Mermaid chart={`graph LR
+    A[First Generation] --> B[Call d.get]
+    B --> C{Key exists?}
+    C -->|No| D[Call origin]
+    D --> E[Store result]
+    C -->|Yes| F[Return cached]
+    E --> G[Return new value]
+`} />
+
+## Usage Examples
+
+### Deterministic UUIDs
+
+<Tabs items={['TypeScript', 'Python', 'C#']}>
+  <Tab value="TypeScript">
+
+```ts template.ts
+import { startTemplateWithFn } from 'cyanprintsdk';
+
+export default startTemplateWithFn(async (i, d) => {
+  // Safe to use crypto.randomUUID() - result is cached
+  const projectId = d.get('project-id', () => crypto.randomUUID());
+  const apiKey = d.get('api-key', () => crypto.randomUUID());
+
+  return {
+    processors: [{
+      name: 'cyan/default',
+      files: [],
+      config: {
+        vars: { projectId, apiKey }
+      }
+    }]
+  };
+});
+```
+
+  </Tab>
+  <Tab value="Python">
+
+```python template.py
+import uuid
+from cyanprintsdk.main import start_template_with_fn
+
+async def template(i: IInquirer, d: IDeterminism) -> Cyan:
+    # Safe to use uuid.uuid4() - result is cached
+    project_id = d.get('project-id', lambda: str(uuid.uuid4()))
+    api_key = d.get('api-key', lambda: str(uuid.uuid4()))
+
+    return Cyan(
+        processors=[
+            CyanProcessor(
+                name='cyan/default',
+                files=[],
+                config=ProcessorConfig(vars={'projectId': project_id, 'apiKey': api_key})
+            )
+        ]
+    )
+
+template_main = start_template_with_fn(template)
+```
+
+  </Tab>
+  <Tab value="C#">
+
+```csharp Template.cs
+using CyanPrintSDK;
+
+public class Template
+{
+    [TemplateMain]
+    public static async Task<Cyan> Run(IInquirer i, IDeterminism d)
+    {
+        // Safe to use Guid.NewGuid() - result is cached
+        var projectId = d.Get("project-id", () => Guid.NewGuid().ToString());
+        var apiKey = d.Get("api-key", () => Guid.NewGuid().ToString());
+
+        return new Cyan
+        {
+            Processors = new[]
+            {
+                new CyanProcessor
+                {
+                    Name = "cyan/default",
+                    Files = new List<CyanFile>(),
+                    Config = new ProcessorConfig
+                    {
+                        Vars = new Dictionary<string, string>
+                        {
+                            ["projectId"] = projectId,
+                            ["apiKey"] = apiKey
+                        }
+                    }
+                }
+            }
+        };
+    }
+}
+```
+
+  </Tab>
+</Tabs>
+
+### Deterministic Timestamps
+
+<Tabs items={['TypeScript', 'Python', 'C#']}>
+  <Tab value="TypeScript">
+
+```ts example.ts
+const createdAt = d.get('created-at', () => Date.now().toString());
+const date = new Date(parseInt(createdAt)).toISOString();
+```
+
+  </Tab>
+  <Tab value="Python">
+
+```python example.py
+import time
+
+created_at = d.get('created-at', lambda: str(int(time.time() * 1000)))
+date = datetime.fromtimestamp(int(created_at) / 1000).isoformat()
+```
+
+  </Tab>
+  <Tab value="C#">
+
+```csharp Example.cs
+var createdAt = d.Get("created-at", () => DateTimeOffset.UtcNow.ToUnixTimeMilliseconds().ToString());
+var date = DateTimeOffset.FromUnixTimeMilliseconds(long.Parse(createdAt)).ToString("o");
+```
+
+  </Tab>
+</Tabs>
+
+### Sequential IDs
+
+For sequential numbers, use unique keys for each:
+
+<Tabs items={['TypeScript', 'Python', 'C#']}>
+  <Tab value="TypeScript">
+
+```ts example.ts
+const userId1 = d.get('user-id-1', () => '1');
+const userId2 = d.get('user-id-2', () => '2');
+const orderId1 = d.get('order-id-1', () => '1');
+```
+
+  </Tab>
+  <Tab value="Python">
+
+```python example.py
+user_id_1 = d.get('user-id-1', lambda: '1')
+user_id_2 = d.get('user-id-2', lambda: '2')
+order_id_1 = d.get('order-id-1', lambda: '1')
+```
+
+  </Tab>
+  <Tab value="C#">
+
+```csharp Example.cs
+var userId1 = d.Get("user-id-1", () => "1");
+var userId2 = d.Get("user-id-2", () => "2");
+var orderId1 = d.Get("order-id-1", () => "1");
+```
+
+  </Tab>
+</Tabs>
+
+## Automatic Pin Handling
+
+CyanPrint automatically handles pin persistence:
 
 ```bash
-# First generation - saves pin
+# First generation - stores state
 cyanprint create my-org/template:1.0.0 ./my-project
 
-# The pin is stored in .cyan/generation.json
-```
-
-### Automatic Pin Handling
-
-CyanPrint automatically handles pins when updating:
-
-```bash
 # Update existing project - reuses pin
 cyanprint update ./my-project
 ```
 
-The `d` (IDefine) interface uses the pin to generate consistent values:
+The deterministic states are stored in `.cyan_state.yaml`:
 
-```ts template.ts
-StartTemplateWithLambda(async (i, d) => {
-  // These are deterministic when pin is set
-  const projectId = d.uuid();  // Same UUID every time with same pin
-  const timestamp = d.timestamp();  // Same timestamp every time
-
-  return { /* ... */ };
-});
-```
-
-## Deterministic Methods
-
-### UUID Generation
-
-```ts example.ts
-const projectId = d.uuid();  // "550e8400-e29b-41d4-a716-446655440000"
-```
-
-Same pin always produces the same UUID.
-
-### Timestamps
-
-```ts example.ts
-const createdAt = d.timestamp();  // Fixed timestamp
-const date = new Date(createdAt);
-```
-
-### Sequential IDs
-
-```ts
-const userId1 = d.seq('users');  // 1
-const userId2 = d.seq('users');  // 2
-const orderId1 = d.seq('orders'); // 1 (separate sequence)
+```yaml filename=".cyan_state.yaml"
+templates:
+  myorg/template-name:
+    active: true
+    history:
+      - version: 1
+        time: '2024-01-15T10:30:00Z'
+        answers:
+          project-name: 'my-project'
+        deterministic_states:
+          project-id: '550e8400-e29b-41d4-a716-446655440000'
+          created-at: '1704067200000'
 ```
 
 ## Best Practices
 
-### Always Use IDefine for IDs
+### Always Use d.get for IDs
 
 <Callout type="warn">
-Never use `Date.now()`, `Math.random()`, or `crypto.randomUUID()` - these break reproducibility.
+Never use `Date.now()`, `Math.random()`, or `crypto.randomUUID()` directly - always wrap them in `d.get()`. Direct calls break reproducibility.
 </Callout>
+
+<Tabs items={['TypeScript', 'Python', 'C#']}>
+  <Tab value="TypeScript">
 
 ```ts
 // Bad - breaks determinism
 const id = crypto.randomUUID();
-const now = Date.now();
 
 // Good - deterministic
-const id = d.uuid();
-const now = d.timestamp();
+const id = d.get('my-id', () => crypto.randomUUID());
 ```
 
-### Namespace Sequences
+  </Tab>
+  <Tab value="Python">
+
+```python
+# Bad - breaks determinism
+id = str(uuid.uuid4())
+
+# Good - deterministic
+id = d.get('my-id', lambda: str(uuid.uuid4()))
+```
+
+  </Tab>
+  <Tab value="C#">
+
+```csharp
+// Bad - breaks determinism
+var id = Guid.NewGuid().ToString();
+
+// Good - deterministic
+var id = d.Get("my-id", () => Guid.NewGuid().ToString());
+```
+
+  </Tab>
+</Tabs>
+
+### Namespace Your Keys
+
+Use descriptive, namespaced keys to avoid collisions:
+
+<Tabs items={['TypeScript', 'Python', 'C#']}>
+  <Tab value="TypeScript">
 
 ```ts
-// Good - namespaced sequences
-const userId = d.seq('my-template.users');
-const orderId = d.seq('my-template.orders');
+// Good - namespaced keys
+const userId = d.get('my-template.users.primary-id', () => crypto.randomUUID());
+const orderId = d.get('my-template.orders.first-id', () => '1');
 
-// Bad - generic names might collide
-const id = d.seq('id');
+// Avoid - generic keys might collide with other templates
+const id = d.get('id', () => crypto.randomUUID());
 ```
 
-## Update Workflow
+  </Tab>
+  <Tab value="Python">
 
-<div className="fd-steps">
-<div className="fd-step">
+```python
+# Good - namespaced keys
+user_id = d.get('my-template.users.primary-id', lambda: str(uuid.uuid4()))
+order_id = d.get('my-template.orders.first-id', lambda: '1')
 
-**Initial generation** - Pin is created and stored
+# Avoid - generic keys might collide
+id = d.get('id', lambda: str(uuid.uuid4()))
+```
 
-</div>
-<div className="fd-step">
+  </Tab>
+  <Tab value="C#">
 
-**Template update** - Pin is reused
+```csharp
+// Good - namespaced keys
+var userId = d.Get("my-template.users.primary-id", () => Guid.NewGuid().ToString());
+var orderId = d.Get("my-template.orders.first-id", () => "1");
 
-</div>
-<div className="fd-step">
+// Avoid - generic keys might collide
+var id = d.Get("id", () => Guid.NewGuid().ToString());
+```
 
-**Deterministic values** - Same values generated
+  </Tab>
+</Tabs>
 
-</div>
-</div>
+## Why This Enables Safe Updates
 
-<Mermaid chart={`graph LR
-    A[Template v1.0] --> B[Generate Project]
-    B --> C[Store Pin]
-    C --> D[Template v2.0]
-    D --> E[Update Project]
-    E --> F[Reuse Pin]
-    F --> G[Same IDs!]
+<Mermaid chart={`graph TB
+    subgraph "First Generation"
+        A[Template v1.0] --> B[Generate Project]
+        B --> C[d.get creates values]
+        C --> D[Store in .cyan_state.yaml]
+    end
+
+    subgraph "Update Flow"
+        E[Template v2.0] --> F[Update Project]
+        F --> G[Read .cyan_state.yaml]
+        G --> H[d.get returns cached]
+        H --> I[Same IDs!]
+    end
+
+    D --> G
 `} />
-
-## 3-Way Merge
 
 Pinned values enable safe 3-way merges:
 
@@ -144,10 +402,10 @@ Pinned values enable safe 3-way merges:
 - **Ours** - User modifications
 - **Theirs** - New template version
 
-See [3-Way Merge](/docs/developer/templates/explanation/3-way-merge) for details.
+Because IDs remain consistent, references don't break when merging updates.
 
 ## Related
 
-- [Determinism Explained](/docs/developer/templates/explanation/determinism) - How determinism works
+- [Determinism Explained](/docs/developer/templates/explanation/determinism) - Deep dive into how determinism works
 - [3-Way Merge](/docs/developer/templates/explanation/3-way-merge) - Update mechanics
 - [Client State](/docs/developer/templates/explanation/client-state) - State management

@@ -3,27 +3,78 @@ title: Tutorial 2 - Adding Variables
 description: Add variable substitution to your templates
 ---
 
+import { Tabs, Tab } from 'fumadocs-ui/components/tabs';
+
 # Tutorial 2: Adding Variables
 
-Add variable substitution using the default processor. This enables dynamic content generation based on variables.
+Add variable substitution to your template. This enables dynamic content generation based on variables, making your templates reusable across different projects.
 
-## Change to GlobType.Template
+## The Change: GlobType.Template
 
-First, update your file configuration to use `GlobType.Template` instead of `GlobType.Copy`:
+In Tutorial 1, we used `GlobType.Copy` which simply copies files. To enable variable substitution, change to `GlobType.Template`:
 
-```ts -c
-files: [{ root: 'template', glob: '**/*', exclude: [], type: GlobType.Template }]
+<Tabs items={['TypeScript', 'Python', 'C#']} persist groupId="runtime">
+<Tab value="TypeScript">
+
+```ts cyan/index.ts -c
+files: [
+  {
+    root: 'templates',
+    glob: '**/*',
+    exclude: [],
+    // !diff - type: GlobType.Copy
+    // !diff + type: GlobType.Template
+  }
+]
 ```
+
+</Tab>
+<Tab value="Python">
+
+```python cyan/index.py -c
+files=[
+    CyanGlob(
+        root="templates",
+        glob="**/*",
+        exclude=[],
+        # !diff - type=GlobType.Copy
+        # !diff + type=GlobType.Template
+    )
+]
+```
+
+</Tab>
+<Tab value="C#">
+
+```csharp cyan/Program.cs -c
+Files =
+[
+    new CyanGlob
+    {
+        Root = "templates",
+        Glob = "**/*",
+        Exclude = [],
+        // !diff - Type = GlobType.Copy
+        // !diff + Type = GlobType.Template
+    }
+]
+```
+
+</Tab>
+</Tabs>
 
 <Callout type="warn">
 Using `GlobType.Template` on binary files (images, PDFs) will corrupt them. See [Tutorial 3](/docs/developer/templates/tutorials/03-changing-glob) for handling mixed file types.
 </Callout>
 
-## Add Variables to Config
+## Define Variables in Config
 
-Define variables in your processor configuration:
+Add variables to your processor configuration:
 
-```ts -c
+<Tabs items={['TypeScript', 'Python', 'C#']} persist groupId="runtime">
+<Tab value="TypeScript">
+
+```ts cyan/index.ts -c
 config: {
   vars: {
     name: 'my-project',
@@ -33,45 +84,50 @@ config: {
 }
 ```
 
-## Use Variables in Files
+</Tab>
+<Tab value="Python">
 
-The default processor uses `var__name__` syntax for variable substitution:
+```python cyan/index.py -c
+config={
+    "vars": {
+        "name": "my-project",
+        "author": "Your Name",
+        "version": "1.0.0"
+    }
+}
+```
 
-`cyan/template/README.md`:
+</Tab>
+<Tab value="C#">
 
-```markdown template/README.md
+```csharp cyan/Program.cs -c
+Config = new
+{
+    vars = new
+    {
+        name = "my-project",
+        author = "Your Name",
+        version = "1.0.0"
+    }
+}
+```
+
+</Tab>
+</Tabs>
+
+## Use Variables in Template Files
+
+The default processor uses `var__name__` syntax for variable substitution.
+
+Create `templates/README.md`:
+
+```markdown templates/README.md
 # var__name__
 
 Welcome to var__name__!
 
 **Author:** var__author__
 **Version:** var__version__
-```
-
-## Complete Example
-
-Update `cyan/index.ts`:
-
-```ts cyan/index.ts -c
-import { StartTemplateWithLambda, GlobType } from '@atomicloud/cyan-sdk';
-
-StartTemplateWithLambda(async (i, d) => {
-  return {
-    processors: [{
-      name: 'cyan/default',
-      files: [
-        { root: 'template', glob: '**/*', exclude: [], type: GlobType.Template }
-      ],
-      config: {
-        vars: {
-          name: 'my-project',
-          author: 'Your Name',
-          version: '1.0.0'
-        }
-      }
-    }]
-  };
-});
 ```
 
 ## Variable Syntax
@@ -87,17 +143,156 @@ The default processor uses Eta templating with custom delimiters:
 The default delimiter `var__` and `__` is chosen to avoid conflicts with common template syntaxes like `${}` or `{{}}`.
 </Callout>
 
+## Complete Code
+
+Update your template logic with all the changes:
+
+<Tabs items={['TypeScript', 'Python', 'C#']} persist groupId="runtime">
+<Tab value="TypeScript">
+
+Update `cyan/index.ts`:
+
+```ts cyan/index.ts -c
+import { startTemplateWithFn, GlobType } from '@atomicloud/cyan-sdk';
+
+startTemplateWithFn(async (i, d) => {
+  const name = await i.text('What is your project name?', 'myuser/my-first-template/name');
+
+  return {
+    processors: [{
+      name: 'cyan/default',
+      files: [
+        {
+          root: 'templates',
+          glob: '**/*',
+          exclude: [],
+          type: GlobType.Template
+        }
+      ],
+      config: {
+        vars: {
+          name,
+          author: 'Your Name',
+          version: '1.0.0'
+        }
+      }
+    }]
+  };
+});
+```
+
+<Callout type="info">
+Note that `name` comes from user input while `author` and `version` are hardcoded defaults.
+</Callout>
+
+</Tab>
+<Tab value="Python">
+
+Update `cyan/index.py`:
+
+```python cyan/index.py -c
+from cyanprintsdk import start_template_with_fn, GlobType
+from cyanprintsdk.domain.core.cyan import Cyan, CyanProcessor, CyanGlob
+
+async def my_template(i, d):
+    name = await i.text("What is your project name?", "myuser/my-first-template/name")
+
+    return Cyan(
+        processors=[
+            CyanProcessor(
+                name="cyan/default",
+                files=[
+                    CyanGlob(
+                        root="templates",
+                        glob="**/*",
+                        exclude=[],
+                        type=GlobType.Template
+                    )
+                ],
+                config={
+                    "vars": {
+                        "name": name,
+                        "author": "Your Name",
+                        "version": "1.0.0"
+                    }
+                }
+            )
+        ]
+    )
+
+start_template_with_fn(my_template)
+```
+
+<Callout type="info">
+Note that `name` comes from user input while `author` and `version` are hardcoded defaults.
+</Callout>
+
+</Tab>
+<Tab value="C#">
+
+Update `cyan/Program.cs`:
+
+```csharp cyan/Program.cs -c
+using sulfone_helium;
+using sulfone_helium.Domain.Core;
+
+CyanEngine.StartTemplate(args, async (i, d) =>
+{
+    var name = await i.Text("What is your project name?", "myuser/my-first-template/name");
+
+    return new Cyan
+    {
+        Processors =
+        [
+            new CyanProcessor
+            {
+                Name = "cyan/default",
+                Files =
+                [
+                    new CyanGlob
+                    {
+                        Root = "templates",
+                        Glob = "**/*",
+                        Exclude = [],
+                        Type = GlobType.Template
+                    }
+                ],
+                Config = new
+                {
+                    vars = new
+                    {
+                        name,
+                        author = "Your Name",
+                        version = "1.0.0"
+                    }
+                }
+            }
+        ]
+    };
+});
+```
+
+<Callout type="info">
+Note that `name` comes from user input while `author` and `version` are hardcoded defaults.
+</Callout>
+
+</Tab>
+</Tabs>
+
 ## Test Your Template
 
+Use the `try` command to test your template:
+
 ```bash -c
-# Build
-docker build -f cyan/Dockerfile -t my-first-template:dev .
+cyanprint try template . ./test-output
+```
 
-# Test
-cyanprint create my-first-template:dev ../test-output
+When prompted, enter a project name like `my-project`.
 
-# Check output
-cat ../test-output/README.md
+### Check the Output
+
+```bash -c
+cat ./test-output/README.md
 ```
 
 Expected output:
@@ -111,11 +306,26 @@ Welcome to my-project!
 **Version:** 1.0.0
 ```
 
+The variables have been replaced with their values.
+
+## Development Workflow
+
+Iterate quickly with the `try` command:
+
+```bash -c
+# Make changes to your template or variables...
+
+# Test again
+rm -rf ./test-output
+cyanprint try template . ./test-output
+```
+
 ## What You Learned
 
-- How to use `GlobType.Template` for file processing
+- How to change `GlobType.Copy` to `GlobType.Template` for variable processing
 - How to define variables in processor config
-- How to use `var__name__` syntax for substitution
+- How to use `var__name__` syntax for substitution in template files
+- How to combine user input with hardcoded default values
 
 ## Next Steps
 

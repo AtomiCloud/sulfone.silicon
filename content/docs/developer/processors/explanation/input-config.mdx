@@ -4,6 +4,7 @@ description: Understanding how configuration flows from template to processor
 ---
 
 import { Cards, Card } from 'fumadocs-ui/components/card';
+import { Tabs, Tab } from 'fumadocs-ui/components/tabs';
 
 # Input Config
 
@@ -24,74 +25,236 @@ Processors receive configuration from templates through `input.config`. This ena
 
 Templates define processor configuration in the return value:
 
-```ts template/index.ts -c
-// Template's index.ts
-StartTemplateWithLambda(async (i, d) => {
-  // Collect user input
-  const projectName = await i.text('Project name?', 'project.name', 'Enter name');
-  const features = await i.checkbox('Features?', ['auth', 'api'], 'project.features', 'Select');
-  const format = await i.select('Format?', ['json', 'yaml'], 'config.format', 'Choose');
+<Tabs items={['TypeScript', 'Python', 'C#']}>
+  <Tab value="TypeScript">
+    ```ts template/index.ts -c
+    // Template's index.ts
+    StartTemplateWithLambda(async (i, d) => {
+      // Collect user input
+      const projectName = await i.text('Project name?', 'project.name', 'Enter name');
+      const features = await i.checkbox('Features?', ['auth', 'api'], 'project.features', 'Select');
+      const format = await i.select('Format?', ['json', 'yaml'], 'config.format', 'Choose');
 
-  return {
-    processors: [{
-      name: 'myorg/my-processor',
-      files: [{ root: 'templates', glob: '**/*', exclude: [], type: GlobType.Template }],
-      config: {
-        // This becomes input.config in processor
-        projectName,
-        features,
-        outputFormat: format,
-        additionalSettings: {
-          strict: true,
-          minify: false
+      return {
+        processors: [{
+          name: 'myorg/my-processor',
+          files: [{ root: 'templates', glob: '**/*', exclude: [], type: GlobType.Template }],
+          config: {
+            // This becomes input.config in processor
+            projectName,
+            features,
+            outputFormat: format,
+            additionalSettings: {
+              strict: true,
+              minify: false
+            }
+          }
+        }]
+      };
+    });
+    ```
+  </Tab>
+
+  <Tab value="Python">
+    ```python template/index.py -c
+    # Template's index.py
+    def start_template_with_lambda(i, d):
+        # Collect user input
+        project_name = i.text('Project name?', 'project.name', 'Enter name')
+        features = i.checkbox('Features?', ['auth', 'api'], 'project.features', 'Select')
+        format = i.select('Format?', ['json', 'yaml'], 'config.format', 'Choose')
+
+        return {
+            'processors': [{
+                'name': 'myorg/my-processor',
+                'files': [{'root': 'templates', 'glob': '**/*', 'exclude': [], 'type': GlobType.Template}],
+                'config': {
+                    # This becomes input.config in processor
+                    'projectName': project_name,
+                    'features': features,
+                    'outputFormat': format,
+                    'additionalSettings': {
+                        'strict': True,
+                        'minify': False
+                    }
+                }
+            }]
         }
-      }
-    }]
-  };
-});
-```
+    ```
+  </Tab>
+
+  <Tab value="C#">
+    ```csharp Template/Index.cs -c
+    // Template's Index.cs
+    [TemplateMain]
+    public async Task<TemplateResult> RunAsync(IInquirer i, TemplateContext d)
+    {
+        // Collect user input
+        var projectName = await i.TextAsync("Project name?", "project.name", "Enter name");
+        var features = await i.CheckboxAsync("Features?", ["auth", "api"], "project.features", "Select");
+        var format = await i.SelectAsync("Format?", ["json", "yaml"], "config.format", "Choose");
+
+        return new TemplateResult
+        {
+            Processors = new[]
+            {
+                new ProcessorConfig
+                {
+                    Name = "myorg/my-processor",
+                    Files = new[] { new FileGlob { Root = "templates", Glob = "**/*", Exclude = Array.Empty<string>(), Type = GlobType.Template } },
+                    Config = new
+                    {
+                        // This becomes input.config in processor
+                        ProjectName = projectName,
+                        Features = features,
+                        OutputFormat = format,
+                        AdditionalSettings = new
+                        {
+                            Strict = true,
+                            Minify = false
+                        }
+                    }
+                }
+            }
+        };
+    }
+    ```
+  </Tab>
+</Tabs>
 
 ## Processor Side
 
 Processors receive config through `input.config`:
 
-```ts processor/index.ts -c
-// Processor's index.ts
+<Tabs items={['TypeScript', 'Python', 'C#']}>
+  <Tab value="TypeScript">
+    ```ts processor/index.ts -c
+    // Processor's index.ts
 
-// Define expected config shape
-interface MyProcessorConfig {
-  projectName: string;
-  features: string[];
-  outputFormat: 'json' | 'yaml';
-  additionalSettings?: {
-    strict?: boolean;
-    minify?: boolean;
-  };
-}
-
-StartProcessorWithLambda(async (input, fileHelper) => {
-  // Cast to your type
-  // !mark
-  const config = input.config as MyProcessorConfig;
-
-  // Use config values
-  // !mark
-  console.log('Project:', config.projectName);
-  console.log('Features:', config.features);
-
-  const files = fileHelper.resolveAll();
-
-  files.forEach(file => {
-    if (config.features.includes('auth')) {
-      file.content = addAuthCode(file.content);
+    // Define expected config shape
+    interface MyProcessorConfig {
+      projectName: string;
+      features: string[];
+      outputFormat: 'json' | 'yaml';
+      additionalSettings?: {
+        strict?: boolean;
+        minify?: boolean;
+      };
     }
 
-    file.writeFile();
-  });
+    StartProcessorWithLambda(async (input, fileHelper) => {
+      // Cast to your type
+      // !mark
+      const config = input.config as MyProcessorConfig;
 
-  return { directory: input.writeDir };
-});
-```
+      // Use config values
+      // !mark
+      console.log('Project:', config.projectName);
+      console.log('Features:', config.features);
+
+      const files = fileHelper.resolveAll();
+
+      files.forEach(file => {
+        if (config.features.includes('auth')) {
+          file.content = addAuthCode(file.content);
+        }
+
+        file.writeFile();
+      });
+
+      return { directory: input.writeDir };
+    });
+    ```
+  </Tab>
+
+  <Tab value="Python">
+    ```python processor/index.py -c
+    # Processor's index.py
+    from dataclasses import dataclass
+    from typing import Optional, List
+
+    @dataclass
+    class AdditionalSettings:
+        strict: Optional[bool] = None
+        minify: Optional[bool] = None
+
+    @dataclass
+    class MyProcessorConfig:
+        project_name: str
+        features: List[str]
+        output_format: str  # 'json' | 'yaml'
+        additional_settings: Optional[AdditionalSettings] = None
+
+    def start_processor_with_fn(input, file_helper):
+        # Cast to your type
+        # !mark
+        config = MyProcessorConfig(**input.config)
+
+        # Use config values
+        # !mark
+        print('Project:', config.project_name)
+        print('Features:', config.features)
+
+        files = file_helper.resolve_all()
+
+        for file in files:
+            if 'auth' in config.features:
+                file.content = add_auth_code(file.content)
+
+            file.write_file()
+
+        return {'directory': input.write_dir}
+    ```
+  </Tab>
+
+  <Tab value="C#">
+    ```csharp Processor/Index.cs -c
+    // Processor's Index.cs
+
+    // Define expected config shape
+    public class MyProcessorConfig
+    {
+        public string ProjectName { get; set; }
+        public List<string> Features { get; set; }
+        public string OutputFormat { get; set; }  // "json" | "yaml"
+        public AdditionalSettings? AdditionalSettings { get; set; }
+    }
+
+    public class AdditionalSettings
+    {
+        public bool? Strict { get; set; }
+        public bool? Minify { get; set; }
+    }
+
+    [ProcessorMain]
+    public async Task<ProcessorResult> RunAsync(ProcessorInput input, CyanFileHelper fileHelper)
+    {
+        // Cast to your type
+        // !mark
+        var config = input.Config as MyProcessorConfig;
+
+        // Use config values
+        // !mark
+        Console.WriteLine($"Project: {config.ProjectName}");
+        Console.WriteLine($"Features: {string.Join(", ", config.Features)}");
+
+        var files = fileHelper.ResolveAll();
+
+        foreach (var file in files)
+        {
+            if (config.Features.Contains("auth"))
+            {
+                file.Content = AddAuthCode(file.Content);
+            }
+
+            file.WriteFile();
+        }
+
+        return new ProcessorResult { Directory = input.WriteDir };
+    }
+    ```
+  </Tab>
+</Tabs>
 
 ## Config Structure
 
@@ -155,29 +318,89 @@ interface ComplexConfig {
 
 Always handle missing config gracefully:
 
-```ts -c
-interface Config {
-  required: string;
-  optional?: boolean;
-  withDefault?: number;
-}
+<Tabs items={['TypeScript', 'Python', 'C#']}>
+  <Tab value="TypeScript">
+    ```ts -c
+    interface Config {
+      required: string;
+      optional?: boolean;
+      withDefault?: number;
+    }
 
-StartProcessorWithLambda(async (input, fileHelper) => {
-  // Provide defaults for optional fields
-  const config: Config = {
-    optional: true,
-    withDefault: 10,
-    ...(input.config as Partial<Config>)
-  };
+    StartProcessorWithLambda(async (input, fileHelper) => {
+      // Provide defaults for optional fields
+      const config: Config = {
+        optional: true,
+        withDefault: 10,
+        ...(input.config as Partial<Config>)
+      };
 
-  // Now config.optional and config.withDefault are guaranteed
-  if (config.optional) {
-    // ...
-  }
+      // Now config.optional and config.withDefault are guaranteed
+      if (config.optional) {
+        // ...
+      }
 
-  return { directory: input.writeDir };
-});
-```
+      return { directory: input.writeDir };
+    });
+    ```
+  </Tab>
+
+  <Tab value="Python">
+    ```python -c
+    from dataclasses import dataclass, field
+    from typing import Optional
+
+    @dataclass
+    class Config:
+        required: str
+        optional: Optional[bool] = True
+        with_default: Optional[int] = 10
+
+    def start_processor_with_fn(input, file_helper):
+        # Provide defaults for optional fields
+        config_data = {'optional': True, 'with_default': 10, **input.config}
+        config = Config(**config_data)
+
+        # Now config.optional and config.with_default are guaranteed
+        if config.optional:
+            # ...
+
+        return {'directory': input.write_dir}
+    ```
+  </Tab>
+
+  <Tab value="C#">
+    ```csharp -c
+    public class Config
+    {
+        public string Required { get; set; }
+        public bool? Optional { get; set; } = true;
+        public int? WithDefault { get; set; } = 10;
+    }
+
+    [ProcessorMain]
+    public async Task<ProcessorResult> RunAsync(ProcessorInput input, CyanFileHelper fileHelper)
+    {
+        // Provide defaults for optional fields
+        var config = input.Config != null
+            ? System.Text.Json.JsonSerializer.Deserialize<Config>(input.Config.ToString())
+            : new Config();
+
+        config ??= new Config();
+        config.Optional ??= true;
+        config.WithDefault ??= 10;
+
+        // Now config.Optional and config.WithDefault are guaranteed
+        if (config.Optional == true)
+        {
+            // ...
+        }
+
+        return new ProcessorResult { Directory = input.WriteDir };
+    }
+    ```
+  </Tab>
+</Tabs>
 
 <Callout type="warn" title="Type Safety">
 `input.config` is typed as `unknown`. Always cast to your expected type and provide defaults for optional fields.
@@ -187,37 +410,108 @@ StartProcessorWithLambda(async (input, fileHelper) => {
 
 Validate config at processor start:
 
-```ts -c
-interface Config {
-  mode: 'dev' | 'prod';
-  maxFiles: number;
-}
+<Tabs items={['TypeScript', 'Python', 'C#']}>
+  <Tab value="TypeScript">
+    ```ts -c
+    interface Config {
+      mode: 'dev' | 'prod';
+      maxFiles: number;
+    }
 
-function validateConfig(config: unknown): Config {
-  if (typeof config !== 'object' || config === null) {
-    throw new Error('Config must be an object');
-  }
+    function validateConfig(config: unknown): Config {
+      if (typeof config !== 'object' || config === null) {
+        throw new Error('Config must be an object');
+      }
 
-  const c = config as Record<string, unknown>;
+      const c = config as Record<string, unknown>;
 
-  if (c.mode !== 'dev' && c.mode !== 'prod') {
-    throw new Error('mode must be "dev" or "prod"');
-  }
+      if (c.mode !== 'dev' && c.mode !== 'prod') {
+        throw new Error('mode must be "dev" or "prod"');
+      }
 
-  if (typeof c.maxFiles !== 'number' || c.maxFiles < 1) {
-    throw new Error('maxFiles must be a positive number');
-  }
+      if (typeof c.maxFiles !== 'number' || c.maxFiles < 1) {
+        throw new Error('maxFiles must be a positive number');
+      }
 
-  return c as Config;
-}
+      return c as Config;
+    }
 
-StartProcessorWithLambda(async (input, fileHelper) => {
-  const config = validateConfig(input.config);
+    StartProcessorWithLambda(async (input, fileHelper) => {
+      const config = validateConfig(input.config);
 
-  // Config is now validated
-  // ...
-});
-```
+      // Config is now validated
+      // ...
+    });
+    ```
+  </Tab>
+
+  <Tab value="Python">
+    ```python -c
+    from dataclasses import dataclass
+    from typing import Literal
+
+    @dataclass
+    class Config:
+        mode: Literal['dev', 'prod']
+        max_files: int
+
+    def validate_config(config: dict) -> Config:
+        if not isinstance(config, dict):
+            raise ValueError('Config must be an object')
+
+        if config.get('mode') not in ('dev', 'prod'):
+            raise ValueError('mode must be "dev" or "prod"')
+
+        if not isinstance(config.get('maxFiles'), int) or config['maxFiles'] < 1:
+            raise ValueError('maxFiles must be a positive number')
+
+        return Config(mode=config['mode'], max_files=config['maxFiles'])
+
+    def start_processor_with_fn(input, file_helper):
+        config = validate_config(input.config)
+
+        # Config is now validated
+        # ...
+    ```
+  </Tab>
+
+  <Tab value="C#">
+    ```csharp -c
+    public class Config
+    {
+        public string Mode { get; set; }  // "dev" | "prod"
+        public int MaxFiles { get; set; }
+    }
+
+    public Config ValidateConfig(object config)
+    {
+        if (config == null)
+            throw new ArgumentException("Config must be an object");
+
+        var json = System.Text.Json.JsonSerializer.Serialize(config);
+        var c = System.Text.Json.JsonSerializer.Deserialize<Dictionary<string, object>>(json);
+
+        if (c["Mode"]?.ToString() != "dev" && c["Mode"]?.ToString() != "prod")
+            throw new ArgumentException("mode must be \"dev\" or \"prod\"");
+
+        var maxFiles = Convert.ToInt32(c["MaxFiles"]);
+        if (maxFiles < 1)
+            throw new ArgumentException("maxFiles must be a positive number");
+
+        return new Config { Mode = c["Mode"].ToString(), MaxFiles = maxFiles };
+    }
+
+    [ProcessorMain]
+    public async Task<ProcessorResult> RunAsync(ProcessorInput input, CyanFileHelper fileHelper)
+    {
+        var config = ValidateConfig(input.Config);
+
+        // Config is now validated
+        // ...
+    }
+    ```
+  </Tab>
+</Tabs>
 
 ## Common Patterns
 

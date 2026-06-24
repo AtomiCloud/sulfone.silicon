@@ -6,6 +6,7 @@ description: Standard file layout for processor projects
 import { Files, File, Folder } from 'fumadocs-ui/components/files';
 import { Callout } from 'fumadocs-ui/components/callout';
 import { Cards, Card } from 'fumadocs-ui/components/card';
+import { Tabs, Tab } from 'fumadocs-ui/components/tabs';
 
 # Project Structure
 
@@ -34,6 +35,9 @@ A processor project follows a standard layout for consistency and ease of develo
 
 The main entry point using `StartProcessorWithLambda`:
 
+<Tabs items={['TypeScript', 'Python', 'C#']}>
+  <Tab value="TypeScript">
+
 ```ts index.ts -c
 import { StartProcessorWithLambda } from '@atomicloud/cyan-sdk';
 
@@ -49,6 +53,49 @@ StartProcessorWithLambda(async (input, fileHelper) => {
   return { directory: input.writeDirectory };
 });
 ```
+
+  </Tab>
+  <Tab value="Python">
+
+```python main.py -c
+from atomicloud_cyan_sdk import start_processor_with_lambda
+
+async def handler(input, file_helper):
+    files = file_helper.resolve_all()
+
+    for file in files:
+        # Transform file content
+        file.content = transform(file.content)
+        file.write_file()
+
+    return {"directory": input.write_directory}
+
+start_processor_with_lambda(handler)
+```
+
+  </Tab>
+  <Tab value="C#">
+
+```csharp Program.cs -c
+using AtomiLoud.CyanSdk;
+
+await Processor.StartAsync(async (input, fileHelper) =>
+{
+    var files = fileHelper.ResolveAll();
+
+    foreach (var file in files)
+    {
+        // Transform file content
+        file.Content = Transform(file.Content);
+        file.WriteFile();
+    }
+
+    return new ProcessorOutput { Directory = input.WriteDirectory };
+});
+```
+
+  </Tab>
+</Tabs>
 
 ### `package.json`
 
@@ -171,6 +218,9 @@ Unit tests for processor logic:
 
 For complex processors, split logic into modules:
 
+<Tabs items={['TypeScript', 'Python', 'C#']}>
+  <Tab value="TypeScript">
+
 ```ts index.ts -c
 // index.ts
 import { StartProcessorWithLambda } from '@atomicloud/cyan-sdk';
@@ -193,6 +243,64 @@ StartProcessorWithLambda(async (input, fileHelper) => {
   return { directory: input.writeDirectory };
 });
 ```
+
+  </Tab>
+  <Tab value="Python">
+
+```python main.py -c
+# main.py
+from atomicloud_cyan_sdk import start_processor_with_lambda
+from .transforms.markdown import transform_markdown
+from .transforms.code import transform_code
+
+async def handler(input, file_helper):
+    files = file_helper.resolve_all()
+    config = input.config  # Cast to your config type
+
+    for file in files:
+        if file.relative.endswith('.md'):
+            file.content = transform_markdown(file.content, config)
+        elif file.relative.endswith('.ts'):
+            file.content = transform_code(file.content, config)
+        file.write_file()
+
+    return {"directory": input.write_directory}
+
+start_processor_with_lambda(handler)
+```
+
+  </Tab>
+  <Tab value="C#">
+
+```csharp Program.cs -c
+// Program.cs
+using AtomiLoud.CyanSdk;
+using MyProcessor.Transforms;
+
+await Processor.StartAsync(async (input, fileHelper) =>
+{
+    var files = fileHelper.ResolveAll();
+    var config = input.Config; // Cast to your config type
+
+    foreach (var file in files)
+    {
+        if (file.Relative.EndsWith(".md"))
+        {
+            file.Content = MarkdownTransform.Transform(file.Content, config);
+        }
+        else if (file.Relative.EndsWith(".ts"))
+        {
+            file.Content = CodeTransform.Transform(file.Content, config);
+        }
+        file.WriteFile();
+    }
+
+    return new ProcessorOutput { Directory = input.WriteDirectory };
+});
+```
+
+  </Tab>
+</Tabs>
 
 ## Related
 

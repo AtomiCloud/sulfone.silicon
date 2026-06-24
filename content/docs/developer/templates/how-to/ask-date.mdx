@@ -3,7 +3,7 @@ title: Ask Date Questions
 description: How to ask for date selection
 ---
 
-import { Callout } from 'fumadocs-ui/components/callout';
+import { Tabs, Tab } from 'fumadocs-ui/components/tabs';
 
 # How to Ask Date Questions
 
@@ -11,54 +11,148 @@ Use date questions when users need to select a date.
 
 ## Shorthand Form
 
-```ts -c
-import { QuestionType } from '@atomi/sdk'; // Import for Object Form examples
+<Tabs items={['TypeScript', 'Python', 'C#']}>
+  <Tab value="TypeScript">
+    ```ts
+    const deadline = await i.dateSelect(
+      'Project deadline?',      // !callout[/Project deadline?/] Message shown to user
+      'project.deadline',       // !callout[/project.deadline/] Unique key for answer storage
+      'Select target date'      // !callout[/Select target date/] Optional description
+    );
+    ```
+  </Tab>
 
-const deadline = await i.dateSelect(
-  'Project deadline?',  // Message
-  'project.deadline',   // Key
-  'Select target date'  // Description
-);
-// Returns: Date object
-```
+  <Tab value="Python">
+    ```python
+    deadline = await i.date_select(
+      'Project deadline?',      # !callout[/Project deadline?/] Message shown to user
+      'project.deadline',       # !callout[/project.deadline/] Unique key for answer storage
+      'Select target date'      # !callout[/Select target date/] Optional description
+    )
+    ```
+  </Tab>
+
+  <Tab value="C#">
+    ```csharp
+    var deadline = await i.DateSelect(
+      "Project deadline?",      // !callout[/Project deadline?/] Message shown to user
+      "project.deadline",       // !callout[/project.deadline/] Unique key for answer storage
+      "Select target date"      // !callout[/Select target date/] Optional description
+    );
+    ```
+  </Tab>
+</Tabs>
 
 ## Object Form
 
-```ts -c
-const startDate = await i.dateSelect({
-  type: QuestionType.DateSelect,
-  id: 'project.startDate',
-  message: 'Start date?',
-  desc: 'When does the project start?',
-  default: new Date()  // Default to today
-});
-```
+<Tabs items={['TypeScript', 'Python', 'C#']}>
+  <Tab value="TypeScript">
+    ```ts
+    import { QuestionType } from '@atomicloud/cyan-sdk';
+
+    const startDate = await i.dateSelect({
+      type: QuestionType.DateSelect,
+      id: 'project.startDate',
+      message: 'Start date?',
+      desc: 'When does the project start?',
+      default: new Date()  // !mark Default to today
+    });
+    ```
+  </Tab>
+
+  <Tab value="Python">
+    ```python
+    from cyan import QuestionType
+
+    start_date = await i.date_select(
+      type=QuestionType.DateSelect,
+      id='project.startDate',
+      message='Start date?',
+      desc='When does the project start?',
+      default=datetime.now()  # !mark Default to today
+    )
+    ```
+  </Tab>
+
+  <Tab value="C#">
+    ```csharp
+    using Atomiq.Cloud.Cyan;
+
+    var startDate = await i.DateSelect(new {
+        type = QuestionType.DateSelect,
+        id = "project.startDate",
+        message = "Start date?",
+        desc = "When does the project start?",
+        @default = DateTime.Now  // !mark Default to today
+    });
+    ```
+  </Tab>
+</Tabs>
 
 ## Using Results
 
 ### Formatting Dates
 
-```ts -c
-const deadline = await i.dateSelect('Deadline?', 'project.deadline', 'Target date');
+<Tabs items={['TypeScript', 'Python', 'C#']}>
+  <Tab value="TypeScript">
+    ```ts
+    const deadline = await i.dateSelect('Deadline?', 'project.deadline', 'Target date');
 
-// Format for display
-const formattedDate = deadline.toISOString().split('T')[0]; // "2024-12-31"
+    // Format for display
+    const formattedDate = deadline.toISOString().split('T')[0];  // !mark "2024-12-31"
 
-// Format for template (return these in your config)
-return {
-  config: {
-    vars: {
-      deadline: formattedDate,
-      deadlineYear: deadline.getFullYear().toString(),
-      deadlineMonth: (deadline.getMonth() + 1).toString().padStart(2, '0')
+    return {
+      config: {
+        vars: {
+          deadline: formattedDate,
+          deadlineYear: deadline.getFullYear().toString(),
+          deadlineMonth: (deadline.getMonth() + 1).toString().padStart(2, '0')
+        }
+      }
+    };
+    ```
+  </Tab>
+
+  <Tab value="Python">
+    ```python
+    from datetime import datetime
+
+    deadline = await i.date_select('Deadline?', 'project.deadline', 'Target date')
+
+    # Format for display
+    formatted_date = deadline.strftime('%Y-%m-%d')  # !mark "2024-12-31"
+
+    return {
+        'config': {
+            'vars': {
+                'deadline': formatted_date,
+                'deadlineYear': str(deadline.year),
+                'deadlineMonth': deadline.strftime('%m')
+            }
+        }
     }
-  }
-};
-```
+    ```
+  </Tab>
 
-<Callout type="info">
-JavaScript Date months are 0-indexed (0=January, 11=December), so we add 1 to get the actual month number.
-</Callout>
+  <Tab value="C#">
+    ```csharp
+    var deadline = await i.DateSelect("Deadline?", "project.deadline", "Target date");
+
+    // Format for display
+    var formattedDate = deadline.ToString("yyyy-MM-dd");  // !mark "2024-12-31"
+
+    return new {
+        config = new {
+            vars = new {
+                deadline = formattedDate,
+                deadlineYear = deadline.Year.ToString(),
+                deadlineMonth = deadline.Month.ToString("D2")
+            }
+        }
+    };
+    ```
+  </Tab>
+</Tabs>
 
 ### In Template Files
 
@@ -69,83 +163,6 @@ JavaScript Date months are 0-indexed (0=January, 11=December), so we add 1 to ge
 - **Deadline:** var__deadline__
 
 This project is due in var__deadlineYear__.
-```
-
-### Date Calculations
-
-```ts -c
-const startDate = await i.dateSelect('Start date?', 'project.start', 'Begin date');
-const endDate = await i.dateSelect('End date?', 'project.end', 'End date');
-
-// Calculate duration
-const duration = Math.ceil((endDate.getTime() - startDate.getTime()) / (1000 * 60 * 60 * 24));
-
-return {
-  config: {
-    vars: {
-      startDate: startDate.toISOString().split('T')[0],
-      endDate: endDate.toISOString().split('T')[0],
-      duration: duration.toString()
-    }
-  }
-};
-```
-
-## Common Patterns
-
-### Default to Future Date
-
-```ts -c
-const defaultDate = new Date();
-defaultDate.setMonth(defaultDate.getMonth() + 1); // 1 month from now
-
-const deadline = await i.dateSelect({
-  type: QuestionType.DateSelect,
-  id: 'project.deadline',
-  message: 'Deadline?',
-  desc: 'Target completion date',
-  default: defaultDate
-});
-```
-
-### Validation
-
-```ts -c
-const startDate = await i.dateSelect({
-  type: QuestionType.DateSelect,
-  id: 'project.start',
-  message: 'Start date?',
-  desc: 'Must be in the future',
-  validate: (date) => {
-    if (date < new Date()) {
-      return 'Start date must be in the future';
-    }
-    return null;
-  }
-});
-```
-
-### License Expiration Pattern
-
-```ts -c
-const licenseExpiry = await i.dateSelect(
-  'License expiration?',
-  'license.expiry',
-  'When does the license expire?'
-);
-
-const daysUntilExpiry = Math.ceil(
-  (licenseExpiry.getTime() - Date.now()) / (1000 * 60 * 60 * 24)
-);
-
-return {
-  config: {
-    vars: {
-      licenseExpiry: licenseExpiry.toISOString().split('T')[0],
-      daysUntilExpiry: daysUntilExpiry.toString()
-    }
-  }
-};
 ```
 
 ## Related

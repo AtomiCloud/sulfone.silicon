@@ -3,6 +3,7 @@ title: Ask Confirm Questions
 description: How to ask yes/no confirmation questions
 ---
 
+import { Tabs, Tab } from 'fumadocs-ui/components/tabs';
 import { Callout } from 'fumadocs-ui/components/callout';
 import { Cards, Card } from 'fumadocs-ui/components/card';
 
@@ -12,25 +13,77 @@ Use confirm questions for boolean yes/no choices.
 
 ## Shorthand Form
 
-```ts template.ts -c
-const useTypescript = await i.confirm(
-  'Use TypeScript?',     // Message
-  'project.typescript',  // Key
-  'Add TypeScript config' // Description
-);
-```
+<Tabs items={['TypeScript', 'Python', 'C#']}>
+  <Tab value="TypeScript">
+    ```ts
+    const useTypescript = await i.confirm(
+      'Use TypeScript?',      // !callout[/'Use TypeScript?'/] Message shown to user
+      'project.typescript',   // !callout[/'project.typescript'/] Unique key for this answer
+      'Add TypeScript config' // !callout[/'Add TypeScript config'/] Description shown in UI
+    );
+    ```
+  </Tab>
 
-## Object Form (with default)
+  <Tab value="Python">
+    ```python
+    use_typescript = await i.confirm(
+      'Use TypeScript?',      # !callout[/'Use TypeScript?'/] Message shown to user
+      'project.typescript',   # !callout[/'project.typescript'/] Unique key for this answer
+      'Add TypeScript config' # !callout[/'Add TypeScript config'/] Description shown in UI
+    )
+    ```
+  </Tab>
 
-```ts template.ts -c
-const useTypescript = await i.confirm({
-  type: QuestionType.Confirm,
-  id: 'project.typescript',
-  message: 'Use TypeScript?',
-  desc: 'Add TypeScript configuration',
-  default: true  // Default to yes
-});
-```
+  <Tab value="C#">
+    ```csharp
+    var useTypescript = await i.Confirm(
+      "Use TypeScript?",      // !callout[/"Use TypeScript?"/] Message shown to user
+      "project.typescript",   // !callout[/"project.typescript"/] Unique key for this answer
+      "Add TypeScript config" // !callout[/"Add TypeScript config"/] Description shown in UI
+    );
+    ```
+  </Tab>
+</Tabs>
+
+## Object Form (with Default)
+
+<Tabs items={['TypeScript', 'Python', 'C#']}>
+  <Tab value="TypeScript">
+    ```ts
+    const useTypescript = await i.confirm({
+      type: QuestionType.Confirm,
+      id: 'project.typescript',
+      message: 'Use TypeScript?',
+      desc: 'Add TypeScript configuration',
+      default: true  // !callout[/default: true/] Pre-selects "yes"
+    });
+    ```
+  </Tab>
+
+  <Tab value="Python">
+    ```python
+    use_typescript = await i.confirm(
+      type=QuestionType.Confirm,
+      id='project.typescript',
+      message='Use TypeScript?',
+      desc='Add TypeScript configuration',
+      default=True  # !callout[/default=True/] Pre-selects "yes"
+    )
+    ```
+  </Tab>
+
+  <Tab value="C#">
+    ```csharp
+    var useTypescript = await i.Confirm(
+        type: QuestionType.Confirm,
+        id: "project.typescript",
+        message: "Use TypeScript?",
+        desc: "Add TypeScript configuration",
+        default: true  // !callout[/default: true/] Pre-selects "yes"
+    );
+    ```
+  </Tab>
+</Tabs>
 
 <Callout type="info">
 The `confirm` method returns a `boolean` - `true` for yes, `false` for no.
@@ -38,85 +91,55 @@ The `confirm` method returns a `boolean` - `true` for yes, `false` for no.
 
 ## Using Results
 
-### In Template Logic
+<Tabs items={['TypeScript', 'Python', 'C#']}>
+  <Tab value="TypeScript">
+    ```ts
+    const docker = await i.confirm('Add Docker?', 'project.docker', 'Include Docker support');
 
-```ts processor.ts -c
-const docker = await i.confirm('Add Docker?', 'project.docker', 'Include Docker support');
+    if (docker) {  // !mark
+      files.push({ root: 'templates/docker', glob: '**/*', exclude: [], type: GlobType.Template });
+    }
 
-// Use directly in conditionals
-if (docker) {
-  files.push({ root: 'templates/docker', glob: '**/*', exclude: [], type: GlobType.Template });
-}
-
-// Convert to string for template vars
-config: {
-  vars: {
-    hasDocker: docker ? 'yes' : 'no',
-    docker: docker ? 'true' : 'false'
-  }
-}
-```
-
-### Multiple Related Confirms
-
-```ts processor.ts -c
-const typescript = await i.confirm('Use TypeScript?', 'project.typescript', 'Add TS config');
-const eslint = await i.confirm('Add ESLint?', 'project.eslint', 'Add ESLint config');
-const prettier = await i.confirm('Add Prettier?', 'project.prettier', 'Add Prettier config');
-const docker = await i.confirm('Add Docker?', 'project.docker', 'Add Docker support');
-
-return {
-  processors: [{
-    name: 'cyan/default',
-    files: [
-      { root: 'templates/base', glob: '**/*', exclude: [], type: GlobType.Template },
-      ...(typescript ? [{ root: 'templates/typescript', glob: '**/*', exclude: [], type: GlobType.Template }] : []),
-      ...(eslint ? [{ root: 'templates/eslint', glob: '**/*', exclude: [], type: GlobType.Copy }] : []),
-      ...(docker ? [{ root: 'templates/docker', glob: '**/*', exclude: [], type: GlobType.Template }] : [])
-    ],
     config: {
       vars: {
-        typescript: typescript ? 'true' : 'false',
-        eslint: eslint ? 'true' : 'false',
-        docker: docker ? 'true' : 'false'
+        hasDocker: docker ? 'yes' : 'no'  // !mark
       }
     }
-  }]
-};
-```
+    ```
+  </Tab>
 
-## Common Patterns
+  <Tab value="Python">
+    ```python
+    docker = await i.confirm('Add Docker?', 'project.docker', 'Include Docker support')
 
-### Conditional Questions
+    if docker:  # !mark
+        files.append({'root': 'templates/docker', 'glob': '**/*', 'exclude': [], 'type': GlobType.Template})
 
-Ask follow-up questions based on confirm response:
+    'config': {
+        'vars': {
+            'hasDocker': 'yes' if docker else 'no'  # !mark
+        }
+    }
+    ```
+  </Tab>
 
-```ts conditional.ts -c
-const useDatabase = await i.confirm('Use a database?', 'project.db', 'Add database config');
+  <Tab value="C#">
+    ```csharp
+    var docker = await i.Confirm("Add Docker?", "project.docker", "Include Docker support");
 
-let dbType = null;
-if (useDatabase) {
-  dbType = await i.select(
-    'Which database?',
-    ['PostgreSQL', 'MySQL', 'MongoDB'],
-    'project.db.type',
-    'Choose database'
-  );
-}
-```
+    if (docker)  // !mark
+    {
+        files.Add(new { root = "templates/docker", glob = "**/*", exclude = Array.Empty<string>(), type = GlobType.Template });
+    }
 
-### With Default True
-
-```ts default-true.ts -c
-// Default to yes for common choices
-const addReadme = await i.confirm({
-  type: QuestionType.Confirm,
-  id: 'project.readme',
-  message: 'Add README?',
-  desc: 'Include README.md',
-  default: true
-});
-```
+    config = new {
+        vars = new {
+            hasDocker = docker ? "yes" : "no"  // !mark
+        }
+    };
+    ```
+  </Tab>
+</Tabs>
 
 ## Related
 
@@ -127,7 +150,7 @@ const addReadme = await i.confirm({
   <Card href="/docs/developer/templates/how-to/ask-checkbox" title="Ask Checkbox">
     Multi-select questions
   </Card>
-  <Card href="/docs/developer/templates/reference/sdk/inquirer#select" title="Ask Select">
+  <Card href="/docs/developer/templates/how-to/ask-select" title="Ask Select">
     Single-choice questions
   </Card>
 </Cards>

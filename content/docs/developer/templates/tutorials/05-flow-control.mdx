@@ -1,0 +1,894 @@
+---
+title: Tutorial 5 - Flow Control
+description: Use conditional logic and branching to create dynamic templates
+---
+
+import { Tabs, Tab } from 'fumadocs-ui/components/tabs';
+import { Steps, Step } from 'fumadocs-ui/components/steps';
+import { Cards, Card } from 'fumadocs-ui/components/card';
+
+# Tutorial 5: Flow Control
+
+Use conditional logic to create templates that adapt based on user input. Flow control makes templates flexible and context-aware.
+
+## Why Flow Control Matters
+
+Templates often need different behavior based on user choices:
+
+- Different frameworks require different file structures
+- Optional features need conditional setup
+- Language selection affects syntax and tooling
+
+## Conditional File Generation
+
+<Steps>
+<Step title="Ask a branching question">
+
+Use `select()` to let users choose a path:
+
+<Tabs items={['TypeScript', 'Python', 'C#']}>
+<Tab value="TypeScript">
+
+```ts
+const framework = await i.select(
+  'Choose framework',
+  'my-template.framework',
+  ['react', 'vue', 'svelte']
+);
+```
+
+</Tab>
+<Tab value="Python">
+
+```python
+framework = await i.select(
+  'Choose framework',
+  'my-template.framework',
+  ['django', 'flask', 'fastapi']
+)
+```
+
+</Tab>
+<Tab value="C#">
+
+```csharp
+var framework = await i.Select(
+  "Choose framework",
+  "my-template.framework",
+  new[] { "blazor", "mvc", "razor-pages" }
+);
+```
+
+</Tab>
+</Tabs>
+
+</Step>
+<Step title="Branch based on the answer">
+
+Use if-else to change behavior:
+
+<Tabs items={['TypeScript', 'Python', 'C#']}>
+<Tab value="TypeScript">
+
+```ts
+let templateRoot: string;
+let additionalVars: Record<string, string> = {};
+
+if (framework === 'react') {
+  templateRoot = 'templates/react';
+  additionalVars = { hookLibrary: 'use-state' };
+} else if (framework === 'vue') {
+  templateRoot = 'templates/vue';
+  additionalVars = { compositionApi: 'true' };
+} else {
+  templateRoot = 'templates/svelte';
+  additionalVars = { stores: 'svelte-stores' };
+}
+```
+
+</Tab>
+<Tab value="Python">
+
+```python
+template_root: str
+additional_vars: dict[str, str] = {}
+
+if framework == 'django':
+    template_root = 'templates/django'
+    additional_vars = {'orm': 'django-orm'}
+elif framework == 'flask':
+    template_root = 'templates/flask'
+    additional_vars = {'extensions': 'flask-extensions'}
+else:
+    template_root = 'templates/fastapi'
+    additional_vars = {'async_support': 'true'}
+```
+
+</Tab>
+<Tab value="C#">
+
+```csharp
+string templateRoot;
+var additionalVars = new Dictionary<string, string>();
+
+if (framework == "blazor")
+{
+    templateRoot = "templates/blazor";
+    additionalVars = new() { ["interactivity"] = "server" };
+}
+else if (framework == "mvc")
+{
+    templateRoot = "templates/mvc";
+    additionalVars = new() { ["razor"] = "true" };
+}
+else
+{
+    templateRoot = "templates/razor-pages";
+    additionalVars = new() { ["pageModel"] = "true" };
+}
+```
+
+</Tab>
+</Tabs>
+
+</Step>
+<Step title="Use the conditional values">
+
+Apply the dynamic values in your processor:
+
+<Tabs items={['TypeScript', 'Python', 'C#']}>
+<Tab value="TypeScript">
+
+```ts
+return {
+  processors: [{
+    name: 'cyan/default',
+    files: [{ root: templateRoot, glob: '**/*', exclude: [], type: GlobType.Template }],
+    config: {
+      vars: {
+        framework,
+        ...additionalVars
+      }
+    }
+  }]
+};
+```
+
+</Tab>
+<Tab value="Python">
+
+```python
+return {
+  'processors': [{
+    'name': 'cyan/default',
+    'files': [{'root': template_root, 'glob': '**/*', 'exclude': [], 'type': GlobType.Template}],
+    'config': {
+      'vars': {
+        'framework': framework,
+        **additional_vars
+      }
+    }
+  }]
+}
+```
+
+</Tab>
+<Tab value="C#">
+
+```csharp
+return new TemplateResult
+{
+    Processors = new[]
+    {
+        new Processor
+        {
+            Name = "cyan/default",
+            Files = new[] { new FileConfig { Root = templateRoot, Glob = "**/*", Exclude = Array.Empty<string>(), Type = GlobType.Template } },
+            Config = new Dictionary<string, object>
+            {
+                ["vars"] = additionalVars
+            }
+        }
+    }
+};
+```
+
+</Tab>
+</Tabs>
+
+</Step>
+</Steps>
+
+## Complex Conditionals
+
+Handle multiple independent options:
+
+<Tabs items={['TypeScript', 'Python', 'C#']}>
+<Tab value="TypeScript">
+
+```ts
+import { StartTemplateWithLambda, GlobType } from '@atomicloud/cyan-sdk';
+
+StartTemplateWithLambda(async (i, d) => {
+  // Collect all choices
+  const language = await i.select(
+    'Language',
+    'my-template.language',
+    ['typescript', 'javascript']
+  );
+
+  const testing = await i.confirm(
+    'Add testing?',
+    'my-template.testing',
+    'Include test setup'
+  );
+
+  const ci = await i.confirm(
+    'Add CI/CD?',
+    'my-template.ci',
+    'Include pipeline config'
+  );
+
+  // Build conditional file list
+  const files = [];
+
+  // Base files
+  files.push({
+    root: 'templates/base',
+    glob: '**/*',
+    exclude: [],
+    type: GlobType.Template
+  });
+
+  // Language-specific files
+  if (language === 'typescript') {
+    files.push({
+      root: 'templates/typescript',
+      glob: '**/*',
+      exclude: [],
+      type: GlobType.Template
+    });
+  } else {
+    files.push({
+      root: 'templates/javascript',
+      glob: '**/*',
+      exclude: [],
+      type: GlobType.Template
+    });
+  }
+
+  // Optional testing files
+  if (testing) {
+    files.push({
+      root: 'templates/testing',
+      glob: '**/*',
+      exclude: [],
+      type: GlobType.Template
+    });
+  }
+
+  // Optional CI files
+  if (ci) {
+    files.push({
+      root: 'templates/ci',
+      glob: '**/*',
+      exclude: [],
+      type: GlobType.Template
+    });
+  }
+
+  return {
+    processors: [{
+      name: 'cyan/default',
+      files,
+      config: {
+        vars: {
+          language,
+          testing: testing ? 'true' : 'false',
+          ci: ci ? 'true' : 'false'
+        }
+      }
+    }]
+  };
+});
+```
+
+</Tab>
+<Tab value="Python">
+
+```python
+from cyan_sdk import StartTemplateWithLambda, GlobType
+
+@StartTemplateWithLambda
+async def main(i, d):
+    # Collect all choices
+    language = await i.select(
+        'Language',
+        'my-template.language',
+        ['python', 'python-ts-hint']
+    )
+
+    testing = await i.confirm(
+        'Add testing?',
+        'my-template.testing',
+        'Include test setup'
+    )
+
+    ci = await i.confirm(
+        'Add CI/CD?',
+        'my-template.ci',
+        'Include pipeline config'
+    )
+
+    # Build conditional file list
+    files = []
+
+    # Base files
+    files.append({
+        'root': 'templates/base',
+        'glob': '**/*',
+        'exclude': [],
+        'type': GlobType.Template
+    })
+
+    # Language-specific files
+    if language == 'python':
+        files.append({
+            'root': 'templates/python',
+            'glob': '**/*',
+            'exclude': [],
+            'type': GlobType.Template
+        })
+    else:
+        files.append({
+            'root': 'templates/python-typed',
+            'glob': '**/*',
+            'exclude': [],
+            'type': GlobType.Template
+        })
+
+    # Optional testing files
+    if testing:
+        files.append({
+            'root': 'templates/testing',
+            'glob': '**/*',
+            'exclude': [],
+            'type': GlobType.Template
+        })
+
+    # Optional CI files
+    if ci:
+        files.append({
+            'root': 'templates/ci',
+            'glob': '**/*',
+            'exclude': [],
+            'type': GlobType.Template
+        })
+
+    return {
+        'processors': [{
+            'name': 'cyan/default',
+            'files': files,
+            'config': {
+                'vars': {
+                    'language': language,
+                    'testing': 'true' if testing else 'false',
+                    'ci': 'true' if ci else 'false'
+                }
+            }
+        }]
+    }
+```
+
+</Tab>
+<Tab value="C#">
+
+```csharp
+using CyanSDK;
+
+public class Template : ITemplate
+{
+    public async Task<TemplateResult> RunAsync(IInquirer i, IDiagnostics d)
+    {
+        // Collect all choices
+        var language = await i.Select(
+            "Language",
+            "my-template.language",
+            new[] { "csharp", "fsharp" }
+        );
+
+        var testing = await i.Confirm(
+            "Add testing?",
+            "my-template.testing",
+            "Include test setup"
+        );
+
+        var ci = await i.Confirm(
+            "Add CI/CD?",
+            "my-template.ci",
+            "Include pipeline config"
+        );
+
+        // Build conditional file list
+        var files = new List<FileConfig>();
+
+        // Base files
+        files.Add(new FileConfig
+        {
+            Root = "templates/base",
+            Glob = "**/*",
+            Exclude = Array.Empty<string>(),
+            Type = GlobType.Template
+        });
+
+        // Language-specific files
+        if (language == "csharp")
+        {
+            files.Add(new FileConfig
+            {
+                Root = "templates/csharp",
+                Glob = "**/*",
+                Exclude = Array.Empty<string>(),
+                Type = GlobType.Template
+            });
+        }
+        else
+        {
+            files.Add(new FileConfig
+            {
+                Root = "templates/fsharp",
+                Glob = "**/*",
+                Exclude = Array.Empty<string>(),
+                Type = GlobType.Template
+            });
+        }
+
+        // Optional testing files
+        if (testing)
+        {
+            files.Add(new FileConfig
+            {
+                Root = "templates/testing",
+                Glob = "**/*",
+                Exclude = Array.Empty<string>(),
+                Type = GlobType.Template
+            });
+        }
+
+        // Optional CI files
+        if (ci)
+        {
+            files.Add(new FileConfig
+            {
+                Root = "templates/ci",
+                Glob = "**/*",
+                Exclude = Array.Empty<string>(),
+                Type = GlobType.Template
+            });
+        }
+
+        return new TemplateResult
+        {
+            Processors = new[]
+            {
+                new Processor
+                {
+                    Name = "cyan/default",
+                    Files = files.ToArray(),
+                    Config = new Dictionary<string, object>
+                    {
+                        ["vars"] = new Dictionary<string, string>
+                        {
+                            ["language"] = language,
+                            ["testing"] = testing ? "true" : "false",
+                            ["ci"] = ci ? "true" : "false"
+                        }
+                    }
+                }
+            }
+        };
+    }
+}
+```
+
+</Tab>
+</Tabs>
+
+## Switch-Style Logic
+
+For many options, use switch-style patterns:
+
+<Tabs items={['TypeScript', 'Python', 'C#']}>
+<Tab value="TypeScript">
+
+```ts
+const database = await i.select(
+  'Database',
+  'my-template.db',
+  ['postgres', 'mysql', 'sqlite', 'mongodb']
+);
+
+// Using object lookup
+const dbConfig: Record<string, { driver: string; port: string }> = {
+  postgres: { driver: 'pg', port: '5432' },
+  mysql: { driver: 'mysql2', port: '3306' },
+  sqlite: { driver: 'sqlite3', port: '0' },
+  mongodb: { driver: 'mongoose', port: '27017' }
+};
+
+const selectedDb = dbConfig[database];
+
+// Or using switch
+let orm: string;
+switch (database) {
+  case 'postgres':
+  case 'mysql':
+    orm = 'prisma';
+    break;
+  case 'sqlite':
+    orm = 'prisma';
+    break;
+  case 'mongodb':
+    orm = 'mongoose';
+    break;
+  default:
+    orm = 'none';
+}
+```
+
+</Tab>
+<Tab value="Python">
+
+```python
+database = await i.select(
+    'Database',
+    'my-template.db',
+    ['postgres', 'mysql', 'sqlite', 'mongodb']
+)
+
+# Using dictionary lookup
+db_config = {
+    'postgres': {'driver': 'psycopg2', 'port': '5432'},
+    'mysql': {'driver': 'mysql-connector', 'port': '3306'},
+    'sqlite': {'driver': 'sqlite3', 'port': '0'},
+    'mongodb': {'driver': 'pymongo', 'port': '27017'}
+}
+
+selected_db = db_config[database]
+
+# Or using match (Python 3.10+)
+match database:
+    case 'postgres' | 'mysql':
+        orm = 'sqlalchemy'
+    case 'sqlite':
+        orm = 'sqlalchemy'
+    case 'mongodb':
+        orm = 'mongoengine'
+    case _:
+        orm = 'none'
+```
+
+</Tab>
+<Tab value="C#">
+
+```csharp
+var database = await i.Select(
+    "Database",
+    "my-template.db",
+    new[] { "postgres", "mysql", "sqlite", "mongodb" }
+);
+
+// Using dictionary lookup
+var dbConfig = new Dictionary<string, (string Driver, string Port)>
+{
+    ["postgres"] = ("Npgsql", "5432"),
+    ["mysql"] = ("MySql.Data", "3306"),
+    ["sqlite"] = ("Microsoft.Data.Sqlite", "0"),
+    ["mongodb"] = ("MongoDB.Driver", "27017")
+};
+
+var (driver, port) = dbConfig[database];
+
+// Or using switch expression
+var orm = database switch
+{
+    "postgres" or "mysql" => "ef-core",
+    "sqlite" => "ef-core",
+    "mongodb" => "mongodb-csharp",
+    _ => "none"
+};
+```
+
+</Tab>
+</Tabs>
+
+## Conditional Variable Values
+
+Build variables that change based on input:
+
+<Tabs items={['TypeScript', 'Python', 'C#']}>
+<Tab value="TypeScript">
+
+```ts
+const env = await i.select('Environment', 'my-template.env', ['dev', 'staging', 'prod']);
+
+const vars: Record<string, string> = {
+  env,
+  debug: env === 'dev' ? 'true' : 'false',
+  logLevel: env === 'prod' ? 'error' : 'debug',
+  dbUrl: env === 'prod'
+    ? 'prod-db.example.com'
+    : env === 'staging'
+      ? 'staging-db.example.com'
+      : 'localhost'
+};
+```
+
+</Tab>
+<Tab value="Python">
+
+```python
+env = await i.select('Environment', 'my-template.env', ['dev', 'staging', 'prod'])
+
+vars = {
+    'env': env,
+    'debug': 'true' if env == 'dev' else 'false',
+    'log_level': 'error' if env == 'prod' else 'debug',
+    'db_url': (
+        'prod-db.example.com' if env == 'prod'
+        else 'staging-db.example.com' if env == 'staging'
+        else 'localhost'
+    )
+}
+```
+
+</Tab>
+<Tab value="C#">
+
+```csharp
+var env = await i.Select("Environment", "my-template.env", new[] { "dev", "staging", "prod" });
+
+var vars = new Dictionary<string, string>
+{
+    ["env"] = env,
+    ["debug"] = env == "dev" ? "true" : "false",
+    ["logLevel"] = env == "prod" ? "error" : "debug",
+    ["dbUrl"] = env switch
+    {
+        "prod" => "prod-db.example.com",
+        "staging" => "staging-db.example.com",
+        _ => "localhost"
+    }
+};
+```
+
+</Tab>
+</Tabs>
+
+## Complete Example: Framework Selector
+
+Here's a complete example combining all flow control concepts:
+
+<Tabs items={['TypeScript', 'Python', 'C#']}>
+<Tab value="TypeScript">
+
+```ts
+import { StartTemplateWithLambda, GlobType } from '@atomicloud/cyan-sdk';
+
+StartTemplateWithLambda(async (i, d) => {
+  // Framework selection
+  const framework = await i.select(
+    'Frontend framework',
+    'my-template.framework',
+    ['react', 'vue', 'svelte']
+  );
+
+  // Optional features
+  const features = await i.checkbox(
+    'Additional features',
+    'my-template.features',
+    ['typescript', 'testing', 'storybook', 'e2e']
+  );
+
+  // Build files based on framework
+  const files = [
+    { root: 'templates/base', glob: '**/*', exclude: [], type: GlobType.Template },
+    { root: `templates/${framework}`, glob: '**/*', exclude: [], type: GlobType.Template }
+  ];
+
+  // Add feature files
+  if (features.includes('testing')) {
+    files.push({ root: 'templates/testing', glob: '**/*', exclude: [], type: GlobType.Template });
+  }
+
+  if (features.includes('storybook')) {
+    files.push({ root: 'templates/storybook', glob: '**/*', exclude: [], type: GlobType.Template });
+  }
+
+  if (features.includes('e2e')) {
+    files.push({ root: 'templates/e2e', glob: '**/*', exclude: [], type: GlobType.Template });
+  }
+
+  // Framework-specific variables
+  const frameworkVars: Record<string, Record<string, string>> = {
+    react: { componentExt: 'tsx', stateManagement: 'hooks' },
+    vue: { componentExt: 'vue', stateManagement: 'pinia' },
+    svelte: { componentExt: 'svelte', stateManagement: 'stores' }
+  };
+
+  return {
+    processors: [{
+      name: 'cyan/default',
+      files,
+      config: {
+        vars: {
+          framework,
+          features: features.join(', '),
+          typescript: features.includes('typescript') ? 'true' : 'false',
+          ...frameworkVars[framework]
+        }
+      }
+    }]
+  };
+});
+```
+
+</Tab>
+<Tab value="Python">
+
+```python
+from cyan_sdk import StartTemplateWithLambda, GlobType
+
+@StartTemplateWithLambda
+async def main(i, d):
+    # Framework selection
+    framework = await i.select(
+        'Frontend framework',
+        'my-template.framework',
+        ['django', 'flask', 'fastapi']
+    )
+
+    # Optional features
+    features = await i.checkbox(
+        'Additional features',
+        'my-template.features',
+        ['testing', 'docker', 'celery', 'graphql']
+    )
+
+    # Build files based on framework
+    files = [
+        {'root': 'templates/base', 'glob': '**/*', 'exclude': [], 'type': GlobType.Template},
+        {'root': f'templates/{framework}', 'glob': '**/*', 'exclude': [], 'type': GlobType.Template}
+    ]
+
+    # Add feature files
+    if 'testing' in features:
+        files.append({'root': 'templates/testing', 'glob': '**/*', 'exclude': [], 'type': GlobType.Template})
+
+    if 'docker' in features:
+        files.append({'root': 'templates/docker', 'glob': '**/*', 'exclude': [], 'type': GlobType.Template})
+
+    if 'celery' in features:
+        files.append({'root': 'templates/celery', 'glob': '**/*', 'exclude': [], 'type': GlobType.Template})
+
+    # Framework-specific variables
+    framework_vars = {
+        'django': {'template_engine': 'django', 'orm': 'django-orm'},
+        'flask': {'template_engine': 'jinja2', 'orm': 'sqlalchemy'},
+        'fastapi': {'template_engine': 'jinja2', 'orm': 'sqlalchemy'}
+    }
+
+    return {
+        'processors': [{
+            'name': 'cyan/default',
+            'files': files,
+            'config': {
+                'vars': {
+                    'framework': framework,
+                    'features': ', '.join(features),
+                    'testing': 'true' if 'testing' in features else 'false',
+                    **framework_vars[framework]
+                }
+            }
+        }]
+    }
+```
+
+</Tab>
+<Tab value="C#">
+
+```csharp
+using CyanSDK;
+
+public class Template : ITemplate
+{
+    public async Task<TemplateResult> RunAsync(IInquirer i, IDiagnostics d)
+    {
+        // Framework selection
+        var framework = await i.Select(
+            "Project type",
+            "my-template.framework",
+            new[] { "webapi", "mvc", "blazor", "console" }
+        );
+
+        // Optional features
+        var features = await i.Checkbox(
+            "Additional features",
+            "my-template.features",
+            new[] { "docker", "serilog", "health-checks", "swagger" }
+        );
+
+        // Build files based on framework
+        var files = new List<FileConfig>
+        {
+            new() { Root = "templates/base", Glob = "**/*", Exclude = Array.Empty<string>(), Type = GlobType.Template },
+            new() { Root = $"templates/{framework}", Glob = "**/*", Exclude = Array.Empty<string>(), Type = GlobType.Template }
+        };
+
+        // Add feature files
+        if (features.Contains("docker"))
+        {
+            files.Add(new() { Root = "templates/docker", Glob = "**/*", Exclude = Array.Empty<string>(), Type = GlobType.Template });
+        }
+
+        if (features.Contains("serilog"))
+        {
+            files.Add(new() { Root = "templates/serilog", Glob = "**/*", Exclude = Array.Empty<string>(), Type = GlobType.Template });
+        }
+
+        // Framework-specific variables
+        var frameworkVars = new Dictionary<string, Dictionary<string, string>>
+        {
+            ["webapi"] = new() { ["projectType"] = "web", ["useControllers"] = "true" },
+            ["mvc"] = new() { ["projectType"] = "web", ["useControllers"] = "true" },
+            ["blazor"] = new() { ["projectType"] = "webassembly", ["interactivity"] = "server" },
+            ["console"] = new() { ["projectType"] = "console", ["useTopLevel"] = "true" }
+        };
+
+        return new TemplateResult
+        {
+            Processors = new[]
+            {
+                new Processor
+                {
+                    Name = "cyan/default",
+                    Files = files.ToArray(),
+                    Config = new Dictionary<string, object>
+                    {
+                        ["vars"] = new Dictionary<string, string>
+                        {
+                            ["framework"] = framework,
+                            ["features"] = string.Join(", ", features),
+                            ["docker"] = features.Contains("docker") ? "true" : "false"
+                        }.Concat(frameworkVars[framework]).ToDictionary(kvp => kvp.Key, kvp => kvp.Value)
+                    }
+                }
+            }
+        };
+    }
+}
+```
+
+</Tab>
+</Tabs>
+
+## What You Learned
+
+- How to use if-else for conditional logic
+- Building dynamic file lists based on user choices
+- Framework-specific variable handling
+- Switch-style patterns for multiple options
+
+## Next Steps
+
+<Cards>
+  <Card href="/docs/developer/templates/tutorials/full-example" title="Full Example">
+    Complete template combining all features
+  </Card>
+  <Card href="/docs/developer/templates/how-to" title="How-to Guides">
+    Specific patterns and recipes
+  </Card>
+  <Card href="/docs/developer/templates/reference/sdk" title="SDK Reference">
+    Complete API documentation
+  </Card>
+</Cards>

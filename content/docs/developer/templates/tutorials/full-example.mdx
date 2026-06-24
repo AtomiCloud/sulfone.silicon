@@ -1,348 +1,351 @@
 ---
-title: Full Template Example
-description: A complete template demonstrating all features
+title: Publish to Registry
+description: Learn how to publish your template to CyanPrint registry
 ---
 
-import { Files, File, Folder } from 'fumadocs-ui/components/files';
+import { Steps, Step } from 'fumadocs-ui/components/steps';
+import { Callout } from 'fumadocs-ui/components/callout';
+import { Tab, Tabs } from 'fumadocs-ui/components/tabs';
 import { Cards, Card } from 'fumadocs-ui/components/card';
-import { Steps } from 'fumadocs-ui/components/steps';
 
-# Full Template Example
+# Publish to Registry
 
-This example demonstrates all major features of CyanPrint templates in a realistic project scaffold.
+Learn how to publish your template to a CyanPrint registry for others to discover and use.
 
-## Project Overview
+## Overview
 
-We'll create a template that scaffolds a Node.js project with:
+Publishing a template involves:
 
-- Configurable project name and description
-- License selection
-- Optional TypeScript support
-- Optional Docker setup
-- Feature selection (ESLint, Prettier, Testing)
+1. Creating an account on a CyanPrint registry
+2. Generating an API token
+3. Building and pushing Docker images
+4. Registering the template with CyanPrint
 
-## Project Structure
+<Callout type="info">
+You can use the official cyanprint.dev registry or host your own. This guide covers both options.
+</Callout>
 
-<Files>
-  <Folder name="node-template" defaultOpen>
-    <Folder name="cyan" defaultOpen>
-      <File name="index.ts" />
-      <File name="template.Dockerfile" />
-      <File name="blob.Dockerfile" />
-      <Folder name="templates">
-        <File name="README.md" />
-        <File name="package.json" />
-        <File name="tsconfig.json" />
-        <File name="Dockerfile" />
-        <File name=".eslintrc.json" />
-        <File name=".prettierrc" />
-      </Folder>
-    </Folder>
-    <File name="cyan.yaml" />
-    <File name="package.json" />
-  </Folder>
-</Files>
+## Prerequisites
 
-## Template Logic (index.ts)
+- A completed template ready to publish
+- Docker with buildx support
+- CyanPrint CLI installed
 
-```ts -c -n
-import { StartTemplateWithLambda, GlobType, QuestionType } from '@atomicloud/cyan-sdk';
+<Steps>
+<Step>
 
-StartTemplateWithLambda(async (i, d) => {
-  // ===== Collect User Input =====
+### Create an Account
 
-  // Basic project info
-  // Use object form when you need validation or default values
-  const name = await i.text({
-    type: QuestionType.Text,
-    id: 'node-template.name',
-    message: 'Project name?',
-    desc: 'Enter project name (lowercase, no spaces)',
-    validate: (input) => {
-      if (!input) return 'Name is required';
-      if (!/^[a-z0-9-]+$/.test(input)) return 'Use lowercase letters, numbers, and hyphens only';
-      return null;
-    },
-    default: 'my-project'
-  });
+<Tabs groupId="registry" items={['cyanprint.dev', 'Self-Hosted']} persist>
+<Tab value="cyanprint.dev">
 
-  // Use shorthand form for simple inputs without validation
-  const description = await i.text(
-    'Description?',
-    'node-template.description',
-    'Brief project description'
-  );
+1. Navigate to [cyanprint.dev](https://cyanprint.dev)
+2. Click **Sign Up** or **Register**
+3. Complete the registration process
+4. Verify your email address
 
-  const author = await i.text(
-    'Author?',
-    'node-template.author',
-    'Your name or organization'
-  );
+</Tab>
+<Tab value="Self-Hosted">
 
-  // License selection
-  const license = await i.select(
-    'License?',
-    ['MIT', 'Apache-2.0', 'GPL-3.0', 'ISC', 'Unlicense'],
-    'node-template.license',
-    'Choose a license'
-  );
+If your organization hosts a private CyanPrint registry:
 
-  // Technology choices
-  const typescript = await i.confirm(
-    'Use TypeScript?',
-    'node-template.typescript',
-    'Add TypeScript configuration'
-  );
+1. Contact your administrator for access
+2. Get the registry URL (e.g., `registry.internal.example.com`)
+3. Obtain credentials for authentication
 
-  const docker = await i.confirm(
-    'Add Docker support?',
-    'node-template.docker',
-    'Include Dockerfile and docker-compose'
-  );
+<Callout type="warn">
+Self-hosted registries require additional setup. See your organization's documentation for specific instructions.
+</Callout>
 
-  // Feature selection
-  const features = await i.checkbox(
-    'Select features',
-    ['ESLint', 'Prettier', 'Jest', 'GitHub Actions CI'],
-    'node-template.features',
-    'Choose additional tooling'
-  );
+</Tab>
+</Tabs>
 
-  // ===== Generate Deterministic Values =====
+</Step>
+<Step>
 
-  const projectId = d.uuid();
+### Generate an API Token
 
-  // ===== Build Configuration =====
+<Tabs groupId="registry" items={['cyanprint.dev', 'Self-Hosted']} persist>
+<Tab value="cyanprint.dev">
 
-  // Determine which files to include
-  const templateFiles = [
-    { root: 'templates/base', glob: '**/*.md', exclude: [], type: GlobType.Template },
-    { root: 'templates/base', glob: '**/*.json', exclude: [], type: GlobType.Template },
-    { root: 'templates/base', glob: '**/*.js', exclude: [], type: GlobType.Template }
-  ];
+1. Log in to [cyanprint.dev](https://cyanprint.dev)
+2. Navigate to **Settings** > **API Tokens**
+3. Click **Generate New Token**
+4. Give it a descriptive name (e.g., "CI/CD Publishing")
+5. Select appropriate scopes (minimum: `template:push`)
+6. Click **Generate**
+7. **Copy the token immediately** - it won't be shown again
 
-  // Add TypeScript files if selected
-  if (typescript) {
-    templateFiles.push({
-      root: 'templates/typescript',
-      glob: '**/*.ts',
-      exclude: [],
-      type: GlobType.Template
-    });
-    templateFiles.push({
-      root: 'templates/typescript',
-      glob: '**/*.json',
-      exclude: [],
-      type: GlobType.Template
-    });
-  }
-
-  // Add Docker files if selected
-  if (docker) {
-    templateFiles.push({
-      root: 'templates/docker',
-      glob: '**/*',
-      exclude: [],
-      type: GlobType.Template
-    });
-  }
-
-  // Add feature-specific files
-  if (features.includes('ESLint')) {
-    templateFiles.push({
-      root: 'templates/eslint',
-      glob: '**/*',
-      exclude: [],
-      type: GlobType.Template
-    });
-  }
-
-  if (features.includes('Prettier')) {
-    templateFiles.push({
-      root: 'templates/prettier',
-      glob: '**/*',
-      exclude: [],
-      type: GlobType.Template
-    });
-  }
-
-  if (features.includes('Jest')) {
-    templateFiles.push({
-      root: 'templates/jest',
-      glob: '**/*',
-      exclude: [],
-      type: GlobType.Template
-    });
-  }
-
-  if (features.includes('GitHub Actions CI')) {
-    templateFiles.push({
-      root: 'templates/github-actions',
-      glob: '**/*',
-      exclude: [],
-      type: GlobType.Template
-    });
-  }
-
-  // ===== Return Configuration =====
-
-  return {
-    processors: [{
-      name: 'cyan/default',  // Uses the default processor for variable substitution
-      files: templateFiles,
-      config: {
-        vars: {
-          // Basic info
-          name,
-          description,
-          author,
-          license,
-
-          // Feature flags
-          typescript: typescript ? 'true' : 'false',
-          docker: docker ? 'true' : 'false',
-
-          // Feature lists
-          features: features.join(', '),
-          hasEslint: features.includes('ESLint') ? 'true' : 'false',
-          hasPrettier: features.includes('Prettier') ? 'true' : 'false',
-          hasJest: features.includes('Jest') ? 'true' : 'false',
-          hasCi: features.includes('GitHub Actions CI') ? 'true' : 'false',
-
-          // Deterministic values
-          projectId
-        }
-      }
-    }],
-
-    // Add plugins for post-processing
-    // Note: Plugin availability depends on your CyanPrint installation
-    // This example uses the init-git plugin to initialize a git repository
-    plugins: [
-      {
-        name: 'cyan/init-git',
-        config: {
-          commitMessage: `Initial commit from template: ${name}`
-        }
-      }
-    ]
-  };
-});
+```bash -c
+# Store the token securely
+export CYAN_TOKEN="your-token-here"
 ```
 
-## Template Files
+</Tab>
+<Tab value="Self-Hosted">
 
-### README.md
+Follow your organization's token generation process. Typically:
 
-```markdown
-# var__name__
+1. Log in to your registry's web interface
+2. Navigate to API settings or profile settings
+3. Generate a token with push permissions
+4. Store it securely
 
-var__description__
+```bash -c
+# Store the token securely
+export CYAN_TOKEN="your-token-here"
 
-## Getting Started
-
-```bash
-npm install
-npm run dev
+# If using a custom registry URL
+export CYAN_REGISTRY="https://registry.internal.example.com"
 ```
 
-## Features
+</Tab>
+</Tabs>
 
-- **License:** var__license__
-- **Author:** var__author__
-- **TypeScript:** var__typescript__
-- **Docker:** var__docker__
-- **Tooling:** var__features__
+<Callout type="warn">
+Never commit API tokens to version control. Use environment variables or secret management tools.
+</Callout>
 
-## Project ID
+</Step>
+<Step>
 
-var__projectId__
+### Authenticate the CLI
+
+Verify your CLI can authenticate with the registry:
+
+```bash -c
+# Test authentication
+cyanprint auth status
+
+# Or manually login
+cyanprint login --token $CYAN_TOKEN
 ```
 
-### package.json
+For self-hosted registries:
 
-```json
-{
-  "name": "var__name__",
-  "version": "1.0.0",
-  "description": "var__description__",
-  "author": "var__author__",
-  "license": "var__license__",
-  "main": "src/index.js",
-  "scripts": {
-    "dev": "node src/index.js",
-    "build": "echo 'Build script'"
-  }
-}
+```bash -c
+# Specify custom registry
+cyanprint login --token $CYAN_TOKEN --registry $CYAN_REGISTRY
 ```
 
-## Metadata (cyan.yaml)
+</Step>
+<Step>
 
-```yaml
-name: node-template
-version: 1.0.0
-description: A modern Node.js project template
-author: Your Organization
-```
+### Build Docker Images
 
-## Dockerfiles
+Build both the template and blob images:
 
-### template.Dockerfile
-
-```dockerfile
-FROM node:20-alpine
-
-WORKDIR /workspace
-
-COPY cyan/package.json ./
-RUN npm install
-
-COPY cyan/ ./
-
-CMD ["node", "index.js"]
-```
-
-### blob.Dockerfile
-
-```dockerfile
-FROM alpine:latest
-
-COPY cyan/templates/ /templates/
-```
-
-## Key Features Demonstrated
-
-| Feature | Implementation |
-|---------|----------------|
-| Input validation | `validate` function on text input |
-| Default values | `default` property on questions |
-| Conditional files | `if` statements to add file groups |
-| Namespaced keys | All keys prefixed with `node-template.` |
-| Deterministic UUID | `d.uuid()` for reproducible IDs |
-| Plugins | `init-git` plugin for automatic git init |
-| Multiple file groups | Array of file configurations |
-
-## Testing the Template
-
-```bash
-# Build the template
+```bash -c
+# Build template image
 docker buildx build --platform linux/amd64,linux/arm64 \
   -f cyan/template.Dockerfile \
-  -t myorg/node-template:1.0.0 \
+  -t myorg/my-template:1.0.0 \
   --push .
 
-# Build the blob
+# Build blob image
 docker buildx build --platform linux/amd64,linux/arm64 \
   -f cyan/blob.Dockerfile \
-  -t myorg/node-template-blob:1.0.0 \
+  -t myorg/my-template-blob:1.0.0 \
   --push .
-
-# Test locally
-cyanprint create myorg/node-template:1.0.0 ./test-project
 ```
+
+<Callout type="info">
+Replace `myorg/my-template` with your actual image name. Use Docker Hub, GHCR, or your private registry.
+</Callout>
+
+For GitHub Container Registry:
+
+```bash -c
+# Login to GHCR first
+echo $GITHUB_TOKEN | docker login ghcr.io -u USERNAME --password-stdin
+
+# Build and push
+docker buildx build --platform linux/amd64,linux/arm64 \
+  -f cyan/template.Dockerfile \
+  -t ghcr.io/myorg/my-template:1.0.0 \
+  --push .
+```
+
+</Step>
+<Step>
+
+### Publish to Registry
+
+Register your template with the CyanPrint registry:
+
+```bash -c
+cyanprint push template --token $CYAN_TOKEN \
+  myorg/my-template-blob 1.0.0 \
+  myorg/my-template 1.0.0
+```
+
+This command:
+- Registers the template metadata
+- Links the blob and template images
+- Makes the template discoverable
+
+### Verify Publication
+
+Confirm your template is available:
+
+```bash -c
+# List your templates
+cyanprint list myorg/
+
+# Get template details
+cyanprint info myorg/my-template:1.0.0
+```
+
+</Step>
+</Steps>
+
+## CI/CD Integration
+
+Automate template publishing with GitHub Actions.
+
+### GitHub Actions Workflow
+
+Create `.github/workflows/publish.yml`:
+
+```yaml .github/workflows/publish.yml -c
+name: Publish Template
+
+on:
+  release:
+    types: [published]
+
+permissions:
+  contents: read
+  packages: write
+
+jobs:
+  publish:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Set up Docker Buildx
+        uses: docker/setup-buildx-action@v3
+
+      - name: Login to GitHub Container Registry
+        uses: docker/login-action@v3
+        with:
+          registry: ghcr.io
+          username: ${{ github.actor }}
+          password: ${{ secrets.GITHUB_TOKEN }}
+
+      - name: Extract version
+        id: version
+        run: echo "VERSION=${GITHUB_REF#refs/tags/}" >> $GITHUB_OUTPUT
+
+      - name: Build and Push Template
+        run: |
+          docker buildx build --platform linux/amd64,linux/arm64 \
+            -f cyan/template.Dockerfile \
+            -t ghcr.io/${{ github.repository_owner }}/my-template:${{ steps.version.outputs.VERSION }} \
+            --push .
+
+      - name: Build and Push Blob
+        run: |
+          docker buildx build --platform linux/amd64,linux/arm64 \
+            -f cyan/blob.Dockerfile \
+            -t ghcr.io/${{ github.repository_owner }}/my-template-blob:${{ steps.version.outputs.VERSION }} \
+            --push .
+
+      - name: Register with CyanPrint
+        run: |
+          cyanprint push template --token ${{ secrets.CYAN_TOKEN }} \
+            ghcr.io/${{ github.repository_owner }}/my-template-blob ${{ steps.version.outputs.VERSION }} \
+            ghcr.io/${{ github.repository_owner }}/my-template ${{ steps.version.outputs.VERSION }}
+```
+
+<Callout type="warn">
+Store your `CYAN_TOKEN` as a GitHub secret. Go to **Settings** > **Secrets and variables** > **Actions** > **New repository secret**.
+</Callout>
+
+### Triggering the Workflow
+
+1. Create a new release in GitHub
+2. Tag it with a semantic version (e.g., `v1.0.0`)
+3. The workflow automatically builds and publishes
+
+## Best Practices
+
+### Versioning
+
+- Use semantic versioning (`MAJOR.MINOR.PATCH`)
+- Tag both specific versions and `latest`
+- Document breaking changes in release notes
+
+```bash -c
+# Build with multiple tags
+docker buildx build \
+  -t myorg/my-template:1.0.0 \
+  -t myorg/my-template:1.0 \
+  -t myorg/my-template:latest \
+  --push .
+```
+
+### Security
+
+- Use scoped tokens with minimum required permissions
+- Rotate tokens regularly
+- Never expose tokens in logs or error messages
+- Use GitHub secrets or similar for CI/CD
+
+### Testing Before Publishing
+
+Always test locally before publishing:
+
+```bash -c
+# Build locally without push
+docker buildx build --platform linux/amd64 \
+  -f cyan/template.Dockerfile \
+  -t myorg/my-template:test \
+  --load .
+
+# Test the template
+cyanprint create myorg/my-template:test ./test-output
+```
+
+## Troubleshooting
+
+### Authentication Failed
+
+```bash -c
+# Verify token is set
+echo $CYAN_TOKEN
+
+# Check token validity
+cyanprint auth status
+```
+
+### Image Not Found
+
+```bash -c
+# Verify images exist
+docker images | grep my-template
+
+# Check registry connectivity
+docker pull myorg/my-template:1.0.0
+```
+
+### Registry Unavailable
+
+- Check registry status at status.cyanprint.dev
+- Try again after a few minutes
+- Contact support if the issue persists
 
 ## Next Steps
 
-- Explore [How-to Guides](/docs/developer/templates/how-to) for specific patterns
-- Read the [SDK Reference](/docs/developer/templates/reference/sdk) for complete API docs
-- Learn about [Processors](/docs/developer/processors) for custom file processing
+<Cards>
+  <Card href="/docs/developer/templates/explanation/docker-vs-cyan-registry" title="Registry Architecture">
+    Understand how Docker and CyanPrint registries work together
+  </Card>
+  <Card href="/docs/developer/templates/reference/dockerfiles" title="Dockerfiles Reference">
+    Learn more about template and blob Dockerfiles
+  </Card>
+  <Card href="/docs/developer/templates/how-to/automated-testing" title="Automated Testing">
+    Set up automated testing for your templates
+  </Card>
+</Cards>

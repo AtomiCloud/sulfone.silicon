@@ -374,8 +374,8 @@ public class MyProcessorConfig
 
 await Processor.StartAsync(async (input, fileHelper) =>
 {
-    // Cast to your type with defaults
-    var config = input.Config as MyProcessorConfig ?? new MyProcessorConfig();
+    // Deserialize JSON config into your type
+    var config = input.Config.Deserialize<MyProcessorConfig>() ?? new MyProcessorConfig();
 });
 ```
 
@@ -589,8 +589,8 @@ public class MarkdownConfig
 
 await Processor.StartAsync(async (input, fileHelper) =>
 {
-    // Parse config with defaults
-    var config = input.Config as MarkdownConfig ?? new MarkdownConfig();
+    // Deserialize config with defaults
+    var config = input.Config.Deserialize<MarkdownConfig>() ?? new MarkdownConfig();
 
     // Log input information
     Console.WriteLine("Processor Input:");

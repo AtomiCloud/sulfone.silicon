@@ -1,0 +1,121 @@
+---
+title: Plugin SDK
+description: SDK reference for CyanPrint plugin development
+---
+
+import { Cards, Card } from 'fumadocs-ui/components/card';
+import { Tabs, Tab } from 'fumadocs-ui/components/tabs';
+
+# Plugin SDK
+
+The `@atomicloud/cyan-sdk` package provides the API for developing CyanPrint plugins.
+
+## Installation
+
+```bash -c
+bun add @atomicloud/cyan-sdk
+```
+
+## Overview
+
+The plugin SDK is minimal by design. Plugins receive a directory containing generated template output (after all processors complete) and config, perform operations, and return the directory path.
+
+### Key Components
+
+| Language | Entry Point | Input Type | Output Type |
+|----------|-------------|------------|-------------|
+| TypeScript | `StartPluginWithLambda` | `CyanPluginInput` / `PluginInput` | `PluginOutput` |
+| Python | `@start_plugin_with_fn` | `PluginInput` | `PluginOutput` |
+| C# | `[PluginMain]` attribute | `PluginInput` | `PluginOutput` |
+
+### Quick Example
+
+<Tabs items={['TypeScript', 'Python', 'C#']}>
+  <Tab value="TypeScript">
+    ```ts plugin.ts -c
+    import { StartPluginWithLambda } from '@atomicloud/cyan-sdk';
+    import { $ } from 'bun';
+
+    StartPluginWithLambda(async (input) => {
+      const { directory, config } = input;
+
+      // Run commands
+      await $`git -C ${directory} init`.quiet();
+
+      // Return directory
+      return { directory };
+    });
+    ```
+  </Tab>
+
+  <Tab value="Python">
+    ```py plugin.py -c
+    from atomicloud_cyan_sdk import start_plugin_with_fn
+
+    @start_plugin_with_fn
+    async def main(input: PluginInput) -> PluginOutput:
+        directory = input.directory
+        config = input.config
+
+        # Run commands
+        # subprocess.run(["git", "-C", directory, "init"])
+
+        # Return directory
+        return {"directory": directory}
+    ```
+  </Tab>
+
+  <Tab value="C#">
+    ```csharp Plugin.cs -c
+    using Atomicloud.Cyan.Sdk;
+    using System.Diagnostics;
+
+    [PluginMain]
+    public static class Plugin
+    {
+        public static async Task<PluginOutput> Main(PluginInput input)
+        {
+            var directory = input.Directory;
+            var config = input.Config;
+
+            // Run commands
+            // Process.Start("git", $"-C {directory} init")?.WaitForExit();
+
+            // Return directory
+            return new PluginOutput { Directory = directory };
+        }
+    }
+    ```
+  </Tab>
+</Tabs>
+
+## SDK Reference
+
+<Cards>
+  <Card href="/docs/developer/plugins/reference/sdk/start-plugin" title="StartPluginWithLambda">
+    Entry point for plugin logic
+  </Card>
+  <Card href="/docs/developer/plugins/reference/sdk/input-output" title="PluginInput/Output">
+    Type definitions for plugin input and output
+  </Card>
+  <Card href="/docs/developer/plugins/reference/sdk/types" title="Types">
+    Complete type definitions reference
+  </Card>
+</Cards>
+
+## Plugin vs Processor SDK
+
+| Feature | Plugin SDK | Processor SDK |
+|---------|------------|---------------|
+| Entry point | `StartPluginWithLambda` | `StartProcessorWithLambda` |
+| Input type | `CyanPluginInput` | `CyanProcessorInput` |
+| Output type | `PluginOutput` | `ProcessorOutput` |
+| Handler params | 1 (`input`) | 2 (`input`, `fileHelper`) |
+| Input fields | `directory`, `config` | `readDirectory`, `writeDirectory`, `globs`, `config` |
+| File helper | Direct filesystem access | `CyanFileHelper` API |
+| Primary use | Post-processing tasks | File transformation |
+
+## Related
+
+- [First Plugin](/docs/developer/plugins/tutorials/first-plugin) - Create your first plugin
+- [Plugin Input/Output](/docs/developer/plugins/reference/sdk/input-output) - Type definitions

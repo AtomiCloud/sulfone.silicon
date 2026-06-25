@@ -1,0 +1,512 @@
+---
+title: Determinism
+description: How reproducible template generation works
+---
+
+import { Callout } from 'fumadocs-ui/components/callout';
+import { Mermaid } from '@/components/mdx/mermaid';
+import { Tabs, Tab } from 'fumadocs-ui/components/tabs';
+
+# Determinism
+
+Determinism ensures that running the same template with the same inputs produces identical outputs.
+
+## Why Determinism Matters
+
+### The LLM Analogy
+
+Think of template generation like a conversation with an LLM:
+
+1. **User answers questions** → stored in state
+2. **Template asks server with X answers** → processes and returns more questions
+3. **User answers X+1 questions** → template asks server again
+4. **This repeats** → each round must produce identical results for the same inputs
+
+If values like UUIDs change between rounds, the entire process becomes unreliable. Determinism ensures the template behaves consistently across multiple generation cycles.
+
+<Callout type="info">
+This is especially important for **template upgrades**. When a user updates from template v1.0 to v2.0, the deterministic states enable a **3-way merge** between the original files, user changes, and new template output.
+</Callout>
+
+### Reproducible Builds
+
+Generate the same project multiple times with identical results:
+
+```bash -c
+# First generation
+cyanprint create myorg/template:1.0.0 ./project-a
+
+# Second generation with same answers
+cyanprint create myorg/template:1.0.0 ./project-b
+
+# project-a and project-b are identical
+```
+
+### Safe Updates
+
+Update templates without breaking existing projects:
+
+```bash -c
+# Initial generation
+cyanprint create myorg/template:1.0.0 ./my-project
+
+# Later, update to new version
+cyanprint update ./my-project myorg/template:2.0.0
+
+# Deterministic values remain consistent
+```
+
+## How It Works
+
+### Deterministic States
+
+Every generation stores **deterministic states** - a key-value cache that ensures reproducible value generation:
+
+```yaml filename=".cyan_state.yaml"
+# Stored in .cyan_state.yaml
+templates:
+  myorg/template-name:
+    active: true
+    history:
+      - version: 1
+        time: '2024-01-15T10:30:00Z'
+        answers:
+          project-name: 'my-project'
+        deterministic_states:
+          project-id: '550e8400-e29b-41d4-a716-446655440000'
+          timestamp: '1704067200000'
+```
+
+### IDeterminism Interface
+
+The `d` parameter provides deterministic value generation through the `IDeterminism` interface:
+
+<Tabs items={['TypeScript', 'Python', 'C#']}>
+  <Tab value="TypeScript">
+
+```ts filename="template.ts"
+import { startTemplateWithFn } from 'cyanprintsdk';
+
+export default startTemplateWithFn(async (i, d) => {
+  // d.get() returns cached value if exists, otherwise calls origin function
+  const projectId = d.get('project-id', () => crypto.randomUUID());
+
+  // Subsequent calls with same key return the cached value
+  const timestamp = d.get('timestamp', () => Date.now().toString());
+
+  return { /* ... */ };
+});
+```
+
+  </Tab>
+  <Tab value="Python">
+
+```python filename="template.py"
+from cyanprintsdk.main import start_template_with_fn
+
+async def template(i: IInquirer, d: IDeterminism) -> Cyan:
+    # d.get() returns cached value if exists, otherwise calls origin function
+    project_id = d.get('project-id', lambda: str(uuid.uuid4()))
+
+    # Subsequent calls with same key return the cached value
+    timestamp = d.get('timestamp', lambda: str(int(time.time() * 1000)))
+
+    return { /* ... */ }
+
+template_main = start_template_with_fn(template)
+```
+
+  </Tab>
+  <Tab value="C#">
+
+```csharp filename="Template.cs"
+[TemplateMain]
+public static async Task<Cyan> Run(IInquirer i, IDeterminism d)
+{
+    // d.Get() returns cached value if exists, otherwise calls origin function
+    var projectId = d.Get("project-id", () => Guid.NewGuid().ToString());
+
+    // Subsequent calls with same key return the cached value
+    var timestamp = d.Get("timestamp", () => DateTimeOffset.UtcNow.ToUnixTimeMilliseconds().ToString());
+
+    return /* ... */;
+}
+```
+
+  </Tab>
+</Tabs>
+
+## The get() Method
+
+### Signature
+
+<Tabs items={['TypeScript', 'Python', 'C#']}>
+  <Tab value="TypeScript">
+
+```ts
+interface IDeterminism {
+  get(key: string, origin: () => string): string;
+}
+```
+
+  </Tab>
+  <Tab value="Python">
+
+```python
+class IDeterminism(ABC):
+    @abstractmethod
+    def get(self, key: str, origin: Callable[[], str]) -> str:
+        pass
+```
+
+  </Tab>
+  <Tab value="C#">
+
+```csharp
+interface IDeterminism
+{
+    string Get(string key, Func<string> origin);
+}
+```
+
+  </Tab>
+</Tabs>
+
+### How It Works
+
+The `get()` method implements a cache-through pattern:
+
+1. **First generation**: If the key doesn't exist, calls the `origin` function and stores the result
+2. **Subsequent generations**: Returns the cached value for that key
+
+<Tabs items={['TypeScript', 'Python', 'C#']}>
+  <Tab value="TypeScript">
+
+```ts
+const projectId = d.get('project-id', () => crypto.randomUUID());
+// First run: generates new UUID, caches it
+// Later runs: returns cached UUID
+
+const buildNumber = d.get('build-number', () => '1');
+// Always returns '1' after first generation
+```
+
+  </Tab>
+  <Tab value="Python">
+
+```python
+project_id = d.get('project-id', lambda: str(uuid.uuid4()))
+# First run: generates new UUID, caches it
+# Later runs: returns cached UUID
+
+build_number = d.get('build-number', lambda: '1')
+# Always returns '1' after first generation
+```
+
+  </Tab>
+  <Tab value="C#">
+
+```csharp
+var projectId = d.Get("project-id", () => Guid.NewGuid().ToString());
+// First run: generates new UUID, caches it
+// Later runs: returns cached UUID
+
+var buildNumber = d.Get("build-number", () => "1");
+// Always returns '1' after first generation
+```
+
+  </Tab>
+</Tabs>
+
+<Callout type="info">
+The `origin` function is only called when the key doesn't exist in the deterministic states cache. This is where you can safely use `Date.now()`, `Math.random()`, or `crypto.randomUUID()` - the result gets cached for future runs.
+</Callout>
+
+## Common Patterns
+
+### Deterministic UUIDs
+
+<Tabs items={['TypeScript', 'Python', 'C#']}>
+  <Tab value="TypeScript">
+
+```ts filename="deterministic-uuids.ts"
+import { startTemplateWithFn } from 'cyanprintsdk';
+
+export default startTemplateWithFn(async (i, d) => {
+  const projectId = d.get('project-id', () => crypto.randomUUID());
+  const apiKey = d.get('api-key', () => crypto.randomUUID());
+
+  return {
+    processors: [{
+      name: 'cyan/default',
+      files: [/* ... */],
+      config: {
+        vars: { projectId, apiKey }
+      }
+    }]
+  };
+});
+```
+
+  </Tab>
+  <Tab value="Python">
+
+```python filename="deterministic_uuids.py"
+import uuid
+from cyanprintsdk.main import start_template_with_fn
+
+async def template(i: IInquirer, d: IDeterminism) -> Cyan:
+    project_id = d.get('project-id', lambda: str(uuid.uuid4()))
+    api_key = d.get('api-key', lambda: str(uuid.uuid4()))
+
+    return Cyan(
+        processors=[
+            CyanProcessor(
+                name='cyan/default',
+                files=[],
+                config=ProcessorConfig(vars={'projectId': project_id, 'apiKey': api_key})
+            )
+        ]
+    )
+
+template_main = start_template_with_fn(template)
+```
+
+  </Tab>
+  <Tab value="C#">
+
+```csharp filename="DeterministicUuids.cs"
+using CyanPrintSDK;
+
+public class Template
+{
+    [TemplateMain]
+    public static async Task<Cyan> Run(IInquirer i, IDeterminism d)
+    {
+        var projectId = d.Get("project-id", () => Guid.NewGuid().ToString());
+        var apiKey = d.Get("api-key", () => Guid.NewGuid().ToString());
+
+        return new Cyan
+        {
+            Processors = new[]
+            {
+                new CyanProcessor
+                {
+                    Name = "cyan/default",
+                    Files = new List<CyanFile>(),
+                    Config = new ProcessorConfig
+                    {
+                        Vars = new Dictionary<string, string>
+                        {
+                            ["projectId"] = projectId,
+                            ["apiKey"] = apiKey
+                        }
+                    }
+                }
+            }
+        };
+    }
+}
+```
+
+  </Tab>
+</Tabs>
+
+### Deterministic Timestamps
+
+<Tabs items={['TypeScript', 'Python', 'C#']}>
+  <Tab value="TypeScript">
+
+```ts filename="deterministic-timestamps.ts"
+import { startTemplateWithFn } from 'cyanprintsdk';
+
+export default startTemplateWithFn(async (i, d) => {
+  const createdAt = d.get('created-at', () => Date.now().toString());
+  const date = new Date(parseInt(createdAt)).toISOString();
+
+  return {
+    processors: [{
+      name: 'cyan/default',
+      files: [/* ... */],
+      config: {
+        vars: { createdAt: date }
+      }
+    }]
+  };
+});
+```
+
+  </Tab>
+  <Tab value="Python">
+
+```python filename="deterministic_timestamps.py"
+import time
+from datetime import datetime
+from cyanprintsdk.main import start_template_with_fn
+
+async def template(i: IInquirer, d: IDeterminism) -> Cyan:
+    created_at = d.get('created-at', lambda: str(int(time.time() * 1000)))
+    date = datetime.fromtimestamp(int(created_at) / 1000).isoformat()
+
+    return Cyan(
+        processors=[
+            CyanProcessor(
+                name='cyan/default',
+                files=[],
+                config=ProcessorConfig(vars={'createdAt': date})
+            )
+        ]
+    )
+
+template_main = start_template_with_fn(template)
+```
+
+  </Tab>
+  <Tab value="C#">
+
+```csharp filename="DeterministicTimestamps.cs"
+using CyanPrintSDK;
+
+public class Template
+{
+    [TemplateMain]
+    public static async Task<Cyan> Run(IInquirer i, IDeterminism d)
+    {
+        var createdAt = d.Get("created-at", () => DateTimeOffset.UtcNow.ToUnixTimeMilliseconds().ToString());
+        var date = DateTimeOffset.FromUnixTimeMilliseconds(long.Parse(createdAt)).ToString("o");
+
+        return new Cyan
+        {
+            Processors = new[]
+            {
+                new CyanProcessor
+                {
+                    Name = "cyan/default",
+                    Files = new List<CyanFile>(),
+                    Config = new ProcessorConfig
+                    {
+                        Vars = new Dictionary<string, string>
+                        {
+                            ["createdAt"] = date
+                        }
+                    }
+                }
+            }
+        };
+    }
+}
+```
+
+  </Tab>
+</Tabs>
+
+### Sequential Numbers
+
+For sequential numbers, use a unique key for each:
+
+<Tabs items={['TypeScript', 'Python', 'C#']}>
+  <Tab value="TypeScript">
+
+```ts filename="sequential-numbers.ts"
+import { startTemplateWithFn } from 'cyanprintsdk';
+
+export default startTemplateWithFn(async (i, d) => {
+  const user1Id = d.get('user-id-1', () => '1');
+  const user2Id = d.get('user-id-2', () => '2');
+  const order1Id = d.get('order-id-1', () => '1');
+
+  return { /* ... */ };
+});
+```
+
+  </Tab>
+  <Tab value="Python">
+
+```python filename="sequential_numbers.py"
+from cyanprintsdk.main import start_template_with_fn
+
+async def template(i: IInquirer, d: IDeterminism) -> Cyan:
+    user1_id = d.get('user-id-1', lambda: '1')
+    user2_id = d.get('user-id-2', lambda: '2')
+    order1_id = d.get('order-id-1', lambda: '1')
+
+    return { /* ... */ }
+
+template_main = start_template_with_fn(template)
+```
+
+  </Tab>
+  <Tab value="C#">
+
+```csharp filename="SequentialNumbers.cs"
+using CyanPrintSDK;
+
+public class Template
+{
+    [TemplateMain]
+    public static async Task<Cyan> Run(IInquirer i, IDeterminism d)
+    {
+        var user1Id = d.Get("user-id-1", () => "1");
+        var user2Id = d.Get("user-id-2", () => "2");
+        var order1Id = d.Get("order-id-1", () => "1");
+
+        return /* ... */;
+    }
+}
+```
+
+  </Tab>
+</Tabs>
+
+## State Lifecycle
+
+<Mermaid chart={`graph LR
+    A[First Generation] --> B[Call d.get with key]
+    B --> C[Origin function generates value]
+    C --> D[Store in deterministic_states]
+    D --> E[Generate Files]
+    E --> F[Update Request]
+    F --> G[Read deterministic_states]
+    G --> H[d.get returns cached value]
+    H --> I[Merge Changes]
+`} />
+
+## What Should Be Deterministic
+
+Use deterministic values for:
+
+- **IDs**: Database IDs, entity identifiers
+- **Keys**: API keys (non-sensitive), tokens
+- **Timestamps**: Creation dates, version dates
+- **References**: Cross-reference identifiers
+
+<Callout type="warn">
+Always wrap non-deterministic functions in `d.get()`. Direct calls to `Date.now()`, `Math.random()`, `crypto.randomUUID()` (or equivalents in Python/C#) will produce different values on each generation.
+</Callout>
+
+## What Should NOT Be Deterministic
+
+Some values should vary per generation:
+
+- **User input** - Varies based on answers
+- **External data** - Fetch at generation time if you need current data
+
+## Verification
+
+Verify determinism by generating twice:
+
+```bash -c
+# Generate twice with same answers
+cyanprint create myorg/template:1.0.0 ./test1
+cyanprint create myorg/template:1.0.0 ./test2
+
+# Compare outputs
+diff -r ./test1 ./test2
+# Should show no differences
+```
+
+## Related
+
+- [Pin Determinism](/docs/developer/templates/how-to/pin-determinism) - How-to guide
+- [3-Way Merge](/docs/developer/templates/explanation/3-way-merge) - Update mechanics
+- [Client State](/docs/developer/templates/explanation/client-state) - State management

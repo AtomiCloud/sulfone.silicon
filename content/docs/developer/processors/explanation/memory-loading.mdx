@@ -1,0 +1,499 @@
+---
+title: Memory Loading
+description: Understanding how processors load files into memory
+---
+
+import { Callout } from 'fumadocs-ui/components/callout';
+import { Mermaid } from '@/components/mdx/mermaid';
+import { Tabs, Tab } from 'fumadocs-ui/components/tabs';
+
+# Memory Loading
+
+Processors load files into memory for transformation. Understanding memory implications helps you choose the right approach.
+
+## The Memory Model
+
+<Mermaid chart={`graph TD
+    A[Template Files] --> B{Loading Method}
+    B -->|resolveAll| C[All in Memory]
+    B -->|read| D[Selected in Memory]
+    B -->|get| E[Metadata Only]
+    B -->|readAsStream| F[Chunk by Chunk]
+    B -->|copy| G[Direct Transfer]
+
+    C --> H[High Memory]
+    D --> I[Medium Memory]
+    E --> J[Low Memory]
+    F --> K[Low Memory]
+    G --> L[Minimal Memory]
+`} />
+
+## Loading Methods Comparison
+
+| Method | Memory Usage | When to Use |
+|--------|--------------|-------------|
+| `resolveAll()` / `resolve_all()` | High | Small files, need all |
+| `read(glob)` | Medium | Specific files |
+| `get(glob)` | Low | Conditional processing |
+| `readAsStream(glob)` / `read_as_stream(glob)` | Low | Large files |
+| `copy(glob)` | Minimal | Static files |
+
+## resolveAll() Memory Implications
+
+`resolveAll()` loads **all matched files** into memory:
+
+<Tabs items={['TypeScript', 'Python', 'C#']}>
+  <Tab value="TypeScript">
+    ```ts -c
+    // If your template has:
+    // - 100 files
+    // - Average 50KB each
+    // = 5MB in memory
+
+    const files = fileHelper.resolveAll();
+    ```
+  </Tab>
+
+  <Tab value="Python">
+    ```python -c
+    # If your template has:
+    # - 100 files
+    # - Average 50KB each
+    # = 5MB in memory
+
+    files = file_helper.resolve_all()
+    ```
+  </Tab>
+
+  <Tab value="C#">
+    ```csharp -c
+    // If your template has:
+    // - 100 files
+    // - Average 50KB each
+    // = 5MB in memory
+
+    var files = fileHelper.ResolveAll();
+    ```
+  </Tab>
+</Tabs>
+
+### When This Is Fine
+
+- Small templates (< 100 files)
+- Text files (not binary)
+- Sufficient container memory
+
+### When to Avoid
+
+- Many large files
+- Binary assets (images, videos)
+- Memory-constrained environments
+
+## Strategies for Large Templates
+
+### 1. Use read() for Specific Files
+
+<Tabs items={['TypeScript', 'Python', 'C#']}>
+  <Tab value="TypeScript">
+    ```ts -c
+    // Only load files you need
+    const mdFiles = fileHelper.read({ root: 'docs', glob: '**/*.md', exclude: [], type: GlobType.Template });
+    // Only markdown files in memory
+    ```
+  </Tab>
+
+  <Tab value="Python">
+    ```python -c
+    # Only load files you need
+    md_files = file_helper.read({'root': 'docs', 'glob': '**/*.md', 'exclude': [], 'type': GlobType.Template})
+    # Only markdown files in memory
+    ```
+  </Tab>
+
+  <Tab value="C#">
+    ```csharp -c
+    // Only load files you need
+    var mdFiles = fileHelper.Read(new FileGlob { Root = "docs", Glob = "**/*.md", Exclude = Array.Empty<string>(), Type = GlobType.Template });
+    // Only markdown files in memory
+    ```
+  </Tab>
+</Tabs>
+
+### 2. Use get() for Conditional Processing
+
+<Tabs items={['TypeScript', 'Python', 'C#']}>
+  <Tab value="TypeScript">
+    ```ts -c
+    // Get references first
+    const refs = fileHelper.get({ root: 'assets', glob: '**/*', exclude: [], type: GlobType.Template });
+
+    // Load only what you need
+    for (const ref of refs) {
+      if (needsProcessing(ref.relative)) {
+        const file = ref.readFile();
+        // Process file.content
+      } else {
+        // Copy via fileHelper - ref.copy() does not exist
+        fileHelper.copy({ root: 'assets', glob: ref.relative, exclude: [], type: GlobType.Copy });
+      }
+    }
+    ```
+  </Tab>
+
+  <Tab value="Python">
+    ```python -c
+    # Get references first
+    refs = file_helper.get({'root': 'assets', 'glob': '**/*', 'exclude': [], 'type': GlobType.Template})
+
+    # Load only what you need
+    for ref in refs:
+        if needs_processing(ref.relative):
+            file = ref.read_file()
+            # Process file.content
+        else:
+            # Copy via file_helper - ref.copy() does not exist
+            file_helper.copy({'root': 'assets', 'glob': ref.relative, 'exclude': [], 'type': GlobType.Copy})
+    ```
+  </Tab>
+
+  <Tab value="C#">
+    ```csharp -c
+    // Get references first
+    var refs = fileHelper.Get(new FileGlob { Root = "assets", Glob = "**/*", Exclude = Array.Empty<string>(), Type = GlobType.Template });
+
+    // Load only what you need
+    foreach (var ref in refs)
+    {
+        if (NeedsProcessing(ref.Relative))
+        {
+            var file = ref.ReadFile();
+            // Process file.Content
+        }
+        else
+        {
+            // Copy via fileHelper - ref.Copy() does not exist
+            fileHelper.Copy(new FileGlob { Root = "assets", Glob = ref.Relative, Exclude = Array.Empty<string>(), Type = GlobType.Copy });
+        }
+    }
+    ```
+  </Tab>
+</Tabs>
+
+### 3. Use readAsStream() for Large Files
+
+<Tabs items={['TypeScript', 'Python', 'C#']}>
+  <Tab value="TypeScript">
+    ```ts -c
+    // Stream large files
+    const streams = fileHelper.readAsStream({ root: 'data', glob: '*.csv', exclude: [], type: GlobType.Template });
+
+    for (const stream of streams) {
+      // Process chunk by chunk using stream.reader (Node.js ReadStream)
+      for await (const chunk of stream.reader) {
+        // Low memory usage
+      }
+    }
+    ```
+  </Tab>
+
+  <Tab value="Python">
+    ```python -c
+    # Stream large files
+    streams = file_helper.read_as_stream({'root': 'data', 'glob': '*.csv', 'exclude': [], 'type': GlobType.Template})
+
+    for stream in streams:
+        # Process chunk by chunk using stream.reader
+        for chunk in stream.reader:
+            # Low memory usage
+            pass
+    ```
+  </Tab>
+
+  <Tab value="C#">
+    ```csharp -c
+    // Stream large files
+    var streams = fileHelper.ReadAsStream(new FileGlob { Root = "data", Glob = "*.csv", Exclude = Array.Empty<string>(), Type = GlobType.Template });
+
+    foreach (var stream in streams)
+    {
+        // Process chunk by chunk using stream.Reader
+        using var reader = new StreamReader(stream.Reader);
+        var chunk = new char[4096];
+        int bytesRead;
+        while ((bytesRead = await reader.ReadAsync(chunk, 0, chunk.Length)) > 0)
+        {
+            // Low memory usage
+        }
+    }
+    ```
+  </Tab>
+</Tabs>
+
+### 4. Use copy() for Static Files
+
+<Tabs items={['TypeScript', 'Python', 'C#']}>
+  <Tab value="TypeScript">
+    ```ts -c
+    // Copy without loading
+    fileHelper.copy({ root: 'images', glob: '**/*', exclude: [], type: GlobType.Copy });
+    // Zero memory for file content
+    ```
+  </Tab>
+
+  <Tab value="Python">
+    ```python -c
+    # Copy without loading
+    file_helper.copy({'root': 'images', 'glob': '**/*', 'exclude': [], 'type': GlobType.Copy})
+    # Zero memory for file content
+    ```
+  </Tab>
+
+  <Tab value="C#">
+    ```csharp -c
+    // Copy without loading
+    fileHelper.Copy(new FileGlob { Root = "images", Glob = "**/*", Exclude = Array.Empty<string>(), Type = GlobType.Copy });
+    // Zero memory for file content
+    ```
+  </Tab>
+</Tabs>
+
+## Memory Estimation
+
+Estimate memory needs:
+
+```
+Memory Needed = File Count × Average File Size × Overhead
+
+Example:
+- 100 files
+- 50KB average
+- 2x overhead (parsing, transformation)
+= 100 × 50KB × 2 = 10MB
+```
+
+<Callout type="info">
+Container memory limits vary by deployment. Default processor containers typically have 256MB-1GB (varies by infrastructure configuration). Large templates may need configuration.
+</Callout>
+
+## Practical Example: Mixed Approach
+
+<Tabs items={['TypeScript', 'Python', 'C#']}>
+  <Tab value="TypeScript">
+    ```ts -c
+    StartProcessorWithLambda(async (input, fileHelper) => {
+      // Small files: load all
+      const configs = fileHelper.read({ root: 'config', glob: '**/*.{json,yaml}', exclude: [], type: GlobType.Template });
+
+      // Medium files: conditional load
+      const docRefs = fileHelper.get({ root: 'docs', glob: '**/*.md', exclude: [], type: GlobType.Template });
+      for (const ref of docRefs) {
+        if (ref.relative.includes('api')) {
+          const file = ref.readFile();
+          file.content = transform(file.content);
+          file.writeFile();
+        } else {
+          // Copy via fileHelper - ref.copy() does not exist
+          fileHelper.copy({ root: 'docs', glob: ref.relative, exclude: [], type: GlobType.Copy });
+        }
+      }
+
+      // Large files: stream
+      const dataStreams = fileHelper.readAsStream({ root: 'data', glob: '*.csv', exclude: [], type: GlobType.Template });
+      for (const stream of dataStreams) {
+        // Use stream.reader (Node.js ReadStream) directly
+        for await (const chunk of stream.reader) {
+          // Process with low memory
+        }
+      }
+
+      // Static files: copy directly
+      fileHelper.copy({ root: 'images', glob: '**/*', exclude: [], type: GlobType.Copy });
+      fileHelper.copy({ root: 'fonts', glob: '**/*', exclude: [], type: GlobType.Copy });
+
+      return { directory: input.writeDirectory };
+    });
+    ```
+  </Tab>
+
+  <Tab value="Python">
+    ```python -c
+    def start_processor_with_fn(input, file_helper):
+        # Small files: load all
+        configs = file_helper.read({'root': 'config', 'glob': '**/*.{json,yaml}', 'exclude': [], 'type': GlobType.Template})
+
+        # Medium files: conditional load
+        doc_refs = file_helper.get({'root': 'docs', 'glob': '**/*.md', 'exclude': [], 'type': GlobType.Template})
+        for ref in doc_refs:
+            if 'api' in ref.relative:
+                file = ref.read_file()
+                file.content = transform(file.content)
+                file.write_file()
+            else:
+                # Copy via file_helper - ref.copy() does not exist
+                file_helper.copy({'root': 'docs', 'glob': ref.relative, 'exclude': [], 'type': GlobType.Copy})
+
+        # Large files: stream
+        data_streams = file_helper.read_as_stream({'root': 'data', 'glob': '*.csv', 'exclude': [], 'type': GlobType.Template})
+        for stream in data_streams:
+            # Use stream.reader directly
+            for chunk in stream.reader:
+                # Process with low memory
+                pass
+
+        # Static files: copy directly
+        file_helper.copy({'root': 'images', 'glob': '**/*', 'exclude': [], 'type': GlobType.Copy})
+        file_helper.copy({'root': 'fonts', 'glob': '**/*', 'exclude': [], 'type': GlobType.Copy})
+
+        return {'directory': input.write_directory}
+    ```
+  </Tab>
+
+  <Tab value="C#">
+    ```csharp -c
+    [ProcessorMain]
+    public async Task<ProcessorResult> RunAsync(ProcessorInput input, CyanFileHelper fileHelper)
+    {
+        // Small files: load all
+        var configs = fileHelper.Read(new FileGlob { Root = "config", Glob = "**/*.{json,yaml}", Exclude = Array.Empty<string>(), Type = GlobType.Template });
+
+        // Medium files: conditional load
+        var docRefs = fileHelper.Get(new FileGlob { Root = "docs", Glob = "**/*.md", Exclude = Array.Empty<string>(), Type = GlobType.Template });
+        foreach (var ref in docRefs)
+        {
+            if (ref.Relative.Contains("api"))
+            {
+                var file = ref.ReadFile();
+                file.Content = Transform(file.Content);
+                file.WriteFile();
+            }
+            else
+            {
+                // Copy via fileHelper - ref.Copy() does not exist
+                fileHelper.Copy(new FileGlob { Root = "docs", Glob = ref.Relative, Exclude = Array.Empty<string>(), Type = GlobType.Copy });
+            }
+        }
+
+        // Large files: stream
+        var dataStreams = fileHelper.ReadAsStream(new FileGlob { Root = "data", Glob = "*.csv", Exclude = Array.Empty<string>(), Type = GlobType.Template });
+        foreach (var stream in dataStreams)
+        {
+            // Use stream.Reader directly
+            using var reader = new StreamReader(stream.Reader);
+            var buffer = new char[4096];
+            while (await reader.ReadAsync(buffer, 0, buffer.Length) > 0)
+            {
+                // Process with low memory
+            }
+        }
+
+        // Static files: copy directly
+        fileHelper.Copy(new FileGlob { Root = "images", Glob = "**/*", Exclude = Array.Empty<string>(), Type = GlobType.Copy });
+        fileHelper.Copy(new FileGlob { Root = "fonts", Glob = "**/*", Exclude = Array.Empty<string>(), Type = GlobType.Copy });
+
+        return new ProcessorResult { Directory = input.WriteDirectory };
+    }
+    ```
+  </Tab>
+</Tabs>
+
+## Memory Troubleshooting
+
+### Symptoms of Memory Issues
+
+- Processor crashes with OOM error
+- Slow processing
+- Container killed unexpectedly
+
+### Solutions
+
+1. **Reduce loaded files** - Use `read()` instead of `resolveAll()`
+2. **Use streaming** - `readAsStream()` for large files
+3. **Copy static files** - `copy()` instead of loading
+4. **Lazy load** - `get()` with conditional `readFile()`
+
+## Best Practices
+
+### Do
+
+<Tabs items={['TypeScript', 'Python', 'C#']}>
+  <Tab value="TypeScript">
+    ```ts -c
+    // ✅ Choose appropriate method
+    const files = needsAll
+      ? fileHelper.resolveAll()
+      : fileHelper.read({ glob: '**/*', exclude: [], type: GlobType.Template });
+
+    // ✅ Copy static assets
+    fileHelper.copy({ root: 'static', glob: '**/*', exclude: [], type: GlobType.Copy });
+
+    // ✅ Stream large files
+    for (const stream of fileHelper.readAsStream({ glob: '*.csv', exclude: [], type: GlobType.Template })) {
+      for await (const chunk of stream.reader) {
+        // Process chunks
+      }
+    }
+    ```
+  </Tab>
+
+  <Tab value="Python">
+    ```python -c
+    # ✅ Choose appropriate method
+    files = (file_helper.resolve_all() if needs_all
+             else file_helper.read({'glob': '**/*', 'exclude': [], 'type': GlobType.Template}))
+
+    # ✅ Copy static assets
+    file_helper.copy({'root': 'static', 'glob': '**/*', 'exclude': [], 'type': GlobType.Copy})
+
+    # ✅ Stream large files
+    for stream in file_helper.read_as_stream({'glob': '*.csv', 'exclude': [], 'type': GlobType.Template}):
+        for chunk in stream.reader:
+            # Process chunks
+            pass
+    ```
+  </Tab>
+
+  <Tab value="C#">
+    ```csharp -c
+    // ✅ Choose appropriate method
+    var files = needsAll
+        ? fileHelper.ResolveAll()
+        : fileHelper.Read(new FileGlob { Glob = "**/*", Exclude = Array.Empty<string>(), Type = GlobType.Template });
+
+    // ✅ Copy static assets
+    fileHelper.Copy(new FileGlob { Root = "static", Glob = "**/*", Exclude = Array.Empty<string>(), Type = GlobType.Copy });
+
+    // ✅ Stream large files
+    foreach (var stream in fileHelper.ReadAsStream(new FileGlob { Glob = "*.csv", Exclude = Array.Empty<string>(), Type = GlobType.Template }))
+    {
+        using var reader = new StreamReader(stream.Reader);
+        var buffer = new char[4096];
+        while (await reader.ReadAsync(buffer, 0, buffer.Length) > 0)
+        {
+            // Process chunks
+        }
+    }
+    ```
+  </Tab>
+</Tabs>
+
+### Don't
+
+```ts
+// ❌ Load everything when not needed
+const all = fileHelper.resolveAll();
+// Process only 10% of files
+
+// ❌ Load binary files you won't transform
+const images = fileHelper.read({ root: 'images', glob: '**/*', exclude: [], type: GlobType.Template });
+// Images don't need transformation
+
+// ❌ Ignore file sizes
+// Large files should be streamed or copied
+```
+
+## Related
+
+- [CyanFileHelper API](/docs/developer/processors/reference/sdk/file-helper) - All methods
+- [Resolve All Files](/docs/developer/processors/how-to/resolve-all-files) - Load all guide
+- [Stream Large Files](/docs/developer/processors/how-to/stream-large-files) - Streaming guide
+- [Copy Files](/docs/developer/processors/how-to/copy-files) - Direct copy guide

@@ -1,0 +1,709 @@
+---
+title: CyanFileHelper API
+description: File operations for processors
+---
+
+import { Callout } from 'fumadocs-ui/components/callout';
+import { Tabs, Tab } from 'fumadocs-ui/components/tabs';
+
+# CyanFileHelper API
+
+The `CyanFileHelper` provides all file operations for processors. It manages reading from the source directory and writing to the output directory.
+
+## Properties
+
+| Property | Type | Description |
+|----------|------|-------------|
+| `readDir` | `string` | Absolute path to the source directory |
+| `writeDir` | `string` | Absolute path to the output directory |
+
+---
+
+## Methods Overview
+
+| Method | Memory Usage | Use Case |
+|--------|--------------|----------|
+| `resolveAll()` | High | Resolve all files: Copy-type files are written to output, returns Template-type files for processing |
+| `read(glob)` | Medium | Load specific files |
+| `get(glob)` | Low | Get file references only |
+| `readAsStream(glob)` | Low | Stream large files |
+| `copy(glob)` | Minimal | Copy without loading |
+
+---
+
+## resolveAll()
+
+Load all files matching the processor's globs into memory.
+
+### Signature
+
+```ts
+resolveAll(): VirtualFile[];
+```
+
+### Returns
+
+`VirtualFile[]` - Array of files with content.
+
+### Usage
+
+<Tabs items={['TypeScript', 'Python', 'C#']}>
+  <Tab value="TypeScript">
+
+```ts
+const files = fileHelper.resolveAll();
+
+files.forEach(file => {
+  console.log(file.relative); // Path relative to read_dir
+  console.log(file.content);  // Full file content
+
+  file.writeFile();           // Write to output
+});
+```
+
+  </Tab>
+  <Tab value="Python">
+
+```python
+files = file_helper.resolve_all()
+
+for file in files:
+    print(file.relative)  # Path relative to read_dir
+    print(file.content)   # Full file content
+
+    file.write_file()     # Write to output
+```
+
+  </Tab>
+  <Tab value="C#">
+
+```csharp
+var files = fileHelper.ResolveAll();
+
+foreach (var file in files)
+{
+    Console.WriteLine(file.Relative); // Path relative to read_dir
+    Console.WriteLine(file.Content);  // Full file content
+
+    file.WriteFile();                  // Write to output
+}
+```
+
+  </Tab>
+</Tabs>
+
+<Callout type="warn">
+Loads ALL matched files into memory. For large templates, consider `get()` or `readAsStream()`.
+</Callout>
+
+---
+
+## read(glob)
+
+Load specific files matching a glob pattern.
+
+### Signature
+
+```ts
+read(glob: CyanGlob): VirtualFile[];
+```
+
+### Parameters
+
+| Parameter | Type | Description |
+|-----------|------|-------------|
+| `glob` | `CyanGlob` | Glob configuration |
+
+### CyanGlob
+
+```ts
+enum GlobType {
+  Template = 0,  // Files to process
+  Copy = 1,      // Files to copy directly
+}
+
+interface CyanGlob {
+  root?: string | null;  // Base directory (optional, defaults to '.')
+  glob: string;          // Glob pattern (e.g., '**/*.md')
+  exclude: string[];     // Patterns to exclude (required, can be empty array)
+  type: GlobType;        // How to handle matched files
+}
+```
+
+The `type` property determines how files are handled:
+- `GlobType.Template` (0) - Files are read and processed
+- `GlobType.Copy` (1) - Files are copied directly without processing
+
+### Returns
+
+`VirtualFile[]` - Array of matching files.
+
+### Usage
+
+<Tabs items={['TypeScript', 'Python', 'C#']}>
+  <Tab value="TypeScript">
+
+```ts
+import { GlobType } from '@atomicloud/cyan-sdk';
+
+// Load markdown files
+const mdFiles = fileHelper.read({
+  glob: '**/*.md',
+  exclude: [],
+  type: GlobType.Template,
+});
+
+// Load with exclusions
+const files = fileHelper.read({
+  root: 'src',
+  glob: '**/*.ts',
+  exclude: ['**/*.test.ts', '**/*.spec.ts'],
+  type: GlobType.Template,
+});
+```
+
+  </Tab>
+  <Tab value="Python">
+
+```python
+from atomicloud_cyan_sdk import GlobType
+
+# Load markdown files
+md_files = file_helper.read({
+    "glob": "**/*.md",
+    "exclude": [],
+    "type": GlobType.TEMPLATE,
+})
+
+# Load with exclusions
+files = file_helper.read({
+    "root": "src",
+    "glob": "**/*.ts",
+    "exclude": ["**/*.test.ts", "**/*.spec.ts"],
+    "type": GlobType.TEMPLATE,
+})
+```
+
+  </Tab>
+  <Tab value="C#">
+
+```csharp
+// Load markdown files
+var mdFiles = fileHelper.Read(new CyanGlob
+{
+    GlobPattern = "**/*.md",
+    Exclude = Array.Empty<string>(),
+    Type = GlobType.Template,
+});
+
+// Load with exclusions
+var files = fileHelper.Read(new CyanGlob
+{
+    Root = "src",
+    GlobPattern = "**/*.ts",
+    Exclude = new[] { "**/*.test.ts", "**/*.spec.ts" },
+    Type = GlobType.Template,
+});
+```
+
+  </Tab>
+</Tabs>
+
+---
+
+## get(glob)
+
+Get file references without loading content. Use for lazy loading.
+
+### Signature
+
+```ts
+get(glob: CyanGlob): VirtualFileReference[];
+```
+
+### Parameters
+
+Same as `read(glob)`.
+
+### Returns
+
+`VirtualFileReference[]` - Array of file references.
+
+### Usage
+
+<Tabs items={['TypeScript', 'Python', 'C#']}>
+  <Tab value="TypeScript">
+
+```ts
+import { GlobType } from '@atomicloud/cyan-sdk';
+
+const refs = fileHelper.get({
+  glob: '**/*',
+  exclude: [],
+  type: GlobType.Template,
+});
+
+for (const ref of refs) {
+  console.log(ref.relative); // Path available
+
+  if (shouldProcess(ref.relative)) {
+    const file = ref.readFile(); // Load content synchronously
+    file.content = transform(file.content);
+    file.writeFile();
+  }
+}
+```
+
+  </Tab>
+  <Tab value="Python">
+
+```python
+from atomicloud_cyan_sdk import GlobType
+
+refs = file_helper.get({
+    "glob": "**/*",
+    "exclude": [],
+    "type": GlobType.TEMPLATE,
+})
+
+for ref in refs:
+    print(ref.relative)  # Path available
+
+    if should_process(ref.relative):
+        file = ref.read_file()  # Load content synchronously
+        file.content = transform(file.content)
+        file.write_file()
+```
+
+  </Tab>
+  <Tab value="C#">
+
+```csharp
+var refs = fileHelper.Get(new CyanGlob
+{
+    GlobPattern = "**/*",
+    Exclude = Array.Empty<string>(),
+    Type = GlobType.Template,
+});
+
+foreach (var ref in refs)
+{
+    Console.WriteLine(ref.Relative); // Path available
+
+    if (ShouldProcess(ref.Relative))
+    {
+        var file = ref.ReadFile(); // Load content synchronously
+        file.Content = Transform(file.Content);
+        file.WriteFile();
+    }
+}
+```
+
+  </Tab>
+</Tabs>
+
+<Callout type="info">
+Use `get()` when you need to conditionally process files. The `readFile()` method loads content only when called.
+</Callout>
+
+---
+
+## readAsStream(glob)
+
+Stream files for memory-efficient processing of large files.
+
+<Callout type="info">
+**SDK Availability:** This method is available in Node.js and .NET SDKs only. Python SDK does not support streaming.
+</Callout>
+
+### Signature
+
+```ts
+readAsStream(glob: CyanGlob): VirtualFileStream[];
+```
+
+### Parameters
+
+Same as `read(glob)`.
+
+### Returns
+
+`VirtualFileStream[]` - Array of streaming file handles.
+
+### Usage
+
+<Tabs items={['TypeScript', 'Python', 'C#']}>
+  <Tab value="TypeScript">
+
+```ts
+import { GlobType } from '@atomicloud/cyan-sdk';
+
+const streams = fileHelper.readAsStream({
+  glob: '**/*',
+  exclude: [],
+  type: GlobType.Template,
+});
+
+for (const stream of streams) {
+  // stream.reader is a Node.js ReadStream
+  // stream.writer is a Node.js WriteStream
+
+  let content = '';
+  stream.reader.setEncoding('utf-8');
+
+  stream.reader.on('data', (chunk) => {
+    content += chunk;
+  });
+
+  stream.reader.on('end', () => {
+    const transformed = transform(content);
+    stream.writer.write(transformed);
+    stream.writer.end();
+  });
+}
+```
+
+  </Tab>
+  <Tab value="Python">
+
+```python
+from atomicloud_cyan_sdk import GlobType
+
+# Note: readAsStream is not available in Python SDK
+# Use read() or get() instead for large files
+```
+
+  </Tab>
+  <Tab value="C#">
+
+```csharp
+var streams = fileHelper.ReadAsStream(new CyanGlob
+{
+    GlobPattern = "**/*",
+    Exclude = Array.Empty<string>(),
+    Type = GlobType.Template,
+});
+
+foreach (var stream in streams)
+{
+    using var reader = new StreamReader(stream.Reader);
+    using var writer = new StreamWriter(stream.Writer);
+
+    var content = await reader.ReadToEndAsync();
+    var transformed = Transform(content);
+    await writer.WriteAsync(transformed);
+}
+```
+
+  </Tab>
+</Tabs>
+
+---
+
+## copy(glob)
+
+Copy files directly to output without loading into memory.
+
+### Signature
+
+```ts
+copy(glob: CyanGlob): void;
+```
+
+### Parameters
+
+Same as `read(glob)`.
+
+### Usage
+
+<Tabs items={['TypeScript', 'Python', 'C#']}>
+  <Tab value="TypeScript">
+
+```ts
+import { GlobType } from '@atomicloud/cyan-sdk';
+
+// Copy static assets
+fileHelper.copy({
+  glob: '**/*',
+  exclude: [],
+  type: GlobType.Copy,
+});
+
+// Copy with exclusions
+fileHelper.copy({
+  root: 'public',
+  glob: '**/*',
+  exclude: ['**/*.tmp'],
+  type: GlobType.Copy,
+});
+```
+
+  </Tab>
+  <Tab value="Python">
+
+```python
+from atomicloud_cyan_sdk import GlobType
+
+# Copy static assets
+file_helper.copy({
+    "glob": "**/*",
+    "exclude": [],
+    "type": GlobType.COPY,
+})
+
+# Copy with exclusions
+file_helper.copy({
+    "root": "public",
+    "glob": "**/*",
+    "exclude": ["**/*.tmp"],
+    "type": GlobType.COPY,
+})
+```
+
+  </Tab>
+  <Tab value="C#">
+
+```csharp
+// Copy static assets
+fileHelper.Copy(new CyanGlob
+{
+    GlobPattern = "**/*",
+    Exclude = Array.Empty<string>(),
+    Type = GlobType.Copy,
+});
+
+// Copy with exclusions
+fileHelper.Copy(new CyanGlob
+{
+    Root = "public",
+    GlobPattern = "**/*",
+    Exclude = new[] { "**/*.tmp" },
+    Type = GlobType.Copy,
+});
+```
+
+  </Tab>
+</Tabs>
+
+---
+
+## VirtualFile
+
+File object returned by `resolveAll()` and `read()`.
+
+### Properties
+
+| Property | Type | Description |
+|----------|------|-------------|
+| `content` | `string` | File contents |
+| `relative` | `string` | Path relative to read directory |
+| `read` | `string` | Full path to source file (getter) |
+| `write` | `string` | Full path to output file (getter) |
+
+### Methods
+
+| Method | Return | Description |
+|--------|--------|-------------|
+| `writeFile()` | `void` | Write file to output directory (uses `content` property) |
+
+---
+
+## VirtualFileReference
+
+Reference object returned by `get()`.
+
+### Properties
+
+| Property | Type | Description |
+|----------|------|-------------|
+| `relative` | `string` | Path relative to read directory |
+| `read` | `string` | Full path to source file (getter) |
+| `write` | `string` | Full path to output file (getter) |
+
+### Methods
+
+| Method | Return | Description |
+|--------|--------|-------------|
+| `readFile()` | `VirtualFile` | Load file content synchronously, returns VirtualFile |
+
+---
+
+## VirtualFileStream
+
+Stream object returned by `readAsStream()` (Node.js and .NET SDKs only).
+
+### Properties
+
+| Property | Type | Description |
+|----------|------|-------------|
+| `reader` | `fs.ReadStream` | Node.js read stream for source file |
+| `writer` | `fs.WriteStream` | Node.js write stream for output file |
+
+<Callout type="info">
+`VirtualFileStream` provides direct access to Node.js streams. Use `reader` to read chunks and `writer` to write transformed output.
+</Callout>
+
+---
+
+## Best Practices
+
+### Choose the Right Method
+
+| Scenario | Method |
+|----------|--------|
+| Small files, need all | `resolveAll()` |
+| Specific files only | `read(glob)` |
+| Conditional processing | `get(glob)` |
+| Large files | `readAsStream(glob)` |
+| Static assets | `copy(glob)` |
+
+### Memory Efficiency
+
+<Tabs items={['TypeScript', 'Python', 'C#']}>
+  <Tab value="TypeScript">
+
+```ts
+import { GlobType } from '@atomicloud/cyan-sdk';
+
+StartProcessorWithLambda(async (input, fileHelper) => {
+  // Process text files (small)
+  const textFiles = fileHelper.read({
+    glob: '**/*.md',
+    exclude: [],
+    type: GlobType.Template,
+  });
+
+  textFiles.forEach(f => {
+    f.content = transform(f.content);
+    f.writeFile();
+  });
+
+  // Copy binaries (large)
+  fileHelper.copy({
+    glob: 'images/**/*',
+    exclude: [],
+    type: GlobType.Copy,
+  });
+
+  // Lazy load when needed
+  const refs = fileHelper.get({
+    glob: 'data/**/*',
+    exclude: [],
+    type: GlobType.Template,
+  });
+
+  for (const ref of refs) {
+    if (needsProcessing(ref.relative)) {
+      const file = ref.readFile();
+      file.content = transform(file.content);
+      file.writeFile();
+    }
+  }
+
+  return { directory: input.writeDir };
+});
+```
+
+  </Tab>
+  <Tab value="Python">
+
+```python
+from atomicloud_cyan_sdk import start_processor_with_lambda, GlobType
+
+async def handler(input, file_helper):
+    # Process text files (small)
+    text_files = file_helper.read({
+        "glob": "**/*.md",
+        "exclude": [],
+        "type": GlobType.TEMPLATE,
+    })
+
+    for f in text_files:
+        f.content = transform(f.content)
+        f.write_file()
+
+    # Copy binaries (large)
+    file_helper.copy({
+        "glob": "images/**/*",
+        "exclude": [],
+        "type": GlobType.COPY,
+    })
+
+    # Lazy load when needed
+    refs = file_helper.get({
+        "glob": "data/**/*",
+        "exclude": [],
+        "type": GlobType.TEMPLATE,
+    })
+
+    for ref in refs:
+        if needs_processing(ref.relative):
+            file = ref.read_file()
+            file.content = transform(file.content)
+            file.write_file()
+
+    return {"directory": input.write_dir}
+
+start_processor_with_lambda(handler)
+```
+
+  </Tab>
+  <Tab value="C#">
+
+```csharp
+using AtomiLoud.CyanSdk;
+
+await Processor.StartAsync(async (input, fileHelper) =>
+{
+    // Process text files (small)
+    var textFiles = fileHelper.Read(new CyanGlob
+    {
+        GlobPattern = "**/*.md",
+        Exclude = Array.Empty<string>(),
+        Type = GlobType.Template,
+    });
+
+    foreach (var f in textFiles)
+    {
+        f.Content = Transform(f.Content);
+        f.WriteFile();
+    }
+
+    // Copy binaries (large)
+    fileHelper.Copy(new CyanGlob
+    {
+        GlobPattern = "images/**/*",
+        Exclude = Array.Empty<string>(),
+        Type = GlobType.Copy,
+    });
+
+    // Lazy load when needed
+    var refs = fileHelper.Get(new CyanGlob
+    {
+        GlobPattern = "data/**/*",
+        Exclude = Array.Empty<string>(),
+        Type = GlobType.Template,
+    });
+
+    foreach (var ref in refs)
+    {
+        if (NeedsProcessing(ref.Relative))
+        {
+            var file = ref.ReadFile();
+            file.Content = Transform(file.Content);
+            file.WriteFile();
+        }
+    }
+
+    return new ProcessorOutput { Directory = input.WriteDir };
+});
+```
+
+  </Tab>
+</Tabs>
+
+## Related
+
+- [StartProcessorWithLambda](/docs/developer/processors/reference/sdk/start-processor) - Entry point
+- [Input/Output Types](/docs/developer/processors/reference/sdk/input-output) - Type definitions
+- [How-to Guides](/docs/developer/processors/how-to) - Practical examples

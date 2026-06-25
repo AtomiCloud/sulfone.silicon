@@ -1,0 +1,129 @@
+---
+title: StartResolver Functions
+description: Entry point functions for starting resolvers
+---
+
+import { Tabs, Tab } from 'fumadocs-ui/components/tabs';
+import { TypeTable } from 'fumadocs-ui/components/type-table';
+import { Mermaid } from '@/components/mdx/mermaid';
+import { Cards, Card } from 'fumadocs-ui/components/card';
+import { Callout } from 'fumadocs-ui/components/callout';
+
+# StartResolver Functions
+
+Each SDK provides an entry point function that starts the resolver server and handles incoming file resolution requests.
+
+## Function Signature
+<Tabs items={['TypeScript', 'Python', 'C#']}>
+  <Tab value="TypeScript">
+
+```ts -c
+function StartResolverWithLambda(fn: LambdaResolverFn): void
+```
+
+### Parameters
+<TypeTable
+  type={{
+    fn: {
+      type: 'LambdaResolverFn',
+      description: 'Async function that handles resolver input and returns output',
+    },
+  }}
+/>
+
+### LambdaResolverFn
+```ts -c
+type LambdaResolverFn = (input: ResolverInput) => Promise<ResolverOutput>;
+```
+
+  </Tab>
+  <Tab value="Python">
+
+```python -c
+def start_resolver_with_fn(fn: Callable[[ResolverInput], Awaitable[ResolverOutput]]) -> None
+```
+
+### Parameters
+<TypeTable
+  type={{
+    fn: {
+      type: 'Callable[[ResolverInput], Awaitable[ResolverOutput]]',
+      description: 'Async function that handles resolver input and returns output',
+    },
+  }}
+/>
+
+### Example
+```python -c
+async def resolver(input: ResolverInput) -> ResolverOutput:
+    # Your logic here
+    return ResolverOutput(path="...", content="...")
+
+start_resolver_with_fn(resolver)
+```
+
+  </Tab>
+  <Tab value="C#">
+
+```cs -c
+void CyanEngine.StartResolver(string[] args, Func<ResolverInput, Task<ResolverOutput>> fn)
+```
+
+### Parameters
+<TypeTable
+  type={{
+    args: {
+      type: 'string[]',
+      description: 'Command line arguments (typically pass `args` from Main)',
+    },
+    fn: {
+      type: 'Func<ResolverInput, Task<ResolverOutput>>',
+      description: 'Async function that handles resolver input and returns output',
+    },
+  }}
+/>
+
+### Example
+```cs -c
+CyanEngine.StartResolver(
+    args,
+    async (ResolverInput input) =>
+        {
+            return new ResolverOutput("path", "content");
+        }
+    );
+```
+
+  </Tab>
+</Tabs>
+
+## Server Behavior
+The resolver server:
+1. Starts on port **5553**
+2. Exposes `/api/resolve` endpoint
+3. Expects JSON request body matching `ResolverInput`
+4. Returns JSON response matching `ResolverOutput`
+
+## Request/Response Flow
+
+<Mermaid
+  chart="
+graph LR
+    A[Template Engine] -->|/api/resolve| B[Resolver Logic]
+    B -->|ResolverOutput| C[Template Engine]
+"
+/>
+
+<Callout type="info">
+The SDK handles all HTTP server setup and routing automatically. You only need to implement the resolver logic function.
+</Callout>
+
+## Related
+<Cards>
+  <Card href="/docs/developer/resolvers/reference/sdk/input-output" title="Input/Output Types">
+    Type definitions for resolver data
+  </Card>
+  <Card href="/docs/developer/resolvers/tutorials/first-resolver" title="First Resolver">
+    Step-by-step tutorial
+  </Card>
+</Cards>

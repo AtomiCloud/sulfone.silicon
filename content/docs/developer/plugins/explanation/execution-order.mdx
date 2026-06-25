@@ -1,0 +1,376 @@
+---
+title: Execution Order
+description: Understanding the order of operations in the CyanPrint pipeline
+---
+
+import { Tabs, Tab } from 'fumadocs-ui/components/tabs';
+
+# Execution Order
+
+Understanding the execution order helps you decide where to place your logic - in a processor or a plugin.
+
+## Pipeline Overview
+
+<Mermaid chart={`graph LR
+    A[Template] --> B[Processors<br/>Parallel]
+    B --> C[Merger]
+    C --> D[Plugin 1]
+    D --> E[Plugin 2]
+    E --> F[Plugin N]
+    F --> G[Output]
+`} />
+
+<Callout type="info">
+Processors execute **in parallel** (subject to parallelism limits), then their outputs are merged. Plugins execute **sequentially** in the order defined.
+</Callout>
+
+## Detailed Sequence
+
+### Phase 1: Template Collection
+
+1. User invokes template
+2. Template asks questions via `IInquirer` and receives `IDeterminism` for deterministic behavior
+3. Template returns `Cyan` with processors and plugins
+
+<Tabs items={['TypeScript', 'Python', 'C#']}>
+  <Tab value="TypeScript">
+
+```ts -c
+// Template index.ts - the template function signature
+import { IInquirer, IDeterminism } from '@atomicloud/cyan-sdk';
+
+export default async function(i: IInquirer, d: IDeterminism) {
+  return {
+    processors: [
+      {
+        name: 'my-processor',
+        files: [{ /* CyanGlob configuration */ }],
+        config: { /* processor-specific config */ }
+      }
+    ],
+    plugins: [
+      { name: 'my-plugin', config: { /* plugin config */ } }
+    ]
+  };
+}
+```
+
+  </Tab>
+  <Tab value="Python">
+
+```python -c
+# Template main.py - the template function signature
+from cyanprintsdk.main import start_template_with_fn
+from cyanprintsdk.protocol import IInquirer, IDeterminism, Cyan
+
+async def template(i: IInquirer, d: IDeterminism) -> Cyan:
+    return Cyan(
+        processors=[
+            CyanProcessor(
+                name='my-processor',
+                files=[/* CyanGlob configuration */],
+                config={/* processor-specific config */}
+            )
+        ],
+        plugins=[
+            CyanPlugin(name='my-plugin', config={/* plugin config */})
+        ]
+    )
+
+template_main = start_template_with_fn(template)
+```
+
+  </Tab>
+  <Tab value="C#">
+
+```csharp -c
+// Template.cs - the template function signature
+using CyanPrintSDK;
+
+public static class Template
+{
+    [TemplateMain]
+    public static async Task<Cyan> Run(IInquirer i, IDeterminism d)
+    {
+        return new Cyan
+        {
+            Processors = new[]
+            {
+                new CyanProcessor
+                {
+                    Name = "my-processor",
+                    Files = new List<CyanGlob> { /* CyanGlob configuration */ },
+                    Config = new Dictionary<string, object> { /* config */ }
+                }
+            },
+            Plugins = new[]
+            {
+                new CyanPlugin { Name = "my-plugin", Config = new Dictionary<string, object>() }
+            }
+        };
+    }
+}
+```
+
+  </Tab>
+</Tabs>
+
+### Phase 2: Processing (Processors)
+
+<Mermaid chart={`sequenceDiagram
+    participant T as Template
+    participant P1 as Processor 1
+    participant P2 as Processor 2
+    participant M as Merger
+    participant FS as Filesystem
+
+    par Parallel Execution
+        T->>P1: readDir, writeDir, globs, config
+        P1->>P1: Transform content
+        P1->>FS: Write to output dir
+    and
+        T->>P2: readDir, writeDir, globs, config
+        P2->>P2: Transform content
+        P2->>FS: Write to output dir
+    end
+    FS->>M: Collect processor outputs
+    M->>FS: Merge into final directory
+`} />
+
+For each processor (executed in parallel):
+
+1. Processor receives `ProcessorInput` with:
+   - `readDir` - Directory to read files from
+   - `writeDir` - Directory to write transformed files to
+   - `globs` - File patterns to process
+   - `config` - Processor-specific configuration
+2. Processor reads files using `CyanFileHelper` methods:
+   - `resolveAll()` - Resolve all matching files
+   - `read()` - Read file contents
+   - `get()` - Get file metadata
+   - `copy()` - Copy files directly
+   - `readAsStream()` - Read files as streams
+3. Processor transforms file content
+4. Processor writes files to its output directory
+5. After all processors complete, outputs are merged into final directory
+
+### Phase 3: Merge
+
+After all processors complete, the Merger combines their outputs:
+
+1. Each processor's output directory is collected
+2. All outputs are merged into a single directory
+3. Conflicts are resolved according to merge rules
+4. Final merged directory is prepared for plugins
+
+### Phase 4: Post-Processing (Plugins)
+
+<Mermaid chart={`sequenceDiagram
+    participant M as Merged Output
+    participant PL1 as Plugin 1
+    participant PL2 as Plugin 2
+
+    M->>PL1: directory + config
+    PL1->>PL1: Run commands/Modify files
+    PL1->>PL2: directory
+    PL2->>PL2: Run commands/Modify files
+    PL2->>M: Return directory
+`} />
+
+For each plugin (executed sequentially):
+
+1. Plugin receives `PluginInput` with:
+   - `directory` - Path to the merged output directory
+   - `config` - Plugin-specific configuration
+2. Plugin runs operations (commands, file modifications)
+3. Plugin returns `PluginOutput` with the directory path
+4. Directory passed to next plugin
+
+<Callout type="info">
+Plugins receive the **merged output** of all processors, not individual processor outputs. This means plugins work with the complete, combined result of all transformations.
+</Callout>
+
+### Phase 5: Output
+
+1. Final directory delivered to user
+2. User can open and use the project
+
+## Example Pipeline
+
+<Tabs items={['TypeScript', 'Python', 'C#']}>
+  <Tab value="TypeScript">
+
+```ts -c
+// Template configuration
+return {
+  processors: [
+    {
+      name: 'cyan/default',
+      files: [{ glob: '**/*', exclude: ['node_modules/**'] }],
+      config: { }
+    },
+    {
+      name: 'custom/formatter',
+      files: [{ glob: '**/*.ts', exclude: [] }, { glob: '**/*.tsx', exclude: [] }],
+      config: { formatter: 'prettier' }
+    },
+  ],
+  plugins: [
+    { name: 'my-org/git-init', config: {} },
+    { name: 'my-org/npm-install', config: {} },
+  ]
+};
+```
+
+  </Tab>
+  <Tab value="Python">
+
+```python -c
+# Template configuration
+return Cyan(
+    processors=[
+        CyanProcessor(
+            name='cyan/default',
+            files=[CyanGlob(glob='**/*', exclude=['node_modules/**'])],
+            config={}
+        ),
+        CyanProcessor(
+            name='custom/formatter',
+            files=[
+                CyanGlob(glob='**/*.ts', exclude=[]),
+                CyanGlob(glob='**/*.tsx', exclude=[])
+            ],
+            config={'formatter': 'prettier'}
+        ),
+    ],
+    plugins=[
+        CyanPlugin(name='my-org/git-init', config={}),
+        CyanPlugin(name='my-org/npm-install', config={}),
+    ]
+)
+```
+
+  </Tab>
+  <Tab value="C#">
+
+```csharp -c
+// Template configuration
+return new Cyan
+{
+    Processors = new[]
+    {
+        new CyanProcessor
+        {
+            Name = "cyan/default",
+            Files = new List<CyanGlob>
+            {
+                new CyanGlob { Glob = "**/*", Exclude = new List<string> { "node_modules/**" } }
+            },
+            Config = new Dictionary<string, object>()
+        },
+        new CyanProcessor
+        {
+            Name = "custom/formatter",
+            Files = new List<CyanGlob>
+            {
+                new CyanGlob { Glob = "**/*.ts", Exclude = new List<string>() },
+                new CyanGlob { Glob = "**/*.tsx", Exclude = new List<string>() }
+            },
+            Config = new Dictionary<string, object> { ["formatter"] = "prettier" }
+        }
+    },
+    Plugins = new[]
+    {
+        new CyanPlugin { Name = "my-org/git-init", Config = new Dictionary<string, object>() },
+        new CyanPlugin { Name = "my-org/npm-install", Config = new Dictionary<string, object>() }
+    }
+};
+```
+
+  </Tab>
+</Tabs>
+
+<Mermaid chart={`graph TD
+    A[Template Files] --> B[Processors Run in Parallel]
+    B --> C[cyan/default + custom/formatter]
+    C --> D[Merger Combines Outputs]
+    D --> E[Write Merged Files]
+    E --> F[my-org/git-init]
+    F --> G[git init]
+    G --> H[my-org/npm-install]
+    H --> I[npm install]
+    I --> J[Final Project]
+`} />
+
+## Timing Considerations
+
+| Phase | Duration | Bottleneck |
+|-------|----------|------------|
+| Processing (parallel) | Fast | File size, parallelism limit |
+| Merging | Fast | File count |
+| Post-Processing (sequential) | Variable | Network (npm install) |
+
+## Error Handling
+
+### During Processing
+
+- Processors execute in parallel; if one fails, others continue running
+- After parallel execution completes, the pipeline returns any errors and stops
+- Individual processor outputs may be partially written before failure is detected
+- The merge phase may not complete if errors occurred
+
+### During Post-Processing
+
+- Plugins execute sequentially; if one fails, subsequent plugins do not run
+- The merged processor output already exists at this point
+- Partial plugin changes may have been applied
+- User may need to clean up manually
+
+## Multiple Plugins
+
+Plugins run in the order defined:
+
+```ts -c
+plugins: [
+  { name: 'plugin-a', config: {} },  // Runs first
+  { name: 'plugin-b', config: {} },  // Runs second
+  { name: 'plugin-c', config: {} },  // Runs third
+]
+```
+
+### Dependency Order
+
+Consider dependencies when ordering plugins:
+
+```ts -c
+plugins: [
+  // Git must be initialized before hooks
+  { name: 'my-org/git-init', config: {} },
+  // Hooks require git
+  { name: 'my-org/husky-setup', config: {} },
+  // Dependencies must be installed before build
+  { name: 'my-org/npm-install', config: {} },
+  // Build requires dependencies
+  { name: 'my-org/npm-build', config: {} },
+]
+```
+
+## What Runs Where
+
+| Operation | Phase | Component |
+|-----------|-------|-----------|
+| Variable substitution | Processing | Processor |
+| Syntax transformation | Processing | Processor |
+| Code generation | Processing | Processor |
+| File filtering | Processing | Processor |
+| `git init` | Post-processing | Plugin |
+| `npm install` | Post-processing | Plugin |
+| `prettier --write` | Post-processing | Plugin |
+| File creation | Post-processing | Plugin |
+| Symlink creation | Post-processing | Plugin |
+
+## Related
+
+- [Plugins vs Processors](/docs/developer/plugins/explanation/plugins-vs-processors) - Comparison
+- [What Are Plugins](/docs/developer/plugins/explanation/what-are-plugins) - Plugin concepts
+- [First Plugin](/docs/developer/plugins/tutorials/first-plugin) - Tutorial

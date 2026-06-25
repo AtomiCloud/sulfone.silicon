@@ -1,0 +1,248 @@
+---
+title: Ask Checkbox Questions
+description: How to ask multi-select checkbox questions
+---
+
+import { Tabs, Tab } from 'fumadocs-ui/components/tabs';
+import { Callout } from 'fumadocs-ui/components/callout';
+import { Cards, Card } from 'fumadocs-ui/components/card';
+
+# How to Ask Checkbox Questions
+
+Checkbox questions allow users to select multiple options. Use them for feature selection, configuration options, or any multi-choice scenario.
+
+## Shorthand Form
+
+<Tabs items={['TypeScript', 'Python', 'C#']}>
+  <Tab value="TypeScript">
+    ```ts template.ts -c
+    const features = await i.checkbox(
+      'Select features',                        // !callout[/'Select features'/] Question message shown to user
+      ['ESLint', 'Prettier', 'Jest', 'Docker'], // !callout[/\[.*\]/] Available options
+      'project.features',                       // !callout[/'project.features'/] Unique key for answer reuse
+      'Choose features to include'              // !callout[/'Choose features to include'/] Helper description
+    );
+    // Returns: string[] - e.g., ['ESLint', 'Jest']
+    ```
+  </Tab>
+
+  <Tab value="Python">
+    ```python template.py -c
+    features = await i.checkbox(
+        'Select features',                        # !callout[/'Select features'/] Question message shown to user
+        ['ESLint', 'Prettier', 'Jest', 'Docker'], # !callout[/\[.*\]/] Available options
+        'project.features',                       # !callout[/'project.features'/] Unique key for answer reuse
+        'Choose features to include'              # !callout[/'Choose features to include'/] Helper description
+    )
+    # Returns: list[str] - e.g., ['ESLint', 'Jest']
+    ```
+  </Tab>
+
+  <Tab value="C#">
+    ```csharp Template.cs -c
+    var features = await i.Checkbox(
+        "Select features",                        // !callout[/"Select features"/] Question message shown to user
+        new[] { "ESLint", "Prettier", "Jest", "Docker" }, // !callout[/new\[\].*/] Available options
+        "project.features",                       // !callout[/"project.features"/] Unique key for answer reuse
+        "Choose features to include"              // !callout[/"Choose features to include"/] Helper description
+    );
+    // Returns: string[] - e.g., ["ESLint", "Jest"]
+    ```
+  </Tab>
+</Tabs>
+
+## Object Form (with validation and defaults)
+
+<Tabs items={['TypeScript', 'Python', 'C#']}>
+  <Tab value="TypeScript">
+    ```ts template.ts -c
+    const features = await i.checkbox({
+      type: QuestionType.Checkbox,
+      id: 'project.features',
+      message: 'Select features',
+      desc: 'Choose features to include',
+      options: ['ESLint', 'Prettier', 'Jest', 'Docker'],
+      default: ['ESLint'],  // !mark Pre-selected options
+      validate: (selected) => {
+        if (selected.length === 0) return 'Select at least one feature';
+        if (selected.length > 3) return 'Maximum 3 features allowed';
+        return null;
+      }
+    });
+    ```
+  </Tab>
+
+  <Tab value="Python">
+    ```python template.py -c
+    from cyanprintsdk import QuestionType
+
+    features = await i.checkbox(
+        type=QuestionType.CHECKBOX,
+        id='project.features',
+        message='Select features',
+        desc='Choose features to include',
+        options=['ESLint', 'Prettier', 'Jest', 'Docker'],
+        default=['ESLint'],  # !mark Pre-selected options
+        validate=lambda selected: (
+            'Select at least one feature' if len(selected) == 0
+            else 'Maximum 3 features allowed' if len(selected) > 3
+            else None
+        )
+    )
+    ```
+  </Tab>
+
+  <Tab value="C#">
+    ```csharp Template.cs -c
+    var features = await i.Checkbox(new CheckboxQuestion
+    {
+        Type = QuestionType.Checkbox,
+        Id = "project.features",
+        Message = "Select features",
+        Desc = "Choose features to include",
+        Options = new[] { "ESLint", "Prettier", "Jest", "Docker" },
+        Default = new[] { "ESLint" },  // !mark Pre-selected options
+        Validate = selected =>
+        {
+            if (selected.Length == 0) return "Select at least one feature";
+            if (selected.Length > 3) return "Maximum 3 features allowed";
+            return null;
+        }
+    });
+    ```
+  </Tab>
+</Tabs>
+
+## Using Results
+
+### Conditional Files Based on Selection
+
+<Tabs items={['TypeScript', 'Python', 'C#']}>
+  <Tab value="TypeScript">
+    ```ts processor.ts -c
+    const features = await i.checkbox(
+      'Select features',
+      ['ESLint', 'Prettier', 'Jest'],
+      'project.features',
+      'Choose features'
+    );
+
+    const files = [
+      { root: 'templates/base', glob: '**/*', exclude: [], type: GlobType.Template }
+    ];
+
+    if (features.includes('ESLint')) {  // !mark Check individual selection
+      files.push({ root: 'templates/eslint', glob: '**/*', exclude: [], type: GlobType.Copy });
+    }
+
+    if (features.includes('Jest')) {
+      files.push({ root: 'templates/jest', glob: '**/*', exclude: [], type: GlobType.Copy });
+    }
+    ```
+  </Tab>
+
+  <Tab value="Python">
+    ```python processor.py -c
+    features = await i.checkbox(
+        'Select features',
+        ['ESLint', 'Prettier', 'Jest'],
+        'project.features',
+        'Choose features'
+    )
+
+    files = [
+        {'root': 'templates/base', 'glob': '**/*', 'exclude': [], 'type': GlobType.Template}
+    ]
+
+    if 'ESLint' in features:  # !mark Check individual selection
+        files.append({'root': 'templates/eslint', 'glob': '**/*', 'exclude': [], 'type': GlobType.Copy})
+
+    if 'Jest' in features:
+        files.append({'root': 'templates/jest', 'glob': '**/*', 'exclude': [], 'type': GlobType.Copy})
+    ```
+  </Tab>
+
+  <Tab value="C#">
+    ```csharp Processor.cs -c
+    var features = await i.Checkbox(
+        "Select features",
+        new[] { "ESLint", "Prettier", "Jest" },
+        "project.features",
+        "Choose features"
+    );
+
+    var files = new List<CyanGlob>
+    {
+        new() { Root = "templates/base", Glob = "**/*", Exclude = Array.Empty<string>(), Type = GlobType.Template }
+    };
+
+    if (features.Contains("ESLint"))  // !mark Check individual selection
+    {
+        files.Add(new() { Root = "templates/eslint", Glob = "**/*", Exclude = Array.Empty<string>(), Type = GlobType.Copy });
+    }
+
+    if (features.Contains("Jest"))
+    {
+        files.Add(new() { Root = "templates/jest", Glob = "**/*", Exclude = Array.Empty<string>(), Type = GlobType.Copy });
+    }
+    ```
+  </Tab>
+</Tabs>
+
+### Template Variables
+
+<Tabs items={['TypeScript', 'Python', 'C#']}>
+  <Tab value="TypeScript">
+    ```ts -c
+    config: {
+      vars: {
+        features: features.join(', '),         // "ESLint, Jest"
+        hasEslint: features.includes('ESLint') ? 'true' : 'false',
+        hasJest: features.includes('Jest') ? 'true' : 'false'
+      }
+    }
+    ```
+  </Tab>
+
+  <Tab value="Python">
+    ```python -c
+    'config': {
+        'vars': {
+            'features': ', '.join(features),
+            'has_eslint': 'true' if 'ESLint' in features else 'false',
+            'has_jest': 'true' if 'Jest' in features else 'false'
+        }
+    }
+    ```
+  </Tab>
+
+  <Tab value="C#">
+    ```csharp -c
+    Config = new {
+        vars = new {
+            features = string.Join(", ", features),
+            hasEslint = features.Contains("ESLint") ? "true" : "false",
+            hasJest = features.Contains("Jest") ? "true" : "false"
+        }
+    }
+    ```
+  </Tab>
+</Tabs>
+
+<Callout type="info">
+The `checkbox` method returns an array of strings containing the selected options.
+</Callout>
+
+## Related
+
+<Cards>
+  <Card href="/docs/developer/templates/reference/sdk/inquirer" title="IInquirer Reference">
+    Complete API documentation
+  </Card>
+  <Card href="/docs/developer/templates/how-to/ask-confirm" title="Ask Confirm">
+    Yes/no questions
+  </Card>
+  <Card href="/docs/developer/templates/how-to/validate-input" title="Validate Input">
+    Input validation patterns
+  </Card>
+</Cards>

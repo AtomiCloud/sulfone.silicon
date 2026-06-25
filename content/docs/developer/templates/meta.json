@@ -1,0 +1,6 @@
+{
+  "title": "Templates",
+  "icon": "Copy",
+  "defaultOpen": true,
+  "pages": ["tutorials", "how-to", "reference", "explanation"]
+}

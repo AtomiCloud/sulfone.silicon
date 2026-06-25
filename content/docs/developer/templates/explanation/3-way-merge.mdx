@@ -1,0 +1,271 @@
+---
+title: 3-Way Merge
+description: How template updates work with 3-way merging
+---
+
+import { Files, File, Folder } from 'fumadocs-ui/components/files';
+import { Steps, Step } from 'fumadocs-ui/components/steps';
+import { Callout } from 'fumadocs-ui/components/callout';
+import { Cards, Card } from 'fumadocs-ui/components/card';
+import { Mermaid } from '@/components/mdx/mermaid';
+
+# 3-Way Merge
+
+CyanPrint uses 3-way merge to update templates while preserving user modifications.
+
+## What is 3-Way Merge?
+
+3-way merge combines three versions of files:
+
+1. **Base** - Original generated files
+2. **Ours** - User modifications
+3. **Theirs** - New template version
+
+<Mermaid chart={`graph TD
+    A[Base - v1.0] --> B[Ours - User Changes]
+    A --> C[Theirs - v2.0]
+    B --> D[3-Way Merge]
+    C --> D
+    D --> E[Merged Result]
+`} />
+
+## Why 3-Way Merge?
+
+When users modify generated projects, naive updates would:
+- Lose user changes (overwrite)
+- Miss template improvements (skip)
+
+3-way merge:
+- Preserves user modifications
+- Incorporates template updates
+- Flags conflicts for resolution
+
+## How It Works
+
+### Generation Tracking
+
+Each generation stores its base state:
+
+<Files>
+  <Folder name=".cyan" defaultOpen>
+    <File name="generation.json" />
+    <Folder name="base" defaultOpen>
+      <File name="README.md" />
+      <File name="package.json" />
+    </Folder>
+  </Folder>
+</Files>
+
+### Update Process
+
+<Steps>
+  <Step>
+
+  ### Read base
+
+  Load original generated files
+
+  </Step>
+  <Step>
+
+  ### Read ours
+
+  Load current project files
+
+  </Step>
+  <Step>
+
+  ### Generate theirs
+
+  Run new template version
+
+  </Step>
+  <Step>
+
+  ### Merge
+
+  Combine all three versions
+
+  </Step>
+  <Step>
+
+  ### Report conflicts
+
+  Flag unresolved changes
+
+  </Step>
+</Steps>
+
+### Merge Algorithm
+
+<Mermaid chart={`graph TD
+    A[Compare Base vs Ours] --> B{User Changed?}
+    B -->|Yes| C[Keep User Change]
+    B -->|No| D[Compare Base vs Theirs]
+    D --> E{Template Changed?}
+    E -->|Yes| F[Use Template Update]
+    E -->|No| G[Keep Original]
+    C --> H{Conflict?}
+    F --> H
+    G --> H
+    H -->|Yes| I[Mark Conflict]
+    H -->|No| J[Auto-Merge]
+`} />
+
+## Example Scenario
+
+### Original Generation (v1.0)
+
+Base `README.md`:
+
+```markdown
+# my-project
+
+A sample project.
+```
+
+### User Modification
+
+User changes `README.md`:
+
+```markdown
+# my-project
+
+A sample project.
+
+## Features
+
+- Feature 1
+- Feature 2
+```
+
+### Template Update (v2.0)
+
+New template generates:
+
+```markdown
+# my-project
+
+A sample project.
+
+## Installation
+
+npm install
+```
+
+### 3-Way Merge Result
+
+```markdown
+# my-project
+
+A sample project.
+
+## Installation
+
+npm install
+
+## Features
+
+- Feature 1
+- Feature 2
+```
+
+## Conflict Detection
+
+When both user and template change the same content:
+
+### User Change
+
+```markdown
+# My Awesome Project
+```
+
+### Template Change
+
+```markdown
+# my-project
+
+[![Version](https://img.shields.io/badge/version-1.0.0-blue)]
+```
+
+### Conflict
+
+```
+<<<<<<< OURS
+# My Awesome Project
+=======
+# my-project
+
+[![Version](https://img.shields.io/badge/version-1.0.0-blue)]
+>>>>>>> THEIRS
+```
+
+## Determinism and Updates
+
+The deterministic state system ensures IDs remain consistent across updates:
+
+```ts
+// v1.0 generation
+const projectId = d.get('project-id', () => crypto.randomUUID());
+// Returns: "abc-123"
+
+// v2.0 update - same key returns same value
+const projectId = d.get('project-id', () => crypto.randomUUID());
+// Returns: "abc-123" - same!
+```
+
+This allows:
+- Database migrations to work
+- API contracts to remain valid
+- References to stay consistent
+
+## Update Command
+
+```bash -c
+# Update to latest version
+cyanprint update ./my-project
+
+# Update to specific version
+cyanprint update ./my-project myorg/template:2.0.0
+
+# Preview changes without applying
+cyanprint update ./my-project --dry-run
+```
+
+## Best Practices
+
+### For Template Authors
+
+1. **Minimize breaking changes** - Keep file structure stable
+2. **Use semantic versioning** - Major versions for breaking changes
+3. **Document changes** - Help users understand updates
+4. **Test updates** - Verify merge behavior
+
+### For Users
+
+1. **Commit before updating** - Easy rollback if needed
+2. **Review conflicts carefully** - Don't blindly accept changes
+3. **Test after updates** - Verify everything still works
+4. **Keep base files** - Don't delete `.cyan/`
+
+## Limitations
+
+<Callout type="warn">
+3-way merge works best with text files (not binaries), line-based changes, and small modifications.
+
+It may struggle with large reorganizations, binary file changes, and complex refactors.
+</Callout>
+
+## Related
+
+<Cards>
+  <Card href="/docs/developer/templates/explanation/determinism" title="Determinism">
+    How IDs stay consistent across updates
+  </Card>
+  <Card href="/docs/developer/templates/explanation/client-state" title="Client State">
+    State management for templates
+  </Card>
+  <Card href="/docs/developer/templates/how-to/pin-determinism" title="Pin Determinism">
+    Pin usage guide for consistent generation
+  </Card>
+</Cards>

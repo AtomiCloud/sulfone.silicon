@@ -1,0 +1,317 @@
+---
+title: Project Structure
+description: Standard file layout for processor projects
+---
+
+import { Files, File, Folder } from 'fumadocs-ui/components/files';
+import { Callout } from 'fumadocs-ui/components/callout';
+import { Cards, Card } from 'fumadocs-ui/components/card';
+import { Tabs, Tab } from 'fumadocs-ui/components/tabs';
+
+# Project Structure
+
+A processor project follows a standard layout for consistency and ease of development.
+
+## Basic Structure
+
+<Files>
+  <Folder name="my-processor" defaultOpen>
+    <File name="index.ts" />
+    <File name="package.json" />
+    <File name="bun.lockb" />
+    <File name="Dockerfile" />
+    <File name="cyan.yaml" />
+    <File name="tsconfig.json" />
+    <Folder name="src">
+      <File name="transforms.ts" />
+      <File name="utils.ts" />
+    </Folder>
+  </Folder>
+</Files>
+
+## File Descriptions
+
+### `index.ts`
+
+The main entry point using `StartProcessorWithLambda`:
+
+<Tabs items={['TypeScript', 'Python', 'C#']}>
+  <Tab value="TypeScript">
+
+```ts index.ts -c
+import { StartProcessorWithLambda } from '@atomicloud/cyan-sdk';
+
+StartProcessorWithLambda(async (input, fileHelper) => {
+  const files = fileHelper.resolveAll();
+
+  files.forEach(file => {
+    // Transform file content
+    file.content = transform(file.content);
+    file.writeFile();
+  });
+
+  return { directory: input.writeDirectory };
+});
+```
+
+  </Tab>
+  <Tab value="Python">
+
+```python main.py -c
+from atomicloud_cyan_sdk import start_processor_with_lambda
+
+async def handler(input, file_helper):
+    files = file_helper.resolve_all()
+
+    for file in files:
+        # Transform file content
+        file.content = transform(file.content)
+        file.write_file()
+
+    return {"directory": input.write_directory}
+
+start_processor_with_lambda(handler)
+```
+
+  </Tab>
+  <Tab value="C#">
+
+```csharp Program.cs -c
+using AtomiLoud.CyanSdk;
+
+await Processor.StartAsync(async (input, fileHelper) =>
+{
+    var files = fileHelper.ResolveAll();
+
+    foreach (var file in files)
+    {
+        // Transform file content
+        file.Content = Transform(file.Content);
+        file.WriteFile();
+    }
+
+    return new ProcessorOutput { Directory = input.WriteDirectory };
+});
+```
+
+  </Tab>
+</Tabs>
+
+### `package.json`
+
+Define dependencies and scripts:
+
+```json package.json -c
+{
+  "name": "my-processor",
+  "version": "1.0.0",
+  "type": "module",
+  "scripts": {
+    "start": "bun run index.ts",
+    "build": "bun build index.ts --outdir=dist"
+  },
+  "dependencies": {
+    "@atomicloud/cyan-sdk": "^1.0.0"
+  },
+  "devDependencies": {
+    "@types/bun": "latest"
+  }
+}
+```
+
+### `Dockerfile`
+
+Container definition for the processor:
+
+```dockerfile Dockerfile -c
+FROM oven/bun:1.1.31
+
+WORKDIR /app
+
+# Required: Mark as CyanPrint processor
+LABEL cyanprint.dev=true
+
+# Install dependencies
+COPY package.json bun.lockb* ./
+RUN bun install --frozen-lockfile
+
+# Copy processor code
+COPY . .
+
+# Run processor
+CMD ["bun", "run", "index.ts"]
+```
+
+<Callout type="warn">
+  The `LABEL cyanprint.dev=true` line is **required** for the container to be recognized as a CyanPrint processor.
+</Callout>
+
+### `cyan.yaml`
+
+Metadata and documentation:
+
+```yaml cyan.yaml -c
+name: myorg/my-processor
+version: 1.0.0
+description: Description of what the processor does
+author: Your Name
+license: MIT
+
+processor:
+  inputs:
+    - name: option1
+      type: string
+      default: "value"
+      description: Description of the option
+```
+
+### `tsconfig.json`
+
+TypeScript configuration:
+
+```json tsconfig.json -c
+{
+  "compilerOptions": {
+    "target": "ES2022",
+    "module": "ESNext",
+    "moduleResolution": "bundler",
+    "strict": true,
+    "skipLibCheck": true,
+    "esModuleInterop": true
+  },
+  "include": ["*.ts", "src/**/*.ts"]
+}
+```
+
+## Optional Directories
+
+### `src/`
+
+Organize larger processors into modules:
+
+<Files>
+  <Folder name="src" defaultOpen>
+    <Folder name="transforms">
+      <File name="markdown.ts" />
+      <File name="code.ts" />
+    </Folder>
+    <Folder name="utils">
+      <File name="parsing.ts" />
+      <File name="formatting.ts" />
+    </Folder>
+    <File name="index.ts" />
+  </Folder>
+</Files>
+
+### `tests/`
+
+Unit tests for processor logic:
+
+<Files>
+  <Folder name="tests" defaultOpen>
+    <File name="transforms.test.ts" />
+    <File name="utils.test.ts" />
+  </Folder>
+</Files>
+
+## Multi-File Example
+
+For complex processors, split logic into modules:
+
+<Tabs items={['TypeScript', 'Python', 'C#']}>
+  <Tab value="TypeScript">
+
+```ts index.ts -c
+// index.ts
+import { StartProcessorWithLambda } from '@atomicloud/cyan-sdk';
+import { transformMarkdown } from './src/transforms/markdown';
+import { transformCode } from './src/transforms/code';
+
+StartProcessorWithLambda(async (input, fileHelper) => {
+  const files = fileHelper.resolveAll();
+  const config = input.config as ProcessorConfig;
+
+  files.forEach(file => {
+    if (file.relative.endsWith('.md')) {
+      file.content = transformMarkdown(file.content, config);
+    } else if (file.relative.endsWith('.ts')) {
+      file.content = transformCode(file.content, config);
+    }
+    file.writeFile();
+  });
+
+  return { directory: input.writeDirectory };
+});
+```
+
+  </Tab>
+  <Tab value="Python">
+
+```python main.py -c
+# main.py
+from atomicloud_cyan_sdk import start_processor_with_lambda
+from .transforms.markdown import transform_markdown
+from .transforms.code import transform_code
+
+async def handler(input, file_helper):
+    files = file_helper.resolve_all()
+    config = input.config  # Cast to your config type
+
+    for file in files:
+        if file.relative.endswith('.md'):
+            file.content = transform_markdown(file.content, config)
+        elif file.relative.endswith('.ts'):
+            file.content = transform_code(file.content, config)
+        file.write_file()
+
+    return {"directory": input.write_directory}
+
+start_processor_with_lambda(handler)
+```
+
+  </Tab>
+  <Tab value="C#">
+
+```csharp Program.cs -c
+// Program.cs
+using AtomiLoud.CyanSdk;
+using MyProcessor.Transforms;
+
+await Processor.StartAsync(async (input, fileHelper) =>
+{
+    var files = fileHelper.ResolveAll();
+    var config = input.Config; // Cast to your config type
+
+    foreach (var file in files)
+    {
+        if (file.Relative.EndsWith(".md"))
+        {
+            file.Content = MarkdownTransform.Transform(file.Content, config);
+        }
+        else if (file.Relative.EndsWith(".ts"))
+        {
+            file.Content = CodeTransform.Transform(file.Content, config);
+        }
+        file.WriteFile();
+    }
+
+    return new ProcessorOutput { Directory = input.WriteDirectory };
+});
+```
+
+  </Tab>
+</Tabs>
+
+## Related
+
+<Cards>
+  <Card href="/docs/developer/processors/reference/dockerfile" title="Dockerfile Reference">
+    Docker configuration details
+  </Card>
+  <Card href="/docs/developer/processors/reference/cyan-yaml" title="cyan.yaml Format">
+    Metadata format specification
+  </Card>
+  <Card href="/docs/developer/processors/tutorials/first-processor" title="First Processor">
+    Step-by-step tutorial
+  </Card>
+</Cards>

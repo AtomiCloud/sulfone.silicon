@@ -1,0 +1,213 @@
+---
+title: Include Files Conditionally
+description: How to include files based on user choices
+---
+
+# How to Include Files Conditionally
+
+Include or exclude files based on user input for customizable templates.
+
+## Basic Pattern
+
+Use conditional logic to add file groups:
+
+```ts -c
+const files = [];
+
+// Always include base files
+files.push({ root: 'templates/base', glob: '**/*', exclude: [], type: GlobType.Template });
+
+// Conditionally add TypeScript files
+if (useTypescript) {
+  files.push({ root: 'templates/typescript', glob: '**/*', exclude: [], type: GlobType.Template });
+}
+
+// Conditionally add Docker files
+if (useDocker) {
+  files.push({ root: 'templates/docker', glob: '**/*', exclude: [], type: GlobType.Template });
+}
+
+return {
+  processors: [{
+    name: 'cyan/default',
+    files,
+    config: { vars: { /* ... */ } }
+  }],
+  plugins: []
+};
+```
+
+## Complete Example
+
+```ts -c
+import { StartTemplateWithLambda, GlobType } from '@atomicloud/cyan-sdk';
+
+StartTemplateWithLambda(async (i, d) => {
+  // Ask configuration questions
+  const typescript = await i.confirm('Use TypeScript?', 'project.typescript', 'Add TS config');
+  const framework = await i.select(
+    'Framework?',
+    ['React', 'Vue', 'Svelte', 'None'],
+    'project.framework',
+    'Choose framework'
+  );
+  const docker = await i.confirm('Add Docker?', 'project.docker', 'Include Dockerfile');
+  const testing = await i.confirm('Add testing?', 'project.testing', 'Include test setup');
+  const ci = await i.select(
+    'CI/CD?',
+    ['None', 'GitHub Actions', 'GitLab CI'],
+    'project.ci',
+    'Choose CI platform'
+  );
+
+  // Build file list conditionally
+  const files = [
+    // Base files always included
+    { root: 'templates/base', glob: '**/*', exclude: [], type: GlobType.Template }
+  ];
+
+  // TypeScript configuration
+  if (typescript) {
+    files.push({ root: 'templates/typescript', glob: '**/*', exclude: [], type: GlobType.Template });
+  }
+
+  // Framework-specific files
+  if (framework !== 'None') {
+    files.push({
+      root: `templates/frameworks/${framework.toLowerCase()}`,
+      glob: '**/*',
+      exclude: [],
+      type: GlobType.Template
+    });
+  }
+
+  // Docker files
+  if (docker) {
+    files.push({ root: 'templates/docker', glob: '**/*', exclude: [], type: GlobType.Template });
+  }
+
+  // Testing setup
+  if (testing) {
+    files.push({ root: 'templates/testing', glob: '**/*', exclude: [], type: GlobType.Copy });
+  }
+
+  // CI/CD configuration
+  if (ci !== 'None') {
+    files.push({
+      root: `templates/ci/${ci.toLowerCase().replace(' ', '-')}`,
+      glob: '**/*',
+      exclude: [],
+      type: GlobType.Template
+    });
+  }
+
+  return {
+    processors: [{
+      name: 'cyan/default',
+      files,
+      config: {
+        vars: {
+          typescript: typescript ? 'true' : 'false',
+          framework,
+          docker: docker ? 'true' : 'false',
+          testing: testing ? 'true' : 'false',
+          ci
+        }
+      }
+    }],
+    plugins: []
+  };
+});
+```
+
+## Conditional Directory Structure
+
+Organize templates by feature. Note that `root` paths are relative to the `cyan/` directory in your template package:
+
+```
+cyan/templates/
+├── base/                 # Always included
+│   ├── README.md
+│   └── package.json
+├── typescript/           # TypeScript config
+│   ├── tsconfig.json
+│   └── src/
+│       └── index.ts
+├── frameworks/
+│   ├── react/           # React setup
+│   │   └── App.tsx
+│   ├── vue/             # Vue setup
+│   │   └── App.vue
+│   └── svelte/          # Svelte setup
+│       └── App.svelte
+├── docker/              # Docker setup
+│   ├── Dockerfile
+│   └── docker-compose.yml
+└── ci/
+    ├── github-actions/  # GitHub Actions
+    │   └── main.yml
+    └── gitlab-ci/       # GitLab CI
+        └── .gitlab-ci.yml
+```
+
+## Using Array Spread
+
+Clean syntax for conditional additions. Use array spread for a functional style, or the `push` method shown earlier for an imperative approach:
+
+```ts -c
+const files = [
+  // Base files
+  { root: 'templates/base', glob: '**/*', exclude: [], type: GlobType.Template },
+
+  // Conditional files using spread
+  ...(typescript ? [
+    { root: 'templates/typescript', glob: '**/*', exclude: [], type: GlobType.Template }
+  ] : []),
+
+  ...(docker ? [
+    { root: 'templates/docker', glob: '**/*', exclude: [], type: GlobType.Template }
+  ] : []),
+
+  ...(testing ? [
+    { root: 'templates/testing', glob: '**/*', exclude: [], type: GlobType.Copy }
+  ] : [])
+];
+```
+
+## Exclude Patterns
+
+Conditionally exclude files. This is an alternative approach to adding separate file groups — instead of including different directories, you include everything and exclude unwanted files:
+
+```ts -c
+const exclude = [];
+
+if (!typescript) {
+  exclude.push('**/*.ts', '**/*.tsx');
+}
+
+if (!testing) {
+  exclude.push('**/*.test.*', '**/*.spec.*');
+}
+
+files.push({
+  root: 'templates',
+  glob: '**/*',
+  exclude,
+  type: GlobType.Template
+});
+```
+
+## GlobType: Template vs Copy
+
+The `type` property determines how files are processed:
+
+- **`GlobType.Template`** — Files are processed through the template engine, enabling variable substitution (e.g., `{{projectName}}` in your files will be replaced with actual values)
+- **`GlobType.Copy`** — Files are copied as-is without any processing
+
+Use `GlobType.Copy` for binary files, static assets, or any files that shouldn't be modified.
+
+## Related
+
+- [Changing Glob Patterns](/docs/developer/templates/tutorials/03-changing-glob) - Tutorial on glob patterns
+- [Full Example](/docs/developer/templates/tutorials/full-example) - Complete template with conditionals
+- [Globbing Reference](/docs/developer/templates/reference/sdk/globbing) - Glob syntax

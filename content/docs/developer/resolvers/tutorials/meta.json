@@ -1,0 +1,6 @@
+{
+  "title": "Tutorials",
+  "description": "Learn to build resolvers step by step",
+  "icon": "GraduationCap",
+  "pages": ["first-resolver"]
+}

@@ -1,0 +1,92 @@
+---
+title: Development Setup
+description: Setting up your development environment for contributing to CyanPrint
+---
+
+import { Steps, Step } from 'fumadocs-ui/components/steps';
+import { Cards, Card } from 'fumadocs-ui/components/card';
+
+# Development Setup
+
+This guide will help you set up your development environment for contributing to CyanPrint.
+
+## Prerequisites
+
+CyanPrint uses **Nix** for reproducible development environments. All dependencies are managed through Nix flakes.
+
+| Tool | Purpose |
+| ---- | ------- |
+| Nix | Package manager and dev environment |
+| Direnv | Auto-loads Nix environment |
+| Git | Version control |
+
+## Quick Start
+
+<Steps>
+  <Step>
+    Fork the repository on GitHub, then clone your fork:
+
+    ```bash -c
+    # Replace REPO_NAME with: boron, iridium, zinc, helium, or argon
+    git clone https://github.com/YOUR_USERNAME/sulfone.REPO_NAME.git
+    cd sulfone.REPO_NAME
+    ```
+  </Step>
+
+  <Step>
+    Allow direnv to load the Nix environment:
+
+    ```bash -c
+    direnv allow
+    ```
+
+    Nix will automatically install all required dependencies. Note: Some repositories run 'pls setup' automatically via .envrc.
+  </Step>
+
+  <Step>
+    Setup dependencies and start development:
+
+    ```bash -c
+    pls setup
+    pls dev
+    ```
+  </Step>
+</Steps>
+
+## Common Commands
+
+All repositories use `pls` (Taskfile) for common operations. Note that available commands vary by repository:
+
+| Command | Description |
+| ------- | ----------- |
+| `pls setup` | Install dependencies |
+| `pls dev` | Start development server (not available in all repos) |
+| `pls build` | Build for production |
+| `pls test` | Run tests (only available in some repos) |
+
+Check each repository's `Taskfile.yaml` for the full list of available commands.
+
+## Pre-commit Hooks
+
+Pre-commit hooks run automatically on commit and handle:
+- Code formatting (treefmt)
+- Linting (language-specific: golangci-lint, clippy, biome, ruff, mypy, eslint, etc.)
+- Secrets scanning
+- Shellcheck
+
+To run all checks manually:
+
+```bash -c
+pre-commit run --all-files
+```
+
+## Next Steps
+
+<Cards>
+  <Card href="/docs/contributor/architecture/overview" title="Architecture Overview">
+    Understand the system architecture and design decisions
+  </Card>
+  <Card href="/docs/contributor/repositories" title="Repositories">
+    Explore all CyanPrint repositories and their purposes
+  </Card>
+</Cards>

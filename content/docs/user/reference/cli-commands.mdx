@@ -1,0 +1,514 @@
+---
+title: CLI Commands Reference
+description: Complete reference for all CyanPrint CLI commands
+---
+
+# CLI Commands Reference
+
+## Global Options
+
+| Flag                   | Default                                                    | Description              |
+| ---------------------- | ---------------------------------------------------------- | ------------------------ |
+| `-r, --registry <URL>` | `https://api.zinc.sulfone.raichu.cluster.atomi.cloud`      | Registry endpoint        |
+| `-d, --debug`          | -                                                          | Enable debug output      |
+| `--version`            | -                                                          | Print version            |
+
+### Environment Variables
+
+| Variable              | Corresponding Flag        |
+| --------------------- | ------------------------- |
+| `CYANPRINT_REGISTRY`  | `-r, --registry`          |
+
+### Command Aliases
+
+| Command      | Alias |
+| ------------ | ----- |
+| `build`      | `b`   |
+| `create`     | `c`   |
+| `update`     | `u`   |
+| `try`        | `t`   |
+| `daemon`     | `d`   |
+| `push`       | `p`   |
+| `test`       | `te`  |
+
+## `cyanprint build`
+
+Build Docker images using buildx.
+
+```bash -c
+cyanprint build <TAG> [OPTIONS]
+```
+
+### Arguments
+
+| Argument | Required | Description        |
+| -------- | -------- | ------------------ |
+| `<TAG>`  | Yes      | Build tag (e.g. v1) |
+
+### Options
+
+| Option                 | Default     | Description                               |
+| ---------------------- | ----------- | ----------------------------------------- |
+| `-c, --config <PATH>`  | `cyan.yaml` | Path to config file                       |
+| `-p, --platform <PLATFORMS>` | -     | Target platforms (comma-separated)        |
+| `-b, --builder <NAME>` | -           | Buildx builder to use                      |
+| `--no-cache`           | -           | Don't use cache                           |
+| `--dry-run`            | -           | Show commands without executing           |
+| `--folder <DIR>`       | `.`         | Working directory for the build           |
+
+## `cyanprint create`
+
+Create a new project from a template.
+
+```bash -c
+cyanprint create <TEMPLATE_REF> [PATH]
+```
+
+### Arguments
+
+| Argument         | Required | Description                                                   |
+| ---------------- | -------- | ------------------------------------------------------------- |
+| `<TEMPLATE_REF>` | Yes      | Template reference (format: `<username>/<name>:<version>`)    |
+| `[PATH]`         | No       | Output directory (default: .)                                 |
+
+### Options
+
+| Option                       | Default                                                    | Description     |
+| ---------------------------- | ---------------------------------------------------------- | --------------- |
+| `-c, --coordinator-endpoint` | `http://coord.cyanprint.dev:9000`                          | Coordinator URL |
+
+### Environment Variables
+
+| Variable               | Corresponding Flag           |
+| ---------------------- | ---------------------------- |
+| `CYANPRINT_COORDINATOR`| `-c, --coordinator-endpoint` |
+
+## `cyanprint update`
+
+Update an existing project to the latest template version. This command uses the `.cyan_state.yaml` file to perform a 3-way merge between your local changes and the upstream template.
+
+```bash -c
+cyanprint update [PATH]
+```
+
+### Arguments
+
+| Argument | Required | Description                      |
+| -------- | -------- | -------------------------------- |
+| `[PATH]` | No       | Project directory (default: `.`) |
+
+### Options
+
+| Option                       | Default                           | Description                                      |
+| ---------------------------- | --------------------------------- | ------------------------------------------------ |
+| `-c, --coordinator-endpoint` | `http://coord.cyanprint.dev:9000` | Coordinator URL                                  |
+| `-i, --interactive`          | -                                 | Select versions interactively                    |
+| `--force`                    | -                                 | Force update even if git is dirty (skip confirmation prompt) |
+
+### Environment Variables
+
+| Variable               | Corresponding Flag           |
+| ---------------------- | ---------------------------- |
+| `CYANPRINT_COORDINATOR`| `-c, --coordinator-endpoint` |
+
+## `cyanprint try`
+
+Try a local template or group without publishing to the registry.
+
+```bash -c
+cyanprint try <COMMAND>
+```
+
+### Subcommands
+
+#### `try template`
+
+Try a local template (with build/images).
+
+```bash -c
+cyanprint try template <TEMPLATE_PATH> <OUTPUT_PATH> [OPTIONS]
+```
+
+##### Arguments
+
+| Argument         | Required | Description              |
+| ---------------- | -------- | ------------------------ |
+| `<TEMPLATE_PATH>`| Yes      | Path to template         |
+| `<OUTPUT_PATH>`  | Yes      | Output directory         |
+
+##### Options
+
+| Option                       | Default                           | Description                                      |
+| ---------------------------- | --------------------------------- | ------------------------------------------------ |
+| `--dev`                      | -                                 | Enable dev mode for local development            |
+| `--keep-containers`          | -                                 | Preserve template container and blob volume after execution |
+| `--disable-daemon-autostart` | -                                 | Skip automatic daemon start                      |
+| `-c, --coordinator-endpoint` | `http://coord.cyanprint.dev:9000` | Coordinator URL                                  |
+
+#### `try group`
+
+Try a local group template (no build, dependencies from registry).
+
+```bash -c
+cyanprint try group <TEMPLATE_PATH> <OUTPUT_PATH> [OPTIONS]
+```
+
+##### Arguments
+
+| Argument         | Required | Description              |
+| ---------------- | -------- | ------------------------ |
+| `<TEMPLATE_PATH>`| Yes      | Path to template         |
+| `<OUTPUT_PATH>`  | Yes      | Output directory         |
+
+##### Options
+
+| Option                       | Default                           | Description                 |
+| ---------------------------- | --------------------------------- | --------------------------- |
+| `--disable-daemon-autostart` | -                                 | Skip automatic daemon start |
+| `-c, --coordinator-endpoint` | `http://coord.cyanprint.dev:9000` | Coordinator URL             |
+
+### Environment Variables
+
+| Variable               | Corresponding Flag           |
+| ---------------------- | ---------------------------- |
+| `CYANPRINT_COORDINATOR`| `-c, --coordinator-endpoint` |
+
+## `cyanprint daemon`
+
+Manage the CyanPrint Coordinator daemon.
+
+```bash -c
+cyanprint daemon <COMMAND>
+```
+
+### Subcommands
+
+#### `daemon start`
+
+Start the CyanPrint Coordinator daemon.
+
+import { Callout } from 'fumadocs-ui/components/callout';
+
+<Callout type="warn">
+Docker must be installed and running before starting the daemon.
+</Callout>
+
+```bash -c
+cyanprint daemon start [VERSION] [OPTIONS]
+```
+
+##### Arguments
+
+| Argument    | Required | Description                     |
+| ----------- | -------- | ------------------------------- |
+| `[VERSION]` | No       | Coordinator version (default: `latest`) |
+
+##### Options
+
+| Option          | Default                                               | Description                        |
+| --------------- | ----------------------------------------------------- | ---------------------------------- |
+| `-p, --port`    | 9000                                                  | Port to host the daemon container  |
+| `-r, --registry`| `https://api.zinc.sulfone.raichu.cluster.atomi.cloud` | Registry endpoint for the coordinator |
+
+##### Environment Variables
+
+| Variable              | Corresponding Flag |
+| --------------------- | ------------------ |
+| `CYANPRINT_REGISTRY`  | `-r, --registry`   |
+
+#### `daemon stop`
+
+Stop the CyanPrint Coordinator daemon and cleanup.
+
+```bash -c
+cyanprint daemon stop [OPTIONS]
+```
+
+##### Options
+
+| Option       | Default | Description                        |
+| ------------ | ------- | ---------------------------------- |
+| `-p, --port` | 9000    | Port where daemon is running       |
+
+## `cyanprint push`
+
+Push templates, processors, plugins, resolvers, or groups to the registry.
+
+```bash -c
+cyanprint push [OPTIONS] <COMMAND>
+```
+
+### Options
+
+| Option                       | Default          | Description                               |
+| ---------------------------- | ---------------- | ----------------------------------------- |
+| `-t, --token <TOKEN>`        | -                | Authentication token                      |
+| `-c, --config <CONFIG_PATH>` | `cyan.yaml`      | Path to config file                       |
+| `-m, --message <MESSAGE>`    | `No description` | Publish message                           |
+| `--platform <PLATFORMS>`     | -                | Target platforms for build (comma-separated) |
+| `--builder <NAME>`           | -                | Buildx builder to use for build           |
+| `--no-cache`                 | -                | Don't use cache during build              |
+| `--dry-run`                  | -                | Show build commands without executing     |
+| `--folder <DIR>`             | `.`              | Working directory for the build (used with --build) |
+
+### Environment Variables
+
+| Variable      | Corresponding Flag |
+| ------------- | ------------------ |
+| `CYAN_TOKEN`  | `-t, --token`      |
+
+### Subcommands
+
+#### `push template`
+
+Push a template to the registry.
+
+```bash -c
+cyanprint push --token <TOKEN> template [OPTIONS] [BLOB_IMAGE] [BLOB_TAG] [TEMPLATE_IMAGE] [TEMPLATE_TAG]
+```
+
+##### Options
+
+| Option        | Description                                             |
+| ------------- | ------------------------------------------------------- |
+| `--build <TAG>` | Build with tag before pushing (requires build config in cyan.yaml) |
+
+##### Arguments
+
+| Argument         | Required | Description             |
+| ---------------- | -------- | ----------------------- |
+| `[BLOB_IMAGE]`   | No       | Blob image name         |
+| `[BLOB_TAG]`     | No       | Blob tag                |
+| `[TEMPLATE_IMAGE]` | No     | Template image name     |
+| `[TEMPLATE_TAG]` | No       | Template tag            |
+
+#### `push processor`
+
+Push a processor to the registry.
+
+```bash -c
+cyanprint push --token <TOKEN> processor [OPTIONS] [IMAGE] [TAG]
+```
+
+##### Options
+
+| Option        | Description                                             |
+| ------------- | ------------------------------------------------------- |
+| `--build <TAG>` | Build with tag before pushing (requires build config in cyan.yaml) |
+
+##### Arguments
+
+| Argument  | Required | Description   |
+| --------- | -------- | ------------- |
+| `[IMAGE]` | No       | Image name    |
+| `[TAG]`   | No       | Image tag     |
+
+#### `push plugin`
+
+Push a plugin to the registry.
+
+```bash -c
+cyanprint push --token <TOKEN> plugin [OPTIONS] [IMAGE] [TAG]
+```
+
+##### Options
+
+| Option        | Description                                             |
+| ------------- | ------------------------------------------------------- |
+| `--build <TAG>` | Build with tag before pushing (requires build config in cyan.yaml) |
+
+##### Arguments
+
+| Argument  | Required | Description   |
+| --------- | -------- | ------------- |
+| `[IMAGE]` | No       | Image name    |
+| `[TAG]`   | No       | Image tag     |
+
+#### `push resolver`
+
+Push a conflict resolver artifact to the registry.
+
+```bash -c
+cyanprint push --token <TOKEN> resolver [OPTIONS] [IMAGE] [TAG]
+```
+
+##### Options
+
+| Option        | Description                                             |
+| ------------- | ------------------------------------------------------- |
+| `--build <TAG>` | Build with tag before pushing (requires build config in cyan.yaml) |
+
+##### Arguments
+
+| Argument  | Required | Description   |
+| --------- | -------- | ------------- |
+| `[IMAGE]` | No       | Image name    |
+| `[TAG]`   | No       | Image tag     |
+
+#### `push group`
+
+Push a template group (meta-template that combines other templates) to the registry.
+
+<Callout type="info">
+Groups are config-only artifacts with no Docker images. Define the group structure in `cyan.yaml` and push without specifying images.
+</Callout>
+
+```bash -c
+cyanprint push --token <TOKEN> group
+```
+
+## `cyanprint test`
+
+Automated snapshot-based testing for templates, processors, plugins, and resolvers. Unlike `try` (interactive development testing), `test` runs automated test cases defined in `test.cyan.yaml` and compares output against expected snapshots.
+
+```bash -c
+cyanprint test <COMMAND>
+```
+
+### Subcommands
+
+#### `test init`
+
+Auto-generate test cases by walking a template's Q&A tree. For each question, all possible answer branches are explored to produce test combinations.
+
+<Callout type="info">
+`test init` is only available for templates. Processors, plugins, and resolvers require manually creating `test.cyan.yaml`.
+</Callout>
+
+```bash -c
+cyanprint test init [PATH] [OPTIONS]
+```
+
+##### Arguments
+
+| Argument | Required | Description                              |
+| -------- | -------- | ---------------------------------------- |
+| `[PATH]` | No       | Path to template directory (default: `.`) |
+
+##### Options
+
+| Option                         | Default                           | Description                                    |
+| ------------------------------ | --------------------------------- | ---------------------------------------------- |
+| `--max-combinations <N>`       | `30`                              | Maximum test combinations to generate          |
+| `--text-seed <VALUE>`          | `"dummy"`                         | Seed value for Text question answers           |
+| `--password-seed <VALUE>`      | `"secret"`                        | Seed value for Password question answers       |
+| `--date-seed <VALUE>`          | today's date                      | Seed value for Date question answers (YYYY-MM-DD) |
+| `-i, --interactive`            | -                                 | Interactively select which branches to explore |
+| `-p, --parallel <N>`           | `1`                               | Parallel test cases for snapshot generation    |
+| `-o, --output <DIR>`           | `.cyan_output`                    | Output directory for test results              |
+| `--config <PATH>`              | `cyan.yaml`                       | Path to build config file                      |
+| `-c, --coordinator-endpoint`   | `http://coord.cyanprint.dev:9000` | Coordinator URL                                |
+| `--disable-daemon-autostart`   | -                                 | Skip automatic daemon start                    |
+
+#### `test template`
+
+Run snapshot tests for a template.
+
+```bash -c
+cyanprint test template [PATH] [OPTIONS]
+```
+
+##### Arguments
+
+| Argument | Required | Description                              |
+| -------- | -------- | ---------------------------------------- |
+| `[PATH]` | No       | Path to template directory (default: `.`) |
+
+##### Options
+
+| Option                         | Default                           | Description                               |
+| ------------------------------ | --------------------------------- | ----------------------------------------- |
+| `--test <NAME>`                | -                                 | Run only a specific test by name          |
+| `--parallel <N>`               | `1`                               | Number of parallel test cases             |
+| `--update-snapshots`           | -                                 | Update expected snapshots with actual output |
+| `-o, --output <DIR>`           | `.cyan_output`                    | Output directory for test results         |
+| `--config <PATH>`              | `cyan.yaml`                       | Path to build config file                 |
+| `--junit <PATH>`               | -                                 | Write JUnit XML report to file            |
+| `-c, --coordinator-endpoint`   | `http://coord.cyanprint.dev:9000` | Coordinator URL                           |
+| `--disable-daemon-autostart`   | -                                 | Skip automatic daemon start               |
+
+#### `test processor`
+
+Run snapshot tests for a processor.
+
+```bash -c
+cyanprint test processor [PATH] [OPTIONS]
+```
+
+Arguments and options are the same as `test template`.
+
+#### `test plugin`
+
+Run snapshot tests for a plugin.
+
+```bash -c
+cyanprint test plugin [PATH] [OPTIONS]
+```
+
+Arguments and options are the same as `test template`.
+
+#### `test resolver`
+
+Run snapshot tests for a resolver.
+
+```bash -c
+cyanprint test resolver [PATH] [OPTIONS]
+```
+
+Arguments and options are the same as `test template`.
+
+### Environment Variables
+
+| Variable               | Corresponding Flag           |
+| ---------------------- | ---------------------------- |
+| `CYANPRINT_COORDINATOR`| `-c, --coordinator-endpoint` |
+
+### Test Configuration (`test.cyan.yaml`)
+
+Test cases are defined in a `test.cyan.yaml` file at the project root:
+
+```yaml -c
+tests:
+  - name: my-test-case
+    expected:
+      type: snapshot
+      value:
+        path: ./fixtures/expected/my-test-case
+    # Template-specific fields:
+    answer_state:
+      project_name:
+        type: String
+        value: "test-project"
+    deterministic_state:
+      seed: "12345"
+    validate:
+      - "bun install --dry-run"
+    # Processor-specific fields:
+    input: ./fixtures/input
+    config: {}
+    globs:
+      - pattern: "**/*.ts"
+        type: Template
+    # Resolver-specific fields:
+    resolver_inputs:
+      - path: ./inputs/template-a
+        origin:
+          template: template-a
+          layer: 0
+```
+
+### Snapshot Comparison Rules
+
+| File Type        | Comparison Method                             |
+| ---------------- | --------------------------------------------- |
+| `.json` files    | Deep comparison (field order ignored)         |
+| Other text files | Exact string match (trailing whitespace trimmed) |
+| Binary files     | Skipped (reported but not compared)           |
+
+Extra files in actual output or missing files from expected output cause test failure.
+
+## Related
+
+- [Installation Guide](/docs/user/how-to/install)
+- [Create a Project](/docs/user/how-to/create-project)
+- [Manage the Daemon](/docs/user/how-to/manage-daemon)

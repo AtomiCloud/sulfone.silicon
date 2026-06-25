@@ -1,0 +1,28 @@
+---
+title: Helium
+description: CyanPrint SDKs for multiple languages
+---
+
+# sulfone.helium
+
+Helium provides SDKs for developing CyanPrint templates, processors, plugins, and resolvers. It supports multiple programming languages with consistent APIs based on an inquirer pattern.
+
+## Repository
+
+[github.com/AtomiCloud/sulfone.helium](https://github.com/AtomiCloud/sulfone.helium)
+
+## Tech Stack
+
+| Language | Package | Purpose |
+| -------- | ------- | ------- |
+| TypeScript | `@atomicloud/cyan-sdk` | TypeScript/JavaScript templates, processors, plugins, resolvers |
+| Python | `cyanprintsdk` | Python templates, processors, plugins, resolvers |
+| C# | `AtomiCloud.CyanPrint` | .NET templates, processors, plugins, resolvers |
+
+## Overview
+
+All SDKs use an inquirer pattern (`IInquirer`) for collecting user input and a determinism interface (`IDeterminism`) for generating consistent values across template runs. Templates return a `Cyan` object that defines how files should be processed through processors and plugins. The repository is structured with separate SDK directories for each language under `sdks/`.
+
+## Getting Started
+
+See the repository README for setup and contributing instructions.

@@ -1,0 +1,156 @@
+---
+title: SDK Overview
+description: CyanPrint SDK for template development
+---
+
+import { Tabs, Tab } from 'fumadocs-ui/components/tabs';
+import { Cards, Card } from 'fumadocs-ui/components/card';
+
+# SDK Overview
+
+The CyanPrint SDK (`@atomicloud/cyan-sdk`) provides the APIs for creating templates, processors, and plugins.
+
+## Installation
+
+<Tabs items={['npm', 'yarn', 'pnpm']}>
+  <Tab value="npm">
+
+```bash -c
+npm install @atomicloud/cyan-sdk
+```
+
+  </Tab>
+  <Tab value="yarn">
+
+```bash -c
+yarn add @atomicloud/cyan-sdk
+```
+
+  </Tab>
+  <Tab value="pnpm">
+
+```bash -c
+pnpm add @atomicloud/cyan-sdk
+```
+
+  </Tab>
+</Tabs>
+
+## Core Exports
+
+### Entry Points
+
+| Export | Purpose |
+|--------|---------|
+| `StartTemplateWithLambda` | Entry point for templates |
+| `StartProcessorWithLambda` | Entry point for processors |
+| `StartPluginWithLambda` | Entry point for plugins |
+| `StartResolverWithLambda` | Entry point for resolvers |
+
+### Interfaces
+
+| Interface | Description |
+|-----------|-------------|
+| `IInquirer` | Ask user questions |
+| `IDeterminism` | Get deterministic values via `get(key, origin)` |
+
+### Types
+
+| Type | Description |
+|------|-------------|
+| `GlobType` | File processing types (`Template = 0`, `Copy = 1`) |
+| `CyanGlob` | File glob configuration |
+| `Cyan` | Template configuration structure (processors and plugins) |
+
+## Quick Start
+
+### Template Entry Point
+
+```ts cyan.ts -c
+import { StartTemplateWithLambda, GlobType } from '@atomicloud/cyan-sdk';
+
+StartTemplateWithLambda(async (i, d) => {
+  // i: IInquirer - ask questions
+  // d: IDeterminism - get deterministic values
+
+  return {
+    processors: [{
+      name: 'cyan/default',
+      files: [{ glob: '**/*', exclude: [], type: GlobType.Template }],
+      config: { vars: {} }
+    }],
+    plugins: []
+  };
+});
+```
+
+### Using IInquirer
+
+```ts -c
+// Text input
+const name = await i.text('Project name?', 'project.name', 'Enter name');
+
+// Selection
+const license = await i.select('License?', ['MIT', 'Apache-2.0'], 'project.license', 'Choose');
+
+// Confirmation
+const typescript = await i.confirm('Use TypeScript?', 'project.typescript', 'Add TS config');
+
+// Checkbox (multi-select)
+const features = await i.checkbox('Features?', ['ESLint', 'Prettier'], 'project.features', 'Select');
+
+// Date selection (returns string in ISO format)
+const startDate = await i.dateSelect('Start date?', 'project.startDate', 'Select date');
+```
+
+### Using IDeterminism
+
+```ts -c
+// Get deterministic value with key and origin function
+// The key identifies the value, origin provides a default if not cached
+const projectId = d.get('project.id', () => crypto.randomUUID());
+
+// Get deterministic timestamp
+const createdAt = d.get('created.at', () => new Date().toISOString());
+
+// Get sequential-style value for a category
+const userId = d.get('user.id', () => `user-${Date.now()}`);
+```
+
+## SDK Reference Sections
+
+<Cards>
+  <Card href="/docs/developer/templates/reference/sdk/inquirer" title="IInquirer">
+    Question asking API for interactive prompts
+  </Card>
+  <Card href="/docs/developer/templates/reference/sdk/cyan-config" title="Cyan Config">
+    Configuration structure for templates
+  </Card>
+  <Card href="/docs/developer/templates/reference/sdk/globbing" title="Globbing">
+    File pattern matching configuration
+  </Card>
+  <Card href="/docs/developer/templates/reference/sdk/types" title="Types">
+    TypeScript type definitions
+  </Card>
+</Cards>
+
+## Version Compatibility
+
+| SDK Version | CyanPrint CLI | Node.js |
+|-------------|---------------|---------|
+| 1.x | 1.x | 18+ |
+| 2.x | 2.x | 20+ |
+
+## Related
+
+<Cards>
+  <Card href="/docs/developer/templates/tutorials" title="Tutorials">
+    Step-by-step guides
+  </Card>
+  <Card href="/docs/developer/templates/how-to" title="How-to Guides">
+    Task-oriented guides
+  </Card>
+  <Card href="/docs/developer/templates/explanation" title="Explanation">
+    Conceptual deep dives
+  </Card>
+</Cards>

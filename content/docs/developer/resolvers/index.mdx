@@ -1,0 +1,64 @@
+---
+title: Resolvers
+description: Resolve file conflicts from layered templates
+---
+
+import { Cards, Card } from 'fumadocs-ui/components/card';
+
+# Resolvers
+
+Resolvers handle file conflicts when composing multiple templates. They receive multiple versions of the same file from different template layers and produce a single merged output.
+
+## What Are Resolvers?
+
+When templates are layered (through dependencies or composition), the same file path may be provided by multiple sources. Resolvers:
+
+- Receive all versions of a conflicting file
+- Apply merge logic based on configuration
+- Return a single unified file
+
+## Quick Start
+
+<Cards>
+  <Card href="/docs/developer/resolvers/tutorials/first-resolver" title="Your First Resolver">
+    Build a JSON file merger step by step
+  </Card>
+  <Card href="/docs/developer/resolvers/explanation/what-are-resolvers" title="Understanding Resolvers">
+    Learn when and why to use resolvers
+  </Card>
+</Cards>
+
+## Common Use Cases
+
+| Use Case | Description |
+|----------|-------------|
+| **JSON merge** | Combine configuration files from multiple templates |
+| **YAML merge** | Merge Kubernetes manifests, CI configs |
+| **Text concatenation** | Append content from multiple sources |
+| **Custom logic** | Apply domain-specific merge strategies |
+
+## How Resolvers Work
+
+Resolvers run on port **5553** and receive:
+
+1. **Config** - Configuration from the template's `cyan.yaml`
+2. **Files** - All versions of the file to resolve
+
+The resolver returns a single file with merged content.
+
+## Documentation Sections
+
+<Cards>
+  <Card href="/docs/developer/resolvers/tutorials/first-resolver" title="Tutorials">
+    Step-by-step guides to build resolvers
+  </Card>
+  <Card href="/docs/developer/resolvers/how-to/merge-json" title="How-To Guides">
+    Practical recipes for common tasks
+  </Card>
+  <Card href="/docs/developer/resolvers/reference/sdk" title="SDK Reference">
+    API documentation for all languages
+  </Card>
+  <Card href="/docs/developer/resolvers/explanation/what-are-resolvers" title="Explanation">
+    Understand resolver concepts
+  </Card>
+</Cards>

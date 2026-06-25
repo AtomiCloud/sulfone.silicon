@@ -1,0 +1,490 @@
+---
+title: Why Processors Exist
+description: Understanding the purpose and use cases for custom processors
+---
+
+import { Tabs, Tab } from 'fumadocs-ui/components/tabs';
+
+# Why Processors Exist
+
+Processors exist because different projects need different file transformation strategies. The default processor covers common cases, but custom processors enable specialized needs.
+
+## The Default Processor
+
+CyanPrint includes a default processor (`cyan/default` - following the `namespace/processor-name` format) that uses Eta templating:
+
+```markdown -c
+# var__projectName__
+
+Created by var__author__ on var__date__.
+```
+
+This works well for simple variable substitution. But what if you need more?
+
+## When Default Isn't Enough
+
+### Different Templating Engines
+
+Your team might prefer different syntax:
+
+| Engine | Syntax | Use Case |
+|--------|--------|----------|
+| **Eta** (default) | `var__name__` | General purpose |
+| **Jinja** | `{{ name }}` | Python ecosystems |
+| **Go Templates** | `{{ .Name }}` | Helm, Kubernetes |
+| **Handlebars** | `{{name}}` | JavaScript projects |
+| **Mustache** | `{{name}}` | Logic-less templates |
+
+<Callout type="info">
+The alternative engines listed above (Jinja, Go Templates, Handlebars, Mustache) and the processor names `custom/jinja`, `custom/go-templates`, and `custom/handlebars` shown in the diagram below are illustrative examples. You would need to create custom processors to use alternative templating engines.
+</Callout>
+
+<Mermaid chart={`graph LR
+    A[Template Files] --> B{Which Engine?}
+    B -->|Eta| C[cyan/default]
+    B -->|Jinja| D[custom/jinja]
+    B -->|Go| E[custom/go-templates]
+    B -->|Handlebars| F[custom/handlebars]
+    C --> G[Output]
+    D --> G
+    E --> G
+    F --> G
+`} />
+
+### Custom Logic
+
+Some transformations go beyond simple variable substitution:
+
+<Tabs items={['TypeScript', 'Python', 'C#']}>
+  <Tab value="TypeScript">
+    ```ts processor.ts -c
+    import { StartProcessorWithLambda, GlobType } from '@atomicloud/cyan-sdk';
+
+    // GraphQL schema -> TypeScript types (illustrative example)
+    StartProcessorWithLambda(async (input, fileHelper) => {
+      // !callout[/fileHelper.read/] Reads all GraphQL schema files from the 'schemas' directory
+      const schemas = fileHelper.read({
+        root: 'schemas',
+        glob: '**/*.graphql',
+        exclude: [],
+        type: GlobType.Template
+      });
+
+      for (const schema of schemas) {
+        // generateTypeScript is a user-defined function
+        const types = generateTypeScript(schema.content);
+        // !callout[/\.generated\.ts/] Changes output file extension
+        schema.relative = schema.relative.replace('.graphql', '.generated.ts');
+        schema.content = types;
+        schema.writeFile();
+      }
+
+      return { directory: input.writeDir };
+    });
+    ```
+  </Tab>
+
+  <Tab value="Python">
+    ```python processor.py -c
+    from atomicloud_cyan_sdk import start_processor_with_fn, GlobType
+
+    # GraphQL schema -> TypeScript types (illustrative example)
+    def start_processor_with_fn(input, file_helper):
+        # !callout[/file_helper.read/] Reads all GraphQL schema files from the 'schemas' directory
+        schemas = file_helper.read({
+            'root': 'schemas',
+            'glob': '**/*.graphql',
+            'exclude': [],
+            'type': GlobType.Template
+        })
+
+        for schema in schemas:
+            # generate_type_script is a user-defined function
+            types = generate_type_script(schema.content)
+            # !callout[/\.generated\.ts/] Changes output file extension
+            schema.relative = schema.relative.replace('.graphql', '.generated.ts')
+            schema.content = types
+            schema.write_file()
+
+        return {'directory': input.write_dir}
+    ```
+  </Tab>
+
+  <Tab value="C#">
+    ```csharp Processor.cs -c
+    using Atomicloud.CyanSdk;
+
+    // GraphQL schema -> TypeScript types (illustrative example)
+    [ProcessorMain]
+    public async Task<ProcessorResult> RunAsync(ProcessorInput input, CyanFileHelper fileHelper)
+    {
+        // !callout[/fileHelper.Read/] Reads all GraphQL schema files from the 'schemas' directory
+        var schemas = fileHelper.Read(new FileGlob
+        {
+            Root = "schemas",
+            Glob = "**/*.graphql",
+            Exclude = Array.Empty<string>(),
+            Type = GlobType.Template
+        });
+
+        foreach (var schema in schemas)
+        {
+            // GenerateTypeScript is a user-defined function
+            var types = GenerateTypeScript(schema.Content);
+            // !callout[/\.generated\.ts/] Changes output file extension
+            schema.Relative = schema.Relative.Replace(".graphql", ".generated.ts");
+            schema.Content = types;
+            schema.WriteFile();
+        }
+
+        return new ProcessorResult { Directory = input.WriteDir };
+    }
+    ```
+  </Tab>
+</Tabs>
+
+#### AST Transformations
+
+<Tabs items={['TypeScript', 'Python', 'C#']}>
+  <Tab value="TypeScript">
+    ```ts processor.ts -c
+    import { StartProcessorWithLambda, GlobType } from '@atomicloud/cyan-sdk';
+
+    // Transform TypeScript using AST (illustrative example)
+    StartProcessorWithLambda(async (input, fileHelper) => {
+      const files = fileHelper.read({
+        root: 'src',
+        glob: '**/*.ts',
+        exclude: [],
+        type: GlobType.Template
+      });
+
+      for (const file of files) {
+        // parseTypeScript, addDeprecationComments, printTypeScript are user-defined
+        // !callout[/parseTypeScript/] Parse source to AST
+        const ast = parseTypeScript(file.content);
+        addDeprecationComments(ast);
+        // !callout[/printTypeScript/] Convert AST back to code
+        file.content = printTypeScript(ast);
+        file.writeFile();
+      }
+
+      return { directory: input.writeDir };
+    });
+    ```
+  </Tab>
+
+  <Tab value="Python">
+    ```python processor.py -c
+    from atomicloud_cyan_sdk import start_processor_with_fn, GlobType
+
+    # Transform TypeScript using AST (illustrative example)
+    def start_processor_with_fn(input, file_helper):
+        files = file_helper.read({
+            'root': 'src',
+            'glob': '**/*.ts',
+            'exclude': [],
+            'type': GlobType.Template
+        })
+
+        for file in files:
+            # parse_type_script, add_deprecation_comments, print_type_script are user-defined
+            # !callout[/parse_type_script/] Parse source to AST
+            ast = parse_type_script(file.content)
+            add_deprecation_comments(ast)
+            # !callout[/print_type_script/] Convert AST back to code
+            file.content = print_type_script(ast)
+            file.write_file()
+
+        return {'directory': input.write_dir}
+    ```
+  </Tab>
+
+  <Tab value="C#">
+    ```csharp Processor.cs -c
+    using Atomicloud.CyanSdk;
+
+    // Transform TypeScript using AST (illustrative example)
+    [ProcessorMain]
+    public async Task<ProcessorResult> RunAsync(ProcessorInput input, CyanFileHelper fileHelper)
+    {
+        var files = fileHelper.Read(new FileGlob
+        {
+            Root = "src",
+            Glob = "**/*.ts",
+            Exclude = Array.Empty<string>(),
+            Type = GlobType.Template
+        });
+
+        foreach (var file in files)
+        {
+            // ParseTypeScript, AddDeprecationComments, PrintTypeScript are user-defined
+            // !callout[/ParseTypeScript/] Parse source to AST
+            var ast = ParseTypeScript(file.Content);
+            AddDeprecationComments(ast);
+            // !callout[/PrintTypeScript/] Convert AST back to code
+            file.Content = PrintTypeScript(ast);
+            file.WriteFile();
+        }
+
+        return new ProcessorResult { Directory = input.WriteDir };
+    }
+    ```
+  </Tab>
+</Tabs>
+
+#### Conditional Processing
+
+<Tabs items={['TypeScript', 'Python', 'C#']}>
+  <Tab value="TypeScript">
+    ```ts processor.ts -c
+    import { StartProcessorWithLambda } from '@atomicloud/cyan-sdk';
+
+    // Process based on config (illustrative example)
+    StartProcessorWithLambda(async (input, fileHelper) => {
+      const config = input.config as { env: 'dev' | 'prod' };
+      // !callout[/resolveAll/] Copies Copy-type files, then returns Template-type files
+      const files = fileHelper.resolveAll();
+
+      for (const file of files) {
+        if (config.env === 'prod') {
+          // removeDebugCode is a user-defined function
+          file.content = removeDebugCode(file.content);
+        }
+        file.writeFile();
+      }
+
+      return { directory: input.writeDir };
+    });
+    ```
+  </Tab>
+
+  <Tab value="Python">
+    ```python processor.py -c
+    from atomicloud_cyan_sdk import start_processor_with_fn
+
+    # Process based on config (illustrative example)
+    def start_processor_with_fn(input, file_helper):
+        config = input.config  # type: dict with 'env' key
+        # !callout[/resolve_all/] Copies Copy-type files, then returns Template-type files
+        files = file_helper.resolve_all()
+
+        for file in files:
+            if config['env'] == 'prod':
+                # remove_debug_code is a user-defined function
+                file.content = remove_debug_code(file.content)
+            file.write_file()
+
+        return {'directory': input.write_dir}
+    ```
+  </Tab>
+
+  <Tab value="C#">
+    ```csharp Processor.cs -c
+    using Atomicloud.CyanSdk;
+
+    // Process based on config (illustrative example)
+    [ProcessorMain]
+    public async Task<ProcessorResult> RunAsync(ProcessorInput input, CyanFileHelper fileHelper)
+    {
+        var config = input.Config as dynamic;
+        // !callout[/ResolveAll/] Copies Copy-type files, then returns Template-type files
+        var files = fileHelper.ResolveAll();
+
+        foreach (var file in files)
+        {
+            if (config.env == "prod")
+            {
+                // RemoveDebugCode is a user-defined function
+                file.Content = RemoveDebugCode(file.Content);
+            }
+            file.WriteFile();
+        }
+
+        return new ProcessorResult { Directory = input.WriteDir };
+    }
+    ```
+  </Tab>
+</Tabs>
+
+## Processing Pipelines
+
+Processors can be chained for complex transformations:
+
+<Mermaid chart={`graph LR
+    A[Source Files] --> B[Preprocessor]
+    B --> C[Main Processor]
+    C --> D[Postprocessor]
+    D --> E[Final Output]
+`} />
+
+### Example: Multi-Stage Pipeline
+
+`GlobType.Template` (value `0` in Node SDK, `1` in Python SDK) processes files through the templating engine. `GlobType.Copy` copies files without transformation.
+
+<Tabs items={['TypeScript', 'Python', 'C#']}>
+  <Tab value="TypeScript">
+    ```ts config.ts -c
+    import { GlobType } from '@atomicloud/cyan-sdk';
+
+    // In template configuration - this is part of a template's return statement
+    return {
+      // !callout[/processors/] Array of processor stages, executed in order
+      processors: [
+        // Stage 1: Preprocess
+        {
+          name: 'custom/preprocessor',
+          files: [{ root: 'src', glob: '**/*', exclude: [], type: GlobType.Template }],
+          config: { stripComments: true }
+        },
+        // Stage 2: Main templating
+        {
+          name: 'cyan/default',
+          files: [{ root: 'src', glob: '**/*', exclude: [], type: GlobType.Template }],
+          config: { vars: { name, version } }
+        },
+        // Stage 3: Postprocess
+        {
+          name: 'custom/formatter',
+          files: [{ root: 'src', glob: '**/*', exclude: [], type: GlobType.Template }],
+          config: { format: 'prettier' }
+        }
+      ]
+    };
+    ```
+  </Tab>
+
+  <Tab value="Python">
+    ```python config.py -c
+    from atomicloud_cyan_sdk import GlobType
+
+    # In template configuration - this is part of a template's return statement
+    return {
+        # !callout[/processors/] Array of processor stages, executed in order
+        'processors': [
+            # Stage 1: Preprocess
+            {
+                'name': 'custom/preprocessor',
+                'files': [{'root': 'src', 'glob': '**/*', 'exclude': [], 'type': GlobType.Template}],
+                'config': {'stripComments': True}
+            },
+            # Stage 2: Main templating
+            {
+                'name': 'cyan/default',
+                'files': [{'root': 'src', 'glob': '**/*', 'exclude': [], 'type': GlobType.Template}],
+                'config': {'vars': {'name': name, 'version': version}}
+            },
+            # Stage 3: Postprocess
+            {
+                'name': 'custom/formatter',
+                'files': [{'root': 'src', 'glob': '**/*', 'exclude': [], 'type': GlobType.Template}],
+                'config': {'format': 'prettier'}
+            }
+        ]
+    }
+    ```
+  </Tab>
+
+  <Tab value="C#">
+    ```csharp Config.cs -c
+    using Atomicloud.CyanSdk;
+
+    // In template configuration - this is part of a template's return statement
+    return new TemplateResult
+    {
+        // !callout[/Processors/] Array of processor stages, executed in order
+        Processors = new[]
+        {
+            // Stage 1: Preprocess
+            new ProcessorConfig
+            {
+                Name = "custom/preprocessor",
+                Files = new[] { new FileGlob { Root = "src", Glob = "**/*", Exclude = Array.Empty<string>(), Type = GlobType.Template } },
+                Config = new { StripComments = true }
+            },
+            // Stage 2: Main templating
+            new ProcessorConfig
+            {
+                Name = "cyan/default",
+                Files = new[] { new FileGlob { Root = "src", Glob = "**/*", Exclude = Array.Empty<string>(), Type = GlobType.Template } },
+                Config = new { Vars = new { Name = name, Version = version } }
+            },
+            // Stage 3: Postprocess
+            new ProcessorConfig
+            {
+                Name = "custom/formatter",
+                Files = new[] { new FileGlob { Root = "src", Glob = "**/*", Exclude = Array.Empty<string>(), Type = GlobType.Template } },
+                Config = new { Format = "prettier" }
+            }
+        }
+    };
+    ```
+  </Tab>
+</Tabs>
+
+## Separation of Concerns
+
+Processors enable clean separation between:
+
+| Concern | Handled By |
+|---------|-----------|
+| User questions | Template (`IInquirer`) |
+| File transformation | Processor |
+| Post-generation actions | Plugin |
+
+<Mermaid chart={`graph TD
+    A[Template] --> B[Ask Questions]
+    B --> C[Define Variables]
+    C --> D[Invoke Processors]
+    D --> E[Processor 1: Eta]
+    D --> F[Processor 2: Custom]
+    E --> G[Output Files]
+    F --> G
+    G --> H[Plugins]
+    H --> I[Final Project]
+`} />
+
+## Extensibility
+
+Processors make CyanPrint extensible:
+
+1. **Core team** provides default processor
+2. **Partners** create specialized processors
+3. **Users** create custom processors for specific needs
+
+<Callout type="info">
+Processors are the primary extension point for file transformation in CyanPrint. If you need to change how files are processed, you need a processor.
+</Callout>
+
+## When to Use Custom Processors
+
+### Use Custom Processor When:
+
+- You need a different templating engine
+- You're doing code generation
+- You need AST-level transformations
+- You have conditional processing logic
+- You're transforming binary files
+- You need multi-step processing
+
+### Use Default Processor When:
+
+- Simple variable substitution is enough
+- You want to use Eta templating
+- No special transformation logic needed
+
+## Related
+
+import { Cards, Card } from 'fumadocs-ui/components/card';
+
+<Cards>
+  <Card href="/docs/developer/processors/explanation/stateless-nature" title="Stateless Nature">
+    Why processors are stateless
+  </Card>
+  <Card href="/docs/developer/processors/tutorials/first-processor" title="First Processor">
+    Create your first processor
+  </Card>
+  <Card href="/docs/developer/templates/explanation/processors-vs-plugins" title="Processors vs Plugins">
+    When to use each
+  </Card>
+</Cards>

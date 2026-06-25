@@ -1,0 +1,194 @@
+---
+title: Execution Flow
+description: Understanding how templates, processors, and plugins execute in CyanPrint
+---
+
+import { Callout } from 'fumadocs-ui/components/callout';
+import { Cards, Card } from 'fumadocs-ui/components/card';
+
+# Execution Flow
+
+This document explains how CyanPrint executes templates, processors, and plugins through the Boron coordinator using containerized environments.
+
+## Overview
+
+When a user runs a command like `cyanprint create <template_ref> [path]`, the following high-level flow occurs:
+
+<Mermaid chart={`flowchart TD
+    A[User runs CLI command] --> B[CLI resolves template from registry]
+    B --> C[CLI requests execution from Boron]
+    C --> D[Boron schedules container]
+    D --> E[Container pulls template image]
+    E --> F[Template executes with inputs]
+    F --> G[Processors transform output]
+    G --> H[Plugins apply modifications]
+    H --> I[Output streamed back to CLI]
+    I --> J[CLI writes files to disk]
+`} />
+
+## Detailed Execution Phases
+
+### Phase 1: Template Resolution
+
+The CLI first resolves the requested template:
+
+<Mermaid chart={`sequenceDiagram
+    participant User
+    participant CLI as Iridium CLI
+    participant Registry as Zinc Registry
+
+    User->>CLI: cyanprint create template-ref
+    CLI->>Registry: GET api/v1/template/slug/{username}/{name}
+    Registry-->>CLI: Template metadata + version info
+    CLI->>CLI: Validate template exists
+    CLI->>CLI: Resolve dependencies
+`} />
+
+During this phase:
+1. The template identifier is parsed (name, version, registry)
+2. Template metadata is fetched from the Zinc registry
+3. Dependencies are resolved transitively
+4. Input schema is retrieved for validation
+
+### Phase 2: Input Collection
+
+Once the template is resolved, inputs are collected:
+
+<Mermaid chart={`flowchart LR
+    A[Template Schema] --> B{Inputs Provided?}
+    B -->|Yes| C[Validate Against Schema]
+    B -->|No| D[Prompt User Interactively]
+    D --> C
+    C -->|Valid| E[Proceed to Execution]
+    C -->|Invalid| F[Show Errors]
+    F --> D
+`} />
+
+Inputs are collected through interactive prompts driven by the template's inquirer schema. The template defines the questions and validation rules, and the SDK handles user interaction.
+
+### Phase 3: Container Scheduling
+
+Boron manages container execution:
+
+<Mermaid chart={`flowchart TD
+    subgraph "Boron Coordinator"
+        A[Receive Execution Request] --> B[Create Job Record]
+        B --> C[Create Container]
+        C --> D[Mount Volumes]
+        D --> E[Start Execution]
+    end
+`} />
+
+### Phase 4: Template Execution
+
+Inside the container, the template executes:
+
+<Mermaid chart={`flowchart TD
+    A[Container Starts] --> B[Initialize SDK Runtime]
+    B --> C[Load Template Module]
+    C --> D["Call template - inquirer, determinism"]
+    D --> E[Process Input Schema]
+    E --> F[Execute Template Logic]
+    F --> G[Return File Tree]
+    G --> H[Container Exits]
+`} />
+
+The template uses the Helium SDK to:
+1. Access validated inputs
+2. Generate files and directories
+3. Set file permissions and metadata
+4. Return a virtual file tree
+
+### Phase 5: Processor Pipeline
+
+Processors transform the template output in parallel:
+
+<Mermaid chart={`flowchart TD
+    A[Template Output] --> B[Semaphore-Based Concurrency]
+    B --> C[Processor 1]
+    B --> D[Processor 2]
+    B --> E[Processor N]
+    C --> F[Final Output]
+    D --> F
+    E --> F
+
+    subgraph "Parallelism Limit"
+        G[Based on runtime.NumCPU]
+    end
+
+    B --> G
+`} />
+
+Processors are primarily **templaters** that perform file transformations:
+
+- **Template engines**: Handlebars, Mustache, Jinja2, etc.
+- **Syntax transformers**: TypeScript compiler, Sass, etc.
+- **File processors**: Copy, rename, organize files
+
+<Callout type="info">
+Formatters, linters, and validators run in the **Plugin** stage (Phase 6), not as processors.
+</Callout>
+
+### Phase 6: Plugin Application
+
+Plugins can modify the final output:
+
+<Mermaid chart={`flowchart TD
+    A[Processor Output] --> B[Load Plugins]
+    B --> C[Plugin 1: plugin method called]
+    C --> D[Plugin 2: plugin method called]
+    D --> E[Plugin N: plugin method called]
+    E --> F[Final File Tree]
+
+    subgraph "Sequential Execution"
+        G["Each plugin sees result of previous plugin"]
+    end
+
+    A --> G
+`} />
+
+### Phase 7: Output Streaming
+
+Results are streamed back to the client:
+
+<Mermaid chart={`sequenceDiagram
+    participant Container
+    participant Boron
+    participant CLI as Iridium CLI
+    participant FS as File System
+
+    Container->>Boron: Generate tar.gz output
+    Boron->>CLI: Stream via HTTP REST (io.Copy)
+    CLI->>FS: Write files incrementally
+    CLI->>CLI: Display progress
+    Container->>Boron: Execution complete
+    Boron->>CLI: Final status
+    CLI->>User: Summary report
+`} />
+
+## Container Lifecycle
+
+<Mermaid chart={`stateDiagram-v2
+    [*] --> Pending: Job Created
+    Pending --> Running: Container Started
+    Running --> Succeeded: Exit 0
+    Running --> Failed: Exit NonZero
+    Succeeded --> [*]: Cleanup
+    Failed --> [*]: Cleanup
+`} />
+
+## Error Handling
+
+| Stage | Error Type | Handling |
+| ----- | ---------- | -------- |
+| Resolution | Template not found | Return error with suggestions |
+| Resolution | Version conflict | Show dependency tree, suggest resolution |
+| Input | Validation failed | Display errors, prompt for correction |
+| Processing | Processor failed | Returns error, stops merge pipeline |
+| Output | Write failure | Retry with elevated permissions, suggest manual path |
+
+## Next Steps
+
+- Learn about specific [Repositories](/docs/contributor/repositories)
+- Set up your [Development Environment](/docs/contributor/development/setup)
+- Return to [Architecture Overview](/docs/contributor/architecture/overview)

@@ -1,0 +1,5 @@
+{
+  "title": "Processors",
+  "icon": "Cpu",
+  "pages": ["index", "tutorials", "how-to", "reference", "explanation"]
+}

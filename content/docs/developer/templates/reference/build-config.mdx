@@ -1,0 +1,268 @@
+---
+title: Build Configuration
+description: Configure Docker buildx builds in cyan.yaml
+---
+
+import { Callout } from 'fumadocs-ui/components/callout';
+import { TypeTable } from 'fumadocs-ui/components/type-table';
+import { Cards, Card } from 'fumadocs-ui/components/card';
+
+# Build Configuration
+
+The `build:` section in `cyan.yaml` configures Docker buildx builds for publishing artifacts to a container registry. This configuration is used by the `cyanprint build` command and the `--build` flag on `cyanprint push`.
+
+<Callout type="info">
+The `build:` section is optional and only needed when you want to build and push Docker images. It's required when using `cyanprint build` or `cyanprint push <artifact> --build <tag>`.
+</Callout>
+
+## Basic Structure
+
+```yaml cyan.yaml -c
+build:
+  registry: ghcr.io/myorg
+  platforms:
+    - linux/amd64
+  images:
+    template:
+      image: my-template
+      dockerfile: docker/Dockerfile.template
+      context: .
+```
+
+## Configuration Reference
+
+### Top-Level Fields
+
+<TypeTable
+  type={{
+    registry: {
+      type: 'string',
+      description: 'Container registry URL (e.g., "ghcr.io/myorg" or "docker.io/user")',
+      required: true,
+    },
+    platforms: {
+      type: 'string[]',
+      description: 'Target platforms for multi-arch builds. Falls back to current platform if not specified.',
+    },
+    images: {
+      type: 'ImagesConfig',
+      description: 'Image configurations for each artifact type. At least one image type must be defined.',
+      required: true,
+    },
+  }}
+/>
+
+### Image Types (under `images:`)
+
+<TypeTable
+  type={{
+    template: {
+      type: 'ImageConfig',
+      description: 'Template image configuration',
+    },
+    blob: {
+      type: 'ImageConfig',
+      description: 'Blob image configuration',
+    },
+    processor: {
+      type: 'ImageConfig',
+      description: 'Processor image configuration',
+    },
+    plugin: {
+      type: 'ImageConfig',
+      description: 'Plugin image configuration',
+    },
+    resolver: {
+      type: 'ImageConfig',
+      description: 'Resolver image configuration',
+    },
+  }}
+/>
+
+### ImageConfig Fields
+
+Each image type (`template`, `blob`, `processor`, `plugin`, `resolver`) accepts these fields:
+
+<TypeTable
+  type={{
+    image: {
+      type: 'string',
+      description: 'Image name for the registry (combined with registry to form full image path)',
+    },
+    dockerfile: {
+      type: 'string',
+      description: 'Path to the Dockerfile (relative to cyan.yaml location)',
+      required: true,
+    },
+    context: {
+      type: 'string',
+      description: 'Build context directory (relative to cyan.yaml location)',
+      required: true,
+    },
+  }}
+/>
+
+<Callout type="warn">
+The `image` field is optional in the schema but required in practice for the build to work. Without it, the image cannot be properly tagged for the registry.
+</Callout>
+
+## Full Image Path
+
+Images are tagged using the pattern:
+
+```
+{registry}/{image}:{tag}
+```
+
+For example, with `registry: ghcr.io/myorg` and `image: my-template`, building with tag `v1.0.0` produces:
+
+```
+ghcr.io/myorg/my-template:v1.0.0
+```
+
+## Examples
+
+### Template with Blob
+
+```yaml cyan.yaml -c
+build:
+  registry: ghcr.io/atomicloud
+  platforms:
+    - linux/amd64
+  images:
+    template:
+      image: my-template
+      dockerfile: cyan/Dockerfile
+      context: ./cyan
+    blob:
+      image: my-template-blob
+      dockerfile: blob.Dockerfile
+      context: .
+```
+
+### Multi-Platform Build
+
+```yaml cyan.yaml -c
+build:
+  registry: ghcr.io/myorg
+  platforms:
+    - linux/amd64
+    - linux/arm64
+  images:
+    template:
+      image: universal-template
+      dockerfile: Dockerfile
+      context: .
+```
+
+### Processor with Custom Dockerfile Location
+
+```yaml cyan.yaml -c
+build:
+  registry: docker.io/myuser
+  platforms:
+    - linux/amd64
+  images:
+    processor:
+      image: my-processor
+      dockerfile: docker/Dockerfile.processor
+      context: ./processor
+```
+
+### All Artifact Types
+
+```yaml cyan.yaml -c
+build:
+  registry: ghcr.io/myorg
+  platforms:
+    - linux/amd64
+    - linux/arm64
+  images:
+    template:
+      image: my-template
+      dockerfile: docker/Dockerfile.template
+      context: .
+    blob:
+      image: my-blob
+      dockerfile: docker/Dockerfile.blob
+      context: ./blob
+    processor:
+      image: my-processor
+      dockerfile: docker/Dockerfile.processor
+      context: ./processor
+    plugin:
+      image: my-plugin
+      dockerfile: docker/Dockerfile.plugin
+      context: ./plugin
+    resolver:
+      image: my-resolver
+      dockerfile: docker/Dockerfile.resolver
+      context: ./resolver
+```
+
+## Usage
+
+### Building Images
+
+Use the `build` command to build and push images:
+
+```bash
+cyanprint build v1.0.0
+```
+
+The command:
+1. Reads the `build:` section from `cyan.yaml`
+2. Builds each defined image using Docker buildx
+3. Pushes images to the configured registry
+
+### Build with Push
+
+Use `push --build` to build and publish in one step:
+
+```bash
+# Build and push a template
+cyanprint push template --build v1.0.0 --token $CYAN_TOKEN
+
+# Build and push a processor
+cyanprint push processor --build v1.0.0 --token $CYAN_TOKEN
+
+# Build and push a plugin
+cyanprint push plugin --build v1.0.0 --token $CYAN_TOKEN
+
+# Build and push a resolver
+cyanprint push resolver --build v1.0.0 --token $CYAN_TOKEN
+```
+
+### Platform Override
+
+Override configured platforms via CLI:
+
+```bash
+# Use CLI-specified platform instead of config
+cyanprint build v1.0.0 --platform linux/amd64
+```
+
+## Platform Resolution
+
+Platforms are resolved in this order:
+
+1. **CLI `--platform` option** (highest priority)
+2. **`build.platforms` from config**
+3. **Current platform** (fallback)
+
+## Related
+
+<Cards>
+  <Card href="/docs/developer/templates/reference/cyan-yaml" title="cyan.yaml Reference">
+    Template metadata configuration
+  </Card>
+  <Card href="/docs/developer/processors/reference/cyan-yaml" title="Processor cyan.yaml">
+    Processor metadata
+  </Card>
+  <Card href="/docs/developer/plugins/reference/cyan-yaml" title="Plugin cyan.yaml">
+    Plugin metadata
+  </Card>
+  <Card href="/docs/developer/resolvers/reference/cyan-yaml" title="Resolver cyan.yaml">
+    Resolver metadata
+  </Card>
+</Cards>

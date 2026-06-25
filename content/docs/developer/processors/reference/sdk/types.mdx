@@ -1,0 +1,1144 @@
+---
+title: Type Definitions
+description: Full type reference for processor SDK
+---
+
+import { Callout } from 'fumadocs-ui/components/callout';
+import { Accordion, Accordions } from 'fumadocs-ui/components/accordion';
+import { Tabs, Tab } from 'fumadocs-ui/components/tabs';
+
+# Type Definitions
+
+Complete type reference for the processor SDK. Use these types when building custom processors to ensure type safety and proper integration with CyanPrint's processing pipeline.
+
+For usage examples, see [Processor Input/Output](/docs/developer/processors/reference/sdk/input-output).
+
+## Core Types
+
+### CyanProcessorInput
+
+The input type received by processor handlers.
+
+<Tabs items={['TypeScript', 'Python', 'C#']}>
+  <Tab value="TypeScript">
+
+```ts
+interface CyanProcessorInput {
+  /**
+   * Path to source files from blob image
+   * @example "/workspace/cyanprint/"
+   */
+  readDir: string;
+
+  /**
+   * Path where processed files should be written
+   * @example "/workspace/output/"
+   */
+  writeDir: string;
+
+  /**
+   * File patterns passed from template configuration
+   */
+  globs: CyanGlob[];
+
+  /**
+   * Custom configuration from template's processor config
+   * Cast to your expected type when using
+   */
+  config: unknown;
+}
+```
+
+  </Tab>
+  <Tab value="Python">
+
+```python
+@dataclass
+class CyanProcessorInput:
+    """
+    Input type received by processor handlers.
+    """
+    # Path to source files from blob image
+    # @example "/workspace/cyanprint/"
+    read_dir: str
+
+    # Path where processed files should be written
+    # @example "/workspace/output/"
+    write_dir: str
+
+    # File patterns passed from template configuration
+    globs: List[CyanGlob]
+
+    # Custom configuration from template's processor config
+    # Cast to your expected type when using
+    config: Any
+```
+
+  </Tab>
+  <Tab value="C#">
+
+```csharp
+/// <summary>
+/// Input type received by processor handlers.
+/// </summary>
+public class CyanProcessorInput
+{
+    /// <summary>
+    /// Path to source files from blob image
+    /// </summary>
+    /// <example>/workspace/cyanprint/</example>
+    public string ReadDir { get; set; }
+
+    /// <summary>
+    /// Path where processed files should be written
+    /// </summary>
+    /// <example>/workspace/output/</example>
+    public string WriteDir { get; set; }
+
+    /// <summary>
+    /// File patterns passed from template configuration
+    /// </summary>
+    public List<CyanGlob> Globs { get; set; }
+
+    /// <summary>
+    /// Custom configuration from template's processor config
+    /// Cast to your expected type when using
+    /// </summary>
+    public object Config { get; set; }
+}
+```
+
+  </Tab>
+</Tabs>
+
+<Callout type="warn">
+  The `config` property is typed as `unknown`. You must cast it to your expected type or use a type guard pattern. See the [Type Guard Pattern](#type-guard-pattern) section below.
+</Callout>
+
+### ProcessorOutput
+
+<Tabs items={['TypeScript', 'Python', 'C#']}>
+  <Tab value="TypeScript">
+
+```ts
+interface ProcessorOutput {
+  /**
+   * Output directory - must be input.writeDir
+   */
+  readonly directory: string;
+}
+```
+
+  </Tab>
+  <Tab value="Python">
+
+```python
+@dataclass
+class ProcessorOutput:
+    """
+    Output type returned by processor handlers.
+    """
+    # Output directory - must be input.write_dir
+    directory: str
+```
+
+  </Tab>
+  <Tab value="C#">
+
+```csharp
+/// <summary>
+/// Output type returned by processor handlers.
+/// </summary>
+public class ProcessorOutput
+{
+    /// <summary>
+    /// Output directory - must be input.WriteDir
+    /// </summary>
+    public string Directory { get; set; }
+}
+```
+
+  </Tab>
+</Tabs>
+
+### GlobType Enum
+
+Specifies the type of file matching for a glob pattern.
+
+<Tabs items={['TypeScript', 'Python', 'C#']}>
+  <Tab value="TypeScript">
+
+```ts
+enum GlobType {
+  /**
+   * Files will be processed through the processor
+   */
+  Template = 0,
+
+  /**
+   * Files will be copied directly without processing
+   */
+  Copy = 1,
+}
+```
+
+  </Tab>
+  <Tab value="Python">
+
+```python
+from enum import IntEnum
+
+class GlobType(IntEnum):
+    """
+    Specifies the type of file matching for a glob pattern.
+    """
+    # Files will be processed through the processor
+    TEMPLATE = 0
+
+    # Files will be copied directly without processing
+    COPY = 1
+```
+
+  </Tab>
+  <Tab value="C#">
+
+```csharp
+/// <summary>
+/// Specifies the type of file matching for a glob pattern.
+/// </summary>
+public enum GlobType
+{
+    /// <summary>
+    /// Files will be processed through the processor
+    /// </summary>
+    Template = 0,
+
+    /// <summary>
+    /// Files will be copied directly without processing
+    /// </summary>
+    Copy = 1
+}
+```
+
+  </Tab>
+</Tabs>
+
+### CyanGlob
+
+<Tabs items={['TypeScript', 'Python', 'C#']}>
+  <Tab value="TypeScript">
+
+```ts
+interface CyanGlob {
+  /**
+   * Base directory for glob matching
+   * @optional Defaults to root of read directory
+   * @example "templates"
+   */
+  root?: string | null;
+
+  /**
+   * Glob pattern to match files
+   * @example "**/*.md"
+   */
+  glob: string;
+
+  /**
+   * Patterns to exclude from matching
+   * @example ["**/*.test.ts"]
+   */
+  exclude: string[];
+
+  /**
+   * Type of glob - determines how files are handled
+   */
+  type: GlobType;
+}
+```
+
+  </Tab>
+  <Tab value="Python">
+
+```python
+@dataclass
+class CyanGlob:
+    """
+    Defines which files to process.
+    """
+    # Glob pattern to match files
+    # @example "**/*.md"
+    glob: str
+
+    # Patterns to exclude from matching
+    # @example ["**/*.test.ts"]
+    exclude: List[str]
+
+    # Type of glob - determines how files are handled
+    type: GlobType
+
+    # Base directory for glob matching
+    # @optional Defaults to root of read directory
+    # @example "templates"
+    root: Optional[str] = None
+```
+
+  </Tab>
+  <Tab value="C#">
+
+```csharp
+/// <summary>
+/// Defines which files to process.
+/// </summary>
+public class CyanGlob
+{
+    /// <summary>
+    /// Glob pattern to match files
+    /// </summary>
+    /// <example>**/*.md</example>
+    public string GlobPattern { get; set; }
+
+    /// <summary>
+    /// Patterns to exclude from matching
+    /// </summary>
+    /// <example>["**/*.test.ts"]</example>
+    public string[] Exclude { get; set; }
+
+    /// <summary>
+    /// Type of glob - determines how files are handled
+    /// </summary>
+    public GlobType Type { get; set; }
+
+    /// <summary>
+    /// Base directory for glob matching
+    /// </summary>
+    /// <example>templates</example>
+    public string? Root { get; set; }
+}
+```
+
+  </Tab>
+</Tabs>
+
+---
+
+## VirtualFile Types
+
+<Callout type="info" title="Classes, not interfaces">
+  All VirtualFile types are **classes**, not interfaces. This means they have constructor signatures and methods, not just property definitions.
+</Callout>
+
+### VirtualFile
+
+File with loaded content (from `resolveAll()` or `read()`).
+
+<Tabs items={['TypeScript', 'Python', 'C#']}>
+  <Tab value="TypeScript">
+
+```ts
+class VirtualFile {
+  constructor(
+    public baseRead: string,
+    public baseWrite: string,
+    public relative: string,
+    public content: string,
+  ) {}
+
+  /**
+   * Full path to source file
+   */
+  get read(): string;
+
+  /**
+   * Full path to output file
+   */
+  get write(): string;
+
+  /**
+   * Path relative to read directory
+   * @example "docs/readme.md"
+   */
+  relative: string;
+
+  /**
+   * File contents as string
+   */
+  content: string;
+
+  /**
+   * Write file to output directory
+   */
+  writeFile(): void;
+}
+```
+
+  </Tab>
+  <Tab value="Python">
+
+```python
+@dataclass
+class VirtualFile:
+    """
+    File with loaded content (from resolve_all() or read()).
+    """
+    # Path relative to read directory
+    # @example "docs/readme.md"
+    relative: str
+
+    # File contents as string
+    content: str
+
+    @property
+    def read(self) -> str:
+        """Full path to source file"""
+        ...
+
+    @property
+    def write(self) -> str:
+        """Full path to output file"""
+        ...
+
+    def write_file(self) -> None:
+        """Write file to output directory"""
+        ...
+```
+
+  </Tab>
+  <Tab value="C#">
+
+```csharp
+/// <summary>
+/// File with loaded content (from ResolveAll() or Read()).
+/// </summary>
+public class VirtualFile
+{
+    /// <summary>
+    /// Path relative to read directory
+    /// </summary>
+    /// <example>docs/readme.md</example>
+    public string Relative { get; set; }
+
+    /// <summary>
+    /// File contents as string
+    /// </summary>
+    public string Content { get; set; }
+
+    /// <summary>
+    /// Full path to source file
+    /// </summary>
+    public string Read { get; }
+
+    /// <summary>
+    /// Full path to output file
+    /// </summary>
+    public string Write { get; }
+
+    /// <summary>
+    /// Write file to output directory
+    /// </summary>
+    public void WriteFile() { }
+}
+```
+
+  </Tab>
+</Tabs>
+
+### VirtualFileReference
+
+Lazy-loaded file reference (from `get()`).
+
+<Tabs items={['TypeScript', 'Python', 'C#']}>
+  <Tab value="TypeScript">
+
+```ts
+class VirtualFileReference {
+  constructor(
+    public baseRead: string,
+    public baseWrite: string,
+    public relative: string,
+  ) {}
+
+  /**
+   * Full path to source file
+   */
+  get read(): string;
+
+  /**
+   * Full path to output file
+   */
+  get write(): string;
+
+  /**
+   * Path relative to read directory
+   */
+  relative: string;
+
+  /**
+   * Load file content and return VirtualFile
+   * @returns VirtualFile with loaded content
+   */
+  readFile(): VirtualFile;
+}
+```
+
+  </Tab>
+  <Tab value="Python">
+
+```python
+@dataclass
+class VirtualFileReference:
+    """
+    Lazy-loaded file reference (from get()).
+    """
+    # Path relative to read directory
+    relative: str
+
+    @property
+    def read(self) -> str:
+        """Full path to source file"""
+        ...
+
+    @property
+    def write(self) -> str:
+        """Full path to output file"""
+        ...
+
+    def read_file(self) -> VirtualFile:
+        """
+        Load file content and return VirtualFile
+        @returns VirtualFile with loaded content
+        """
+        ...
+```
+
+  </Tab>
+  <Tab value="C#">
+
+```csharp
+/// <summary>
+/// Lazy-loaded file reference (from Get()).
+/// </summary>
+public class VirtualFileReference
+{
+    /// <summary>
+    /// Path relative to read directory
+    /// </summary>
+    public string Relative { get; set; }
+
+    /// <summary>
+    /// Full path to source file
+    /// </summary>
+    public string Read { get; }
+
+    /// <summary>
+    /// Full path to output file
+    /// </summary>
+    public string Write { get; }
+
+    /// <summary>
+    /// Load file content and return VirtualFile
+    /// </summary>
+    /// <returns>VirtualFile with loaded content</returns>
+    public VirtualFile ReadFile() { }
+}
+```
+
+  </Tab>
+</Tabs>
+
+### VirtualFileStream
+
+Streaming file access (from `readAsStream()`). Wraps Node.js streams directly.
+
+<Tabs items={['TypeScript', 'Python', 'C#']}>
+  <Tab value="TypeScript">
+
+```ts
+class VirtualFileStream {
+  constructor(
+    public reader: fs.ReadStream,
+    public writer: fs.WriteStream,
+  ) {}
+}
+```
+
+  </Tab>
+  <Tab value="Python">
+
+```python
+# Note: VirtualFileStream is not available in Python SDK
+# Use read() or get() instead for large files
+```
+
+  </Tab>
+  <Tab value="C#">
+
+```csharp
+/// <summary>
+/// Streaming file access (from ReadAsStream()).
+/// </summary>
+public class VirtualFileStream
+{
+    /// <summary>
+    /// Stream for reading source file
+    /// </summary>
+    public Stream Reader { get; }
+
+    /// <summary>
+    /// Stream for writing output file
+    /// </summary>
+    public Stream Writer { get; }
+}
+```
+
+  </Tab>
+</Tabs>
+
+---
+
+## CyanFileHelper
+
+Class providing file operations for processors.
+
+<Tabs items={['TypeScript', 'Python', 'C#']}>
+  <Tab value="TypeScript">
+
+```ts
+class CyanFileHelper {
+  constructor(
+    private readonly _readDir: string,
+    private readonly _writeDir: string,
+    private readonly globs: CyanGlob[],
+  ) {}
+
+  /**
+   * Resolved read directory path
+   */
+  get readDir(): string;
+
+  /**
+   * Resolved write directory path
+   */
+  get writeDir(): string;
+
+  /**
+   * Load all files matching processor globs into memory
+   * Files with GlobType.Copy are copied directly
+   * Files with GlobType.Template are loaded and returned
+   * @returns Array of files with content
+   */
+  resolveAll(): VirtualFile[];
+
+  /**
+   * Load specific files matching glob pattern
+   * @param glob - Pattern to match
+   * @returns Array of matching files with content
+   */
+  read(glob: CyanGlob): VirtualFile[];
+
+  /**
+   * Get file references without loading content
+   * @param glob - Pattern to match
+   * @returns Array of file references
+   */
+  get(glob: CyanGlob): VirtualFileReference[];
+
+  /**
+   * Stream files for memory-efficient processing
+   * @param glob - Pattern to match
+   * @returns Array of streaming file handles
+   */
+  readAsStream(glob: CyanGlob): VirtualFileStream[];
+
+  /**
+   * Copy files directly to output without loading
+   * @param glob - Pattern to match
+   */
+  copy(glob: CyanGlob): void;
+}
+```
+
+  </Tab>
+  <Tab value="Python">
+
+```python
+class CyanFileHelper:
+    """
+    Class providing file operations for processors.
+    """
+
+    @property
+    def read_dir(self) -> str:
+        """Resolved read directory path"""
+        ...
+
+    @property
+    def write_dir(self) -> str:
+        """Resolved write directory path"""
+        ...
+
+    def resolve_all(self) -> List[VirtualFile]:
+        """
+        Load all files matching processor globs into memory
+        Files with GlobType.COPY are copied directly
+        Files with GlobType.TEMPLATE are loaded and returned
+        @returns List of files with content
+        """
+        ...
+
+    def read(self, glob: CyanGlob) -> List[VirtualFile]:
+        """
+        Load specific files matching glob pattern
+        @param glob - Pattern to match
+        @returns List of matching files with content
+        """
+        ...
+
+    def get(self, glob: CyanGlob) -> List[VirtualFileReference]:
+        """
+        Get file references without loading content
+        @param glob - Pattern to match
+        @returns List of file references
+        """
+        ...
+
+    # Note: read_as_stream is not available in Python SDK
+    # Use read() or get() instead for large files
+
+    def copy(self, glob: CyanGlob) -> None:
+        """
+        Copy files directly to output without loading
+        @param glob - Pattern to match
+        """
+        ...
+```
+
+  </Tab>
+  <Tab value="C#">
+
+```csharp
+/// <summary>
+/// Class providing file operations for processors.
+/// </summary>
+public class CyanFileHelper
+{
+    /// <summary>
+    /// Resolved read directory path
+    /// </summary>
+    public string ReadDir { get; }
+
+    /// <summary>
+    /// Resolved write directory path
+    /// </summary>
+    public string WriteDir { get; }
+
+    /// <summary>
+    /// Load all files matching processor globs into memory
+    /// Files with GlobType.Copy are copied directly
+    /// Files with GlobType.Template are loaded and returned
+    /// </summary>
+    /// <returns>Array of files with content</returns>
+    public VirtualFile[] ResolveAll() { }
+
+    /// <summary>
+    /// Load specific files matching glob pattern
+    /// </summary>
+    /// <param name="glob">Pattern to match</param>
+    /// <returns>Array of matching files with content</returns>
+    public VirtualFile[] Read(CyanGlob glob) { }
+
+    /// <summary>
+    /// Get file references without loading content
+    /// </summary>
+    /// <param name="glob">Pattern to match</param>
+    /// <returns>Array of file references</returns>
+    public VirtualFileReference[] Get(CyanGlob glob) { }
+
+    /// <summary>
+    /// Stream files for memory-efficient processing
+    /// </summary>
+    /// <param name="glob">Pattern to match</param>
+    /// <returns>Array of streaming file handles</returns>
+    public VirtualFileStream[] ReadAsStream(CyanGlob glob) { }
+
+    /// <summary>
+    /// Copy files directly to output without loading
+    /// </summary>
+    /// <param name="glob">Pattern to match</param>
+    public void Copy(CyanGlob glob) { }
+}
+```
+
+  </Tab>
+</Tabs>
+
+---
+
+## Handler Function
+
+<Tabs items={['TypeScript', 'Python', 'C#']}>
+  <Tab value="TypeScript">
+
+```ts
+/**
+ * Processor handler function type
+ * @param input - Processor input containing directories, globs, and config
+ * @param fileHelper - File operations API
+ * @returns Promise resolving to processor output
+ */
+type LambdaProcessorFn = (
+  input: CyanProcessorInput,
+  fileHelper: CyanFileHelper
+) => Promise<ProcessorOutput>;
+```
+
+  </Tab>
+  <Tab value="Python">
+
+```python
+# Processor handler function type
+# @param input - Processor input containing directories, globs, and config
+# @param file_helper - File operations API
+# @returns Coroutine resolving to processor output
+AsyncHandler = Callable[[CyanProcessorInput, CyanFileHelper], Awaitable[ProcessorOutput]]
+```
+
+  </Tab>
+  <Tab value="C#">
+
+```csharp
+/// <summary>
+/// Processor handler function type
+/// </summary>
+/// <param name="input">Processor input containing directories, globs, and config</param>
+/// <param name="fileHelper">File operations API</param>
+/// <returns>Task resolving to processor output</returns>
+public delegate Task<ProcessorOutput> LambdaProcessorFn(
+    CyanProcessorInput input,
+    CyanFileHelper fileHelper
+);
+```
+
+  </Tab>
+</Tabs>
+
+---
+
+## Entry Point
+
+### StartProcessorWithLambda
+
+<Tabs items={['TypeScript', 'Python', 'C#']}>
+  <Tab value="TypeScript">
+
+```ts
+/**
+ * Register processor handler
+ * @param handler - Async function implementing processor logic
+ */
+function StartProcessorWithLambda(
+  handler: LambdaProcessorFn
+): void;
+```
+
+  </Tab>
+  <Tab value="Python">
+
+```python
+def start_processor_with_lambda(
+    handler: Callable[[CyanProcessorInput, CyanFileHelper], Awaitable[ProcessorOutput]]
+) -> None:
+    """
+    Register processor handler
+    @param handler - Async function implementing processor logic
+    """
+    ...
+```
+
+  </Tab>
+  <Tab value="C#">
+
+```csharp
+/// <summary>
+/// Register processor handler
+/// </summary>
+/// <param name="handler">Async function implementing processor logic</param>
+public static async Task StartAsync(LambdaProcessorFn handler) { }
+```
+
+  </Tab>
+</Tabs>
+
+---
+
+## Example Patterns
+
+The following sections show common patterns you can use in your processors. These are not SDK types, but examples of how to structure your code.
+
+<Accordions type="single">
+  <Accordion title="Common Config Patterns">
+
+<Tabs items={['TypeScript', 'Python', 'C#']}>
+  <Tab value="TypeScript">
+
+```ts
+// Variable substitution config (like default processor)
+interface VariableConfig {
+  vars: Record<string, string | number | boolean>;
+}
+
+// Feature flags
+interface FeatureConfig {
+  features: string[];
+}
+
+// Output formatting
+interface FormatConfig {
+  indent?: number;
+  newline?: 'lf' | 'crlf';
+  encoding?: 'utf-8' | 'ascii';
+}
+
+// Combined config
+interface ProcessorConfig extends FeatureConfig, FormatConfig {
+  // Processor-specific options
+  customOption?: string;
+}
+```
+
+  </Tab>
+  <Tab value="Python">
+
+```python
+from typing import Dict, List, Union, Optional
+
+# Variable substitution config (like default processor)
+@dataclass
+class VariableConfig:
+    vars: Dict[str, Union[str, int, bool]]
+
+# Feature flags
+@dataclass
+class FeatureConfig:
+    features: List[str]
+
+# Output formatting
+@dataclass
+class FormatConfig:
+    indent: Optional[int] = None
+    newline: Optional[str] = None  # 'lf' or 'crlf'
+    encoding: Optional[str] = None  # 'utf-8' or 'ascii'
+
+# Combined config
+@dataclass
+class ProcessorConfig(FeatureConfig, FormatConfig):
+    # Processor-specific options
+    custom_option: Optional[str] = None
+```
+
+  </Tab>
+  <Tab value="C#">
+
+```csharp
+// Variable substitution config (like default processor)
+public class VariableConfig
+{
+    public Dictionary<string, object> Vars { get; set; }
+}
+
+// Feature flags
+public class FeatureConfig
+{
+    public List<string> Features { get; set; }
+}
+
+// Output formatting
+public class FormatConfig
+{
+    public int? Indent { get; set; }
+    public string? Newline { get; set; }  // "lf" or "crlf"
+    public string? Encoding { get; set; } // "utf-8" or "ascii"
+}
+
+// Combined config
+public class ProcessorConfig : FeatureConfig, FormatConfig
+{
+    // Processor-specific options
+    public string? CustomOption { get; set; }
+}
+```
+
+  </Tab>
+</Tabs>
+
+  </Accordion>
+  <Accordion title="Error Handling Patterns">
+
+<Tabs items={['TypeScript', 'Python', 'C#']}>
+  <Tab value="TypeScript">
+
+```ts
+// Suggested error classes for custom error handling
+class ProcessorError extends Error {
+  constructor(message: string, public readonly file?: string) {
+    super(message);
+    this.name = 'ProcessorError';
+  }
+}
+
+class FileNotFoundError extends ProcessorError {
+  constructor(path: string) {
+    super(`File not found: ${path}`, path);
+    this.name = 'FileNotFoundError';
+  }
+}
+
+class TransformError extends ProcessorError {
+  constructor(message: string, file: string, public readonly line?: number) {
+    super(`${message} in ${file}${line ? `:${line}` : ''}`, file);
+    this.name = 'TransformError';
+  }
+}
+```
+
+  </Tab>
+  <Tab value="Python">
+
+```python
+# Suggested error classes for custom error handling
+class ProcessorError(Exception):
+    def __init__(self, message: str, file: str = None):
+        super().__init__(message)
+        self.file = file
+        self.name = 'ProcessorError'
+
+class FileNotFoundError(ProcessorError):
+    def __init__(self, path: str):
+        super().__init__(f"File not found: {path}", path)
+        self.name = 'FileNotFoundError'
+
+class TransformError(ProcessorError):
+    def __init__(self, message: str, file: str, line: int = None):
+        super().__init__(f"{message} in {file}{f':{line}' if line else ''}", file)
+        self.line = line
+        self.name = 'TransformError'
+```
+
+  </Tab>
+  <Tab value="C#">
+
+```csharp
+// Suggested error classes for custom error handling
+public class ProcessorError : Exception
+{
+    public string? File { get; }
+    public ProcessorError(string message, string? file = null) : base(message)
+    {
+        File = file;
+    }
+}
+
+public class FileNotFoundError : ProcessorError
+{
+    public FileNotFoundError(string path) : base($"File not found: {path}", path) { }
+}
+
+public class TransformError : ProcessorError
+{
+    public int? Line { get; }
+    public TransformError(string message, string file, int? line = null)
+        : base($"{message} in {file}{(line.HasValue ? $":{line}" : "")}", file)
+    {
+        Line = line;
+    }
+}
+```
+
+  </Tab>
+</Tabs>
+
+  </Accordion>
+  <Accordion title="Type Guard Pattern">
+
+Example pattern for safely casting the config:
+
+<Tabs items={['TypeScript', 'Python', 'C#']}>
+  <Tab value="TypeScript">
+
+```ts
+// Example type guard for checking config shape
+function isVariableConfig(config: unknown): config is VariableConfig {
+  return typeof config === 'object' && config !== null && 'vars' in config;
+}
+
+// Usage
+StartProcessorWithLambda(async (input, fileHelper) => {
+  if (isVariableConfig(input.config)) {
+    const vars = input.config.vars;
+    // ...
+  }
+
+  return {
+    directory: input.writeDir,
+  };
+});
+```
+
+  </Tab>
+  <Tab value="Python">
+
+```python
+# Example pattern for safely validating config
+def is_variable_config(config: Any) -> bool:
+    return isinstance(config, dict) and 'vars' in config
+
+# Usage
+async def handler(input, file_helper):
+    if is_variable_config(input.config):
+        vars = input.config['vars']
+        # ...
+
+    return {"directory": input.write_dir}
+
+start_processor_with_lambda(handler)
+```
+
+  </Tab>
+  <Tab value="C#">
+
+```csharp
+// Example pattern for safely casting config
+public static bool IsVariableConfig(object config)
+{
+    if (config is Dictionary<string, object> dict)
+    {
+        return dict.ContainsKey("vars");
+    }
+    return false;
+}
+
+// Usage
+await Processor.StartAsync(async (input, fileHelper) =>
+{
+    if (IsVariableConfig(input.Config))
+    {
+        var vars = (input.Config as Dictionary<string, object>)["vars"];
+        // ...
+    }
+
+    return new ProcessorOutput { Directory = input.WriteDir };
+});
+```
+
+  </Tab>
+</Tabs>
+
+  </Accordion>
+</Accordions>
+
+---
+
+## Related
+
+- [Processor Input/Output](/docs/developer/processors/reference/sdk/input-output) - Detailed usage
+- [CyanFileHelper](/docs/developer/processors/reference/sdk/file-helper) - File operations
+- [StartProcessorWithLambda](/docs/developer/processors/reference/sdk/start-processor) - Entry point

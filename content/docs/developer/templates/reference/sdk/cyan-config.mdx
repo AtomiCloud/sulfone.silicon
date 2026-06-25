@@ -1,0 +1,276 @@
+---
+title: Cyan Config Reference
+description: Configuration structure for templates
+---
+
+import { Callout } from 'fumadocs-ui/components/callout';
+import { TypeTable } from 'fumadocs-ui/components/type-table';
+
+# Cyan Config Reference
+
+The configuration object returned by `StartTemplateWithLambda` defines how templates are processed.
+
+## Structure Overview
+
+```ts -c
+interface Cyan {
+  processors: CyanProcessor[];
+  plugins: CyanPlugin[];
+}
+```
+
+## Processors
+
+Processors handle file transformation. Most templates use the default processor.
+
+### Single Processor
+
+```ts -c
+return {
+  processors: [{
+    name: 'cyan/default',
+    files: [
+      { root: 'templates', glob: '**/*', exclude: [], type: GlobType.Template }
+    ],
+    config: {
+      vars: {
+        name: 'my-project',
+        version: '1.0.0'
+      }
+    }
+  }]
+};
+```
+
+### Multiple Processors
+
+```ts -c
+return {
+  processors: [
+    {
+      name: 'cyan/default',
+      files: [
+        { root: 'templates', glob: '**/*.md', exclude: [], type: GlobType.Template }
+      ],
+      config: { vars: { name } }
+    },
+    {
+      name: 'myorg/custom-processor',
+      files: [
+        { root: 'codegen', glob: '**/*.graphql', exclude: [], type: GlobType.Template }
+      ],
+      config: { generateTypes: true }
+    }
+  ]
+};
+```
+
+## Processor Configuration
+
+### CyanProcessor Interface
+
+<TypeTable
+  type={{
+    name: {
+      type: 'string',
+      description: 'Processor identifier',
+      required: true,
+    },
+    files: {
+      type: 'CyanGlob[]',
+      description: 'File groups to process',
+      required: true,
+    },
+    config: {
+      type: 'unknown',
+      description: 'Processor-specific configuration',
+      required: true,
+    },
+  }}
+/>
+
+### File Groups
+
+<TypeTable
+  type={{
+    root: {
+      type: 'string | null',
+      description: 'Source directory (optional)',
+    },
+    glob: {
+      type: 'string',
+      description: 'Glob pattern',
+      required: true,
+    },
+    exclude: {
+      type: 'string[]',
+      description: 'Exclude patterns',
+      required: true,
+    },
+    type: {
+      type: 'GlobType',
+      description: 'Processing type',
+      required: true,
+    },
+  }}
+/>
+
+### GlobType Options
+
+| Value | Behavior |
+|-------|----------|
+| `GlobType.Template` | Process with variable substitution |
+| `GlobType.Copy` | Copy without processing |
+
+### Default Processor Config
+
+The `cyan/default` processor accepts:
+
+<TypeTable
+  type={{
+    vars: {
+      type: 'Record<string, unknown>',
+      description: 'Variables for substitution',
+    },
+    parser: {
+      type: 'object',
+      description: 'Parser configuration with varSyntax for custom tag pairs',
+    },
+  }}
+/>
+
+<Callout type="info">
+The `cyan/default` processor is the standard processor included with Cyan. The exact configuration options may vary based on the processor implementation. The `vars` type shown here is an example; the actual config type is `unknown`.
+</Callout>
+
+## Plugins
+
+Plugins run after file generation for post-processing.
+
+<Callout type="info">
+The plugin names shown below (e.g., `cyan/init-git`, `cyan/npm-install`) are examples. Actual plugin names depend on your Cyan registry configuration.
+</Callout>
+
+### Basic Plugin
+
+```ts -c
+return {
+  processors: [/* ... */],
+  plugins: [
+    {
+      name: 'cyan/init-git',
+      config: {
+        commitMessage: 'Initial commit'
+      }
+    }
+  ]
+};
+```
+
+### Multiple Plugins
+
+```ts -c
+return {
+  processors: [/* ... */],
+  plugins: [
+    {
+      name: 'cyan/init-git',
+      config: { commitMessage: 'Initial commit' }
+    },
+    {
+      name: 'cyan/npm-install',
+      config: { packageManager: 'pnpm' }
+    }
+  ]
+};
+```
+
+### Conditional Plugins
+
+```ts -c
+const plugins = [];
+
+if (initGit) {
+  plugins.push({
+    name: 'cyan/init-git',
+    config: { commitMessage: 'Initial commit' }
+  });
+}
+
+return {
+  processors: [/* ... */],
+  plugins
+};
+```
+
+## Complete Example
+
+```ts index.ts -c
+import { StartTemplateWithLambda, GlobType, QuestionType } from '@atomicloud/cyan-sdk';
+
+StartTemplateWithLambda(async (i, d) => {
+  // Collect input
+  const name = await i.text({
+    type: QuestionType.Text,
+    id: 'template.name',
+    message: 'Project name?',
+    default: 'my-project'
+  });
+  const typescript = await i.confirm({
+    type: QuestionType.Confirm,
+    id: 'template.typescript',
+    message: 'TypeScript?',
+    default: true
+  });
+  const docker = await i.confirm({
+    type: QuestionType.Confirm,
+    id: 'template.docker',
+    message: 'Docker?',
+    default: false
+  });
+
+  // Build file groups
+  const files = [
+    { root: 'templates/base', glob: '**/*', exclude: [], type: GlobType.Template }
+  ];
+
+  if (typescript) {
+    files.push({ root: 'templates/typescript', glob: '**/*', exclude: [], type: GlobType.Template });
+  }
+
+  if (docker) {
+    files.push({ root: 'templates/docker', glob: '**/*', exclude: [], type: GlobType.Template });
+  }
+
+  // Build plugins
+  const plugins = [
+    {
+      name: 'cyan/init-git',
+      config: { commitMessage: `Initial commit: ${name}` }
+    }
+  ];
+
+  // Return config
+  return {
+    processors: [{
+      name: 'cyan/default',
+      files,
+      config: {
+        vars: {
+          name,
+          typescript: typescript ? 'true' : 'false',
+          docker: docker ? 'true' : 'false'
+        }
+      }
+    }],
+    plugins
+  };
+});
+```
+
+## Related
+
+- [IInquirer Reference](/docs/developer/templates/reference/sdk/inquirer) - User input API
+- [Globbing Reference](/docs/developer/templates/reference/sdk/globbing) - File patterns
+- [Types Reference](/docs/developer/templates/reference/sdk/types) - Type definitions
+- [Default Processor](/docs/developer/templates/explanation/default-processor) - How cyan/default works

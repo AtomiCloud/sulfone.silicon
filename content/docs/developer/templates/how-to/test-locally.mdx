@@ -1,0 +1,203 @@
+---
+title: Test Templates Locally
+description: Test your template during development without publishing
+---
+
+import { Steps, Step } from 'fumadocs-ui/components/steps';
+import { Tabs, Tab } from 'fumadocs-ui/components/tabs';
+import { Callout } from 'fumadocs-ui/components/callout';
+import { Files, File, Folder } from 'fumadocs-ui/components/files';
+
+# Test Templates Locally
+
+The `try` command lets you test templates during development without publishing to the registry. This provides a fast feedback loop: write code, test, iterate.
+
+## Basic Usage
+
+```bash
+cyanprint try template <template_path> <output_path>
+```
+
+| Argument | Description |
+|----------|-------------|
+| `template_path` | Path to template directory (containing `cyan.yaml`) |
+| `output_path` | Directory for generated output |
+
+## Quick Start
+
+<Steps>
+<Step>
+
+### Create Template Directory
+
+<Files>
+  <File name="cyan.yaml" />
+  <Folder name="cyan" defaultOpen>
+    <File name="index.ts" />
+    <File name="Dockerfile" />
+    <File name="package.json" />
+  </Folder>
+  <Folder name="templates" defaultOpen>
+    <File name="README.md" />
+  </Folder>
+</Files>
+
+</Step>
+<Step>
+
+### Run Try Command
+
+```bash
+cyanprint try template . ./output
+```
+
+This command will:
+
+1. Build the template Docker image automatically
+2. Start the coordinator daemon (if needed)
+3. Prompt for template questions
+4. Generate the project
+
+</Step>
+<Step>
+
+### Check Output
+
+```bash
+ls ./output
+```
+
+</Step>
+</Steps>
+
+## How It Works
+
+The try command automates the full development workflow:
+
+```
+cyan.yaml ──► Docker Build ──► Coordinator ──► Template Execution ──► Output
+```
+
+1. **Build**: Creates the template image from your `cyan.yaml` configuration
+2. **Coordinate**: Starts a local coordinator on port 9000
+3. **Execute**: Runs your template logic with interactive prompts
+4. **Generate**: Writes files to the output directory
+
+<Callout type="info">
+The try command builds images automatically—you don't need to run `docker build` manually.
+</Callout>
+
+## Command Options
+
+### Keep Containers
+
+Preserve containers after execution for debugging:
+
+```bash
+cyanprint try template . ./output --keep-containers
+```
+
+Useful when:
+- Inspecting container state
+- Debugging build issues
+- Checking mounted volumes
+
+### Skip Daemon Autostart
+
+Use an already-running coordinator:
+
+```bash
+cyanprint try template . ./output --disable-daemon-autostart
+```
+
+### Custom Coordinator
+
+Connect to a different coordinator endpoint:
+
+```bash
+cyanprint try template . ./output -c http://coordinator.example.com:9000
+```
+
+## Development Workflow
+
+### Iterative Development
+
+1. **Write** your template logic in `cyan/index.ts`
+2. **Test** with `cyanprint try template . ./output`
+3. **Review** generated files in `./output`
+4. **Iterate** by modifying code and re-running
+
+```bash
+# After making changes
+rm -rf ./output
+cyanprint try template . ./output
+```
+
+<Callout type="info">
+For hot-reloading during development, see [Dev Mode](/docs/developer/templates/how-to/dev-mode) which enables live code updates without rebuilding.
+</Callout>
+
+### Testing Different Inputs
+
+Create multiple output directories to test different configurations:
+
+<Tabs items={['TypeScript', 'Python', 'C#']}>
+<Tab value="TypeScript">
+
+Test with TypeScript configuration:
+
+```bash
+# Test with TypeScript configuration
+cyanprint try template . ./output-ts
+
+# Review TypeScript output
+ls ./output-ts
+cat ./output-ts/package.json
+```
+
+</Tab>
+<Tab value="Python">
+
+Test with Python configuration:
+
+```bash
+# Test with Python configuration
+cyanprint try template . ./output-python
+
+# Review Python output
+ls ./output-python
+cat ./output-python/pyproject.toml
+```
+
+</Tab>
+<Tab value="C#">
+
+Test with C# configuration:
+
+```bash
+# Test with C# configuration
+cyanprint try template . ./output-csharp
+
+# Review C# output
+ls ./output-csharp
+cat ./output-csharp/Project.csproj
+```
+
+</Tab>
+</Tabs>
+
+## Trying Group Templates
+
+Group templates (meta-templates) combine multiple published templates:
+
+```bash
+cyanprint try group <group_path> <output_path>
+```
+
+Groups don't require building because they reference published templates from the registry.
+
+## Next Steps
+
+- [Dev Mode](/docs/developer/templates/how-to/dev-mode) - Hot-reloading during development
+- [Push to Registry](/docs/developer/templates/how-to/push-to-registry) - Publish your template
+- [Add Plugins](/docs/developer/templates/how-to/add-plugins) - Enhance with post-processing

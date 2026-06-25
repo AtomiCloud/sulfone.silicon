@@ -1,0 +1,388 @@
+---
+title: Project Structure
+description: Standard file layout for resolver projects
+---
+
+import { Files, File, Folder } from 'fumadocs-ui/components/files';
+import { Callout } from 'fumadocs-ui/components/callout';
+import { Cards, Card } from 'fumadocs-ui/components/card';
+import { Tabs, Tab } from 'fumadocs-ui/components/tabs';
+
+# Project Structure
+
+A resolver project follows a standard layout for consistency and ease of development.
+
+## Basic Structure
+
+<Tabs items={['TypeScript', 'Python', 'C#']}>
+  <Tab value="TypeScript">
+
+<Files>
+  <Folder name="my-resolver" defaultOpen>
+    <File name="index.ts" />
+    <File name="package.json" />
+    <File name="bun.lock" />
+    <File name="Dockerfile" />
+    <File name="cyan.yaml" />
+    <File name="tsconfig.json" />
+    <Folder name="src">
+      <File name="mergers.ts" />
+      <File name="utils.ts" />
+    </Folder>
+  </Folder>
+</Files>
+
+  </Tab>
+  <Tab value="Python">
+
+<Files>
+  <Folder name="my-resolver" defaultOpen>
+    <File name="main.py" />
+    <File name="requirements.txt" />
+    <File name="Dockerfile" />
+    <File name="cyan.yaml" />
+    <Folder name="src">
+      <File name="mergers.py" />
+      <File name="utils.py" />
+    </Folder>
+  </Folder>
+</Files>
+
+  </Tab>
+  <Tab value="C#">
+
+<Files>
+  <Folder name="MyResolver" defaultOpen>
+    <File name="Program.cs" />
+    <File name="MyResolver.csproj" />
+    <File name="Dockerfile" />
+    <File name="cyan.yaml" />
+    <Folder name="Strategies">
+      <File name="DeepMerge.cs" />
+      <File name="Concat.cs" />
+    </Folder>
+  </Folder>
+</Files>
+
+  </Tab>
+</Tabs>
+
+## File Descriptions
+
+### Entry Point File
+
+<Tabs items={['TypeScript', 'Python', 'C#']}>
+  <Tab value="TypeScript">
+
+The main entry point using `StartResolverWithLambda`:
+
+```ts index.ts -c
+import { ResolverOutput, StartResolverWithLambda } from '@atomicloud/cyan-sdk';
+
+StartResolverWithLambda(async (input): Promise<ResolverOutput> => {
+  // Sort files by layer
+  const sorted = [...input.files].sort(
+    (a, b) => a.origin.layer - b.origin.layer
+  );
+
+  // Merge content
+  let merged = {};
+  for (const file of sorted) {
+    merged = { ...merged, ...JSON.parse(file.content) };
+  }
+
+  return {
+    path: input.files[0].path,
+    content: JSON.stringify(merged, null, 2)
+  };
+});
+```
+
+  </Tab>
+  <Tab value="Python">
+
+The main entry point using `start_resolver_with_fn`:
+
+```python main.py -c
+import json
+from cyanprintsdk.resolver import start_resolver_with_fn
+from cyanprintsdk.protocol import ResolverInput, ResolverOutput
+
+async def resolver(input: ResolverInput) -> ResolverOutput:
+    # Sort files by layer
+    sorted_files = sorted(input.files, key=lambda f: f.origin.layer)
+
+    # Merge content
+    merged = {}
+    for file in sorted_files:
+        merged = {**merged, **json.loads(file.content)}
+
+    return ResolverOutput(
+        path=input.files[0].path,
+        content=json.dumps(merged, indent=2)
+    )
+
+resolver_main = start_resolver_with_fn(resolver)
+```
+
+  </Tab>
+  <Tab value="C#">
+
+The main entry point using `CyanEngine.StartResolver`:
+
+```csharp Program.cs -c
+using CyanPrintSDK;
+using System.Text.Json;
+
+public static class Resolver
+{
+    public static async Task Main(string[] args)
+    {
+        CyanEngine.StartResolver(args, Resolve);
+    }
+
+    private static Task<ResolverOutput> Resolve(ResolverInput input)
+    {
+        // Sort files by layer
+        var sorted = input.Files.OrderBy(f => f.Origin.Layer).ToList();
+
+        // Merge content
+        var merged = new Dictionary<string, object>();
+        foreach (var file in sorted)
+        {
+            var content = JsonSerializer.Deserialize<Dictionary<string, object>>(file.Content);
+            if (content != null)
+            {
+                foreach (var kvp in content)
+                    merged[kvp.Key] = kvp.Value;
+            }
+        }
+
+        return Task.FromResult(new ResolverOutput(
+            input.Files[0].Path,
+            JsonSerializer.Serialize(merged, new JsonSerializerOptions { WriteIndented = true })
+        ));
+    }
+}
+```
+
+  </Tab>
+</Tabs>
+
+### Dependency File
+
+<Tabs items={['TypeScript', 'Python', 'C#']}>
+  <Tab value="TypeScript">
+
+Define dependencies and scripts in `package.json`:
+
+```json package.json -c
+{
+  "name": "my-resolver",
+  "version": "1.0.0",
+  "type": "module",
+  "scripts": {
+    "start": "bun run index.ts"
+  },
+  "dependencies": {
+    "@atomicloud/cyan-sdk": "^1.0.0"
+  },
+  "devDependencies": {
+    "@types/bun": "latest"
+  }
+}
+```
+
+  </Tab>
+  <Tab value="Python">
+
+Define dependencies in `requirements.txt`:
+
+```text requirements.txt -c
+cyanprintsdk>=1.0.0
+```
+
+  </Tab>
+  <Tab value="C#">
+
+Define dependencies in `.csproj`:
+
+```xml MyResolver.csproj -c
+<Project Sdk="Microsoft.NET.Sdk">
+  <PropertyGroup>
+    <OutputType>Exe</OutputType>
+    <TargetFramework>net8.0</TargetFramework>
+  </PropertyGroup>
+  <ItemGroup>
+    <PackageReference Include="Sulfone.Helium" Version="1.0.0" />
+  </ItemGroup>
+</Project>
+```
+
+  </Tab>
+</Tabs>
+
+### Dockerfile
+
+<Tabs items={['TypeScript', 'Python', 'C#']}>
+  <Tab value="TypeScript">
+
+Container definition for the resolver:
+
+```dockerfile Dockerfile -c
+FROM oven/bun:1.1.30
+
+WORKDIR /app
+
+# Required: Mark as CyanPrint resolver
+LABEL cyanprint.dev=true
+
+# Install dependencies
+COPY package.json .
+COPY bun.lock .
+RUN bun install
+
+# Copy resolver code
+COPY . .
+
+# Run resolver
+CMD ["bun", "run", "index.ts"]
+```
+
+  </Tab>
+  <Tab value="Python">
+
+Container definition for the resolver:
+
+```dockerfile Dockerfile -c
+FROM python:3.11-slim
+
+WORKDIR /app
+
+# Required: Mark as CyanPrint resolver
+LABEL cyanprint.dev=true
+
+# Install dependencies
+COPY requirements.txt .
+RUN pip install --no-cache-dir -r requirements.txt
+
+# Copy resolver code
+COPY . .
+
+# Run resolver
+CMD ["python", "main.py"]
+```
+
+  </Tab>
+  <Tab value="C#">
+
+Container definition for the resolver:
+
+```dockerfile Dockerfile -c
+FROM mcr.microsoft.com/dotnet/sdk:8.0 AS build
+WORKDIR /app
+
+# Required: Mark as CyanPrint resolver
+LABEL cyanprint.dev=true
+
+# Build
+COPY *.csproj .
+RUN dotnet restore
+COPY . .
+RUN dotnet publish -c Release -o out
+
+# Runtime
+FROM mcr.microsoft.com/dotnet/runtime:8.0
+WORKDIR /app
+COPY --from=build /app/out .
+CMD ["dotnet", "MyResolver.dll"]
+```
+
+  </Tab>
+</Tabs>
+
+<Callout type="warn">
+The `LABEL cyanprint.dev=true` line is **required** for the container to be recognized as a CyanPrint resolver.
+</Callout>
+
+### `cyan.yaml`
+
+Metadata for registry publishing:
+
+```yaml cyan.yaml -c
+username: your-username
+name: my-resolver
+description: JSON file resolver for layered templates
+project: https://github.com/org/my-project
+source: https://github.com/org/my-resolver
+email: contact@example.com
+tags:
+  - json
+  - merge
+  - resolver
+readme: README.md
+```
+
+### `tsconfig.json`
+
+TypeScript configuration
+
+```json tsconfig.json -c
+{
+  "compilerOptions": {
+    "target": "ES2022",
+    "module": "ESNext",
+    "moduleResolution": "bundler",
+    "strict": true,
+    "skipLibCheck": true,
+    "esModuleInterop": true
+  },
+  "include": ["*.ts", "src/**/*.ts"]
+}
+```
+
+## Optional Directories
+
+### `src/`
+
+Organize larger resolvers into modules
+
+<Files>
+  <Folder name="src" defaultOpen>
+    <Folder name="strategies">
+      <File name="deep-merge.ts" />
+      <File name="concat.ts" />
+      <File name="distinct.ts" />
+    </Folder>
+    <Folder name="utils">
+      <File name="json-parser.ts" />
+      <File name="validators.ts" />
+    </Folder>
+    <File name="index.ts" />
+  </Folder>
+</Files>
+
+### `tests/`
+
+Unit tests for resolver logic
+
+<Files>
+  <Folder name="tests" defaultOpen>
+    <File name="merge.test.ts" />
+    <File name="utils.test.ts" />
+  </Folder>
+</Files>
+
+## Related
+
+<Cards>
+  <Card href="/docs/developer/resolvers/reference/dockerfile" title="Resolver Dockerfile">
+    Docker configuration details
+  </Card>
+  <Card href="/docs/developer/resolvers/reference/cyan-yaml" title="cyan.yaml Format">
+    Metadata format specification
+  </Card>
+  <Card href="/docs/developer/resolvers/tutorials/first-resolver" title="First Resolver">
+    Step-by-step tutorial
+  </Card>
+</Cards>

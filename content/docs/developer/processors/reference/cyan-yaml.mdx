@@ -1,0 +1,138 @@
+---
+title: cyan.yaml Format
+description: Processor metadata and configuration schema
+---
+
+import { TypeTable } from 'fumadocs-ui/components/type-table';
+
+# cyan.yaml Format
+
+The `cyan.yaml` file contains metadata for publishing your processor to the Cyan registry. This file provides information about the processor for discovery and identification purposes.
+
+## Basic Structure
+
+```yaml -c cyan.yaml
+username: your-username
+name: my-processor
+description: Description of the processor's purpose
+project: https://github.com/org/my-project
+source: https://github.com/org/my-processor
+email: contact@example.com
+tags:
+  - markdown
+  - processing
+readme: README.md
+```
+
+## Required Fields
+
+All fields in the processor's `cyan.yaml` are required:
+
+<TypeTable
+  type={{
+    username: {
+      type: 'string',
+      description: 'Registry username or organization',
+    },
+    name: {
+      type: 'string',
+      description: 'Processor identifier (simple name, no org prefix)',
+    },
+    description: {
+      type: 'string',
+      description: 'Brief description of functionality',
+    },
+    project: {
+      type: 'string',
+      description: 'URL to the main project or organization',
+    },
+    source: {
+      type: 'string',
+      description: "URL to the processor's source code",
+    },
+    email: {
+      type: 'string',
+      description: 'Contact email for the processor maintainer',
+    },
+    tags: {
+      type: 'string[]',
+      description: 'Search keywords for registry discovery',
+    },
+    readme: {
+      type: 'string',
+      description: 'Path to the README file (typically `README.md`)',
+    },
+  }}
+/>
+
+## Full Example
+
+```yaml -c cyan.yaml
+username: atomicloud
+name: markdown-processor
+description: Process markdown files with custom transformations
+project: https://github.com/atomicloud/cyan-processor
+source: https://github.com/atomicloud/markdown-processor
+email: support@atomicloud.com
+tags:
+  - markdown
+  - documentation
+  - processing
+readme: README.md
+```
+
+## Versioning
+
+Version is not specified in `cyan.yaml`. Versioning is managed by the Cyan registry system when you publish your processor. Each push to the registry creates a new version, which can be described using `version_description` in the publish request.
+
+## Config Definition
+
+The `cyan.yaml` file does not define processor configuration options. Configuration is defined at the template level when a template references a processor with config values. The config is passed to the processor at runtime via `input.config`.
+
+For defining config in templates, see [Access Config](/docs/developer/processors/how-to/access-config) for how processors receive and use configuration values.
+
+## Using Config in Processor
+
+The config passed to your processor is typed as `unknown` and you define your own TypeScript interface:
+
+```ts -c processor.ts
+interface MarkdownConfig {
+  features?: string[];
+  frontmatter?: boolean;
+  headingPrefix?: string;
+  formatting?: {
+    lineWidth?: number;
+    preserveBlankLines?: boolean;
+  };
+}
+
+StartProcessorWithLambda(async (input, fileHelper) => {
+  const config: MarkdownConfig = {
+    features: ['toc'],
+    frontmatter: true,
+    ...(input.config as Partial<MarkdownConfig>)
+  };
+
+  // Use config values
+  if (config.features?.includes('toc')) {
+    // Generate table of contents
+  }
+
+  // ...
+});
+```
+
+## Best Practices
+
+- **Use descriptive names** - Choose a clear, descriptive processor name
+- **Provide accurate metadata** - Help users discover and understand your processor
+- **Include relevant tags** - Add tags that help users find your processor in the registry
+- **Maintain a good README** - The referenced README should document processor functionality and usage
+- **Keep contact info current** - Use a valid email for support inquiries
+
+## Related
+
+- [Project Structure](/docs/developer/processors/reference/project-structure) - File layout
+- [Access Config](/docs/developer/processors/how-to/access-config) - Using config in code
+- [Push to Registry](/docs/developer/processors/how-to/push-to-registry) - Publishing your processor
+- [Build Configuration](/docs/developer/templates/reference/build-config) - Docker buildx setup

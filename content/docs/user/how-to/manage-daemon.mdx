@@ -1,0 +1,152 @@
+---
+title: Manage the Daemon
+description: Start and stop the CyanPrint Coordinator daemon for local development
+---
+
+import { Steps, Step } from 'fumadocs-ui/components/steps';
+import { Callout } from 'fumadocs-ui/components/callout';
+
+# Manage the Daemon
+
+CyanPrint has a hosted coordinator at `http://coord.cyanprint.dev:9000` which is used by default — you don't need to run anything locally to create projects.
+
+However, you may want to host the coordinator locally for security or privacy reasons (e.g., to keep template execution on your own machine).
+
+<Callout type="warn">
+Docker must be installed and running before using daemon commands.
+</Callout>
+
+## Export Coordinator Endpoint
+
+When running a local daemon, override the default hosted endpoint:
+
+```bash -c
+export CYANPRINT_COORDINATOR=http://localhost:9000
+```
+
+This tells the CLI to use your local coordinator instead of the hosted one.
+
+## Start the Daemon
+
+<Steps>
+<Step>
+
+### Start with Defaults
+
+```bash -c
+cyanprint daemon start
+```
+
+This starts the coordinator on port 9000 using the latest version.
+
+</Step>
+<Step>
+
+### Verify It's Running
+
+```bash -c
+docker ps | grep cyanprint
+```
+
+You should see a container named `cyanprint-coordinator` running.
+
+</Step>
+</Steps>
+
+## Stop the Daemon
+
+<Steps>
+<Step>
+
+### Stop and Cleanup
+
+```bash -c
+cyanprint daemon stop
+```
+
+This command calls the cleanup endpoint to remove Docker resources and removes the coordinator container.
+
+</Step>
+</Steps>
+
+## Options
+
+### Custom Port
+
+Use a different port if 9000 is in use:
+
+```bash -c
+cyanprint daemon start --port 8080
+```
+
+When using a custom port, specify it with other commands:
+
+```bash -c
+cyanprint create template:1 ./project -c http://localhost:8080
+```
+
+### Specific Version
+
+Use a specific coordinator version instead of latest:
+
+```bash -c
+cyanprint daemon start 1.5.0
+```
+
+### Custom Registry
+
+Point the coordinator to a different registry:
+
+```bash -c
+cyanprint daemon start --registry https://custom-registry.example.com
+```
+
+<Callout type="info">
+The `--registry` option can also be set via the `CYANPRINT_REGISTRY` environment variable.
+</Callout>
+
+## Command Reference
+
+### `daemon start`
+
+| Argument | Default | Description |
+|----------|---------|-------------|
+| `[version]` | `latest` | Coordinator version to use |
+| `--port` | `9000` | Port to host the daemon |
+| `--registry` | Default registry | Registry endpoint for the coordinator |
+
+### `daemon stop`
+
+| Option | Default | Description |
+|--------|---------|-------------|
+| `--port` | `9000` | Port where the daemon is running |
+
+## Troubleshooting
+
+### Docker Not Running
+
+If you see connection errors:
+
+```text
+Error: Failed to connect to Docker daemon
+```
+
+Start Docker Desktop or the Docker daemon.
+
+### Port Already in Use
+
+If port 9000 is taken:
+
+```bash -c
+cyanprint daemon start --port 9001
+```
+
+Or stop any existing daemon first:
+
+```bash -c
+cyanprint daemon stop
+```
+
+## Next Steps
+
+- [Create a Project](/docs/user/how-to/create-project) - Generate from templates

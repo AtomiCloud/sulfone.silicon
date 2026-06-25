@@ -1,0 +1,411 @@
+---
+title: Lazy Load Files
+description: Get file references without loading content
+---
+
+import { Callout } from 'fumadocs-ui/components/callout';
+import { TypeTable } from 'fumadocs-ui/components/type-table';
+import { Tabs, Tab } from 'fumadocs-ui/components/tabs';
+
+# Lazy Load Files
+
+Use `get()` to get file references without loading content. Load content only when needed.
+
+## When to Use
+
+**Best for:**
+- Conditional processing where you may not need all files
+- Checking file paths/extensions before loading
+- Reducing initial memory footprint
+
+<Callout type="info">
+"Lazy" here means deferred loading by you, the developer. The actual file read uses synchronous I/O. For truly memory-efficient large file handling, use `fileHelper.readAsStream()` instead.
+</Callout>
+
+## Usage
+
+<Tabs items={['TypeScript', 'Python', 'C#']}>
+<Tab value="TypeScript">
+
+```ts processor.ts -c
+import { StartProcessorWithLambda } from '@atomicloud/cyan-sdk';
+
+StartProcessorWithLambda(async (input, fileHelper) => {
+  // Get references WITHOUT loading content
+  const refs = fileHelper.get({ root: 'templates', glob: '**/*' });
+
+  for (const ref of refs) {
+    console.log(ref.relative); // Path available immediately
+    // ref.content NOT available - must load explicitly
+
+    // Only load content when needed
+    if (shouldProcess(ref.relative)) {
+      // readFile() returns a VirtualFile with content property
+      const file = ref.readFile();
+      const transformed = processContent(file.content);
+      // Update content and write
+      file.content = transformed;
+      file.writeFile();
+    } else {
+      // Copy without loading - use fileHelper.copy()
+      fileHelper.copy({ root: 'templates', glob: ref.relative });
+    }
+  }
+
+  return { directory: input.writeDir };
+});
+```
+
+</Tab>
+<Tab value="Python">
+
+```python processor.py -c
+from cyanprintsdk import start_processor_with_fn
+from cyanprintsdk.domain.processor.input import ProcessorInput
+from cyanprintsdk.domain.core.fs.cyan_fs_helper import CyanFileHelper
+
+async def my_processor(input: ProcessorInput, fileHelper: CyanFileHelper):
+    # Get references WITHOUT loading content
+    refs = fileHelper.get(root='templates', glob='**/*')
+
+    for ref in refs:
+        print(ref.relative)  # Path available immediately
+        # ref.content NOT available - must load explicitly
+
+        # Only load content when needed
+        if should_process(ref.relative):
+            # read_file() returns a VirtualFile with content property
+            file = ref.read_file()
+            transformed = process_content(file.content)
+            # Update content and write
+            file.content = transformed
+            file.write_file()
+        else:
+            # Copy without loading - use fileHelper.copy()
+            fileHelper.copy(root='templates', glob=ref.relative)
+
+    return {'directory': input.write_directory}
+
+start_processor_with_fn(my_processor)
+```
+
+</Tab>
+<Tab value="C#">
+
+```csharp Processor.cs -c
+using sulfone_helium;
+using sulfone_helium.Domain.Core.FileSystem;
+using sulfone_helium.Domain.Processor;
+
+CyanEngine.StartProcessor(args, async (input, fileHelper) =>
+{
+    // Get references WITHOUT loading content
+    var refs = fileHelper.Get(root: "templates", glob: "**/*");
+
+    foreach (var ref_ in refs)
+    {
+        Console.WriteLine(ref_.Relative); // Path available immediately
+        // ref_.Content NOT available - must load explicitly
+
+        // Only load content when needed
+        if (ShouldProcess(ref_.Relative))
+        {
+            // ReadFile() returns a VirtualFile with Content property
+            var file = ref_.ReadFile();
+            var transformed = ProcessContent(file.Content);
+            // Update content and write
+            file.Content = transformed;
+            file.WriteFile();
+        }
+        else
+        {
+            // Copy without loading - use fileHelper.Copy()
+            fileHelper.Copy(root: "templates", glob: ref_.Relative);
+        }
+    }
+
+    return new ProcessorOutput { Directory = input.WriteDirectory };
+});
+```
+
+</Tab>
+</Tabs>
+
+## VirtualFileReference Properties
+
+<TypeTable
+  type={{
+    relative: {
+      type: 'string',
+      description: 'Path relative to read directory',
+    },
+    baseRead: {
+      type: 'string',
+      description: 'Base read directory path',
+    },
+    baseWrite: {
+      type: 'string',
+      description: 'Base write directory path',
+    },
+    read: {
+      type: 'string',
+      description: 'Full path to read from (getter)',
+    },
+    write: {
+      type: 'string',
+      description: 'Full path to write to (getter)',
+    },
+  }}
+/>
+
+## VirtualFileReference Methods
+
+<TypeTable
+  type={{
+    readFile: {
+      type: '() => VirtualFile',
+      description: 'Load file content synchronously',
+    },
+  }}
+/>
+
+## VirtualFile Properties
+
+Returned by `readFile()`, this class holds the loaded content:
+
+<TypeTable
+  type={{
+    relative: {
+      type: 'string',
+      description: 'Path relative to read directory',
+    },
+    content: {
+      type: 'string',
+      description: 'File content (read/write)',
+    },
+    read: {
+      type: 'string',
+      description: 'Full path to read from (getter)',
+    },
+    write: {
+      type: 'string',
+      description: 'Full path to write to (getter)',
+    },
+  }}
+/>
+
+## VirtualFile Methods
+
+<TypeTable
+  type={{
+    writeFile: {
+      type: '() => void',
+      description: 'Write content to output',
+    },
+  }}
+/>
+
+## Example: Conditional Processing
+
+<Tabs items={['TypeScript', 'Python', 'C#']}>
+<Tab value="TypeScript">
+
+```ts processor.ts -c
+StartProcessorWithLambda(async (input, fileHelper) => {
+  const refs = fileHelper.get({ root: 'templates', glob: '**/*' });
+  const config = input.config as { processMarkdown: boolean };
+
+  for (const ref of refs) {
+    // Only process markdown files if enabled
+    if (config.processMarkdown && ref.relative.endsWith('.md')) {
+      const file = ref.readFile();
+      file.content = transformMarkdown(file.content);
+      file.writeFile();
+    } else {
+      // Copy other files directly using fileHelper.copy()
+      fileHelper.copy({ root: 'templates', glob: ref.relative });
+    }
+  }
+
+  return { directory: input.writeDir };
+});
+```
+
+</Tab>
+<Tab value="Python">
+
+```python processor.py -c
+from cyanprintsdk import start_processor_with_fn
+from cyanprintsdk.domain.processor.input import ProcessorInput
+from cyanprintsdk.domain.core.fs.cyan_fs_helper import CyanFileHelper
+from typing import TypedDict
+
+class Config(TypedDict):
+    processMarkdown: bool
+
+async def my_processor(input: ProcessorInput, fileHelper: CyanFileHelper):
+    refs = fileHelper.get(root='templates', glob='**/*')
+    config: Config = input.config or {'processMarkdown': False}
+
+    for ref in refs:
+        # Only process markdown files if enabled
+        if config.get('processMarkdown') and ref.relative.endswith('.md'):
+            file = ref.read_file()
+            file.content = transform_markdown(file.content)
+            file.write_file()
+        else:
+            # Copy other files directly using fileHelper.copy()
+            fileHelper.copy(root='templates', glob=ref.relative)
+
+    return {'directory': input.write_directory}
+
+start_processor_with_fn(my_processor)
+```
+
+</Tab>
+<Tab value="C#">
+
+```csharp Processor.cs -c
+using sulfone_helium;
+using sulfone_helium.Domain.Core.FileSystem;
+using sulfone_helium.Domain.Processor;
+
+public class Config
+{
+    public bool ProcessMarkdown { get; set; }
+}
+
+CyanEngine.StartProcessor(args, async (input, fileHelper) =>
+{
+    var refs = fileHelper.Get(root: "templates", glob: "**/*");
+    var config = input.Config.Deserialize<Config>() ?? new Config();
+
+    foreach (var ref_ in refs)
+    {
+        // Only process markdown files if enabled
+        if (config.ProcessMarkdown && ref_.Relative.EndsWith(".md"))
+        {
+            var file = ref_.ReadFile();
+            file.Content = TransformMarkdown(file.Content);
+            file.WriteFile();
+        }
+        else
+        {
+            // Copy other files directly using fileHelper.Copy()
+            fileHelper.Copy(root: "templates", glob: ref_.Relative);
+        }
+    }
+
+    return new ProcessorOutput { Directory = input.WriteDirectory };
+});
+```
+
+</Tab>
+</Tabs>
+
+## Example: Process by Extension
+
+<Tabs items={['TypeScript', 'Python', 'C#']}>
+<Tab value="TypeScript">
+
+```ts processor.ts -c
+StartProcessorWithLambda(async (input, fileHelper) => {
+  const refs = fileHelper.get({ root: 'assets', glob: '**/*' });
+
+  for (const ref of refs) {
+    // Process based on file extension
+    if (ref.relative.endsWith('.json')) {
+      const file = ref.readFile();
+      const data = JSON.parse(file.content);
+      // Transform and write back
+      data.processed = true;
+      file.content = JSON.stringify(data, null, 2);
+      file.writeFile();
+    } else {
+      // Copy non-JSON files directly
+      fileHelper.copy({ root: 'assets', glob: ref.relative });
+    }
+  }
+
+  return { directory: input.writeDir };
+});
+```
+
+</Tab>
+<Tab value="Python">
+
+```python processor.py -c
+import json
+from cyanprintsdk import start_processor_with_fn
+from cyanprintsdk.domain.processor.input import ProcessorInput
+from cyanprintsdk.domain.core.fs.cyan_fs_helper import CyanFileHelper
+
+async def my_processor(input: ProcessorInput, fileHelper: CyanFileHelper):
+    refs = fileHelper.get(root='assets', glob='**/*')
+
+    for ref in refs:
+        # Process based on file extension
+        if ref.relative.endswith('.json'):
+            file = ref.read_file()
+            data = json.loads(file.content)
+            # Transform and write back
+            data['processed'] = True
+            file.content = json.dumps(data, indent=2)
+            file.write_file()
+        else:
+            # Copy non-JSON files directly
+            fileHelper.copy(root='assets', glob=ref.relative)
+
+    return {'directory': input.write_directory}
+
+start_processor_with_fn(my_processor)
+```
+
+</Tab>
+<Tab value="C#">
+
+```csharp Processor.cs -c
+using System.Text.Json;
+using sulfone_helium;
+using sulfone_helium.Domain.Core.FileSystem;
+using sulfone_helium.Domain.Processor;
+
+CyanEngine.StartProcessor(args, async (input, fileHelper) =>
+{
+    var refs = fileHelper.Get(root: "assets", glob: "**/*");
+
+    foreach (var ref_ in refs)
+    {
+        // Process based on file extension
+        if (ref_.Relative.EndsWith(".json"))
+        {
+            var file = ref_.ReadFile();
+            var data = JsonSerializer.Deserialize<Dictionary<string, object>>(file.Content);
+            // Transform and write back
+            data["processed"] = true;
+            file.Content = JsonSerializer.Serialize(data, new JsonSerializerOptions { WriteIndented = true });
+            file.WriteFile();
+        }
+        else
+        {
+            // Copy non-JSON files directly
+            fileHelper.Copy(root: "assets", glob: ref_.Relative);
+        }
+    }
+
+    return new ProcessorOutput { Directory = input.WriteDirectory };
+});
+```
+
+</Tab>
+</Tabs>
+
+<Callout type="success">
+Lazy loading is memory-efficient because you only load content for files you actually need to process. Files that don't need transformation can be copied directly using `fileHelper.copy()`.
+</Callout>
+
+## Related
+
+- [Resolve All Files](/docs/developer/processors/how-to/resolve-all-files) - Load all at once
+- [Copy Files](/docs/developer/processors/how-to/copy-files) - Copy without loading
+- [CyanFileHelper API](/docs/developer/processors/reference/sdk/file-helper) - Full API reference

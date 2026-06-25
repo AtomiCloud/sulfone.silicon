@@ -1,0 +1,96 @@
+---
+title: Template Reference
+description: Technical reference documentation for CyanPrint templates
+---
+
+import { Cards, Card } from 'fumadocs-ui/components/card';
+
+# Template Reference
+
+Technical documentation for template structure, configuration, and SDK.
+
+## Project Structure
+
+<Cards>
+  <Card href="/docs/developer/templates/reference/project-structure" title="Project Structure">
+    Template directory organization
+  </Card>
+  <Card href="/docs/developer/templates/reference/cyan-yaml" title="cyan.yaml">
+    Metadata configuration
+  </Card>
+  <Card href="/docs/developer/templates/reference/dockerfiles" title="Dockerfiles">
+    Container configuration
+  </Card>
+  <Card href="/docs/developer/templates/reference/build-config" title="Build Configuration">
+    Docker buildx setup
+  </Card>
+</Cards>
+
+## SDK Reference
+
+Complete API documentation for the CyanPrint SDK:
+
+<Cards>
+  <Card href="/docs/developer/templates/reference/sdk" title="SDK Overview">
+    SDK introduction and exports
+  </Card>
+  <Card href="/docs/developer/templates/reference/sdk/inquirer" title="IInquirer">
+    Question asking API
+  </Card>
+  <Card href="/docs/developer/templates/reference/sdk/cyan-config" title="Cyan Config">
+    Configuration structure
+  </Card>
+  <Card href="/docs/developer/templates/reference/sdk/globbing" title="Globbing">
+    File pattern matching
+  </Card>
+  <Card href="/docs/developer/templates/reference/sdk/types" title="Types">
+    Type definitions
+  </Card>
+</Cards>
+
+## Quick Reference
+
+### Entry Point
+
+```ts -c
+import { StartTemplateWithLambda, GlobType } from '@atomicloud/cyan-sdk';
+
+StartTemplateWithLambda(async (i, d) => {
+  return {
+    processors: [{
+      name: 'cyan/default',
+      files: [{ root: 'templates', glob: '**/*', exclude: [], type: GlobType.Template }],
+      config: { vars: {} }
+    }]
+  };
+});
+```
+
+### Question Types
+
+| Method | Returns | Purpose |
+|--------|---------|---------|
+| `text()` | `string` | Text input |
+| `select()` | `string` | Single selection |
+| `confirm()` | `boolean` | Yes/no |
+| `checkbox()` | `string[]` | Multi-select |
+| `password()` | `string` | Hidden input |
+| `dateSelect()` | `string` | Date selection |
+
+### File Processing
+
+| Type | Behavior |
+|------|----------|
+| `GlobType.Template` | Process with variable substitution |
+| `GlobType.Copy` | Copy without processing |
+
+## Next Steps
+
+<Cards>
+  <Card href="/docs/developer/templates/how-to" title="How-To Guides">
+    Task-oriented guides
+  </Card>
+  <Card href="/docs/developer/templates/explanation" title="Explanation">
+    Conceptual documentation
+  </Card>
+</Cards>

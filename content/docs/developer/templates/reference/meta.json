@@ -1,0 +1,5 @@
+{
+  "title": "Reference",
+  "icon": "Book",
+  "pages": ["project-structure", "cyan-yaml", "dockerfiles", "build-config", "dev-config", "sdk"]
+}

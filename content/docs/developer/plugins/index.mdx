@@ -1,0 +1,213 @@
+---
+title: Plugin Development
+description: Create post-processing plugins for CyanPrint templates
+---
+
+import { Cards, Card } from 'fumadocs-ui/components/card';
+import { Tabs, Tab } from 'fumadocs-ui/components/tabs';
+
+# Plugin Development
+
+Plugins run **after** file generation, enabling post-processing like running commands or modifying files. While processors transform file content, plugins perform operations on the generated project.
+
+## What is a Plugin?
+
+A plugin is a Docker container that:
+
+1. **Receives directory** containing all generated files
+2. **Runs operations** on the directory (commands, file modifications)
+3. **Returns directory** path for the next step
+
+Plugins are the final step in the generation pipeline - they run after all processors have completed.
+
+## Plugin Architecture
+
+<Mermaid chart={`graph TD
+    A[Template Collects Input] --> B[Processors Transform Files]
+    B --> C[Files Written to Directory]
+    C --> D[Plugin Container]
+    E[Plugin Config] --> D
+    D --> F[Run Commands]
+    D --> G[Modify Files]
+    F --> H[Return Directory]
+    G --> H
+    H --> I[Final Output]
+`} />
+
+### Components
+
+| Component | Purpose | Examples |
+|-----------|---------|----------|
+| **Entry Point** | Plugin logic | `StartPluginWithLambda` |
+| **CyanPluginInput** | Input from system | Directory, config |
+| **PluginOutput** | Return value | Directory path |
+| **Shell/Bun** | Command execution | `$` from bun, exec |
+
+## What Plugins Can Do
+
+Plugins have full access to the generated project directory:
+
+| Capability | Example |
+|------------|---------|
+| Initialize git | `git init`, `git add .` |
+| Install dependencies | `npm install`, `bun install` |
+| Run formatters | `prettier --write .`, `biome format .` |
+| Set up hooks | `husky install` |
+| Create symlinks | Link config files |
+| Build steps | `npm run build` |
+| File modifications | Edit generated files |
+
+<Callout type="info">
+Plugins are the only component that can execute shell commands. Processors are stateless file transformers only.
+</Callout>
+
+## Learning Path
+
+### Start Here: Tutorials
+
+Build your first plugin step by step:
+
+<Cards>
+  <Card href="/docs/developer/plugins/tutorials/first-plugin" title="First Plugin">
+    Create a plugin that runs post-processing commands
+  </Card>
+</Cards>
+
+### How-To Guides
+
+Task-oriented guides for common scenarios:
+
+<Cards>
+  <Card href="/docs/developer/plugins/how-to/run-commands" title="Run Shell Commands">
+    Execute commands in the directory
+  </Card>
+  <Card href="/docs/developer/plugins/how-to/modify-files" title="Modify Generated Files">
+    Read and edit files
+  </Card>
+  <Card href="/docs/developer/plugins/how-to/conditional-execution" title="Conditional Execution">
+    Logic based on config
+  </Card>
+  <Card href="/docs/developer/plugins/how-to/push-to-registry" title="Push to Registry">
+    Publish your plugin
+  </Card>
+</Cards>
+
+[View all How-To Guides](/docs/developer/plugins/how-to)
+
+### Reference
+
+Technical documentation for the SDK:
+
+- [StartPluginWithLambda](/docs/developer/plugins/reference/sdk/start-plugin) - Entry point
+- [CyanPluginInput/PluginOutput](/docs/developer/plugins/reference/sdk/input-output) - Interfaces
+- [Type Definitions](/docs/developer/plugins/reference/sdk/types) - Full type reference
+- [Plugin Dockerfile](/docs/developer/plugins/reference/dockerfile) - Container setup
+
+[View all Reference Docs](/docs/developer/plugins/reference)
+
+### Explanation
+
+Deep dives into plugin concepts:
+
+- [What Are Plugins](/docs/developer/plugins/explanation/what-are-plugins) - Purpose and use cases
+- [Plugins vs Processors](/docs/developer/plugins/explanation/plugins-vs-processors) - When to use each
+- [Execution Order](/docs/developer/plugins/explanation/execution-order) - Pipeline sequence
+
+[View all Explanations](/docs/developer/plugins/explanation)
+
+## Quick Example
+
+Here's a minimal plugin that initializes git and installs dependencies:
+
+<Tabs items={['TypeScript', 'Python', 'C#']}>
+  <Tab value="TypeScript">
+
+```ts -c
+import { StartPluginWithLambda } from '@atomicloud/cyan-sdk';
+import { $ } from 'bun';
+
+StartPluginWithLambda(async (input) => {
+  const { directory, config } = input;
+  const cfg = config as { installDeps?: boolean };
+
+  // Initialize git repository
+  await $`git -C ${directory} init`.quiet();
+
+  // Optionally install dependencies
+  if (cfg.installDeps) {
+    await $`cd ${directory} && npm install`.quiet();
+  }
+
+  return { directory };
+});
+```
+
+  </Tab>
+  <Tab value="Python">
+
+```python -c
+import asyncio
+import subprocess
+from cyanprintsdk.plugin import start_plugin_with_fn
+from cyanprintsdk.protocol import PluginInput, PluginOutput
+
+async def run_plugin(input: PluginInput) -> PluginOutput:
+    cfg = input.config or {}
+    directory = input.directory
+
+    # Initialize git repository
+    subprocess.run(['git', 'init'], cwd=directory, capture_output=True)
+
+    # Optionally install dependencies
+    if cfg.get('installDeps'):
+        subprocess.run(['npm', 'install'], cwd=directory, capture_output=True)
+
+    return PluginOutput(directory=directory)
+
+plugin_main = start_plugin_with_fn(run_plugin)
+```
+
+  </Tab>
+  <Tab value="C#">
+
+```csharp -c
+using CyanPrintSDK;
+using System.Diagnostics;
+
+public static class Plugin
+{
+    [PluginMain]
+    public static async Task<PluginOutput> Run(PluginInput input)
+    {
+        var cfg = input.Config;
+        var directory = input.Directory;
+
+        // Initialize git repository
+        await RunCommand("git", "init", directory);
+
+        // Optionally install dependencies
+        if (cfg.TryGetValue("installDeps", out var installDeps) && installDeps == "true")
+        {
+            await RunCommand("npm", "install", directory);
+        }
+
+        return new PluginOutput { Directory = directory };
+    }
+
+    private static Task RunCommand(string cmd, string args, string cwd)
+    {
+        var psi = new ProcessStartInfo(cmd, args) { WorkingDirectory = cwd };
+        Process.Start(psi)?.WaitForExit();
+        return Task.CompletedTask;
+    }
+}
+```
+
+  </Tab>
+</Tabs>
+
+## Next Steps
+
+- [Create your first plugin](/docs/developer/plugins/tutorials/first-plugin)
+- [Learn what plugins are](/docs/developer/plugins/explanation/what-are-plugins)
+- [Explore the Plugin API](/docs/developer/plugins/reference/sdk/input-output)

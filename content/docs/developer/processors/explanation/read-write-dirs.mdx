@@ -1,0 +1,600 @@
+---
+title: Read and Write Directories
+description: Understanding the directory mechanics in processors
+---
+
+import { Callout } from 'fumadocs-ui/components/callout';
+import { Mermaid } from '@/components/mdx/mermaid';
+import { Tabs, Tab } from 'fumadocs-ui/components/tabs';
+
+# Read and Write Directories
+
+Processors work with two directories: `readDir` for input and `writeDir` for output. Understanding these is key to correct processor implementation.
+
+## Directory Overview
+
+<Mermaid chart={`graph LR
+    subgraph Container
+        A[/workspace/cyanprint/<br/>readDir]
+        B[Processor]
+        C[/workspace/output/<br/>writeDir]
+    end
+
+    A --> B
+    B --> C
+
+    style A fill:#f9f,stroke:#333
+    style C fill:#9f9,stroke:#333
+`} />
+
+| Directory | Path | Purpose | Access |
+|-----------|------|---------|--------|
+| `readDir` | `/workspace/cyanprint/` | Source files | Read-only |
+| `writeDir` | `/workspace/output/` | Generated files | Write-only |
+
+<Callout type="info">
+The paths shown above are typical examples. Actual values depend on your container or deployment configuration.
+</Callout>
+
+## readDir
+
+Contains files from the template's blob image. This is your **source material**.
+
+### Typical Value
+
+```sh -c
+/workspace/cyanprint/
+```
+
+### Contents
+
+Files from the template that match the processor's globs:
+
+```plaintext -c
+/workspace/cyanprint/
+├── templates/
+│   ├── README.md
+│   ├── package.json
+│   └── src/
+│       └── index.ts
+└── config/
+    └── settings.json
+```
+
+### Accessing Files
+
+Use `CyanFileHelper` - never access directly:
+
+<Tabs items={['TypeScript', 'Python', 'C#']}>
+  <Tab value="TypeScript">
+    ```ts processor.ts -c
+    StartProcessorWithLambda(async (input, fileHelper) => {
+      // ✅ Correct: Use fileHelper
+      const files = fileHelper.resolveAll();
+
+      // ❌ Wrong: Direct filesystem access
+      // const content = fs.readFileSync(`${input.readDir}/README.md`);
+
+      return { directory: input.writeDir };
+    });
+    ```
+  </Tab>
+
+  <Tab value="Python">
+    ```python processor.py -c
+    def start_processor_with_fn(input, file_helper):
+        # ✅ Correct: Use file_helper
+        files = file_helper.resolve_all()
+
+        # ❌ Wrong: Direct filesystem access
+        # content = open(f'{input.read_dir}/README.md').read()
+
+        return {'directory': input.write_dir}
+    ```
+  </Tab>
+
+  <Tab value="C#">
+    ```csharp Processor.cs -c
+    [ProcessorMain]
+    public async Task<ProcessorResult> RunAsync(ProcessorInput input, CyanFileHelper fileHelper)
+    {
+        // ✅ Correct: Use fileHelper
+        var files = fileHelper.ResolveAll();
+
+        // ❌ Wrong: Direct filesystem access
+        // var content = File.ReadAllText($"{input.ReadDir}/README.md");
+
+        return new ProcessorResult { Directory = input.WriteDir };
+    }
+    ```
+  </Tab>
+</Tabs>
+
+<Callout type="warn">
+Never access `readDir` directly with `fs` operations. Always use `CyanFileHelper` APIs.
+</Callout>
+
+## writeDir
+
+Where processed files are written. This is your **output location**.
+
+### Typical Value
+
+```sh -c
+/workspace/output/
+```
+
+### Writing Files
+
+Use `writeFile()` on file objects:
+
+<Tabs items={['TypeScript', 'Python', 'C#']}>
+  <Tab value="TypeScript">
+    ```ts processor.ts -c
+    StartProcessorWithLambda(async (input, fileHelper) => {
+      const files = fileHelper.resolveAll();
+
+      files.forEach(file => {
+        // Transform content
+        file.content = transform(file.content);
+
+        // Write to writeDir
+        file.writeFile();
+      });
+
+      return { directory: input.writeDir };
+    });
+    ```
+  </Tab>
+
+  <Tab value="Python">
+    ```python processor.py -c
+    def start_processor_with_fn(input, file_helper):
+        files = file_helper.resolve_all()
+
+        for file in files:
+            # Transform content
+            file.content = transform(file.content)
+
+            # Write to write_dir
+            file.write_file()
+
+        return {'directory': input.write_dir}
+    ```
+  </Tab>
+
+  <Tab value="C#">
+    ```csharp Processor.cs -c
+    [ProcessorMain]
+    public async Task<ProcessorResult> RunAsync(ProcessorInput input, CyanFileHelper fileHelper)
+    {
+        var files = fileHelper.ResolveAll();
+
+        foreach (var file in files)
+        {
+            // Transform content
+            file.Content = Transform(file.Content);
+
+            // Write to WriteDir
+            file.WriteFile();
+        }
+
+        return new ProcessorResult { Directory = input.WriteDir };
+    }
+    ```
+  </Tab>
+</Tabs>
+
+### VirtualFile Paths
+
+The `relative` property is the path **between** read and write:
+
+<Tabs items={['TypeScript', 'Python', 'C#']}>
+  <Tab value="TypeScript">
+    ```ts processor.ts -c
+    // Input: /workspace/cyanprint/templates/README.md
+    // file.relative = 'templates/README.md'
+    // Output: /workspace/output/templates/README.md
+    ```
+  </Tab>
+
+  <Tab value="Python">
+    ```python processor.py -c
+    # Input: /workspace/cyanprint/templates/README.md
+    # file.relative = 'templates/README.md'
+    # Output: /workspace/output/templates/README.md
+    ```
+  </Tab>
+
+  <Tab value="C#">
+    ```csharp Processor.cs -c
+    // Input: /workspace/cyanprint/templates/README.md
+    // file.Relative = "templates/README.md"
+    // Output: /workspace/output/templates/README.md
+    ```
+  </Tab>
+</Tabs>
+
+<Mermaid chart={`graph LR
+    A["/workspace/cyanprint/"] --> B["templates/README.md"]
+    B --> C["/workspace/output/"]
+
+    B -.->|"file.relative"| B
+`} />
+
+## Path Resolution
+
+### How Paths Work
+
+<Tabs items={['TypeScript', 'Python', 'C#']}>
+  <Tab value="TypeScript">
+    ```ts processor.ts -c
+    // Full input path
+    const inputPath = `${input.readDir}/${file.relative}`;
+    // Example: /workspace/cyanprint/templates/README.md
+
+    // Full output path
+    const outputPath = `${input.writeDir}/${file.relative}`;
+    // Example: /workspace/output/templates/README.md
+    ```
+  </Tab>
+
+  <Tab value="Python">
+    ```python processor.py -c
+    # Full input path
+    input_path = f'{input.read_dir}/{file.relative}'
+    # Example: /workspace/cyanprint/templates/README.md
+
+    # Full output path
+    output_path = f'{input.write_dir}/{file.relative}'
+    # Example: /workspace/output/templates/README.md
+    ```
+  </Tab>
+
+  <Tab value="C#">
+    ```csharp Processor.cs -c
+    // Full input path
+    var inputPath = $"{input.ReadDir}/{file.Relative}";
+    // Example: /workspace/cyanprint/templates/README.md
+
+    // Full output path
+    var outputPath = $"{input.WriteDir}/{file.Relative}";
+    // Example: /workspace/output/templates/README.md
+    ```
+  </Tab>
+</Tabs>
+
+### Modifying Output Paths
+
+You can change where files are written:
+
+<Tabs items={['TypeScript', 'Python', 'C#']}>
+  <Tab value="TypeScript">
+    ```ts processor.ts -c
+    StartProcessorWithLambda(async (input, fileHelper) => {
+      const files = fileHelper.resolveAll();
+
+      files.forEach(file => {
+        // Transform content
+        file.content = transform(file.content);
+
+        // Optionally change output path
+        if (file.relative.endsWith('.template')) {
+          // Remove .template extension
+          file.relative = file.relative.replace('.template', '');
+        }
+
+        file.writeFile();
+      });
+
+      return { directory: input.writeDir };
+    });
+    ```
+  </Tab>
+
+  <Tab value="Python">
+    ```python processor.py -c
+    def start_processor_with_fn(input, file_helper):
+        files = file_helper.resolve_all()
+
+        for file in files:
+            # Transform content
+            file.content = transform(file.content)
+
+            # Optionally change output path
+            if file.relative.endswith('.template'):
+                # Remove .template extension
+                file.relative = file.relative.replace('.template', '')
+
+            file.write_file()
+
+        return {'directory': input.write_dir}
+    ```
+  </Tab>
+
+  <Tab value="C#">
+    ```csharp Processor.cs -c
+    [ProcessorMain]
+    public async Task<ProcessorResult> RunAsync(ProcessorInput input, CyanFileHelper fileHelper)
+    {
+        var files = fileHelper.ResolveAll();
+
+        foreach (var file in files)
+        {
+            // Transform content
+            file.Content = Transform(file.Content);
+
+            // Optionally change output path
+            if (file.Relative.EndsWith(".template"))
+            {
+                // Remove .template extension
+                file.Relative = file.Relative.Replace(".template", "");
+            }
+
+            file.WriteFile();
+        }
+
+        return new ProcessorResult { Directory = input.WriteDir };
+    }
+    ```
+  </Tab>
+</Tabs>
+
+## Important Rules
+
+### Rule 1: Always Return writeDir
+
+<Tabs items={['TypeScript', 'Python', 'C#']}>
+  <Tab value="TypeScript">
+    ```ts processor.ts -c
+    // ✅ Correct
+    return { directory: input.writeDir };
+
+    // ❌ Wrong - never change this
+    // return { directory: '/some/other/path' };
+    ```
+  </Tab>
+
+  <Tab value="Python">
+    ```python processor.py -c
+    # ✅ Correct
+    return {'directory': input.write_dir}
+
+    # ❌ Wrong - never change this
+    # return {'directory': '/some/other/path'}
+    ```
+  </Tab>
+
+  <Tab value="C#">
+    ```csharp Processor.cs -c
+    // ✅ Correct
+    return new ProcessorResult { Directory = input.WriteDir };
+
+    // ❌ Wrong - never change this
+    // return new ProcessorResult { Directory = "/some/other/path" };
+    ```
+  </Tab>
+</Tabs>
+
+### Rule 2: Use fileHelper for All File Operations
+
+<Tabs items={['TypeScript', 'Python', 'C#']}>
+  <Tab value="TypeScript">
+    ```ts processor.ts -c
+    // ✅ Correct
+    const files = fileHelper.resolveAll();
+    files.forEach(f => f.writeFile());
+
+    // ❌ Wrong
+    // fs.readdirSync(input.readDir);
+    // fs.writeFileSync(`${input.writeDir}/file.txt`, content);
+    ```
+  </Tab>
+
+  <Tab value="Python">
+    ```python processor.py -c
+    # ✅ Correct
+    files = file_helper.resolve_all()
+    for f in files:
+        f.write_file()
+
+    # ❌ Wrong
+    # os.listdir(input.read_dir)
+    # open(f'{input.write_dir}/file.txt', 'w').write(content)
+    ```
+  </Tab>
+
+  <Tab value="C#">
+    ```csharp Processor.cs -c
+    // ✅ Correct
+    var files = fileHelper.ResolveAll();
+    foreach (var f in files) f.WriteFile();
+
+    // ❌ Wrong
+    // Directory.GetFiles(input.ReadDir);
+    // File.WriteAllText($"{input.WriteDir}/file.txt", content);
+    ```
+  </Tab>
+</Tabs>
+
+### Rule 3: Preserve Directory Structure (Usually)
+
+<Tabs items={['TypeScript', 'Python', 'C#']}>
+  <Tab value="TypeScript">
+    ```ts processor.ts -c
+    // Usually you want to maintain the same structure
+    files.forEach(file => {
+      // file.relative is preserved
+      file.writeFile();
+    });
+
+    // Output mirrors input structure
+    ```
+  </Tab>
+
+  <Tab value="Python">
+    ```python processor.py -c
+    # Usually you want to maintain the same structure
+    for file in files:
+        # file.relative is preserved
+        file.write_file()
+
+    # Output mirrors input structure
+    ```
+  </Tab>
+
+  <Tab value="C#">
+    ```csharp Processor.cs -c
+    // Usually you want to maintain the same structure
+    foreach (var file in files)
+    {
+        // file.Relative is preserved
+        file.WriteFile();
+    }
+
+    // Output mirrors input structure
+    ```
+  </Tab>
+</Tabs>
+
+### Rule 4: Handle Missing Writes
+
+Files not written are not included in output:
+
+**Note:** **Copy-type files** (matched by `copy` globs in cyan.yaml) are automatically written during `resolveAll()`. **Template-type files** require explicit `writeFile()` calls. If you don't call `writeFile()` on a template file, it won't be included in the output.
+
+<Tabs items={['TypeScript', 'Python', 'C#']}>
+  <Tab value="TypeScript">
+    ```ts processor.ts -c
+    files.forEach(file => {
+      if (shouldInclude(file)) {
+        file.writeFile(); // Included
+      }
+      // Template files without writeFile() are excluded
+      // Copy-type files are already handled by resolveAll()
+    });
+    ```
+  </Tab>
+
+  <Tab value="Python">
+    ```python processor.py -c
+    for file in files:
+        if should_include(file):
+            file.write_file()  # Included
+        # Template files without write_file() are excluded
+        # Copy-type files are already handled by resolve_all()
+    ```
+  </Tab>
+
+  <Tab value="C#">
+    ```csharp Processor.cs -c
+    foreach (var file in files)
+    {
+        if (ShouldInclude(file))
+        {
+            file.WriteFile(); // Included
+        }
+        // Template files without WriteFile() are excluded
+        // Copy-type files are already handled by ResolveAll()
+    }
+    ```
+  </Tab>
+</Tabs>
+
+## Example: Full Path Flow
+
+<Tabs items={['TypeScript', 'Python', 'C#']}>
+  <Tab value="TypeScript">
+    ```ts
+    StartProcessorWithLambda(async (input, fileHelper) => {
+      console.log('Reading from:', input.readDir);
+      // /workspace/cyanprint/
+
+      console.log('Writing to:', input.writeDir);
+      // /workspace/output/
+
+      // resolveAll() copies Copy-type files automatically, returns Template-type files
+      const files = fileHelper.resolveAll();
+
+      files.forEach(file => {
+        console.log('Processing:', file.relative);
+        // templates/README.md
+
+        // Full paths (conceptual - don't access directly)
+        // Input:  /workspace/cyanprint/templates/README.md
+        // Output: /workspace/output/templates/README.md
+
+        file.content = transform(file.content);
+        file.writeFile();
+      });
+
+      return { directory: input.writeDir };
+    });
+    ```
+  </Tab>
+
+  <Tab value="Python">
+    ```python
+    def start_processor_with_fn(input, file_helper):
+        print('Reading from:', input.read_dir)
+        # /workspace/cyanprint/
+
+        print('Writing to:', input.write_dir)
+        # /workspace/output/
+
+        # resolve_all() copies Copy-type files automatically, returns Template-type files
+        files = file_helper.resolve_all()
+
+        for file in files:
+            print('Processing:', file.relative)
+            # templates/README.md
+
+            # Full paths (conceptual - don't access directly)
+            # Input:  /workspace/cyanprint/templates/README.md
+            # Output: /workspace/output/templates/README.md
+
+            file.content = transform(file.content)
+            file.write_file()
+
+        return {'directory': input.write_dir}
+    ```
+  </Tab>
+
+  <Tab value="C#">
+    ```csharp
+    [ProcessorMain]
+    public async Task<ProcessorResult> RunAsync(ProcessorInput input, CyanFileHelper fileHelper)
+    {
+        Console.WriteLine($"Reading from: {input.ReadDir}");
+        // /workspace/cyanprint/
+
+        Console.WriteLine($"Writing to: {input.WriteDir}");
+        // /workspace/output/
+
+        // ResolveAll() copies Copy-type files automatically, returns Template-type files
+        var files = fileHelper.ResolveAll();
+
+        foreach (var file in files)
+        {
+            Console.WriteLine($"Processing: {file.Relative}");
+            // templates/README.md
+
+            // Full paths (conceptual - don't access directly)
+            // Input:  /workspace/cyanprint/templates/README.md
+            // Output: /workspace/output/templates/README.md
+
+            file.Content = Transform(file.Content);
+            file.WriteFile();
+        }
+
+        return new ProcessorResult { Directory = input.WriteDir };
+    }
+    ```
+  </Tab>
+</Tabs>
+
+## Related
+
+- [CyanFileHelper API](/docs/developer/processors/reference/sdk/file-helper) - File operations
+- [Input/Output Types](/docs/developer/processors/reference/sdk/input-output) - Type definitions
+- [Stateless Nature](/docs/developer/processors/explanation/stateless-nature) - Why isolation matters

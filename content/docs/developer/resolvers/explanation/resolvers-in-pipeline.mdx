@@ -1,0 +1,149 @@
+---
+title: Resolvers in Pipeline
+description: How resolvers fit into the template generation pipeline
+---
+
+import { Callout } from 'fumadocs-ui/components/callout';
+import { Mermaid } from '@/components/mdx/mermaid';
+import { Cards, Card } from 'fumadocs-ui/components/card';
+
+# Resolvers in Pipeline
+
+Resolvers are the third step in the template generation pipeline, after processors but before plugins.
+
+## Pipeline Overview
+<Mermaid chart={`graph LR
+    A[Template<br/>User Input] --> B[Processor<br/>Transform Files]
+    B --> C{Resolver<br/>Merge Conflicts}
+    C --> D[Plugin<br/>Post-Process]
+    D --> E[Final Output]
+`} />
+
+## Execution Order
+
+### 1. Template Execution
+- Template collects user input
+- Template defines files and configuration
+- Template specifies processors, resolvers, and plugins
+
+### 2. Processor Execution
+- Processors transform individual files
+- Applied to all files matching globs
+- Outputs transformed files
+
+### 3. Resolver Execution
+**This is where resolvers run.**
+- Receives multiple versions of conflicting files
+- Applies merge logic based on configuration
+- Outputs single merged file per conflict
+
+### 4. Plugin Execution
+- Runs after all files are generated
+- Can run commands, modify files
+- Returns final directory
+
+## When Resolvers Execute
+
+Resolvers execute when:
+- Multiple templates provide the same file path
+- Template composition creates file overlaps
+- Explicit resolver configuration in `cyan.yaml`
+
+<Callout type="info">
+If only one file version exists for a path, the resolver may still be called but simply returns that single version.
+</Callout>
+
+## Resolver Configuration
+
+Templates configure resolvers in `cyan.yaml`:
+
+```yaml cyan.yaml -c
+resolvers:
+  - resolver: org/json-merger:1
+    config:
+      arrayStrategy: concat
+      deepMerge: true
+    files:
+      - config.json
+      - package.json
+      - "*.json"
+```
+
+### Configuration Options
+| Option | Description | Example |
+|--------|-------------|---------|
+| `resolver` | Resolver image reference | `org/json-merger:1` |
+| `config` | Configuration passed to resolver | `arrayStrategy: concat` |
+| `files` | File patterns to resolve | `["*.json"]` |
+
+## Data Flow
+### Input to Resolver
+```json
+{
+  "config": {
+    "arrayStrategy": "concat"
+  },
+  "files": [
+    {
+      "path": "config.json",
+      "content": "{\"name\": \"app\"}",
+      "origin": {
+        "template": "base-template",
+        "layer": 0
+      }
+    },
+    {
+      "path": "config.json",
+      "content": "{\"version\": \"1.0\"}",
+      "origin": {
+        "template": "feature-template",
+        "layer": 1
+      }
+    }
+  ]
+}
+```
+
+### Output from Resolver
+```json
+{
+  "path": "config.json",
+  "content": "{\"name\": \"app\", \"version\": \"1.0\"}"
+}
+```
+
+## Error Handling
+Resolvers should:
+- **Validate input** - Check file paths match
+- **Handle edge cases** - Empty files, missing content
+- **Report errors** - Throw meaningful exceptions
+
+### Common Errors
+| Error | Cause | Solution |
+|-------|-------|----------|
+| Path mismatch | Files have different paths | Ensure resolver configured for correct files |
+| Invalid JSON | Content is not valid JSON | Add JSON validation |
+| Missing config | Required config not provided | Add default values |
+| Merge conflict | Unable to merge content | Define conflict resolution strategy |
+
+## Performance Considerations
+- **File size** - Large files may need streaming
+- **Memory usage** - Be mindful of memory when merging many files
+- **Timeout** - Complex merges may need more time
+
+<Callout type="warn">
+Resolvers have a 10-minute timeout by default. If your merge operation takes longer, consider optimizing the logic.
+</Callout>
+
+## Next Steps
+<Cards>
+  <Card href="/docs/developer/resolvers/reference/sdk/input-output" title="Resolver Input/Output">
+    Understand the data structures
+  </Card>
+  <Card href="/docs/developer/resolvers/how-to/merge-json" title="Merge JSON Files">
+    Practical implementation guide
+  </Card>
+  <Card href="/docs/developer/resolvers/reference/cyan-yaml" title="cyan.yaml Reference">
+    Configuration options
+  </Card>
+</Cards>

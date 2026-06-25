@@ -1,0 +1,591 @@
+---
+title: Your First Plugin
+description: Create a plugin that runs post-processing commands
+---
+
+import { Steps } from 'fumadocs-ui/components/steps';
+import { Callout } from 'fumadocs-ui/components/callout';
+import { TypeTable } from 'fumadocs-ui/components/type-table';
+import { Cards, Card } from 'fumadocs-ui/components/card';
+import { Tabs, Tab } from 'fumadocs-ui/components/tabs';
+
+# Your First Plugin
+
+Create a plugin that runs post-processing commands after file generation. This tutorial builds a plugin that initializes git and optionally installs dependencies.
+
+## Prerequisites
+
+- Docker installed and running
+- One of the following runtimes:
+
+<Tabs items={['TypeScript', 'Python', 'C#']} persist groupId="runtime">
+<Tab value="TypeScript">
+
+Node.js 18+ or Bun installed
+
+</Tab>
+<Tab value="Python">
+
+Python 3.11+ and pip
+
+</Tab>
+<Tab value="C#">
+
+.NET 8 SDK
+
+</Tab>
+</Tabs>
+
+## Create Project
+
+<Steps>
+
+### Initialize Project
+
+<Tabs items={['TypeScript', 'Python', 'C#']} persist groupId="runtime">
+<Tab value="TypeScript">
+
+```bash -c
+mkdir my-plugin
+cd my-plugin
+bun init -y
+bun add @atomicloud/cyan-sdk
+```
+
+</Tab>
+<Tab value="Python">
+
+```bash -c
+mkdir my-plugin
+cd my-plugin
+python -m venv .venv
+source .venv/bin/activate  # On Windows: .venv\Scripts\activate
+pip install cyanprintsdk
+```
+
+</Tab>
+<Tab value="C#">
+
+```bash -c
+mkdir my-plugin
+cd my-plugin
+dotnet new console
+dotnet add package AtomiCloud.CyanPrint
+```
+
+</Tab>
+</Tabs>
+
+### Create Plugin Logic
+
+<Tabs items={['TypeScript', 'Python', 'C#']} persist groupId="runtime">
+<Tab value="TypeScript">
+
+Create `index.ts`:
+
+```ts index.ts -c
+import { StartPluginWithLambda, PluginOutput } from '@atomicloud/cyan-sdk';
+import { $ } from 'bun';
+
+// !callout[/StartPluginWithLambda/] Entry point - starts the plugin server on port 5552
+StartPluginWithLambda(async (input): Promise<PluginOutput> => {
+  // !callout[/directory, config/] The input contains the generated directory and plugin config
+  const { directory, config } = input;
+
+  // !callout[/config as/] Cast config to expected type since it comes as unknown
+  const cfg = config as {
+    gitInit?: boolean;
+    installDeps?: boolean;
+    packageManager?: 'npm' | 'bun' | 'yarn' | 'pnpm';
+  };
+
+  // Initialize git if requested
+  if (cfg.gitInit !== false) {
+    await $`git -C ${directory} init`.quiet();
+    await $`git -C ${directory} add .`.quiet();
+  }
+
+  // Install dependencies if requested
+  if (cfg.installDeps) {
+    const pm = cfg.packageManager || 'npm';
+    if (pm === 'bun') {
+      await $`cd ${directory} && bun install`.quiet();
+    } else if (pm === 'yarn') {
+      await $`cd ${directory} && yarn install`.quiet();
+    } else if (pm === 'pnpm') {
+      await $`cd ${directory} && pnpm install`.quiet();
+    } else {
+      await $`cd ${directory} && npm install`.quiet();
+    }
+  }
+
+  // Always return the directory
+  return { directory };
+});
+```
+
+</Tab>
+<Tab value="Python">
+
+Create `index.py`:
+
+```python index.py -c
+import subprocess
+from cyanprintsdk import start_plugin_with_fn
+from cyanprintsdk.domain.plugin.input import PluginInput
+from cyanprintsdk.domain.plugin.output import PluginOutput
+
+# !callout[/start_plugin_with_fn/] Entry point - starts the plugin server on port 5552
+async def my_plugin(input: PluginInput) -> PluginOutput:
+    # !callout[/input.directory, input.config/] The input contains the generated directory and plugin config
+    directory = input.directory
+    config = input.config or {}
+
+    # !callout[/config.get/] Access config with defaults
+    git_init = config.get("gitInit", True)
+    install_deps = config.get("installDeps", False)
+    package_manager = config.get("packageManager", "npm")
+
+    # Initialize git if requested
+    if git_init:
+        subprocess.run(["git", "-C", directory, "init"], check=True, capture_output=True)
+        subprocess.run(["git", "-C", directory, "add", "."], check=True, capture_output=True)
+
+    # Install dependencies if requested
+    if install_deps:
+        if package_manager == "bun":
+            subprocess.run(["bun", "install"], cwd=directory, check=True, capture_output=True)
+        elif package_manager == "yarn":
+            subprocess.run(["yarn", "install"], cwd=directory, check=True, capture_output=True)
+        elif package_manager == "pnpm":
+            subprocess.run(["pnpm", "install"], cwd=directory, check=True, capture_output=True)
+        else:
+            subprocess.run(["npm", "install"], cwd=directory, check=True, capture_output=True)
+
+    # Always return the directory
+    return PluginOutput(directory=directory)
+
+start_plugin_with_fn(my_plugin)
+```
+
+Create `requirements.txt`:
+
+```text requirements.txt -c
+cyanprintsdk>=1.0.0
+```
+
+</Tab>
+<Tab value="C#">
+
+Create `Program.cs`:
+
+```csharp Program.cs -c
+using sulfone_helium;
+using sulfone_helium.Domain.Plugin;
+
+// !callout[/StartPlugin/] Entry point - starts the plugin server on port 5552
+CyanEngine.StartPlugin(args, async (input) =>
+{
+    // !callout[/input.Directory, input.Config/] The input contains the generated directory and plugin config
+    var directory = input.Directory;
+    var cfg = input.Config != null
+        ? System.Text.Json.JsonSerializer.Deserialize<PluginConfig>(input.Config.ToString()!)
+        : new PluginConfig();
+
+    // Initialize git if requested
+    if (cfg?.GitInit != false)
+    {
+        await RunCommand($"git -C {directory} init");
+        await RunCommand($"git -C {directory} add .");
+    }
+
+    // Install dependencies if requested
+    if (cfg?.InstallDeps == true)
+    {
+        var pm = cfg.PackageManager ?? "npm";
+        await RunCommand($"cd {directory} && {pm} install");
+    }
+
+    // Always return the directory
+    return new PluginOutput { Directory = directory };
+});
+
+static async Task RunCommand(string command)
+{
+    var parts = command.Split(' ');
+    var proc = System.Diagnostics.Process.Start(new System.Diagnostics.ProcessStartInfo
+    {
+        FileName = parts[0],
+        Arguments = string.Join(" ", parts.Skip(1)),
+        RedirectStandardOutput = true,
+        RedirectStandardError = true
+    });
+    await proc.WaitForExitAsync();
+}
+
+class PluginConfig
+{
+    public bool? GitInit { get; set; }
+    public bool? InstallDeps { get; set; }
+    public string? PackageManager { get; set; }
+}
+```
+
+</Tab>
+</Tabs>
+
+### Create Dockerfile
+
+<Tabs items={['TypeScript', 'Python', 'C#']} persist groupId="runtime">
+<Tab value="TypeScript">
+
+Create `Dockerfile`:
+
+```dockerfile Dockerfile -c
+FROM oven/bun:1.1.31
+
+WORKDIR /app
+
+# Mark as CyanPrint plugin
+LABEL cyanprint.dev=true
+
+# Install dependencies
+COPY package.json bun.lockb* ./
+RUN bun install
+
+# Copy plugin code
+COPY . .
+
+# Run plugin
+CMD ["bun", "run", "index.ts"]
+```
+
+</Tab>
+<Tab value="Python">
+
+Create `Dockerfile`:
+
+```dockerfile Dockerfile -c
+FROM python:3.11-slim
+
+WORKDIR /app
+
+# Mark as CyanPrint plugin
+LABEL cyanprint.dev=true
+
+# Install git (needed for git init commands)
+RUN apt-get update && apt-get install -y git && rm -rf /var/lib/apt/lists/*
+
+# Install dependencies
+COPY requirements.txt .
+RUN pip install --no-cache-dir -r requirements.txt
+
+# Copy plugin code
+COPY . .
+
+# Run plugin
+CMD ["python", "index.py"]
+```
+
+</Tab>
+<Tab value="C#">
+
+Create `Dockerfile`:
+
+```dockerfile Dockerfile -c
+FROM mcr.microsoft.com/dotnet/sdk:8.0
+
+WORKDIR /app
+
+# Mark as CyanPrint plugin
+LABEL cyanprint.dev=true
+
+# Install git (needed for git init commands)
+RUN apt-get update && apt-get install -y git && rm -rf /var/lib/apt/lists/*
+
+# Install dependencies
+COPY *.csproj .
+RUN dotnet restore
+
+# Copy plugin code
+COPY . .
+
+# Run plugin
+CMD ["dotnet", "run"]
+```
+
+</Tab>
+</Tabs>
+
+</Steps>
+
+## Understanding the Code
+
+### Entry Point
+
+<Tabs items={['TypeScript', 'Python', 'C#']} persist groupId="runtime">
+<Tab value="TypeScript">
+
+**StartPluginWithLambda** receives one argument:
+
+<TypeTable
+  type={{
+    input: {
+      type: 'CyanPluginInput',
+      description: 'Contains directory and config',
+      required: true,
+    },
+  }}
+/>
+
+</Tab>
+<Tab value="Python">
+
+**start_plugin_with_fn** receives one argument:
+
+<TypeTable
+  type={{
+    input: {
+      type: 'PluginInput',
+      description: 'Contains directory and config',
+      required: true,
+    },
+  }}
+/>
+
+</Tab>
+<Tab value="C#">
+
+**StartPlugin** receives one argument:
+
+<TypeTable
+  type={{
+    input: {
+      type: 'CyanPluginInput',
+      description: 'Contains directory and config',
+      required: true,
+    },
+  }}
+/>
+
+</Tab>
+</Tabs>
+
+Unlike processors, plugins don't receive a file helper—they work directly with the filesystem.
+
+### PluginInput
+
+<TypeTable
+  type={{
+    directory: {
+      type: 'string',
+      description: 'Path to generated project files',
+      required: true,
+    },
+    config: {
+      type: 'unknown',
+      description: 'Configuration from template',
+      required: true,
+    },
+  }}
+/>
+
+### PluginOutput
+
+<TypeTable
+  type={{
+    directory: {
+      type: 'string',
+      description: 'Must return the directory path',
+      required: true,
+    },
+  }}
+/>
+
+## Test with Try Command
+
+### Build Docker Image
+
+```bash -c
+docker build -t my-plugin:dev .
+```
+
+### Create a Test Template
+
+Create a template that uses your plugin:
+
+<Tabs items={['TypeScript', 'Python', 'C#']} persist groupId="runtime">
+<Tab value="TypeScript">
+
+```ts ../test-template/cyan/index.ts -c
+import { StartTemplateWithLambda, GlobType } from '@atomicloud/cyan-sdk';
+
+StartTemplateWithLambda(async (i, d) => {
+  const name = await i.text('Project name?', 'test/name');
+
+  return {
+    processors: [{
+      name: 'cyan/default',
+      files: [{ root: 'templates', glob: '**/*', exclude: [], type: GlobType.Copy }],
+      config: { vars: { name } }
+    }],
+    plugins: [{
+      name: 'my-plugin:dev',
+      config: {
+        gitInit: true,
+        installDeps: true,
+        packageManager: 'bun'
+      }
+    }]
+  };
+});
+```
+
+</Tab>
+<Tab value="Python">
+
+```python ../test-template/cyan/index.py -c
+from cyanprintsdk import start_template_with_fn, GlobType
+from cyanprintsdk.domain.core.cyan import Cyan, CyanProcessor, CyanGlob, CyanPlugin
+
+async def my_template(i, d):
+    name = await i.text("Project name?", "test/name")
+
+    return Cyan(
+        processors=[
+            CyanProcessor(
+                name="cyan/default",
+                files=[
+                    CyanGlob(
+                        root="templates",
+                        glob="**/*",
+                        exclude=[],
+                        type=GlobType.Copy
+                    )
+                ],
+                config={"vars": {"name": name}}
+            )
+        ],
+        plugins=[
+            CyanPlugin(
+                name="my-plugin:dev",
+                config={
+                    "gitInit": True,
+                    "installDeps": True,
+                    "packageManager": "bun"
+                }
+            )
+        ]
+    )
+
+start_template_with_fn(my_template)
+```
+
+</Tab>
+<Tab value="C#">
+
+```csharp ../test-template/cyan/Program.cs -c
+using sulfone_helium;
+using sulfone_helium.Domain.Core;
+
+CyanEngine.StartTemplate(args, async (i, d) =>
+{
+    var name = await i.Text("Project name?", "test/name");
+
+    return new Cyan
+    {
+        Processors =
+        [
+            new CyanProcessor
+            {
+                Name = "cyan/default",
+                Files =
+                [
+                    new CyanGlob
+                    {
+                        Root = "templates",
+                        Glob = "**/*",
+                        Exclude = [],
+                        Type = GlobType.Copy
+                    }
+                ],
+                Config = new { vars = new { name } }
+            }
+        ],
+        Plugins =
+        [
+            new CyanPlugin
+            {
+                Name = "my-plugin:dev",
+                Config = new
+                {
+                    gitInit = true,
+                    installDeps = true,
+                    packageManager = "bun"
+                }
+            }
+        ]
+    };
+});
+```
+
+</Tab>
+</Tabs>
+
+### Run Try Command
+
+```bash -c
+cd ../test-template
+cyanprint try template . ./output
+```
+
+### Check Output
+
+```bash -c
+cd ./output
+git status  # Should show initialized git repo
+ls node_modules  # If installDeps was true
+```
+
+<Callout type="info">
+The `try` command builds and runs your plugin automatically. After file generation completes, the plugin initializes git and installs dependencies.
+</Callout>
+
+## Automated Testing
+
+Set up snapshot tests to verify your plugin produces consistent output:
+
+```bash -c
+cyanprint test plugin .
+```
+
+Create a `test.cyan.yaml` with input fixtures and expected snapshots. See [Automated Testing](/docs/developer/plugins/how-to/automated-testing) for the full guide.
+
+## What You Learned
+
+- How to create a plugin project
+- Using the plugin entry point (port 5552)
+- Running shell commands
+- Accessing plugin configuration
+- Returning the directory path
+- Testing plugins with the `try` command
+- Setting up automated snapshot tests
+
+## Next Steps
+
+Learn more about plugin capabilities:
+
+<Cards>
+  <Card href="/docs/developer/plugins/how-to/run-commands" title="Run Shell Commands">
+    Command execution patterns
+  </Card>
+  <Card href="/docs/developer/plugins/how-to/modify-files" title="Modify Generated Files">
+    Edit files in the directory
+  </Card>
+  <Card href="/docs/developer/plugins/reference/sdk/input-output" title="Plugin Input/Output">
+    Full API reference
+  </Card>
+  <Card href="/docs/developer/plugins/how-to/automated-testing" title="Automated Testing">
+    Snapshot-based testing for plugins
+  </Card>
+</Cards>

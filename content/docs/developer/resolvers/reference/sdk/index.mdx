@@ -1,0 +1,108 @@
+---
+title: Resolver SDK
+description: SDK reference for building resolvers
+---
+
+import { Cards, Card } from 'fumadocs-ui/components/card';
+import { Tabs, Tab } from 'fumadocs-ui/components/tabs';
+
+# Resolver SDK
+
+The SDK provides the entry point functions and type definitions for building resolvers.
+
+## Quick Start
+<Tabs items={['TypeScript', 'Python', 'C#']}>
+  <Tab value="TypeScript">
+
+```bash -c
+bun add @atomicloud/cyan-sdk
+```
+
+  </Tab>
+  <Tab value="Python">
+
+```bash -c
+pip install cyanprintsdk
+```
+
+  </Tab>
+  <Tab value="C#">
+
+```bash -c
+dotnet add package Sulfone.Helium
+```
+
+  </Tab>
+</Tabs>
+
+## Entry Point
+Each SDK provides an entry point function that starts the resolver server and handles incoming file resolution requests.
+
+<Tabs items={['TypeScript', 'Python', 'C#']}>
+  <Tab value="TypeScript">
+
+```ts index.ts -c
+import { StartResolverWithLambda } from '@atomicloud/cyan-sdk';
+
+StartResolverWithLambda(async (input) => {
+  // Your resolver logic here
+  return {
+    path: input.files[0].path,
+    content: "merged content"
+  };
+});
+```
+
+  </Tab>
+  <Tab value="Python">
+
+```python main.py -c
+from cyanprintsdk.domain.resolver.input import ResolverInput
+from cyanprintsdk.domain.resolver.output import ResolverOutput
+from cyanprintsdk.main import start_resolver_with_fn
+
+
+async def resolver(input: ResolverInput) -> ResolverOutput:
+    # Your resolver logic here
+    return ResolverOutput(
+        path=input.files[0].path,
+        content="merged content"
+    )
+
+
+if __name__ == "__main__":
+    start_resolver_with_fn(resolver)
+```
+
+  </Tab>
+  <Tab value="C#">
+
+```cs Program.cs -c
+using sulfone_helium;
+using sulfone_helium.Domain.Resolver;
+
+CyanEngine.StartResolver(
+    args,
+    async (ResolverInput input) =>
+    {
+        // Your resolver logic here
+        return new ResolverOutput(
+            input.Files.First().Path,
+            "merged content"
+        );
+    }
+);
+```
+
+  </Tab>
+</Tabs>
+
+## Documentation Sections
+<Cards>
+  <Card href="/docs/developer/resolvers/reference/sdk/start-resolver" title="StartResolver Functions">
+    Entry point API reference
+  </Card>
+  <Card href="/docs/developer/resolvers/reference/sdk/input-output" title="Input/Output Types">
+    Type definitions
+  </Card>
+</Cards>

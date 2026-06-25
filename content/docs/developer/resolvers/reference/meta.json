@@ -1,0 +1,6 @@
+{
+  "title": "Reference",
+  "description": "Technical reference for resolver development",
+  "icon": "Book",
+  "pages": ["project-structure", "cyan-yaml", "dockerfile", "sdk"]
+}

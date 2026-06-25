@@ -1,0 +1,129 @@
+---
+title: Installation
+description: Install CyanPrint CLI on Linux and macOS with version pinning
+---
+
+import { Tab, Tabs } from 'fumadocs-ui/components/tabs';
+import { Cards, Card } from 'fumadocs-ui/components/card';
+
+# Installation
+
+CyanPrint is a template engine for generating projects. Install the CLI to start creating projects from templates.
+
+## Install Latest
+
+<Tabs groupId="installer" items={['Nix', 'Brew', 'Scoop', 'APT', 'YUM']} persist>
+<Tab value="Nix">
+
+```bash -c
+# Run directly without installing
+nix shell github:AtomiCloud/sulfone.iridium
+
+# Or install permanently
+nix profile install github:AtomiCloud/sulfone.iridium
+```
+
+</Tab>
+<Tab value="Brew">
+
+```bash -c
+brew install AtomiCloud/tap/cyanprint
+```
+
+</Tab>
+<Tab value="Scoop">
+
+```bash -c
+scoop bucket add cyanprint https://github.com/AtomiCloud/scoop-bucket
+scoop install cyanprint
+```
+
+</Tab>
+<Tab value="APT">
+
+```bash -c
+sudo apt install software-properties-common -y
+sudo apt-add-repository "deb [trusted=yes] https://apt.fury.io/AtomiCloud/ /" -y
+sudo apt update -y
+sudo apt install cyanprint
+```
+
+</Tab>
+<Tab value="YUM">
+
+```bash
+sudo sh -c 'echo "[fury]
+name=AtomiCloud Repo
+baseurl=https://yum.fury.io/atomicloud/
+enabled=1
+gpgcheck=0" > /etc/yum.repos.d/fury.repo'
+yum install cyanprint
+```
+
+</Tab>
+</Tabs>
+
+## Pin to Specific Version
+
+<Tabs groupId="installer" items={['Nix', 'Brew', 'Scoop', 'APT', 'YUM']} persist>
+<Tab value="Nix">
+
+```bash
+# Pin to specific tag/commit
+nix shell github:AtomiCloud/sulfone.iridium/2.6.0
+
+# Or with flake reference
+nix profile install github:AtomiCloud/sulfone.iridium/2.6.0
+```
+
+</Tab>
+<Tab value="Brew">
+
+```bash
+# List available versions
+brew info AtomiCloud/tap/cyanprint
+
+# Install specific version (if available)
+brew install AtomiCloud/tap/cyanprint@2.6.0
+```
+
+</Tab>
+<Tab value="Scoop">
+
+```bash
+# List available versions
+scoop info cyanprint
+
+# Install specific version
+scoop install cyanprint@2.6.0
+```
+
+</Tab>
+<Tab value="APT">
+
+```bash
+# List available versions
+apt-cache madison cyanprint
+
+# Install specific version
+sudo apt install cyanprint=2.6.0
+```
+
+</Tab>
+<Tab value="YUM">
+
+```bash
+# List available versions
+yum --showduplicates list cyanprint
+
+# Install specific version
+yum install cyanprint-2.6.0
+```
+
+</Tab>
+</Tabs>
+
+## Next Steps
+
+- [Create your first project](/docs/user/how-to/create-project)
+- [CLI Commands Reference](/docs/user/reference/cli-commands)

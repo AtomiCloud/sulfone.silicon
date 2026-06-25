@@ -1,0 +1,61 @@
+---
+title: Quickstart
+description: Quickstart guide for CyanPrint development
+---
+
+import { Cards, Card } from 'fumadocs-ui/components/card';
+
+# Quickstart
+
+Get started with CyanPrint development in minutes. Choose your path based on what you want to build.
+
+## Prerequisites
+
+Before you begin, ensure you have:
+
+- **Docker** installed and running
+- **CyanPrint CLI** installed
+- **Node.js 18+** for local development
+
+## What Do You Want to Build?
+
+CyanPrint has four extensible components called **artifacts**:
+
+<Cards>
+  <Card href="/docs/developer/templates/tutorials/01-blank-template" title="Templates">
+    Define questions and file processing rules
+  </Card>
+  <Card href="/docs/developer/processors/tutorials/first-processor" title="Processors">
+    Transform files (templating, syntax)
+  </Card>
+  <Card href="/docs/developer/resolvers/tutorials/first-resolver" title="Resolvers">
+    Resolve file conflicts from layered templates
+  </Card>
+  <Card href="/docs/developer/plugins/tutorials/first-plugin" title="Plugins">
+    Post-processing (run commands, file ops)
+  </Card>
+</Cards>
+
+## Quick Start: Create a Template
+
+The most common starting point is creating a template. Run this command:
+
+```bash -c
+cyanprint create cyan/new my-first-template
+```
+
+This scaffolds a complete template project using the meta template.
+
+## Next Steps
+
+<Cards>
+  <Card href="/docs/developer/basics/introduction" title="Four Artifacts">
+    Learn about the four extensible components
+  </Card>
+  <Card href="/docs/developer/basics/architecture" title="System Architecture">
+    Understand how CyanPrint works
+  </Card>
+  <Card href="/docs/developer/templates/tutorials/01-blank-template" title="Template Tutorials">
+    Follow step-by-step template creation
+  </Card>
+</Cards>

@@ -1,0 +1,398 @@
+---
+title: Plugins vs Processors
+description: When to use plugins versus processors
+---
+
+import { Cards, Card } from 'fumadocs-ui/components/card';
+import { Tabs, Tab } from 'fumadocs-ui/components/tabs';
+
+# Plugins vs Processors
+
+Both plugins and processors extend CyanPrint's capabilities, but they serve different purposes in the generation pipeline.
+
+## Quick Comparison
+
+| Aspect | Processor | Plugin |
+|--------|-----------|--------|
+| **Role** | Transform file content | Execute operations |
+| **When** | During file generation | After generation completes |
+| **Access** | File content via helper | Full directory access |
+| **State** | Pure function | Can have side effects |
+| **API** | `CyanFileHelper` | Direct fs access |
+
+## Processors: File Transformation
+
+Processors transform file content. They operate on individual files during the generation process.
+
+### What Processors Do
+
+- Template variable substitution
+- Syntax transformation
+- Code generation
+- File content processing
+
+### Processor Example
+
+<Tabs items={['TypeScript', 'Python', 'C#']}>
+  <Tab value="TypeScript">
+
+```ts index.ts -c
+import { StartProcessorWithLambda } from '@atomicloud/cyan-sdk';
+
+StartProcessorWithLambda(async (input, fileHelper) => {
+  const files = fileHelper.resolveAll();
+
+  files.forEach(file => {
+    // Transform file content
+    file.content = file.content.replaceAll('var__name__', 'MyProject');
+    file.writeFile();
+  });
+
+  return { directory: input.writeDir };
+});
+```
+
+  </Tab>
+  <Tab value="Python">
+
+```python main.py -c
+from cyanprintsdk.processor import start_processor_with_fn
+from cyanprintsdk.protocol import ProcessorInput, ProcessorOutput
+
+async def processor(input: ProcessorInput, file_helper) -> ProcessorOutput:
+    files = file_helper.resolve_all()
+
+    for file in files:
+        # Transform file content
+        file.content = file.content.replace('var__name__', 'MyProject')
+        file.write_file()
+
+    return ProcessorOutput(directory=input.write_dir)
+
+processor_main = start_processor_with_fn(processor)
+```
+
+  </Tab>
+  <Tab value="C#">
+
+```csharp Processor.cs -c
+using CyanPrintSDK;
+
+public static class Processor
+{
+    [ProcessorMain]
+    public static async Task<ProcessorOutput> Run(ProcessorInput input, CyanFileHelper fileHelper)
+    {
+        var files = fileHelper.ResolveAll();
+
+        foreach (var file in files)
+        {
+            // Transform file content
+            file.Content = file.Content.Replace("var__name__", "MyProject");
+            file.WriteFile();
+        }
+
+        return new ProcessorOutput { Directory = input.WriteDir };
+    }
+}
+```
+
+  </Tab>
+</Tabs>
+
+### Key Points
+
+- Receives `CyanFileHelper` for file operations
+- Transforms content before files are written
+- Must be pure (same input → same output)
+- Cannot execute shell commands
+
+## Plugins: Post-Processing Operations
+
+Plugins run operations after all files are generated. They have full access to the filesystem and can execute commands.
+
+### What Plugins Do
+
+- Run shell commands (git, npm, etc.)
+- Install dependencies
+- Initialize version control
+- Set up development tooling
+
+### Plugin Example
+
+<Tabs items={['TypeScript', 'Python', 'C#']}>
+  <Tab value="TypeScript">
+
+```ts index.ts -c
+import { StartPluginWithLambda } from '@atomicloud/cyan-sdk';
+import fs from 'node:fs';
+import path from 'node:path';
+
+StartPluginWithLambda(async (input) => {
+  const { directory } = input;
+
+  // Create files or modify the generated output
+  const gitDir = path.join(directory, '.git');
+  if (!fs.existsSync(gitDir)) {
+    fs.mkdirSync(gitDir, { recursive: true });
+    // Initialize git structure...
+  }
+
+  // Write configuration files
+  const configPath = path.join(directory, 'config.json');
+  fs.writeFileSync(configPath, JSON.stringify({ initialized: true }));
+
+  return { directory };
+});
+```
+
+  </Tab>
+  <Tab value="Python">
+
+```python main.py -c
+import os
+import json
+from cyanprintsdk.plugin import start_plugin_with_fn
+from cyanprintsdk.protocol import PluginInput, PluginOutput
+
+async def plugin(input: PluginInput) -> PluginOutput:
+    directory = input.directory
+
+    # Create files or modify the generated output
+    git_dir = os.path.join(directory, '.git')
+    if not os.path.exists(git_dir):
+        os.makedirs(git_dir, exist_ok=True)
+        # Initialize git structure...
+
+    # Write configuration files
+    config_path = os.path.join(directory, 'config.json')
+    with open(config_path, 'w') as f:
+        json.dump({'initialized': True}, f)
+
+    return PluginOutput(directory=directory)
+
+plugin_main = start_plugin_with_fn(plugin)
+```
+
+  </Tab>
+  <Tab value="C#">
+
+```csharp Plugin.cs -c
+using CyanPrintSDK;
+using System.IO;
+using System.Text.Json;
+
+public static class Plugin
+{
+    [PluginMain]
+    public static async Task<PluginOutput> Run(PluginInput input)
+    {
+        var directory = input.Directory;
+
+        // Create files or modify the generated output
+        var gitDir = Path.Combine(directory, ".git");
+        if (!Directory.Exists(gitDir))
+        {
+            Directory.CreateDirectory(gitDir);
+            // Initialize git structure...
+        }
+
+        // Write configuration files
+        var configPath = Path.Combine(directory, "config.json");
+        var config = new { initialized = true };
+        await File.WriteAllTextAsync(configPath, JsonSerializer.Serialize(config));
+
+        return new PluginOutput { Directory = directory };
+    }
+}
+```
+
+  </Tab>
+</Tabs>
+
+### Key Points
+
+- No file helper - direct filesystem access
+- Runs after all processors complete
+- Can execute shell commands (via child_process or bun shell)
+- Can have side effects (installing packages, etc.)
+
+## Execution Order
+
+<Mermaid chart={`graph TD
+    A[Template] --> B[Processor 1]
+    B --> C[Processor 2]
+    C --> D[Processor N]
+    D --> E[All Files Written]
+    E --> F[Plugin 1]
+    F --> G[Plugin 2]
+    G --> H[Plugin N]
+    H --> I[Final Output]
+`} />
+
+1. Template collects user input
+2. Processors run in sequence (transform content)
+3. All files are written to disk
+4. Plugins run in sequence (post-processing)
+5. Final output delivered to user
+
+## When to Use Which
+
+### Use a Processor When:
+
+| Scenario | Example |
+|----------|---------|
+| Substitute variables | `var__name__` → `MyProject` |
+| Transform file syntax | Convert Eta to final output |
+| Generate code | Create files from templates |
+| Process file content | Add headers, format code |
+| Filter files | Include/exclude based on config |
+
+### Use a Plugin When:
+
+| Scenario | Example |
+|----------|---------|
+| Run git commands | `git init`, `git commit` |
+| Install dependencies | `npm install`, `bun install` |
+| Run formatters | `prettier --write .` |
+| Set up tooling | `husky install` |
+| Build steps | `npm run build` |
+| Create symlinks | Link config files |
+
+## Using Both Together
+
+Many templates need both processors and plugins:
+
+<Tabs items={['TypeScript', 'Python', 'C#']}>
+  <Tab value="TypeScript">
+
+```ts index.ts -c
+// In template's index.ts
+return {
+  processors: [{
+    name: 'cyan/default',  // Transform templates
+    files: [{ root: 'templates', glob: '**/*', type: GlobType.Template }],
+    config: { vars: { name, version } }
+  }],
+  plugins: [{
+    name: 'atomi/setup-plugin',  // Post-processing
+    config: {
+      git: true,
+      installDeps: true
+    }
+  }]
+};
+```
+
+  </Tab>
+  <Tab value="Python">
+
+```python main.py -c
+# In template's main.py
+return Cyan(
+    processors=[
+        CyanProcessor(
+            name='cyan/default',  # Transform templates
+            files=[CyanGlob(root='templates', glob='**/*', type=GlobType.TEMPLATE)],
+            config={'vars': {'name': name, 'version': version}}
+        )
+    ],
+    plugins=[
+        CyanPlugin(
+            name='atomi/setup-plugin',  # Post-processing
+            config={
+                'git': True,
+                'installDeps': True
+            }
+        )
+    ]
+)
+```
+
+  </Tab>
+  <Tab value="C#">
+
+```csharp Template.cs -c
+// In Template.cs
+return new Cyan
+{
+    Processors = new[]
+    {
+        new CyanProcessor
+        {
+            Name = "cyan/default",  // Transform templates
+            Files = new List<CyanGlob>
+            {
+                new CyanGlob { Root = "templates", Glob = "**/*", Type = GlobType.Template }
+            },
+            Config = new Dictionary<string, object>
+            {
+                ["vars"] = new Dictionary<string, string> { ["name"] = name, ["version"] = version }
+            }
+        }
+    },
+    Plugins = new[]
+    {
+        new CyanPlugin
+        {
+            Name = "atomi/setup-plugin",  // Post-processing
+            Config = new Dictionary<string, object>
+            {
+                ["git"] = true,
+                ["installDeps"] = true
+            }
+        }
+    }
+};
+```
+
+  </Tab>
+</Tabs>
+
+### Typical Workflow
+
+1. **Processor** substitutes `var__name__` with actual project name
+2. **Processor** transforms template files
+3. Files are written to output directory
+4. **Plugin** initializes git repository
+5. **Plugin** installs dependencies
+6. User receives complete, ready-to-use project
+
+<Callout type="info">
+Use processors for content transformation and plugins for operations. Together they provide a complete generation pipeline.
+</Callout>
+
+## Architecture View
+
+<Mermaid chart={`graph LR
+    subgraph Processing Phase
+        A[Template Files] --> B[Processor]
+        B --> C[Transformed Files]
+    end
+
+    subgraph Output Phase
+        C --> D[Write to Disk]
+    end
+
+    subgraph Post-Processing Phase
+        D --> E[Plugin]
+        E --> F[Final Project]
+    end
+`} />
+
+## Related
+
+<Cards>
+  <Card href="/docs/developer/processors" title="Processor Documentation">
+    Full processor reference
+  </Card>
+  <Card href="/docs/developer/plugins/explanation/execution-order" title="Execution Order">
+    Detailed pipeline sequence
+  </Card>
+  <Card href="/docs/developer/plugins/explanation/what-are-plugins" title="What Are Plugins">
+    Plugin concepts
+  </Card>
+  <Card href="/docs/developer/plugins/tutorials/first-plugin" title="First Plugin">
+    Create your first plugin
+  </Card>
+</Cards>

@@ -1,0 +1,398 @@
+---
+title: StartPluginWithLambda
+description: Entry point for CyanPrint plugins
+---
+
+import { Steps, Step } from 'fumadocs-ui/components/steps';
+import { Tabs, Tab } from 'fumadocs-ui/components/tabs';
+
+# StartPluginWithLambda
+
+Register a plugin function that handles post-processing after file generation.
+
+## Signature
+
+<Tabs items={['TypeScript', 'Python', 'C#']}>
+  <Tab value="TypeScript">
+
+  ```ts
+  function StartPluginWithLambda(
+    handler: (input: CyanPluginInput) => Promise<PluginOutput>
+  ): void;
+  ```
+
+  </Tab>
+  <Tab value="Python">
+
+  ```py
+  from atomicloud_cyan_sdk import start_plugin_with_fn
+
+  @start_plugin_with_fn
+  async def handler(input: PluginInput) -> PluginOutput:
+      ...
+  ```
+
+  </Tab>
+  <Tab value="C#">
+
+  ```csharp
+  [PluginMain]
+  public static async Task<PluginOutput> Main(PluginInput input)
+  {
+      // ...
+  }
+  ```
+
+  </Tab>
+</Tabs>
+
+## Parameters
+
+| Parameter | Type | Description |
+|-----------|------|-------------|
+| `handler` | `(input: CyanPluginInput) => Promise<PluginOutput>` | Async function that processes the generated files |
+
+## Usage
+
+### Basic
+
+<Tabs items={['TypeScript', 'Python', 'C#']}>
+  <Tab value="TypeScript">
+
+  ```ts index.ts -c
+  import { StartPluginWithLambda } from '@atomicloud/cyan-sdk';
+
+  StartPluginWithLambda(async (input) => {
+    const { directory } = input;
+
+    // Your plugin logic here
+
+    return { directory };
+  });
+  ```
+
+  </Tab>
+  <Tab value="Python">
+
+  ```py index.py -c
+  from atomicloud_cyan_sdk import start_plugin_with_fn, PluginInput, PluginOutput
+
+  @start_plugin_with_fn
+  async def main(input: PluginInput) -> PluginOutput:
+      directory = input.directory
+
+      # Your plugin logic here
+
+      return {'directory': directory}
+  ```
+
+  </Tab>
+  <Tab value="C#">
+
+  ```csharp Plugin.cs -c
+  using Atomicloud.Cyan.Sdk;
+
+  [PluginMain]
+  public static class Plugin
+  {
+      public static async Task<PluginOutput> Main(PluginInput input)
+      {
+          var directory = input.Directory;
+
+          // Your plugin logic here
+
+          return new PluginOutput { Directory = directory };
+      }
+  }
+  ```
+
+  </Tab>
+</Tabs>
+
+### With Config
+
+<Tabs items={['TypeScript', 'Python', 'C#']}>
+  <Tab value="TypeScript">
+
+  ```ts plugin.ts -c
+  import { StartPluginWithLambda } from '@atomicloud/cyan-sdk';
+  import { $ } from 'bun';
+
+  interface MyConfig {
+    git?: boolean;
+    installDeps?: boolean;
+  }
+
+  StartPluginWithLambda(async (input) => {
+    const { directory, config } = input;
+    const cfg = config as MyConfig;
+
+    if (cfg.git) {
+      await $`git -C ${directory} init`.quiet();
+    }
+
+    if (cfg.installDeps) {
+      await $`cd ${directory} && npm install`.quiet();
+    }
+
+    return { directory };
+  });
+  ```
+
+  </Tab>
+  <Tab value="Python">
+
+  ```py plugin.py -c
+  from atomicloud_cyan_sdk import start_plugin_with_fn, PluginInput, PluginOutput
+  import subprocess
+
+  @start_plugin_with_fn
+  async def main(input: PluginInput) -> PluginOutput:
+      directory = input.directory
+      config = input.config
+
+      if config.get('git'):
+          subprocess.run(['git', '-C', directory, 'init'], capture_output=True)
+
+      if config.get('installDeps'):
+          subprocess.run(['npm', 'install', '--prefix', directory], capture_output=True)
+
+      return {'directory': directory}
+  ```
+
+  </Tab>
+  <Tab value="C#">
+
+  ```csharp Plugin.cs -c
+  using Atomicloud.Cyan.Sdk;
+  using System.Diagnostics;
+  using System.Text.Json;
+
+  [PluginMain]
+  public static class Plugin
+  {
+      public static async Task<PluginOutput> Main(PluginInput input)
+      {
+          var directory = input.Directory;
+          var config = JsonSerializer.Deserialize<Dictionary<string, object>>(
+              input.Config.ToString()
+          );
+
+          if (config?.ContainsKey("git") == true && config["git"] is bool git && git)
+          {
+              Process.Start("git", $"-C {directory} init")?.WaitForExit();
+          }
+
+          if (config?.ContainsKey("installDeps") == true && config["installDeps"] is bool installDeps && installDeps)
+          {
+              Process.Start("npm", $"install --prefix {directory}")?.WaitForExit();
+          }
+
+          return new PluginOutput { Directory = directory };
+      }
+  }
+  ```
+
+  </Tab>
+</Tabs>
+
+### Error Handling
+
+<Tabs items={['TypeScript', 'Python', 'C#']}>
+  <Tab value="TypeScript">
+
+  ```ts -c
+  StartPluginWithLambda(async (input) => {
+    const { directory } = input;
+
+    try {
+      // Attempt operation
+      await $`git -C ${directory} init`.quiet();
+    } catch (error) {
+      // Log error but continue
+      console.error('Git init failed:', error);
+    }
+
+    // Always return directory
+    return { directory };
+  });
+  ```
+
+  </Tab>
+  <Tab value="Python">
+
+  ```py -c
+  @start_plugin_with_fn
+  async def main(input: PluginInput) -> PluginOutput:
+      directory = input.directory
+
+      try:
+          # Attempt operation
+          subprocess.run(['git', '-C', directory, 'init'], capture_output=True)
+      except Exception as error:
+          # Log error but continue
+          print(f'Git init failed: {error}')
+
+      # Always return directory
+      return {'directory': directory}
+  ```
+
+  </Tab>
+  <Tab value="C#">
+
+  ```csharp -c
+  [PluginMain]
+  public static async Task<PluginOutput> Main(PluginInput input)
+  {
+      var directory = input.Directory;
+
+      try
+      {
+          // Attempt operation
+          Process.Start("git", $"-C {directory} init")?.WaitForExit();
+      }
+      catch (Exception error)
+      {
+          // Log error but continue
+          Console.WriteLine($"Git init failed: {error.Message}");
+      }
+
+      // Always return directory
+      return new PluginOutput { Directory = directory };
+  }
+  ```
+
+  </Tab>
+</Tabs>
+
+## How It Works
+
+<Steps>
+<Step>
+
+### Plugin starts
+
+Container runs on port 5552
+
+</Step>
+<Step>
+
+### Request received
+
+POST `/api/plug` with `PluginInput`
+
+</Step>
+<Step>
+
+### Handler executes
+
+Your async function processes the directory
+
+</Step>
+<Step>
+
+### Response sent
+
+Returns `PluginOutput` with directory path
+
+</Step>
+</Steps>
+
+<Mermaid chart={`sequenceDiagram
+    participant Cyan as CyanPrint
+    participant Plugin as Plugin Container
+
+    Cyan->>Plugin: POST /api/plug
+    Note over Plugin: Handler receives PluginInput
+    Plugin->>Plugin: Execute plugin logic
+    Plugin->>Cyan: Return PluginOutput
+    Note over Cyan: Continue pipeline
+`} />
+
+## Port
+
+Plugins listen on port **5552** by default:
+
+<Tabs items={['TypeScript', 'Python', 'C#']}>
+  <Tab value="TypeScript">
+
+  ```ts -c
+  // Internal server starts on port 5552
+  // Handles: POST /api/plug
+  ```
+
+  </Tab>
+  <Tab value="Python">
+
+  ```py -c
+  # Internal server starts on port 5552
+  # Handles: POST /api/plug
+  ```
+
+  </Tab>
+  <Tab value="C#">
+
+  ```csharp -c
+  // Internal server starts on port 5552
+  // Handles: POST /api/plug
+  ```
+
+  </Tab>
+</Tabs>
+
+## Return Value
+
+Always return the directory path:
+
+<Tabs items={['TypeScript', 'Python', 'C#']}>
+  <Tab value="TypeScript">
+
+  ```ts -c
+  StartPluginWithLambda(async (input) => {
+    const { directory } = input;
+
+    // ... plugin logic ...
+
+    // Required: return directory
+    return { directory };
+  });
+  ```
+
+  </Tab>
+  <Tab value="Python">
+
+  ```py -c
+  @start_plugin_with_fn
+  async def main(input: PluginInput) -> PluginOutput:
+      directory = input.directory
+
+      # ... plugin logic ...
+
+      # Required: return directory
+      return {'directory': directory}
+  ```
+
+  </Tab>
+  <Tab value="C#">
+
+  ```csharp -c
+  [PluginMain]
+  public static async Task<PluginOutput> Main(PluginInput input)
+  {
+      var directory = input.Directory;
+
+      // ... plugin logic ...
+
+      // Required: return directory
+      return new PluginOutput { Directory = directory };
+  }
+  ```
+
+  </Tab>
+</Tabs>
+
+## Related
+
+- [PluginInput/Output](/docs/developer/plugins/reference/sdk/input-output) - Type definitions
+- [Types](/docs/developer/plugins/reference/sdk/types) - All type definitions
+- [First Plugin](/docs/developer/plugins/tutorials/first-plugin) - Tutorial

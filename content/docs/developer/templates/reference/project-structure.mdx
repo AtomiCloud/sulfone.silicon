@@ -1,0 +1,222 @@
+---
+title: Template Project Structure
+description: Understanding the structure of a CyanPrint template project
+---
+
+import { Files, File, Folder } from 'fumadocs-ui/components/files';
+import { Tabs, Tab } from 'fumadocs-ui/components/tabs';
+
+# Template Project Structure
+
+A CyanPrint template is organized as a structured project with specific files and directories.
+
+## Standard Structure
+
+<Files>
+  <Folder name="my-template" defaultOpen>
+    <Folder name="cyan" defaultOpen>
+      <File name="index.ts" icon="ts" />
+      <File name="Dockerfile" />
+      <File name="package.json" icon="json" />
+    </Folder>
+    <Folder name="template" defaultOpen>
+      <File name="README.md" icon="markdown" />
+      <Folder name="src">
+        <File name="index.ts" icon="ts" />
+      </Folder>
+    </Folder>
+    <File name="blob.Dockerfile" />
+    <File name="cyan.yaml" icon="yaml" />
+  </Folder>
+</Files>
+
+## Directory Details
+
+### `cyan/`
+
+Contains all template logic and SDK dependencies.
+
+<Files>
+  <Folder name="cyan" defaultOpen>
+    <File name="index.ts" icon="ts" />
+    <File name="Dockerfile" />
+    <File name="package.json" icon="json" />
+  </Folder>
+</Files>
+
+### `cyan/index.ts`
+
+The entry point for template logic:
+
+```ts
+import { StartTemplateWithLambda, IInquirer, IDeterminism, GlobType } from '@atomicloud/cyan-sdk';
+
+StartTemplateWithLambda(async (i: IInquirer, d: IDeterminism) => {
+  // i: IInquirer - ask questions
+  // d: IDeterminism - get deterministic values
+
+  return {
+    processors: [/* ... */],
+    plugins: [/* ... */]
+  };
+});
+```
+
+### `template/`
+
+Source files that will be processed and output to the user's project (located at root level, sibling to `cyan/`):
+
+<Files>
+  <Folder name="template" defaultOpen>
+    <File name="README.md" icon="markdown" />
+    <Folder name="src">
+      <File name="index.ts" icon="ts" />
+      <File name="config.ts" icon="ts" />
+    </Folder>
+    <Folder name="assets">
+      <File name="logo.png" icon="image" />
+    </Folder>
+  </Folder>
+</Files>
+
+Use `GlobType.Template` for text files with variable substitution, and `GlobType.Copy` for binary files that should be copied as-is.
+
+### `cyan.yaml`
+
+Template metadata:
+
+```yaml
+username: myorg
+name: my-template
+description: A description of the template
+project: https://github.com/myorg/my-template
+source: https://github.com/myorg/my-template
+email: contact@myorg.com
+tags: []
+readme: cyan/README.md
+processors: []
+plugins: []
+templates: []
+```
+
+### `cyan/package.json`
+
+SDK dependencies (located inside `cyan/` directory):
+
+```json
+{
+  "name": "template",
+  "module": "index.ts",
+  "type": "module",
+  "devDependencies": {
+    "bun-types": "latest"
+  },
+  "peerDependencies": {
+    "typescript": "^5.0.0"
+  },
+  "dependencies": {
+    "@atomicloud/cyan-sdk": "latest"
+  }
+}
+```
+
+## Dockerfiles
+
+### `cyan/Dockerfile`
+
+Builds the template execution environment (located inside `cyan/` directory):
+
+```dockerfile
+FROM oven/bun:1.1.31
+LABEL cyanprint.dev=true
+
+WORKDIR /app
+
+# Install dependencies
+COPY package.json .
+COPY bun.lockb .
+RUN bun install
+
+# Copy template code
+COPY . .
+
+# Run template
+CMD ["bun", "run", "index.ts"]
+```
+
+### `blob.Dockerfile`
+
+Stores template files for efficient transfer (located at root level). Uses a multi-stage build to create a compressed archive:
+
+```dockerfile
+FROM alpine:3.21 as base
+# hadolint ignore=DL3018,DL3019
+RUN apk add tar
+
+FROM base as build
+WORKDIR /src
+COPY . .
+RUN rm -rf cyan && mkdir -p /cyanprint/artifact && tar -czvf /cyanprint/artifact/cyan.tar.gz /src/
+
+FROM base
+LABEL cyanprint.dev=true
+COPY --from=build /cyanprint/artifact/cyan.tar.gz /cyanprint/artifact/cyan.tar.gz
+WORKDIR /workspace
+CMD ["tar", "-xzf", "/cyanprint/artifact/cyan.tar.gz", "-C", "/workspace/cyanprint", "--strip-components=1"]
+```
+
+## File Organization Patterns
+
+These are recommended patterns for organizing template files.
+
+### By Type
+
+Organize by file type:
+
+```
+template/
+├── docs/           # Markdown documentation
+├── src/            # Source code
+├── config/         # Configuration files
+└── static/         # Binary assets
+```
+
+### By Feature
+
+Organize by feature for conditional inclusion:
+
+```
+template/
+├── base/           # Always included
+├── typescript/     # TypeScript support
+├── docker/         # Docker configuration
+├── testing/        # Test setup
+└── ci/             # CI/CD configurations
+    ├── github/
+    └── gitlab/
+```
+
+## Generated Output
+
+When users run `cyanprint create`, the output directory contains:
+
+```
+my-project/
+├── .cyan_state.yaml        # Metadata for updates
+├── README.md
+├── package.json
+└── src/
+    └── index.ts
+```
+
+The `.cyan_state.yaml` file stores:
+- Active template configuration
+- History of template applications
+- User answers for reproducibility
+- Deterministic states for consistent regeneration
+
+## Related
+
+- [cyan.yaml Reference](/docs/developer/templates/reference/cyan-yaml) - Configuration format
+- [Dockerfiles Reference](/docs/developer/templates/reference/dockerfiles) - Docker configuration
+- [SDK Overview](/docs/developer/templates/reference/sdk) - SDK documentation

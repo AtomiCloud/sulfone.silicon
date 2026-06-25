@@ -1,0 +1,480 @@
+---
+title: Type Definitions
+description: SDK type definitions and enums
+---
+
+import { TypeTable } from 'fumadocs-ui/components/type-table';
+import { Callout } from 'fumadocs-ui/components/callout';
+
+# Type Definitions
+
+Complete type definitions for the CyanPrint SDK.
+
+## Enums
+
+### GlobType
+
+File processing types.
+
+<TypeTable
+  type={{
+    Template: {
+      type: '0',
+      description: 'Process with variable substitution (e.g., {{projectName}})',
+    },
+    Copy: {
+      type: '1',
+      description: 'Copy without any processing (e.g., images, binaries)',
+    },
+  }}
+/>
+
+**Usage:**
+
+```ts cyan.config.ts -c
+import { GlobType } from '@atomicloud/cyan-sdk';
+
+files: [
+  { root: 'templates', glob: '**/*.md', exclude: [], type: GlobType.Template },
+  { root: 'templates', glob: '**/*.png', exclude: [], type: GlobType.Copy }
+]
+```
+
+---
+
+### QuestionType
+
+Question type identifiers.
+
+<TypeTable
+  type={{
+    Text: {
+      type: '0',
+      description: 'Text input question',
+    },
+    DateSelect: {
+      type: '1',
+      description: 'Date picker question',
+    },
+    Select: {
+      type: '2',
+      description: 'Single-select dropdown question',
+    },
+    Checkbox: {
+      type: '3',
+      description: 'Multi-select checkbox question',
+    },
+    Password: {
+      type: '4',
+      description: 'Password input with masking',
+    },
+    Confirm: {
+      type: '5',
+      description: 'Yes/no confirmation question',
+    },
+  }}
+/>
+
+**Usage:**
+
+```ts cyan.config.ts -c
+import { QuestionType } from '@atomicloud/cyan-sdk';
+
+const name = await i.text({
+  type: QuestionType.Text,
+  id: 'project.name',
+  message: 'Project name?',
+  desc: 'Enter project name'
+});
+```
+
+---
+
+## Interfaces
+
+### Cyan
+
+Main configuration object returned by templates.
+
+<TypeTable
+  type={{
+    processors: {
+      type: 'CyanProcessor[]',
+      description: 'Array of processor definitions',
+      required: true,
+    },
+    plugins: {
+      type: 'CyanPlugin[]',
+      description: 'Array of plugin definitions',
+      required: true,
+    },
+  }}
+/>
+
+---
+
+### CyanProcessor
+
+Processor definition.
+
+<TypeTable
+  type={{
+    name: {
+      type: 'string',
+      description: 'Processor name/identifier',
+      required: true,
+    },
+    files: {
+      type: 'CyanGlob[]',
+      description: 'File groups to process',
+      required: true,
+    },
+    config: {
+      type: 'unknown',
+      description: 'Processor-specific configuration',
+      required: true,
+    },
+  }}
+/>
+
+---
+
+### CyanGlob
+
+File group for processing.
+
+<TypeTable
+  type={{
+    root: {
+      type: 'string | null',
+      description: 'Source directory (optional)',
+      default: 'null',
+    },
+    glob: {
+      type: 'string',
+      description: 'Glob pattern for matching files',
+      required: true,
+    },
+    exclude: {
+      type: 'string[]',
+      description: 'Patterns to exclude from matching',
+      default: '[]',
+    },
+    type: {
+      type: 'GlobType',
+      description: 'Processing type (Template or Copy)',
+      required: true,
+    },
+  }}
+/>
+
+---
+
+### CyanPlugin
+
+Plugin definition.
+
+<TypeTable
+  type={{
+    name: {
+      type: 'string',
+      description: 'Plugin name/identifier',
+      required: true,
+    },
+    config: {
+      type: 'unknown',
+      description: 'Plugin-specific configuration',
+      required: true,
+    },
+  }}
+/>
+
+---
+
+### IInquirer
+
+Question asking interface.
+
+```ts -c
+interface IInquirer {
+  // Shorthand forms
+  text(q: string, id: string, help?: string | null): Promise<string>;
+  select(q: string, options: string[], id: string, help?: string | null): Promise<string>;
+  confirm(q: string, id: string, help?: string | null): Promise<boolean>;
+  checkbox(q: string, options: string[], id: string, help?: string | null): Promise<string[]>;
+  password(q: string, id: string, help?: string | null): Promise<string>;
+  dateSelect(q: string, id: string, help?: string | null): Promise<string>;
+
+  // Object forms
+  text(config: TextQ): Promise<string>;
+  select(config: SelectQ): Promise<string>;
+  confirm(config: ConfirmQ): Promise<boolean>;
+  checkbox(config: CheckboxQ): Promise<string[]>;
+  password(config: PasswordQ): Promise<string>;
+  dateSelect(config: DateQ): Promise<string>;
+}
+```
+
+---
+
+### IDeterminism
+
+<Callout type="info" title="Deterministic Generation">
+  The `IDeterminism` interface ensures reproducible output across template runs.
+  Use it when you need consistent values based on a key (e.g., generating default names).
+</Callout>
+
+```ts -c
+interface IDeterminism {
+  get(key: string, origin: () => string): string;
+}
+```
+
+---
+
+### Question Interfaces
+
+#### TextQ
+
+<TypeTable
+  type={{
+    type: {
+      type: 'QuestionType.Text',
+      description: 'Question type identifier',
+      required: true,
+    },
+    id: {
+      type: 'string',
+      description: 'Unique question identifier',
+      required: true,
+    },
+    message: {
+      type: 'string',
+      description: 'Question prompt text',
+      required: true,
+    },
+    desc: {
+      type: 'string | null',
+      description: 'Helper/description text',
+      default: 'null',
+    },
+    default: {
+      type: 'string | null',
+      description: 'Default value',
+      default: 'null',
+    },
+    initial: {
+      type: 'string | null',
+      description: 'Initial input value',
+      default: 'null',
+    },
+    validate: {
+      type: '(input: string) => string | null',
+      description: 'Validation function, returns error message or null',
+      default: 'undefined',
+    },
+  }}
+/>
+
+#### SelectQ
+
+<TypeTable
+  type={{
+    type: {
+      type: 'QuestionType.Select',
+      description: 'Question type identifier',
+      required: true,
+    },
+    id: {
+      type: 'string',
+      description: 'Unique question identifier',
+      required: true,
+    },
+    message: {
+      type: 'string',
+      description: 'Question prompt text',
+      required: true,
+    },
+    desc: {
+      type: 'string | null',
+      description: 'Helper/description text',
+      default: 'null',
+    },
+    options: {
+      type: 'string[]',
+      description: 'Available selection options',
+      required: true,
+    },
+    validate: {
+      type: 'null',
+      description: 'Validation (not applicable for select)',
+      default: 'null',
+    },
+  }}
+/>
+
+#### ConfirmQ
+
+<TypeTable
+  type={{
+    type: {
+      type: 'QuestionType.Confirm',
+      description: 'Question type identifier',
+      required: true,
+    },
+    id: {
+      type: 'string',
+      description: 'Unique question identifier',
+      required: true,
+    },
+    message: {
+      type: 'string',
+      description: 'Question prompt text',
+      required: true,
+    },
+    desc: {
+      type: 'string | null',
+      description: 'Helper/description text',
+      default: 'null',
+    },
+    default: {
+      type: 'boolean | null',
+      description: 'Default value',
+      default: 'null',
+    },
+    errorMessage: {
+      type: 'string | null',
+      description: 'Error message for invalid input',
+      default: 'null',
+    },
+  }}
+/>
+
+#### CheckboxQ
+
+<TypeTable
+  type={{
+    type: {
+      type: 'QuestionType.Checkbox',
+      description: 'Question type identifier',
+      required: true,
+    },
+    id: {
+      type: 'string',
+      description: 'Unique question identifier',
+      required: true,
+    },
+    message: {
+      type: 'string',
+      description: 'Question prompt text',
+      required: true,
+    },
+    desc: {
+      type: 'string | null',
+      description: 'Helper/description text',
+      default: 'null',
+    },
+    options: {
+      type: 'string[]',
+      description: 'Available checkbox options',
+      required: true,
+    },
+    validate: {
+      type: 'null',
+      description: 'Validation (not applicable for checkbox)',
+      default: 'null',
+    },
+  }}
+/>
+
+#### PasswordQ
+
+<TypeTable
+  type={{
+    type: {
+      type: 'QuestionType.Password',
+      description: 'Question type identifier',
+      required: true,
+    },
+    id: {
+      type: 'string',
+      description: 'Unique question identifier',
+      required: true,
+    },
+    message: {
+      type: 'string',
+      description: 'Question prompt text',
+      required: true,
+    },
+    desc: {
+      type: 'string | null',
+      description: 'Helper/description text',
+      default: 'null',
+    },
+    confirmation: {
+      type: 'boolean | null',
+      description: 'Require confirmation input',
+      default: 'null',
+    },
+    validate: {
+      type: '(input: string) => string | null',
+      description: 'Validation function, returns error message or null',
+      default: 'undefined',
+    },
+  }}
+/>
+
+#### DateQ
+
+<TypeTable
+  type={{
+    type: {
+      type: 'QuestionType.DateSelect',
+      description: 'Question type identifier',
+      required: true,
+    },
+    id: {
+      type: 'string',
+      description: 'Unique question identifier',
+      required: true,
+    },
+    message: {
+      type: 'string',
+      description: 'Question prompt text',
+      required: true,
+    },
+    desc: {
+      type: 'string | null',
+      description: 'Helper/description text',
+      default: 'null',
+    },
+    default: {
+      type: 'Date | null',
+      description: 'Default date value',
+      default: 'null',
+    },
+    minDate: {
+      type: 'Date | null',
+      description: 'Minimum selectable date',
+      default: 'null',
+    },
+    maxDate: {
+      type: 'Date | null',
+      description: 'Maximum selectable date',
+      default: 'null',
+    },
+    validate: {
+      type: '(input: string) => string | null',
+      description: 'Validation function, returns error message or null',
+      default: 'undefined',
+    },
+  }}
+/>
+
+---
+
+## Related
+
+- [IInquirer Reference](/docs/developer/templates/reference/sdk/inquirer) - Question API details
+- [Cyan Config Reference](/docs/developer/templates/reference/sdk/cyan-config) - Configuration structure
+- [Globbing Reference](/docs/developer/templates/reference/sdk/globbing) - File patterns

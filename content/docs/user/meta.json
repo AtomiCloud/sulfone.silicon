@@ -2,5 +2,6 @@
   "title": "User",
   "description": "Use CyanPrint",
   "icon": "User",
-  "root": true
+  "root": true,
+  "pages": ["index", "tutorials", "how-to", "reference", "explanation"]
 }

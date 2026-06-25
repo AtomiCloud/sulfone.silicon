@@ -1,0 +1,214 @@
+---
+title: cyan.yaml Reference
+description: Configuration format for template metadata
+---
+
+import { Callout } from 'fumadocs-ui/components/callout';
+import { Cards, Card } from 'fumadocs-ui/components/card';
+
+# cyan.yaml Reference
+
+The `cyan.yaml` file defines template metadata and declares dependencies on processors, plugins, and other templates.
+
+## Basic Structure
+
+```yaml cyan.yaml -c
+username: myorg
+name: my-template
+description: A template description
+project: https://example.com/my-project
+source: https://github.com/myorg/my-template
+email: contact@myorg.com
+tags: []
+readme: README.md
+processors: []
+plugins: []
+templates: []
+```
+
+## Fields Reference
+
+### `username`
+
+**Required.** The organization or user name that owns this template.
+
+```yaml
+username: myorg
+```
+
+- Use lowercase letters
+- Use hyphens for separation
+- Must match the registry user/organization
+
+### `name`
+
+**Required.** The template identifier within the organization.
+
+```yaml
+name: my-template
+```
+
+- Use lowercase letters
+- Use hyphens for separation
+- Must be unique within the organization
+
+### `description`
+
+**Required.** Brief description of what the template provides.
+
+```yaml
+description: A modern Node.js project template with TypeScript support
+```
+
+### `project`
+
+**Required.** URL to the project documentation or website.
+
+```yaml
+project: https://docs.myorg.io/templates/node-service
+```
+
+### `source`
+
+**Required.** URL to the source code repository.
+
+```yaml
+source: https://github.com/myorg/my-template
+```
+
+### `email`
+
+**Required.** Contact email for the template maintainer.
+
+```yaml
+email: team@myorg.com
+```
+
+### `tags`
+
+**Required.** Tags for template discovery. Can be an empty array.
+
+```yaml
+tags:
+  - nodejs
+  - typescript
+  - react
+  - starter
+```
+
+### `readme`
+
+**Required.** Path to the template's README file.
+
+```yaml
+readme: README.md
+```
+
+### `processors`
+
+**Required.** Array of processor dependencies. Can be empty.
+
+```yaml
+processors:
+  - myorg/my-processor
+  - atomi/typescript:3
+```
+
+Format: `username/processor-name[:version]`
+
+<Callout type="info">
+Versions are auto-incrementing integers managed by the registry (not semantic versions). Version is optional: `myorg/processor` (latest) or `myorg/processor:3` (specific version).
+</Callout>
+
+### `plugins`
+
+**Required.** Array of plugin dependencies. Can be empty.
+
+```yaml
+plugins:
+  - cyan/init-git
+  - atomi/npm-install:2
+```
+
+Format: `username/plugin-name[:version]`
+
+### `templates`
+
+**Required.** Array of other templates to compose with. Can be empty.
+
+```yaml
+templates:
+  - myorg/base-node
+  - myorg/typescript:2
+  - myorg/docker:1
+```
+
+Format: `username/template-name[:version]`
+
+## Version Management
+
+Template versions are **auto-incrementing integers** managed by the registry, not semantic versions. When you push a template to the registry, it automatically receives the next available version number (1, 2, 3, ...).
+
+This means:
+
+- No `version` field exists in `cyan.yaml`
+- Versions are tracked internally by the registry
+- Reference specific versions using the `:version` suffix (e.g., `myorg/template:3`)
+
+## Complete Example
+
+```yaml cyan.yaml -c
+# Organization and identity
+username: myorg
+name: node-service
+description: Production-ready Node.js microservice template
+email: team@myorg.com
+
+# Links
+project: https://docs.myorg.io/templates/node-service
+source: https://github.com/myorg/node-service-template
+readme: README.md
+
+# Discovery
+tags:
+  - nodejs
+  - microservice
+  - typescript
+  - grpc
+
+# Processor dependencies
+processors:
+  - myorg/base-processor
+
+# Plugin dependencies
+plugins:
+  - cyan/init-git
+  - cyan/npm-install
+
+# Compose with other templates
+templates:
+  - myorg/base-node:3
+  - myorg/typescript:2
+  - myorg/docker:1
+  - myorg/grpc:1
+```
+
+## Related
+
+<Cards>
+  <Card title="Project Structure" href="/docs/developer/templates/reference/project-structure">
+    Template files organization
+  </Card>
+  <Card title="Dockerfiles Reference" href="/docs/developer/templates/reference/dockerfiles">
+    Docker configuration
+  </Card>
+  <Card title="Build Configuration" href="/docs/developer/templates/reference/build-config">
+    Docker buildx setup
+  </Card>
+  <Card title="Dev Configuration" href="/docs/developer/templates/reference/dev-config">
+    Dev mode setup
+  </Card>
+  <Card title="Compose Templates" href="/docs/developer/templates/how-to/compose-templates">
+    Composition how-to
+  </Card>
+</Cards>

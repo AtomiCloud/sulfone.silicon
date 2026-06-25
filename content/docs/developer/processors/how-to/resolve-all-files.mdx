@@ -1,0 +1,327 @@
+---
+title: Resolve All Files
+description: Load all files into memory with full content
+---
+
+import { Callout } from 'fumadocs-ui/components/callout';
+import { TypeTable } from 'fumadocs-ui/components/type-table';
+import { Cards, Card } from 'fumadocs-ui/components/card';
+import { Tabs, Tab } from 'fumadocs-ui/components/tabs';
+
+# Resolve All Files
+
+Use `resolveAll()` to load all files matching the processor's globs into memory.
+
+## When to Use
+
+**Best for:**
+- Small to medium files where you need full content
+- Simple transformations on all files
+- When you need random access to any file
+
+**Avoid with:**
+- Very large files (use streaming instead)
+- Many files where you only need some (use lazy loading)
+
+## Usage
+
+<Tabs items={['TypeScript', 'Python', 'C#']}>
+<Tab value="TypeScript">
+
+```ts filename="processor.ts" -c
+import { StartProcessorWithLambda } from '@atomicloud/cyan-sdk';
+
+StartProcessorWithLambda(async (input, fileHelper) => {
+  // Load ALL files with their content
+  // Returns: VirtualFile[] with content already loaded
+  // Note: Copy-type globs are automatically handled - files are copied directly
+  const files = fileHelper.resolveAll();
+
+  files.forEach(file => {
+    console.log(file.relative); // Path relative to read_dir
+    console.log(file.content);  // Full file content
+
+    // Transform and write
+    file.content = processContent(file.content);
+    file.writeFile();
+  });
+
+  return { directory: input.writeDir };
+});
+```
+
+</Tab>
+<Tab value="Python">
+
+```python filename="processor.py" -c
+from cyanprintsdk import start_processor_with_fn
+from cyanprintsdk.domain.processor.input import ProcessorInput
+from cyanprintsdk.domain.core.fs.cyan_fs_helper import CyanFileHelper
+
+async def my_processor(input: ProcessorInput, fileHelper: CyanFileHelper):
+    # Load ALL files with their content
+    # Returns: List[VirtualFile] with content already loaded
+    # Note: Copy-type globs are automatically handled - files are copied directly
+    files = fileHelper.resolve_all()
+
+    for file in files:
+        print(file.relative)  # Path relative to read_dir
+        print(file.content)   # Full file content
+
+        # Transform and write
+        file.content = process_content(file.content)
+        file.write_file()
+
+    return {'directory': input.write_directory}
+
+start_processor_with_fn(my_processor)
+```
+
+</Tab>
+<Tab value="C#">
+
+```csharp filename="Processor.cs" -c
+using sulfone_helium;
+using sulfone_helium.Domain.Core.FileSystem;
+using sulfone_helium.Domain.Processor;
+
+CyanEngine.StartProcessor(args, async (input, fileHelper) =>
+{
+    // Load ALL files with their content
+    // Returns: List<VirtualFile> with content already loaded
+    // Note: Copy-type globs are automatically handled - files are copied directly
+    var files = fileHelper.ResolveAll();
+
+    foreach (var file in files)
+    {
+        Console.WriteLine(file.Relative); // Path relative to read_dir
+        Console.WriteLine(file.Content);  // Full file content
+
+        // Transform and write
+        file.Content = ProcessContent(file.Content);
+        file.WriteFile();
+    }
+
+    return new ProcessorOutput { Directory = input.WriteDirectory };
+});
+```
+
+</Tab>
+</Tabs>
+
+## VirtualFile Properties
+
+<TypeTable
+  type={{
+    content: {
+      type: 'string',
+      description: 'Full file contents',
+    },
+    relative: {
+      type: 'string',
+      description: 'Path relative to read directory',
+    },
+    baseRead: {
+      type: 'string',
+      description: 'Base read directory path',
+    },
+    baseWrite: {
+      type: 'string',
+      description: 'Base write directory path',
+    },
+    read: {
+      type: 'string',
+      description: 'Full read path (getter: baseRead + relative)',
+    },
+    write: {
+      type: 'string',
+      description: 'Full write path (getter: baseWrite + relative)',
+    },
+  }}
+/>
+
+## VirtualFile Methods
+
+| Method | Return | Description |
+|--------|--------|-------------|
+| `writeFile()` | `void` | Write file to write directory |
+
+## Example: Variable Substitution
+
+<Tabs items={['TypeScript', 'Python', 'C#']}>
+<Tab value="TypeScript">
+
+```ts filename="processor.ts" -c
+StartProcessorWithLambda(async (input, fileHelper) => {
+  const files = fileHelper.resolveAll();
+  const config = input.config as { vars: Record<string, string> };
+
+  files.forEach(file => {
+    // Simple variable substitution
+    for (const [key, value] of Object.entries(config.vars)) {
+      file.content = file.content.replaceAll(`{{${key}}}`, value);
+    }
+    file.writeFile();
+  });
+
+  return { directory: input.writeDir };
+});
+```
+
+</Tab>
+<Tab value="Python">
+
+```python filename="processor.py" -c
+from cyanprintsdk import start_processor_with_fn
+from cyanprintsdk.domain.processor.input import ProcessorInput
+from cyanprintsdk.domain.core.fs.cyan_fs_helper import CyanFileHelper
+from typing import TypedDict, Dict
+
+class Config(TypedDict):
+    vars: Dict[str, str]
+
+async def my_processor(input: ProcessorInput, fileHelper: CyanFileHelper):
+    files = fileHelper.resolve_all()
+    config: Config = input.config or {'vars': {}}
+
+    for file in files:
+        # Simple variable substitution
+        for key, value in config.get('vars', {}).items():
+            file.content = file.content.replace(f'{{{{{key}}}}}', value)
+        file.write_file()
+
+    return {'directory': input.write_directory}
+
+start_processor_with_fn(my_processor)
+```
+
+</Tab>
+<Tab value="C#">
+
+```csharp filename="Processor.cs" -c
+using sulfone_helium;
+using sulfone_helium.Domain.Core.FileSystem;
+using sulfone_helium.Domain.Processor;
+
+public class Config
+{
+    public Dictionary<string, string> Vars { get; set; } = new();
+}
+
+CyanEngine.StartProcessor(args, async (input, fileHelper) =>
+{
+    var files = fileHelper.ResolveAll();
+    var config = input.Config.Deserialize<Config>() ?? new Config();
+
+    foreach (var file in files)
+    {
+        // Simple variable substitution
+        foreach (var kvp in config.Vars)
+        {
+            file.Content = file.Content.Replace($"{{{{{kvp.Key}}}}}", kvp.Value);
+        }
+        file.WriteFile();
+    }
+
+    return new ProcessorOutput { Directory = input.WriteDirectory };
+});
+```
+
+</Tab>
+</Tabs>
+
+## Example: Filter and Transform
+
+<Tabs items={['TypeScript', 'Python', 'C#']}>
+<Tab value="TypeScript">
+
+```ts filename="processor.ts" -c
+StartProcessorWithLambda(async (input, fileHelper) => {
+  const files = fileHelper.resolveAll();
+
+  files.forEach(file => {
+    // Only process markdown files
+    if (file.relative.endsWith('.md')) {
+      file.content = addFrontmatter(file.content);
+    }
+
+    // Write all files (including non-md unchanged)
+    file.writeFile();
+  });
+
+  return { directory: input.writeDir };
+});
+```
+
+</Tab>
+<Tab value="Python">
+
+```python filename="processor.py" -c
+from cyanprintsdk import start_processor_with_fn
+from cyanprintsdk.domain.processor.input import ProcessorInput
+from cyanprintsdk.domain.core.fs.cyan_fs_helper import CyanFileHelper
+
+async def my_processor(input: ProcessorInput, fileHelper: CyanFileHelper):
+    files = fileHelper.resolve_all()
+
+    for file in files:
+        # Only process markdown files
+        if file.relative.endswith('.md'):
+            file.content = add_frontmatter(file.content)
+
+        # Write all files (including non-md unchanged)
+        file.write_file()
+
+    return {'directory': input.write_directory}
+
+start_processor_with_fn(my_processor)
+```
+
+</Tab>
+<Tab value="C#">
+
+```csharp filename="Processor.cs" -c
+using sulfone_helium;
+using sulfone_helium.Domain.Core.FileSystem;
+using sulfone_helium.Domain.Processor;
+
+CyanEngine.StartProcessor(args, async (input, fileHelper) =>
+{
+    var files = fileHelper.ResolveAll();
+
+    foreach (var file in files)
+    {
+        // Only process markdown files
+        if (file.Relative.EndsWith(".md"))
+        {
+            file.Content = AddFrontmatter(file.Content);
+        }
+
+        // Write all files (including non-md unchanged)
+        file.WriteFile();
+    }
+
+    return new ProcessorOutput { Directory = input.WriteDirectory };
+});
+```
+
+</Tab>
+</Tabs>
+
+<Callout type="warn">
+`resolveAll()` loads all matched files into memory. For large templates, consider using `get()` for lazy loading or `readAsStream()` for memory efficiency. Note: `get()` returns `VirtualFileReference[]` which requires calling `readFile()` to load the content.
+</Callout>
+
+## Related
+
+<Cards>
+  <Card href="/docs/developer/processors/how-to/lazy-load-files" title="Lazy Load Files">
+    Load files on demand
+  </Card>
+  <Card href="/docs/developer/processors/how-to/stream-large-files" title="Stream Large Files">
+    Memory-efficient streaming
+  </Card>
+  <Card href="/docs/developer/processors/reference/sdk/file-helper" title="CyanFileHelper API">
+    Full API reference
+  </Card>
+</Cards>

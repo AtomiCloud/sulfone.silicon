@@ -1,0 +1,164 @@
+---
+title: Processor Development
+description: Create custom file transformers for CyanPrint templates
+---
+
+import { Cards, Card } from 'fumadocs-ui/components/card';
+import { Tabs, Tab } from 'fumadocs-ui/components/tabs';
+
+# Processor Development
+
+Processors are the transformation engines that convert template files into generated output. The default processor uses Eta templating, but you can create custom processors for any transformation needs.
+
+## What is a Processor?
+
+A processor is a Docker container that:
+
+1. **Receives files** from the template's blob image
+2. **Transforms content** based on configuration
+3. **Outputs files** to the write directory
+
+Processors are stateless file transformers - they receive input files and produce output files without side effects.
+
+## Processor Architecture
+
+<Mermaid chart={`graph TD
+    A[Template Blob] --> B[Processor Container]
+    C[Processor Config] --> B
+    B --> D[CyanFileHelper]
+    D --> E[resolveAll]
+    D --> F[read]
+    D --> G[get]
+    D --> H[readAsStream]
+    D --> I[copy]
+    E --> J[VirtualFile]
+    J --> K[Transform Content]
+    K --> L[writeFile]
+    L --> M[Output Directory]
+`} />
+
+### Components
+
+| Component | Purpose | Examples |
+|-----------|---------|----------|
+| **Entry Point** | Processor logic | `StartProcessorWithLambda` |
+| **CyanFileHelper** | File operations | `resolveAll()`, `read()`, `copy()` |
+| **CyanProcessorInput** | Input from template | Config, globs, directories |
+| **ProcessorOutput** | Return value | Output directory path |
+
+## Why Create a Custom Processor?
+
+### Different Templating Engines
+
+The default processor uses Eta with `var__name__` syntax. You might need:
+
+| Engine | Use Case |
+|--------|----------|
+| Jinja | Python-style templates |
+| Go templates | Helm/Kubernetes manifests |
+| Mustache | Logic-less templates |
+| Handlebars | Rich template features |
+
+### Custom Logic
+
+Processors enable custom processing that goes beyond simple variable substitution:
+
+- Code generation (GraphQL, Protobuf, OpenAPI)
+- AST transformations
+- Binary file processing
+- Multi-step pipelines
+
+<Callout type="info">
+Processors should be pure functions - same input always produces same output. This ensures reproducible project generation.
+</Callout>
+
+## Learning Path
+
+<Cards>
+  <Card href="/docs/developer/processors/tutorials/first-processor" title="Tutorials">
+    Build your first processor step by step
+  </Card>
+  <Card href="/docs/developer/processors/how-to" title="How-To Guides">
+    Task-oriented guides for common scenarios
+  </Card>
+  <Card href="/docs/developer/processors/reference" title="Reference">
+    Technical documentation for the SDK
+  </Card>
+  <Card href="/docs/developer/processors/explanation" title="Explanation">
+    Deep dives into processor concepts
+  </Card>
+</Cards>
+
+## Quick Example
+
+Here's a minimal processor that uppercases all file content:
+
+<Tabs items={['TypeScript', 'Python', 'C#']}>
+  <Tab value="TypeScript">
+
+```ts index.ts -c
+import { StartProcessorWithLambda } from '@atomicloud/cyan-sdk';
+
+StartProcessorWithLambda(async (input, fileHelper) => {
+  const files = fileHelper.resolveAll();
+
+  files.forEach(file => {
+    file.content = file.content.toUpperCase();
+    file.writeFile();
+  });
+
+  return { directory: input.writeDir };
+});
+```
+
+  </Tab>
+  <Tab value="Python">
+
+```python main.py -c
+from cyanprintsdk.processor import start_processor_with_fn
+from cyanprintsdk.protocol import ProcessorInput, ProcessorOutput
+
+async def processor(input: ProcessorInput, file_helper) -> ProcessorOutput:
+    files = file_helper.resolve_all()
+
+    for file in files:
+        file.content = file.content.upper()
+        file.write_file()
+
+    return ProcessorOutput(directory=input.write_dir)
+
+processor_main = start_processor_with_fn(processor)
+```
+
+  </Tab>
+  <Tab value="C#">
+
+```csharp Processor.cs -c
+using CyanPrintSDK;
+
+public static class Processor
+{
+    [ProcessorMain]
+    public static async Task<ProcessorOutput> Run(ProcessorInput input, CyanFileHelper fileHelper)
+    {
+        var files = fileHelper.ResolveAll();
+
+        foreach (var file in files)
+        {
+            file.Content = file.Content.ToUpper();
+            file.WriteFile();
+        }
+
+        return new ProcessorOutput { Directory = input.WriteDir };
+    }
+}
+```
+
+  </Tab>
+</Tabs>
+
+## Next Steps
+
+- [Create your first processor](/docs/developer/processors/tutorials/first-processor)
+- [Explore CyanFileHelper API](/docs/developer/processors/reference/sdk/file-helper)
+- [Learn why processors are stateless](/docs/developer/processors/explanation/stateless-nature)

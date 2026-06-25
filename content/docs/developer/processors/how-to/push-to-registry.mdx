@@ -1,0 +1,226 @@
+---
+title: Push to Registry
+description: Build and publish your processor to a container registry and register with Zinc
+---
+
+import { Steps } from 'fumadocs-ui/components/steps';
+import { Callout } from 'fumadocs-ui/components/callout';
+import { Tabs, Tab } from 'fumadocs-ui/components/tabs';
+
+# Push to Registry
+
+Publish your processor to a container registry and register it with the CyanPrint registry (Zinc) so others can use it in their templates.
+
+## Prerequisites
+
+- Docker installed and logged in
+- Access to a container registry (Docker Hub, GitHub GHCR, etc.)
+- Completed processor code
+- Dockerfile includes `LABEL cyanprint.dev=true` (see [Dockerfile Reference](/docs/developer/processors/reference/dockerfile))
+
+## Publish Process
+
+<Steps>
+
+### Tag Your Image
+
+Tag your processor image with the registry path:
+
+<Tabs groupId="registry" items={['Docker Hub', 'GHCR', 'Private Registry']} persist>
+  <Tab value="Docker Hub">
+    ```bash -c
+    docker tag my-processor:dev username/my-processor:latest
+    docker tag my-processor:dev username/my-processor:1.0.0
+    ```
+  </Tab>
+  <Tab value="GHCR">
+    ```bash -c
+    docker tag my-processor:dev ghcr.io/org/my-processor:latest
+    docker tag my-processor:dev ghcr.io/org/my-processor:1.0.0
+    ```
+  </Tab>
+  <Tab value="Private Registry">
+    ```bash -c
+    docker tag my-processor:dev registry.company.com/processors/my-processor:latest
+    ```
+  </Tab>
+</Tabs>
+
+### Push to Registry
+
+<Tabs groupId="registry" items={['Docker Hub', 'GHCR', 'Private Registry']} persist>
+  <Tab value="Docker Hub">
+    ```bash -c
+    docker push username/my-processor:latest
+    docker push username/my-processor:1.0.0
+    ```
+  </Tab>
+  <Tab value="GHCR">
+    ```bash -c
+    docker push ghcr.io/org/my-processor:latest
+    docker push ghcr.io/org/my-processor:1.0.0
+    ```
+  </Tab>
+  <Tab value="Private Registry">
+    ```bash -c
+    docker push registry.company.com/processors/my-processor:latest
+    ```
+  </Tab>
+</Tabs>
+
+### Verify the Push
+
+```bash -c
+# Pull the image to verify
+docker pull username/my-processor:latest
+
+# Run a test
+docker run --rm username/my-processor:latest
+```
+
+</Steps>
+
+<Callout type="warn">
+Pushing to a container registry is only part of the process. You must also register your processor with the CyanPrint registry (Zinc) for the system to discover and use it. See [Register Your Processor](#register-your-processor) below.
+</Callout>
+
+## Naming Convention
+
+Use the `username/processor-name` or `org/processor-name` format for your Docker images:
+
+| Pattern | Example | Description |
+|---------|---------|-------------|
+| `org/processor-name` | `atomi/handlebars-processor` | Organization namespace |
+| `username/processor-name` | `johndoe/custom-processor` | User namespace |
+| `registry/org/processor-name` | `ghcr.io/atomi/processors/custom` | Full registry path |
+
+<Callout type="info">
+The system uses the `username/name[:version]` format to reference processors in templates. Container names are auto-generated internally by the system.
+</Callout>
+
+## Versioning
+
+### Semantic Versioning for Docker Tags
+
+Use semantic versioning for Docker image tags:
+
+```bash -c
+# Major version (breaking changes)
+docker tag my-processor:dev org/my-processor:2.0.0
+
+# Minor version (new features)
+docker tag my-processor:dev org/my-processor:1.1.0
+
+# Patch version (bug fixes)
+docker tag my-processor:dev org/my-processor:1.0.1
+
+# Latest tag (current stable)
+docker tag my-processor:dev org/my-processor:latest
+```
+
+### Registry Version Numbers
+
+<Callout type="info">
+The CyanPrint registry (Zinc) uses auto-incremented integer version numbers (1, 2, 3, etc.) for tracking processor versions internally. When you register a new version of your processor, the registry assigns the next integer version. These integer versions are separate from your Docker image tags.
+</Callout>
+
+### Using in Templates
+
+Templates reference processors by name with an optional version tag:
+
+```ts -c
+return {
+  processors: [{
+    name: 'username/my-processor:1.0.0',  // !callout[/1.0.0/] Pin to specific Docker tag
+    files: [{ root: 'templates', glob: '**/*', exclude: [], type: GlobType.Template }],
+    config: { /* ... */ }
+  }]
+};
+```
+
+<Callout type="info">
+Version references in templates are exact matches or `latest`. The system does not perform semantic version range matching (e.g., `org/processor:1` will not resolve to the latest 1.x.x).
+</Callout>
+
+## Register Your Processor
+
+After pushing your Docker image to a container registry, you must register the processor with the CyanPrint registry (Zinc) for the system to discover and use it.
+
+The CyanPrint registry stores processor metadata including:
+
+- **Docker Reference**: The full Docker image path (e.g., `ghcr.io/org/my-processor`)
+- **Docker Tag**: The version tag (e.g., `1.0.0`, `latest`)
+- **Processor metadata**: Information from your processor's documentation
+
+<Callout type="info">
+For details on registering your processor with the CyanPrint registry, refer to the [Zinc Registry API](/docs/contributor/repositories/zinc) documentation. Use the `POST /api/v1/processor/push/{username}` endpoint to register your processor.
+</Callout>
+
+### Verify Registration
+
+To verify your processor is properly registered:
+
+1. Ensure the Docker image is accessible from the container registry
+2. Confirm the processor metadata is registered in the CyanPrint registry
+3. Test by using the processor in a template generation
+
+## CI/CD Integration
+
+### GitHub Actions
+
+Create `.github/workflows/publish.yml`:
+
+```yaml
+name: Publish Processor
+
+on:
+  release:
+    types: [published]
+
+jobs:
+  publish:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Set up Docker Buildx
+        uses: docker/setup-buildx-action@v3
+
+      - name: Login to GHCR
+        uses: docker/login-action@v3
+        with:
+          registry: ghcr.io
+          username: ${{ github.actor }}
+          password: ${{ secrets.GITHUB_TOKEN }}
+
+      - name: Extract version
+        id: version
+        run: echo "VERSION=${GITHUB_REF#refs/tags/}" >> $GITHUB_OUTPUT
+
+      - name: Build and push
+        uses: docker/build-push-action@v5
+        with:
+          context: .
+          push: true
+          tags: |
+            ghcr.io/${{ github.repository_owner }}/my-processor:latest
+            ghcr.io/${{ github.repository_owner }}/my-processor:${{ steps.version.outputs.VERSION }}
+```
+
+<Callout type="warn">
+This workflow pushes the Docker image to GHCR only. You must also register the processor with the CyanPrint registry for the system to discover it.
+</Callout>
+
+## Best Practices
+
+1. **Use semantic versioning for Docker tags** - Tag images with `1.0.0`, `1.1.0`, etc.
+2. **Register with Zinc after pushing** - Docker push alone is not sufficient
+3. **Document config options** - Help users understand available configuration
+4. **Test locally before publishing** - Verify processor works with `:dev` tag first
+5. **Keep images small** - Use minimal base images for faster pulls
+
+## Related
+
+- [First Processor Tutorial](/docs/developer/processors/tutorials/first-processor) - Create your first processor
+- [Project Structure](/docs/developer/processors/reference/project-structure) - Processor file layout
+- [Dockerfile Reference](/docs/developer/processors/reference/dockerfile) - Dockerfile best practices

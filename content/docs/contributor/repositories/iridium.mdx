@@ -1,0 +1,31 @@
+---
+title: Iridium
+description: The CyanPrint CLI tool
+---
+
+# sulfone.iridium
+
+The CyanPrint command-line interface (CLI) is the primary way users interact with CyanPrint. It handles project creation, template management, and configuration.
+
+## Repository
+
+[github.com/AtomiCloud/sulfone.iridium](https://github.com/AtomiCloud/sulfone.iridium)
+
+## Tech Stack
+
+| Technology | Purpose |
+| ---------- | ------- |
+| Rust | Primary language for performance and safety |
+| Clap | CLI argument parsing framework |
+| Tokio | Async runtime |
+| Reqwest | HTTP client for API calls |
+| Bollard | Docker client for container management |
+| Inquire | Interactive CLI prompts |
+
+## Overview
+
+Iridium is a Rust workspace containing 4 crates: `cyanprint` (main CLI binary), `cyanprompt` (interactive prompt handling), `cyanregistry` (registry client for Zinc API), and `cyancoordinator` (coordinator client for Boron communication). It provides commands for creating projects from templates, updating existing projects, pushing artifacts to the registry, and managing the local daemon.
+
+## Getting Started
+
+See the repository README for setup and contributing instructions.

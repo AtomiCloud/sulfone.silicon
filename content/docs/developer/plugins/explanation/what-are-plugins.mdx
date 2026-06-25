@@ -1,0 +1,375 @@
+---
+title: What Are Plugins?
+description: Understanding plugins and their role in CyanPrint
+---
+
+import { TypeTable } from 'fumadocs-ui/components/type-table';
+import { Cards, Card } from 'fumadocs-ui/components/card';
+import { Tabs, Tab } from 'fumadocs-ui/components/tabs';
+
+# What Are Plugins?
+
+Plugins are post-processing components that run **after** all file generation is complete. They enable actions that processors cannot perform, such as running shell commands and executing system operations.
+
+## The Big Picture
+
+<Mermaid chart={`graph LR
+    A[User Input] --> B[Template]
+    B --> C[Processors]
+    C --> D[Generated Files]
+    D --> E[Plugins]
+    E --> F[Final Project]
+`} />
+
+Plugins are the final step in the generation pipeline. After processors have transformed and written all files, plugins can:
+
+- Run commands on the generated files
+- Modify the filesystem
+- Execute build steps
+- Initialize version control
+
+## What Plugins Can Do
+
+| Capability | Example | Why It's a Plugin |
+|------------|---------|-------------------|
+| Initialize git | `git init` | Requires shell access |
+| Install dependencies | `npm install` | Requires package manager |
+| Run formatters | `prettier --write .` | Requires npm packages |
+| Create symlinks | `ln -s` | Requires filesystem access |
+| Build steps | `npm run build` | Requires toolchain |
+| Set up hooks | `husky install` | Requires git + npm |
+
+<Callout type="info">
+Plugins are the only component with shell access. Processors are isolated and cannot execute commands.
+</Callout>
+
+## How Plugins Work
+
+### Input
+
+Plugins receive a `CyanPluginInput` object:
+
+<TypeTable
+  type={{
+    directory: {
+      type: 'string',
+      description: 'Path to all generated files',
+      required: true,
+    },
+    config: {
+      type: 'object',
+      description: 'Configuration from the template',
+      required: true,
+    },
+  }}
+/>
+
+### Execution
+
+<Mermaid chart={`sequenceDiagram
+    participant T as Template
+    participant P as Processor
+    participant PL as Plugin
+    participant FS as Filesystem
+
+    T->>P: Transform files
+    P->>FS: Write files
+    FS->>PL: Pass directory path
+    PL->>FS: Run commands/modify files
+    FS->>PL: Return directory
+    PL->>T: Complete
+`} />
+
+### Output
+
+Plugins return a `PluginOutput` object:
+
+<TypeTable
+  type={{
+    directory: {
+      type: 'string',
+      description: 'Same path (returned for pipeline continuity when multiple plugins run in sequence)',
+      required: true,
+    },
+  }}
+/>
+
+## When to Use Plugins
+
+### Use a Plugin When You Need To:
+
+- Initialize a git repository
+- Install npm/bun dependencies
+- Run code formatters or linters
+- Execute build commands
+- Create symlinks or special files
+- Set up development tooling
+
+### Don't Use a Plugin When You Need To:
+
+<Callout type="warn">
+- Transform file content (use a processor)
+- Substitute variables (use a processor)
+- Process individual files (use a processor)
+</Callout>
+
+## Plugin vs Processor
+
+| Aspect | Processor | Plugin |
+|--------|-----------|--------|
+| **Purpose** | Transform file content | Run operations |
+| **Access** | File content only | Full filesystem + shell |
+| **When** | During file generation | After all files written |
+| **State** | Stateless | Can have side effects |
+| **Example** | Replace `var__name__` | Run `git init` |
+
+Read more in [Plugins vs Processors](/docs/developer/plugins/explanation/plugins-vs-processors).
+
+## Common Plugin Patterns
+
+### Setup Plugin
+
+Initialize the project environment:
+
+<Tabs items={['TypeScript', 'Python', 'C#']}>
+  <Tab value="TypeScript">
+
+```ts plugin.ts -c
+import { $ } from 'bun';
+import { StartPluginWithLambda } from '@atomicloud/cyan-sdk';
+import type { CyanPluginInput, PluginOutput } from '@atomicloud/cyan-sdk';
+
+StartPluginWithLambda(async (input: CyanPluginInput): Promise<PluginOutput> => {
+  // !mark Extract directory from input
+  const { directory } = input;
+
+  // !callout[/\$\`/] Bun's shell template literal for running commands
+  await $`git -C ${directory} init`.quiet();
+  await $`cd ${directory} && npm install`.quiet();
+
+  // !mark Always return the directory for pipeline continuity
+  return { directory };
+});
+```
+
+  </Tab>
+  <Tab value="Python">
+
+```python plugin.py -c
+import subprocess
+from cyan_sdk import start_plugin_with_fn
+from cyan_sdk.types import CyanPluginInput, PluginOutput
+
+@start_plugin_with_fn
+async def setup_plugin(input: CyanPluginInput) -> PluginOutput:
+    # Extract directory from input
+    directory = input.directory
+
+    # Run shell commands
+    subprocess.run(["git", "-C", directory, "init"], capture_output=True)
+    subprocess.run(["npm", "install"], cwd=directory, capture_output=True)
+
+    # Always return the directory for pipeline continuity
+    return PluginOutput(directory=directory)
+```
+
+  </Tab>
+  <Tab value="C#">
+
+```csharp Plugin.cs -c
+using CyanSdk;
+using CyanSdk.Types;
+
+[PluginMain]
+public static class SetupPlugin
+{
+    public static async Task<PluginOutput> Run(CyanPluginInput input)
+    {
+        // Extract directory from input
+        var directory = input.Directory;
+
+        // Run shell commands
+        await Shell.Exec($"git -C {directory} init");
+        await Shell.Exec($"cd {directory} && npm install");
+
+        // Always return the directory for pipeline continuity
+        return new PluginOutput(directory);
+    }
+}
+```
+
+  </Tab>
+</Tabs>
+
+### Formatter Plugin
+
+Run code formatters:
+
+<Tabs items={['TypeScript', 'Python', 'C#']}>
+  <Tab value="TypeScript">
+
+```ts -c
+import { $ } from 'bun';
+import { StartPluginWithLambda } from '@atomicloud/cyan-sdk';
+import type { CyanPluginInput, PluginOutput } from '@atomicloud/cyan-sdk';
+
+StartPluginWithLambda(async (input: CyanPluginInput): Promise<PluginOutput> => {
+  const { directory, config } = input;
+  const cfg = config as { formatter?: string };
+
+  if (cfg.formatter === 'prettier') {
+    await $`cd ${directory} && npx prettier --write .`.quiet();
+  }
+
+  return { directory };
+});
+```
+
+  </Tab>
+  <Tab value="Python">
+
+```python -c
+import subprocess
+from cyan_sdk import start_plugin_with_fn
+from cyan_sdk.types import CyanPluginInput, PluginOutput
+from typing import TypedDict
+
+class PluginConfig(TypedDict, total=False):
+    formatter: str
+
+@start_plugin_with_fn
+async def formatter_plugin(input: CyanPluginInput) -> PluginOutput:
+    directory = input.directory
+    config: PluginConfig = input.config
+
+    if config.get("formatter") == "prettier":
+        subprocess.run(
+            ["npx", "prettier", "--write", "."],
+            cwd=directory,
+            capture_output=True
+        )
+
+    return PluginOutput(directory=directory)
+```
+
+  </Tab>
+  <Tab value="C#">
+
+```csharp -c
+using CyanSdk;
+using CyanSdk.Types;
+
+[PluginMain]
+public static class FormatterPlugin
+{
+    public static async Task<PluginOutput> Run(CyanPluginInput input)
+    {
+        var directory = input.Directory;
+        var config = input.Config as dynamic;
+
+        if (config?.formatter == "prettier")
+        {
+            await Shell.Exec($"cd {directory} && npx prettier --write .");
+        }
+
+        return new PluginOutput(directory);
+    }
+}
+```
+
+  </Tab>
+</Tabs>
+
+### Build Plugin
+
+Run build steps:
+
+<Tabs items={['TypeScript', 'Python', 'C#']}>
+  <Tab value="TypeScript">
+
+```ts -c
+import { $ } from 'bun';
+import { StartPluginWithLambda } from '@atomicloud/cyan-sdk';
+import type { CyanPluginInput, PluginOutput } from '@atomicloud/cyan-sdk';
+
+StartPluginWithLambda(async (input: CyanPluginInput): Promise<PluginOutput> => {
+  const { directory, config } = input;
+  const cfg = config as { build?: boolean };
+
+  if (cfg.build) {
+    await $`cd ${directory} && npm run build`.quiet();
+  }
+
+  return { directory };
+});
+```
+
+  </Tab>
+  <Tab value="Python">
+
+```python -c
+import subprocess
+from cyan_sdk import start_plugin_with_fn
+from cyan_sdk.types import CyanPluginInput, PluginOutput
+from typing import TypedDict
+
+class BuildConfig(TypedDict, total=False):
+    build: bool
+
+@start_plugin_with_fn
+async def build_plugin(input: CyanPluginInput) -> PluginOutput:
+    directory = input.directory
+    config: BuildConfig = input.config
+
+    if config.get("build", False):
+        subprocess.run(
+            ["npm", "run", "build"],
+            cwd=directory,
+            capture_output=True
+        )
+
+    return PluginOutput(directory=directory)
+```
+
+  </Tab>
+  <Tab value="C#">
+
+```csharp -c
+using CyanSdk;
+using CyanSdk.Types;
+
+[PluginMain]
+public static class BuildPlugin
+{
+    public static async Task<PluginOutput> Run(CyanPluginInput input)
+    {
+        var directory = input.Directory;
+        var config = input.Config as dynamic;
+
+        if (config?.build == true)
+        {
+            await Shell.Exec($"cd {directory} && npm run build");
+        }
+
+        return new PluginOutput(directory);
+    }
+}
+```
+
+  </Tab>
+</Tabs>
+
+## Design Philosophy
+
+Plugins are designed to be:
+
+1. **Simple** - Minimal API, just receive directory and return it
+2. **Flexible** - Full filesystem and shell access
+3. **Optional** - Templates work without plugins
+4. **Composable** - Multiple plugins can be chained
+
+## Related
+
+- [Plugins vs Processors](/docs/developer/plugins/explanation/plugins-vs-processors) - Detailed comparison
+- [Execution Order](/docs/developer/plugins/explanation/execution-order) - Pipeline sequence
+- [First Plugin](/docs/developer/plugins/tutorials/first-plugin) - Tutorial

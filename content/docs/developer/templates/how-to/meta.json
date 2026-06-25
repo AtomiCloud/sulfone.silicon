@@ -1,0 +1,23 @@
+{
+  "title": "How-To Guides",
+  "icon": "ListChecks",
+  "pages": [
+    "test-locally",
+    "automated-testing",
+    "dev-mode",
+    "ask-checkbox",
+    "ask-confirm",
+    "ask-password",
+    "ask-date",
+    "default-values",
+    "validate-input",
+    "use-keys",
+    "pin-determinism",
+    "compose-templates",
+    "pass-images-binaries",
+    "push-to-registry",
+    "conditional-files",
+    "use-custom-processor",
+    "add-plugins"
+  ]
+}

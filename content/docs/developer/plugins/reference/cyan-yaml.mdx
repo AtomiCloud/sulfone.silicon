@@ -1,0 +1,146 @@
+---
+title: Plugin cyan.yaml
+description: Configuration file for plugin metadata
+---
+
+import { Callout } from 'fumadocs-ui/components/callout';
+import { TypeTable } from 'fumadocs-ui/components/type-table';
+import { Cards, Card } from 'fumadocs-ui/components/card';
+
+# Plugin cyan.yaml
+
+The `cyan.yaml` file provides metadata about your plugin for the Cyan registry. This file is required for publishing your plugin.
+
+<Callout type="info">
+This page describes the **plugin** cyan.yaml schema. Template cyan.yaml files have different fields like `processors`, `plugins`, and `templates` arrays. See the [Template cyan.yaml](/docs/developer/templates/reference/cyan-yaml) documentation for that schema.
+</Callout>
+
+## Basic Structure
+
+```yaml cyan.yaml -c
+username: atomi
+name: my-plugin
+description: A plugin that performs post-processing operations
+project: https://github.com/atomi/my-plugin
+source: https://github.com/atomi/my-plugin.git
+email: admin@atomi.cloud
+tags: [formatting, post-process]
+readme: README.MD
+```
+
+## Properties
+
+<TypeTable
+  type={{
+    username: {
+      type: 'string',
+      description: 'Owner username (who publishes the plugin)',
+      required: true,
+    },
+    name: {
+      type: 'string',
+      description: 'Plugin name (alphanumeric, dashes allowed)',
+      required: true,
+    },
+    description: {
+      type: 'string',
+      description: 'Brief description of what the plugin does',
+      required: true,
+    },
+    project: {
+      type: 'string',
+      description: 'Project homepage URL',
+      required: true,
+    },
+    source: {
+      type: 'string',
+      description: 'Source repository URL',
+      required: true,
+    },
+    email: {
+      type: 'string',
+      description: 'Contact email for the plugin maintainer',
+      required: true,
+    },
+    tags: {
+      type: 'string[]',
+      description: 'Search tags for discovery',
+      required: true,
+    },
+    readme: {
+      type: 'string',
+      description: 'Path to README file (usually `README.MD`)',
+      required: true,
+    },
+  }}
+/>
+
+## Full Example
+
+```yaml cyan.yaml -c
+username: atomi
+name: setup-plugin
+description: Plugin that sets up git, installs dependencies, and configures the project
+project: https://github.com/atomi/cyan-plugin-setup
+source: https://github.com/atomi/cyan-plugin-setup.git
+email: admin@atomi.cloud
+tags:
+  - setup
+  - git
+  - npm
+  - initialization
+readme: README.MD
+```
+
+## Plugin vs Template cyan.yaml
+
+Plugins and templates use different cyan.yaml schemas:
+
+- **Plugin cyan.yaml**: Contains only metadata (`username`, `name`, `description`, `project`, `source`, `email`, `tags`, `readme`)
+- **Template cyan.yaml**: Contains additional fields like `processors`, `plugins`, and `templates` arrays to define the template's dependencies
+
+<Callout type="info">
+Plugin cyan.yaml does not define a `config` schema. Configuration is passed at runtime by the template when invoking the plugin. See [Conditional Execution](/docs/developer/plugins/how-to/conditional-execution) for how templates pass config to plugins.
+</Callout>
+
+## Usage in Templates
+
+Templates reference plugins using the `username/name` format with an optional version:
+
+```yaml cyan.yaml -c
+# In template's cyan.yaml
+plugins:
+  - atomi/setup-plugin:1
+  - atomi/formatter
+```
+
+## Versioning
+
+Versions are managed by the Cyan registry, not declared in the plugin's cyan.yaml. When referencing a plugin in a template:
+
+```yaml cyan.yaml -c
+# Reference without version (uses latest)
+plugins:
+  - atomi/setup-plugin
+
+# Reference with specific version (integer)
+plugins:
+  - atomi/setup-plugin:3
+```
+
+## Related
+
+<Cards>
+  <Card href="/docs/developer/plugins/reference/project-structure" title="Project Structure">
+    Directory layout
+  </Card>
+  <Card href="/docs/developer/plugins/how-to/push-to-registry" title="Push to Registry">
+    Publishing your plugin
+  </Card>
+  <Card href="/docs/developer/plugins/how-to/conditional-execution" title="Conditional Execution">
+    Using config at runtime
+  </Card>
+  <Card href="/docs/developer/templates/reference/build-config" title="Build Configuration">
+    Docker buildx setup
+  </Card>
+</Cards>

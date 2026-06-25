@@ -1,0 +1,274 @@
+---
+title: Resolver Dockerfile
+description: Docker container configuration for resolvers
+---
+
+import { Callout } from 'fumadocs-ui/components/callout';
+import { Tabs, Tab } from 'fumadocs-ui/components/tabs';
+import { Cards, Card } from 'fumadocs-ui/components/card';
+
+# Resolver Dockerfile
+
+Resolvers run as Docker containers. The Dockerfile defines the container environment. Resolvers listen on port **5553**.
+
+## Minimal Dockerfile
+
+<Tabs items={['TypeScript', 'Python', 'C#']}>
+  <Tab value="TypeScript">
+
+```dockerfile Dockerfile -c
+FROM oven/bun:1.1.30
+
+WORKDIR /app
+
+# Required: Mark as CyanPrint resolver
+LABEL cyanprint.dev=true
+
+# Install dependencies
+COPY package.json .
+COPY bun.lock .
+RUN bun install
+
+# Copy resolver code
+COPY . .
+
+# Run resolver
+CMD ["bun", "run", "index.ts"]
+```
+
+  </Tab>
+  <Tab value="Python">
+
+```dockerfile Dockerfile -c
+FROM python:3.11-slim
+
+WORKDIR /app
+
+# Required: Mark as CyanPrint resolver
+LABEL cyanprint.dev=true
+
+# Install dependencies
+COPY requirements.txt .
+RUN pip install --no-cache-dir -r requirements.txt
+
+# Copy resolver code
+COPY . .
+
+# Run resolver
+CMD ["python", "-u", "main.py"]
+```
+
+  </Tab>
+  <Tab value="C#">
+
+```dockerfile Dockerfile -c
+FROM mcr.microsoft.com/dotnet/aspnet:8.0 AS base
+WORKDIR /app
+ENV ASPNETCORE_URLS=http://+:5553
+
+FROM mcr.microsoft.com/dotnet/sdk:8.0 AS build
+WORKDIR /src
+COPY ["MyResolver.csproj", "./"]
+RUN dotnet restore "MyResolver.csproj"
+COPY . .
+RUN dotnet build "MyResolver.csproj" -c Release -o /app/build
+
+FROM build AS publish
+RUN dotnet publish "MyResolver.csproj" -c Release -o /app/publish /p:UseAppHost=false
+
+FROM base AS final
+WORKDIR /app
+COPY --from=publish /app/publish .
+
+# Required: Mark as CyanPrint resolver
+LABEL cyanprint.dev=true
+
+ENTRYPOINT ["dotnet", "MyResolver.dll"]
+```
+
+  </Tab>
+</Tabs>
+
+## Required Elements
+
+### LABEL cyanprint.dev=true
+
+This label identifies the container as a CyanPrint resolver:
+
+```dockerfile -c
+LABEL cyanprint.dev=true
+```
+
+### Port 5553
+Resolvers must listen on port **5553**. The SDKs handle this automatically for most languages:
+
+- **Bun/Node.js SDK**: Listens on port 5553 automatically
+- **Python SDK**: Listens on port 5553 automatically
+- **.NET SDK**: Requires explicit configuration: `ENV ASPNETCORE_URLS=http://+:5553`
+
+### WORKDIR
+
+Set the working directory. The convention is `/app`:
+
+```dockerfile -c
+WORKDIR /app
+```
+
+### CMD / ENTRYPOINT
+The command that runs the resolver
+
+<Tabs items={['TypeScript', 'Python', 'C#']}>
+  <Tab value="TypeScript">
+
+```dockerfile -c
+# Bun
+CMD ["bun", "run", "index.ts"]
+
+# Node.js
+CMD ["node", "index.js"]
+```
+
+  </Tab>
+  <Tab value="Python">
+
+```dockerfile -c
+CMD ["python", "-u", "main.py"]
+```
+
+  </Tab>
+  <Tab value="C#">
+
+```dockerfile -c
+ENTRYPOINT ["dotnet", "MyResolver.dll"]
+```
+
+  </Tab>
+</Tabs>
+
+## Full Example with Multi-Stage Build
+
+<Tabs items={['TypeScript', 'Python', 'C#']}>
+  <Tab value="TypeScript">
+
+```dockerfile Dockerfile -c
+# Build stage
+FROM oven/bun:1.1.30-alpine AS builder
+
+WORKDIR /app
+
+COPY package.json .
+COPY bun.lock .
+RUN bun install
+
+COPY . .
+RUN bun build index.ts --outdir=dist --target=bun
+
+# Final stage
+FROM oven/bun:1.1.30-alpine
+LABEL cyanprint.dev=true
+WORKDIR /app
+COPY --from=builder /app/dist ./dist
+CMD ["bun", "run", "dist/index.js"]
+```
+
+  </Tab>
+  <Tab value="Python">
+
+```dockerfile Dockerfile -c
+FROM python:3.11-slim
+
+WORKDIR /app
+
+# Create non-root user for security
+RUN useradd --create-home --shell /bin/bash appuser
+
+LABEL cyanprint.dev=true
+
+COPY requirements.txt .
+RUN pip install --no-cache-dir -r requirements.txt
+
+COPY . .
+
+USER appuser
+
+CMD ["python", "-u", "main.py"]
+```
+
+  </Tab>
+  <Tab value="C#">
+
+```dockerfile Dockerfile -c
+FROM mcr.microsoft.com/dotnet/aspnet:8.0 AS base
+WORKDIR /app
+ENV ASPNETCORE_URLS=http://+:5553
+
+FROM --platform=$BUILDPLATFORM mcr.microsoft.com/dotnet/sdk:8.0 AS build
+ARG TARGETARCH
+WORKDIR /src
+COPY ["MyResolver.csproj", "./"]
+RUN dotnet restore -a $TARGETARCH "MyResolver.csproj"
+COPY . .
+WORKDIR "/src/"
+RUN dotnet build "MyResolver.csproj" -a $TARGETARCH -c Release -o /app/build
+
+FROM build AS publish
+RUN dotnet publish "MyResolver.csproj" -a $TARGETARCH -c Release -o /app/publish /p:UseAppHost=false
+
+FROM base AS final
+LABEL cyanprint.dev=true
+WORKDIR /app
+COPY --from=publish /app/publish .
+ENTRYPOINT ["dotnet", "MyResolver.dll"]
+```
+
+  </Tab>
+</Tabs>
+
+## Best Practices
+
+### 1. Use Specific Versions
+```dockerfile -c
+# Good: Specific version
+FROM oven/bun:1.1.30
+
+# Avoid: Latest (unpredictable)
+FROM oven/bun:latest
+```
+
+### 2. Use .dockerignore
+Create a `.dockerignore` file
+
+``` -c
+node_modules
+.git
+.gitignore
+*.md
+tests/
+.env*
+```
+
+### 3. Create Non-Root User
+For production deployments
+
+```dockerfile -c
+# Create non-root user for security
+RUN useradd --create-home --shell /bin/bash appuser
+USER appuser
+```
+
+<Callout type="info">
+Resolvers should be deterministic. Always include your lockfile to ensure consistent dependency versions across builds.
+</Callout>
+
+## Related
+<Cards>
+  <Card href="/docs/developer/resolvers/reference/project-structure" title="Project Structure">
+    File layout
+  </Card>
+  <Card href="/docs/developer/resolvers/reference/cyan-yaml" title="cyan.yaml Format">
+    Metadata format
+  </Card>
+  <Card href="/docs/developer/resolvers/how-to/push-to-registry" title="Push to Registry">
+    Publishing guide
+  </Card>
+</Cards>

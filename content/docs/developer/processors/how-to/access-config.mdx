@@ -1,0 +1,556 @@
+---
+title: Access Processor Config
+description: Access configuration passed from template
+---
+
+import { Callout } from 'fumadocs-ui/components/callout';
+import { TypeTable } from 'fumadocs-ui/components/type-table';
+import { Cards, Card } from 'fumadocs-ui/components/card';
+import { Tabs, Tab } from 'fumadocs-ui/components/tabs';
+
+# Access Processor Config
+
+Processors receive configuration from the template through `input.config`. This allows templates to customize processor behavior.
+
+## ProcessorConfig Type
+
+<TypeTable
+  type={{
+    customSetting: {
+      type: 'boolean',
+      description: 'Enable custom behavior',
+    },
+    features: {
+      type: 'string[]',
+      description: 'List of enabled features',
+    },
+    outputFormat: {
+      type: "'json' | 'yaml'",
+      description: 'Output format for generated files',
+    },
+  }}
+/>
+
+## Template Configuration
+
+In the template's `index.ts`, pass config to the processor:
+
+```ts index.ts -c
+// Template's index.ts
+import { StartTemplateWithLambda, GlobType } from '@atomicloud/cyan-sdk';
+
+interface ProcessorConfig {
+  customSetting: boolean;
+  features: string[];
+  outputFormat: 'json' | 'yaml';
+}
+
+StartTemplateWithLambda(async (i, d) => {
+  // Ask user for preferences
+  const features = await i.checkbox(
+    'Select features:',
+    ['docker', 'ci', 'testing'],
+    'project.features',
+    'Choose features'
+  );
+
+  const format = await i.select(
+    'Output format:',
+    ['json', 'yaml'],
+    'config.format',
+    'Choose format'
+  );
+
+  return {
+    processors: [{
+      name: 'myorg/my-processor',
+      files: [{ root: 'templates', glob: '**/*', exclude: [], type: GlobType.Template }],
+      config: {
+        customSetting: true,
+        features: features,
+        outputFormat: format
+      } as ProcessorConfig
+    }]
+  };
+});
+```
+
+## Accessing Config in Processor
+
+<Tabs items={['TypeScript', 'Python', 'C#']}>
+<Tab value="TypeScript">
+
+```ts index.ts -c
+// Processor's index.ts
+import { StartProcessorWithLambda } from '@atomicloud/cyan-sdk';
+
+interface ProcessorConfig {
+  customSetting: boolean;
+  features: string[];
+  outputFormat: 'json' | 'yaml';
+}
+
+StartProcessorWithLambda(async (input, fileHelper) => {
+  // Cast config to your type
+  const config = input.config as ProcessorConfig;
+
+  // Use config values
+  if (config.customSetting) {
+    console.log('Custom setting enabled');
+  }
+
+  const files = fileHelper.resolveAll();
+
+  files.forEach(file => {
+    if (config.features.includes('docker')) {
+      // Modify file.content as needed for docker feature
+    }
+
+    if (config.outputFormat === 'yaml') {
+      // Convert file.content to YAML format
+    }
+
+    file.writeFile();
+  });
+
+  return { directory: input.writeDir };
+});
+```
+
+</Tab>
+<Tab value="Python">
+
+```python index.py -c
+from cyanprintsdk import start_processor_with_fn
+from cyanprintsdk.domain.processor.input import ProcessorInput
+from cyanprintsdk.domain.core.fs.cyan_fs_helper import CyanFileHelper
+from typing import TypedDict, List, Literal
+
+class ProcessorConfig(TypedDict):
+    customSetting: bool
+    features: List[str]
+    outputFormat: Literal['json', 'yaml']
+
+async def my_processor(input: ProcessorInput, fileHelper: CyanFileHelper):
+    # Cast config to your type
+    config: ProcessorConfig = input.config
+
+    # Use config values
+    if config.get('customSetting'):
+        print('Custom setting enabled')
+
+    files = fileHelper.resolve_all()
+
+    for file in files:
+        if 'docker' in config.get('features', []):
+            # Modify file.content as needed for docker feature
+            pass
+
+        if config.get('outputFormat') == 'yaml':
+            # Convert file.content to YAML format
+            pass
+
+        file.write_file()
+
+    return {'directory': input.write_directory}
+
+start_processor_with_fn(my_processor)
+```
+
+</Tab>
+<Tab value="C#">
+
+```csharp Program.cs -c
+using sulfone_helium;
+using sulfone_helium.Domain.Core.FileSystem;
+using sulfone_helium.Domain.Processor;
+
+// Processor config class
+public class ProcessorConfig
+{
+    public bool CustomSetting { get; set; }
+    public List<string> Features { get; set; } = new();
+    public string OutputFormat { get; set; } = "json";
+}
+
+CyanEngine.StartProcessor(args, async (input, fileHelper) =>
+{
+    // Cast config to your type
+    var config = input.Config.Deserialize<ProcessorConfig>();
+
+    // Use config values
+    if (config.CustomSetting)
+    {
+        Console.WriteLine("Custom setting enabled");
+    }
+
+    var files = fileHelper.ResolveAll();
+
+    foreach (var file in files)
+    {
+        if (config.Features.Contains("docker"))
+        {
+            // Modify file.Content as needed for docker feature
+        }
+
+        if (config.OutputFormat == "yaml")
+        {
+            // Convert file.Content to YAML format
+        }
+
+        file.WriteFile();
+    }
+
+    return new ProcessorOutput { Directory = input.WriteDirectory };
+});
+```
+
+</Tab>
+</Tabs>
+
+## Default Config Values
+
+Always handle missing config gracefully:
+
+<Tabs items={['TypeScript', 'Python', 'C#']}>
+<Tab value="TypeScript">
+
+```ts index.ts -c
+interface ProcessorConfig {
+  includeComments?: boolean;
+  indentSize?: number;
+  generateTypes?: boolean;
+}
+
+StartProcessorWithLambda(async (input, fileHelper) => {
+  // Provide defaults for missing values
+  const config: ProcessorConfig = {
+    includeComments: true,
+    indentSize: 2,
+    generateTypes: false,
+    ...(input.config as Partial<ProcessorConfig>)
+  };
+
+  const files = fileHelper.resolveAll();
+
+  files.forEach(file => {
+    const indent = ' '.repeat(config.indentSize);
+
+    if (config.generateTypes) {
+      // Generate types from file.content
+    }
+
+    if (!config.includeComments) {
+      // Remove comments from file.content
+    }
+
+    file.writeFile();
+  });
+
+  return { directory: input.writeDir };
+});
+```
+
+</Tab>
+<Tab value="Python">
+
+```python index.py -c
+from cyanprintsdk import start_processor_with_fn
+from cyanprintsdk.domain.processor.input import ProcessorInput
+from cyanprintsdk.domain.core.fs.cyan_fs_helper import CyanFileHelper
+from typing import TypedDict, Optional
+
+class ProcessorConfig(TypedDict, total=False):
+    includeComments: bool
+    indentSize: int
+    generateTypes: bool
+
+async def my_processor(input: ProcessorInput, fileHelper: CyanFileHelper):
+    # Provide defaults for missing values
+    raw_config = input.config or {}
+    config: ProcessorConfig = {
+        'includeComments': raw_config.get('includeComments', True),
+        'indentSize': raw_config.get('indentSize', 2),
+        'generateTypes': raw_config.get('generateTypes', False),
+    }
+
+    files = fileHelper.resolve_all()
+
+    for file in files:
+        indent = ' ' * config['indentSize']
+
+        if config['generateTypes']:
+            # Generate types from file.content
+            pass
+
+        if not config['includeComments']:
+            # Remove comments from file.content
+            pass
+
+        file.write_file()
+
+    return {'directory': input.write_directory}
+
+start_processor_with_fn(my_processor)
+```
+
+</Tab>
+<Tab value="C#">
+
+```csharp Program.cs -c
+using sulfone_helium;
+using sulfone_helium.Domain.Core.FileSystem;
+using sulfone_helium.Domain.Processor;
+
+public class ProcessorConfig
+{
+    public bool IncludeComments { get; set; } = true;
+    public int IndentSize { get; set; } = 2;
+    public bool GenerateTypes { get; set; } = false;
+}
+
+CyanEngine.StartProcessor(args, async (input, fileHelper) =>
+{
+    // Provide defaults for missing values
+    var rawConfig = input.Config.Deserialize<ProcessorConfig>() ?? new ProcessorConfig();
+    var config = new ProcessorConfig
+    {
+        IncludeComments = rawConfig.IncludeComments,
+        IndentSize = rawConfig.IndentSize,
+        GenerateTypes = rawConfig.GenerateTypes
+    };
+
+    var files = fileHelper.ResolveAll();
+
+    foreach (var file in files)
+    {
+        var indent = new string(' ', config.IndentSize);
+
+        if (config.GenerateTypes)
+        {
+            // Generate types from file.Content
+        }
+
+        if (!config.IncludeComments)
+        {
+            // Remove comments from file.Content
+        }
+
+        file.WriteFile();
+    }
+
+    return new ProcessorOutput { Directory = input.WriteDirectory };
+});
+```
+
+</Tab>
+</Tabs>
+
+## Complex Config Example
+
+<Tabs items={['TypeScript', 'Python', 'C#']}>
+<Tab value="TypeScript">
+
+```ts template-config.ts -c
+// Template config
+{
+  name: 'myorg/codegen-processor',
+  files: [{ root: 'schemas', glob: '**/*.graphql', exclude: [], type: GlobType.Template }],
+  config: {
+    generateClient: true,
+    generateServer: false,
+    clientOptions: {
+      outputDir: 'src/client',
+      fetcher: 'axios',
+      typesOnly: false
+    },
+    scalars: {
+      DateTime: 'Date',
+      JSON: 'Record<string, unknown>'
+    }
+  }
+}
+
+// Processor handling complex config
+interface CodegenConfig {
+  generateClient?: boolean;
+  generateServer?: boolean;
+  clientOptions?: {
+    outputDir: string;
+    fetcher: 'axios' | 'fetch';
+    typesOnly: boolean;
+  };
+  scalars?: Record<string, string>;
+}
+
+StartProcessorWithLambda(async (input, fileHelper) => {
+  const config: CodegenConfig = input.config as CodegenConfig;
+
+  const files = fileHelper.resolveAll();
+
+  files.forEach(file => {
+    // Parse schema from file.content
+    const schema = parseSchema(file.content);
+
+    if (config.generateClient) {
+      const clientCode = generateClient(schema, config.clientOptions);
+      // Note: To write additional files, use fileHelper to create new VirtualFile instances
+      // and write them to the appropriate output location within input.writeDir
+    }
+
+    file.writeFile();
+  });
+
+  return { directory: input.writeDir };
+});
+```
+
+</Tab>
+<Tab value="Python">
+
+```python template_config.py -c
+# Template config
+template_config = {
+    'name': 'myorg/codegen-processor',
+    'files': [{'root': 'schemas', 'glob': '**/*.graphql', 'exclude': [], 'type': GlobType.Template}],
+    'config': {
+        'generateClient': True,
+        'generateServer': False,
+        'clientOptions': {
+            'outputDir': 'src/client',
+            'fetcher': 'axios',
+            'typesOnly': False
+        },
+        'scalars': {
+            'DateTime': 'Date',
+            'JSON': 'Dict[str, Any]'
+        }
+    }
+}
+
+# Processor handling complex config
+from cyanprintsdk import start_processor_with_fn
+from cyanprintsdk.domain.processor.input import ProcessorInput
+from cyanprintsdk.domain.core.fs.cyan_fs_helper import CyanFileHelper
+from typing import TypedDict, Optional, Dict, Any, Literal
+
+class ClientOptions(TypedDict, total=False):
+    outputDir: str
+    fetcher: Literal['axios', 'fetch']
+    typesOnly: bool
+
+class CodegenConfig(TypedDict, total=False):
+    generateClient: bool
+    generateServer: bool
+    clientOptions: ClientOptions
+    scalars: Dict[str, str]
+
+async def my_processor(input: ProcessorInput, fileHelper: CyanFileHelper):
+    config: CodegenConfig = input.config
+
+    files = fileHelper.resolve_all()
+
+    for file in files:
+        # Parse schema from file.content
+        schema = parse_schema(file.content)
+
+        if config.get('generateClient'):
+            client_code = generate_client(schema, config.get('clientOptions'))
+            # Note: To write additional files, use fileHelper to create new VirtualFile instances
+            # and write them to the appropriate output location within input.write_directory
+
+        file.write_file()
+
+    return {'directory': input.write_directory}
+
+start_processor_with_fn(my_processor)
+```
+
+</Tab>
+<Tab value="C#">
+
+```csharp TemplateConfig.cs -c
+// Template config
+var templateConfig = new
+{
+    name = "myorg/codegen-processor",
+    files = new[] { new { root = "schemas", glob = "**/*.graphql", exclude = Array.Empty<string>(), type = GlobType.Template } },
+    config = new
+    {
+        generateClient = true,
+        generateServer = false,
+        clientOptions = new
+        {
+            outputDir = "src/client",
+            fetcher = "axios",
+            typesOnly = false
+        },
+        scalars = new Dictionary<string, string>
+        {
+            ["DateTime"] = "Date",
+            ["JSON"] = "object"
+        }
+    }
+};
+
+// Processor handling complex config
+public class ClientOptions
+{
+    public string OutputDir { get; set; } = "";
+    public string Fetcher { get; set; } = "axios";
+    public bool TypesOnly { get; set; }
+}
+
+public class CodegenConfig
+{
+    public bool GenerateClient { get; set; }
+    public bool GenerateServer { get; set; }
+    public ClientOptions? ClientOptions { get; set; }
+    public Dictionary<string, string>? Scalars { get; set; }
+}
+
+CyanEngine.StartProcessor(args, async (input, fileHelper) =>
+{
+    var config = input.Config.Deserialize<CodegenConfig>();
+
+    var files = fileHelper.ResolveAll();
+
+    foreach (var file in files)
+    {
+        // Parse schema from file.Content
+        var schema = ParseSchema(file.Content);
+
+        if (config.GenerateClient)
+        {
+            var clientCode = GenerateClient(schema, config.ClientOptions);
+            // Note: To write additional files, use fileHelper to create new VirtualFile instances
+            // and write them to the appropriate output location within input.WriteDirectory
+        }
+
+        file.WriteFile();
+    }
+
+    return new ProcessorOutput { Directory = input.WriteDirectory };
+});
+```
+
+</Tab>
+</Tabs>
+
+<Callout type="info">
+Config is passed as `unknown` type. Always cast to your expected type and provide default values for optional fields.
+</Callout>
+
+## Related
+
+<Cards>
+  <Card href="/docs/developer/processors/reference/sdk/input-output" title="Processor Input/Output">
+    Type definitions for processor input and output
+  </Card>
+  <Card href="/docs/developer/processors/reference/sdk/file-helper" title="CyanFileHelper API">
+    File operations and utilities
+  </Card>
+  <Card href="/docs/developer/processors/reference/sdk/types" title="Type Definitions">
+    Full type reference
+  </Card>
+</Cards>

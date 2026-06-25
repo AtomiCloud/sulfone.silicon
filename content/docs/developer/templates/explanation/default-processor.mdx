@@ -1,0 +1,250 @@
+---
+title: Default Processor
+description: How the cyan/default processor works with Eta templating
+---
+
+import { Callout } from 'fumadocs-ui/components/callout';
+
+# Default Processor
+
+The `cyan/default` processor uses **Eta templating** with custom delimiters for variable substitution.
+
+## Overview
+
+The default processor is the most commonly used processor. It:
+- Replaces variable placeholders with values
+- Supports nested variable access
+- Allows custom delimiters
+- Handles all text file types
+
+## Variable Syntax
+
+### Default Delimiters
+
+The default syntax uses `var__` prefix and `__` suffix:
+
+```text title="template.md"
+var__name__
+var__project.version__
+```
+
+### Example
+
+Template file:
+
+```markdown title="template.md"
+# var__name__
+
+Welcome to var__name__!
+
+Author: var__author__
+Version: var__version__
+```
+
+With config:
+
+```yaml {5-9} title="cyan.yaml" -c
+processor:
+  name: cyan/default
+  files:
+    - '**/*'
+  config:
+    vars:
+      name: 'my-project'
+      author: 'John Doe'
+      version: '1.0.0'
+```
+
+Generated output:
+
+```markdown title="output.md"
+# my-project
+
+Welcome to my-project!
+
+Author: John Doe
+Version: 1.0.0
+```
+
+## Nested Variables
+
+Access nested properties with dot notation:
+
+```yaml {5-10} title="cyan.yaml" -c
+processor:
+  name: cyan/default
+  files:
+    - '**/*'
+  config:
+    vars:
+      project:
+        name: 'my-project'
+        version: '1.0.0'
+```
+
+Template:
+
+```markdown title="template.md"
+Project: var__project.name__
+Version: var__project.version__
+```
+
+## Custom Delimiters
+
+Change the delimiters for compatibility with other template syntaxes:
+
+### Using Angle Brackets
+
+```yaml {5-8} title="cyan.yaml" -c
+processor:
+  name: cyan/default
+  files:
+    - '**/*'
+  config:
+    vars:
+      name: 'my-project'
+    parser:
+      varSyntax:
+        - ['<%', '%>']
+```
+
+Template:
+
+```markdown title="template.md"
+# <% name %>
+```
+
+### Using Mustache Style
+
+```yaml {5-8} title="cyan.yaml" -c
+processor:
+  name: cyan/default
+  files:
+    - '**/*'
+  config:
+    vars:
+      name: 'my-project'
+    parser:
+      varSyntax:
+        - ['{{', '}}']
+```
+
+Template:
+
+```markdown title="template.md"
+# {{ name }}
+```
+
+### Using Double Braces
+
+```yaml {5-8} title="cyan.yaml" -c
+processor:
+  name: cyan/default
+  files:
+    - '**/*'
+  config:
+    vars:
+      name: 'my-project'
+    parser:
+      varSyntax:
+        - ['${{', '}}']
+```
+
+Template:
+
+```markdown title="template.md"
+# ${{ name }}
+```
+
+## Why var__ Syntax?
+
+The `var__name__` syntax is chosen to avoid conflicts:
+
+| Syntax | Potential Conflicts |
+|--------|---------------------|
+| `${name}` | JavaScript template literals |
+| `{{name}}` | Handlebars, Mustache |
+| `<%= name %>` | EJS |
+| `{name}` | JSON, YAML |
+| `var__name__` | Rarely used in any language |
+
+<Callout type="info">
+The `var__` prefix is verbose but ensures templates work correctly even when generating code that uses other template syntaxes.
+</Callout>
+
+## Eta Features
+
+The default processor is built on Eta, which supports more than simple substitution:
+
+### Conditionals
+
+```markdown title="template.md"
+<% if (typescript) { %>
+## TypeScript Configuration
+
+This project uses TypeScript.
+<% } %>
+```
+
+Note: This requires changing delimiters to avoid `var__`.
+
+### Loops
+
+```markdown title="template.md"
+## Features
+<% features.forEach(function(feature) { %>
+- <%= feature %>
+<% }) %>
+```
+
+<Callout type="warn">
+Advanced Eta features like conditionals and loops require custom delimiters and may need adjustments to work correctly with the default processor's configuration. For complex templating needs, consider creating a custom processor.
+</Callout>
+
+## Processor Configuration
+
+The default processor supports the following configuration options:
+
+```yaml title="cyan.yaml" -c
+processor:
+  name: cyan/default
+  files:
+    - '**/*'
+  config:
+    # Variables to substitute
+    vars:
+      name: 'my-project'
+      version: '1.0.0'
+
+    # Parser configuration
+    parser:
+      # Custom tag pairs (default is ['var__', '__'])
+      varSyntax:
+        - ['var__', '__']
+```
+
+<Callout type="info">
+The `cyan/default` processor is a specific implementation provided as the reference processor. Other registries or organizations may provide their own default processors with different capabilities. Options like `autoEscape`, `autoTrim`, and `filters` are hardcoded in the processor implementation and cannot be configured by template authors.
+</Callout>
+
+## When to Use Default vs Custom
+
+### Use Default When
+
+- Standard variable substitution is sufficient
+- Working with common file formats
+- No special processing needed
+
+### Use Custom When
+
+- Need different template engine (Handlebars, Mustache)
+- Complex code generation required
+- Special file transformations needed
+
+See [Processors vs Plugins](/docs/developer/templates/explanation/processors-vs-plugins) for more guidance.
+
+## Related
+
+- [Tutorial: Adding Variables](/docs/developer/templates/tutorials/02-adding-variables) - Variable basics
+- [Processors vs Plugins](/docs/developer/templates/explanation/processors-vs-plugins) - When to use each
+- [Use Custom Processor](/docs/developer/templates/how-to/use-custom-processor) - Using custom processors

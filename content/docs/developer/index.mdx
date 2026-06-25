@@ -1,8 +1,53 @@
 ---
 title: Developer Overview
-description: Overview of the Developer documentation
+description: Extend CyanPrint with custom templates, processors, plugins, and resolvers
 ---
 
-# Developer Docs
+import { Cards, Card } from 'fumadocs-ui/components/card';
 
-This is the documentation for developers
+# Developer Documentation
+
+Welcome to the CyanPrint developer documentation. Learn how to extend CyanPrint by creating custom artifacts.
+
+## What You Can Build
+
+CyanPrint has four extensible components called **artifacts**:
+
+| Artifact       | Purpose                                              |
+| -------------- | ---------------------------------------------------- |
+| **Templates**  | Define questions and file processing rules           |
+| **Processors** | Transform files (templating, syntax)                 |
+| **Resolvers**  | Resolve file conflicts from layered templates        |
+| **Plugins**    | Post-processing (run commands, file operations)      |
+
+## Getting Started
+
+Start with the basics to understand how CyanPrint works:
+
+<Cards>
+  <Card href="/docs/developer/basics/introduction" title="Introduction">
+    Learn about the four artifacts: templates, processors, resolvers, and plugins
+  </Card>
+  <Card href="/docs/developer/basics/architecture" title="Architecture">
+    Understand the system design and how components interact
+  </Card>
+</Cards>
+
+## Build Your Artifact
+
+Ready to create? Choose your path:
+
+<Cards>
+  <Card href="/docs/developer/templates" title="Templates">
+    Build project scaffolds that collect user input
+  </Card>
+  <Card href="/docs/developer/processors" title="Processors">
+    Build file transformers for templates
+  </Card>
+  <Card href="/docs/developer/plugins" title="Plugins">
+    Build post-processors for generated projects
+  </Card>
+  <Card href="/docs/developer/resolvers" title="Resolvers">
+    Build file conflict resolvers for layered templates
+  </Card>
+</Cards>

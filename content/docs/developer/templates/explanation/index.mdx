@@ -1,0 +1,101 @@
+---
+title: Template Explanation
+description: Conceptual deep dives into CyanPrint template architecture
+---
+
+import { Cards, Card } from 'fumadocs-ui/components/card';
+import { Mermaid } from '@/components/mdx/mermaid';
+
+# Template Explanation
+
+Understanding the concepts and architecture behind CyanPrint templates.
+
+## Core Concepts
+
+### Configuration
+
+<Cards>
+  <Card href="/docs/developer/templates/explanation/cyan-object" title="Cyan Configuration Object">
+    Understanding the structure returned by templates
+  </Card>
+  <Card href="/docs/developer/templates/explanation/default-processor" title="Default Processor">
+    How the cyan/default processor works with Eta templating
+  </Card>
+</Cards>
+
+### Determinism
+
+<Cards>
+  <Card href="/docs/developer/templates/explanation/determinism" title="Determinism">
+    How reproducible generation works
+  </Card>
+  <Card href="/docs/developer/templates/explanation/client-state" title="Client State">
+    Managing state across executions
+  </Card>
+  <Card href="/docs/developer/templates/explanation/3-way-merge" title="3-Way Merge">
+    How template updates preserve user changes
+  </Card>
+</Cards>
+
+### Architecture
+
+<Cards>
+  <Card href="/docs/developer/templates/explanation/container-paths" title="Container Paths">
+    Path mechanics in template containers
+  </Card>
+  <Card href="/docs/developer/templates/explanation/processors-vs-plugins" title="Processors vs Plugins">
+    When to use each
+  </Card>
+  <Card href="/docs/developer/templates/explanation/docker-vs-cyan-registry" title="Docker vs Cyan Registry">
+    Registry comparison
+  </Card>
+</Cards>
+
+## Conceptual Overview
+
+<Mermaid chart={`graph TD
+    A[Template] --> B[Questions]
+    B --> C[Processors]
+    C --> D[Generated Files]
+    D --> E[Plugins]
+    E --> F[Final Project]
+
+    G[Pin] --> H[Determinism]
+    H --> I[Reproducible IDs]
+    I --> C
+
+    J[State] --> K[Updates]
+    K --> L[3-Way Merge]
+`} />
+
+## Key Questions
+
+### Why var__name__ syntax?
+
+The `var__name__` syntax avoids conflicts with common template syntaxes like `${}` or `{{}}`. See [Default Processor](/docs/developer/templates/explanation/default-processor).
+
+### How do updates work?
+
+3-way merge combines the original template, user changes, and new template version. See [3-Way Merge](/docs/developer/templates/explanation/3-way-merge).
+
+### How are IDs consistent?
+
+The pin system seeds deterministic value generation. See [Determinism](/docs/developer/templates/explanation/determinism).
+
+### When to use processors vs plugins?
+
+Processors transform files; plugins execute actions. See [Processors vs Plugins](/docs/developer/templates/explanation/processors-vs-plugins).
+
+## Next Steps
+
+<Cards>
+  <Card href="/docs/developer/templates/tutorials" title="Tutorials">
+    Step-by-step learning
+  </Card>
+  <Card href="/docs/developer/templates/how-to" title="How-To Guides">
+    Task-oriented guides
+  </Card>
+  <Card href="/docs/developer/templates/reference" title="Reference">
+    Technical documentation
+  </Card>
+</Cards>

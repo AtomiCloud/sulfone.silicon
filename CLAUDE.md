@@ -27,6 +27,17 @@ direnv exec . biome lint --write .
 
 Pre-commit hooks run automatically on commit (Biome, treefmt, secrets scanning, shellcheck).
 
+## Verification Before Completing Tasks
+
+Before declaring any task complete, always run both checks:
+
+```bash
+direnv exec . pls build
+direnv exec . pre-commit run --all-files
+```
+
+Both must pass with no errors.
+
 ## Commit Message Convention
 
 Uses Angular Conventional Commits format:

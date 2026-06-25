@@ -1,0 +1,103 @@
+---
+title: Get Started
+description: Create your first CyanPrint project in under a minute
+---
+
+import { Tab, Tabs } from 'fumadocs-ui/components/tabs';
+import { Callout } from 'fumadocs-ui/components/callout';
+import { Steps, Step } from 'fumadocs-ui/components/steps';
+import { Cards, Card } from 'fumadocs-ui/components/card';
+
+# Get Started
+
+Create your first CyanPrint project in under a minute.
+
+<Steps>
+<Step>
+
+### Install CLI
+
+<Tabs groupId="installer" items={['Nix', 'Brew', 'Scoop', 'APT', 'YUM']} persist>
+<Tab value="Nix">
+
+```bash -c
+# Run directly without installing
+nix shell github:AtomiCloud/sulfone.iridium
+
+# Or install permanently
+nix profile install github:AtomiCloud/sulfone.iridium
+```
+
+</Tab>
+<Tab value="Brew">
+
+```bash -c
+brew install AtomiCloud/tap/cyanprint
+```
+
+</Tab>
+<Tab value="Scoop">
+
+```bash -c
+scoop bucket add cyanprint https://github.com/AtomiCloud/scoop-bucket
+scoop install cyanprint
+```
+
+</Tab>
+<Tab value="APT">
+
+```bash -c
+sudo apt install software-properties-common -y
+sudo apt-add-repository "deb [trusted=yes] https://apt.fury.io/AtomiCloud/ /" -y
+sudo apt update -y
+sudo apt install cyanprint
+```
+
+</Tab>
+<Tab value="YUM">
+
+```bash
+sudo sh -c 'echo "[fury]
+name=AtomiCloud Repo
+baseurl=https://yum.fury.io/atomicloud/
+enabled=1
+gpgcheck=0" > /etc/yum.repos.d/fury.repo'
+yum install cyanprint
+```
+
+</Tab>
+</Tabs>
+
+For version pinning and more details, see the [full installation guide](/docs/user/how-to/install).
+
+</Step>
+<Step>
+
+### Create Project
+
+```bash -c
+cyanprint create atomi/nix-init my-project
+```
+
+Answer the prompts, and your project is ready!
+
+<Callout type="info">
+The command above uses the latest version of the template. To specify a version, use `atomi/nix-init:1` (where `1` is the major version).
+</Callout>
+
+</Step>
+</Steps>
+
+## Next Steps
+
+<Cards>
+  <Card href="/docs/user/how-to/install" title="Full Installation Guide">
+    Pinning versions, more options
+  </Card>
+  <Card href="/docs/user/how-to/create-project" title="Create More Projects">
+    Learn about project creation
+  </Card>
+  <Card href="/docs/user/how-to/browse-templates" title="Browse Templates">
+    Explore available templates
+  </Card>
+</Cards>

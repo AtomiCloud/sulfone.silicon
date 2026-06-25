@@ -1,0 +1,29 @@
+---
+title: Boron
+description: The CyanPrint execution coordinator
+---
+
+# sulfone.boron
+
+Boron is the execution coordinator that manages container-based template execution. It handles container lifecycle, template warming, processor/plugin execution, and file operations.
+
+## Repository
+
+[github.com/AtomiCloud/sulfone.boron](https://github.com/AtomiCloud/sulfone.boron)
+
+## Tech Stack
+
+| Technology | Purpose |
+| ---------- | ------- |
+| Go 1.24.0 | Primary language |
+| Gin | HTTP/REST framework |
+| urfave/cli | CLI framework |
+| Docker | Container management |
+
+## Overview
+
+Boron exposes a REST HTTP API on port 9000 that orchestrates Docker containers for template execution. It manages several container types (template, processor, plugin, merger) and uses CPU-based parallelism for execution. The coordinator handles container lifecycle, workspace isolation via Docker volumes, and resource cleanup.
+
+## Getting Started
+
+See the repository README for setup and contributing instructions.

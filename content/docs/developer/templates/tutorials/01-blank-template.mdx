@@ -1,0 +1,311 @@
+---
+title: Tutorial 1 - Blank Template
+description: Create your first CyanPrint template from scratch
+---
+
+import { Steps, Step } from 'fumadocs-ui/components/steps';
+import { Files, File, Folder } from 'fumadocs-ui/components/files';
+import { Tabs, Tab } from 'fumadocs-ui/components/tabs';
+
+# Tutorial 1: Blank Template
+
+Create a minimal working template from scratch and test it with `cyanprint try`.
+
+## Prerequisites
+
+- Docker installed and running
+- CyanPrint CLI installed
+- Choose one runtime:
+  - **TypeScript**: Node.js 18+ and Bun
+  - **Python**: Python 3.11+ and pip
+  - **C#**: .NET 8 SDK
+
+<Steps>
+<Step>
+
+### Create project structure
+
+```bash
+mkdir my-first-template && cd my-first-template
+mkdir -p cyan templates
+echo "# My Project" > templates/README.md
+```
+
+</Step>
+<Step>
+
+### Create cyan.yaml
+
+```yaml cyan.yaml
+username: myuser
+name: my-first-template
+description: My first CyanPrint template
+
+build:
+  registry: docker.io
+  images:
+    blob:
+      image: myuser/my-first-template-blob
+      dockerfile: cyan/Dockerfile
+    template:
+      image: myuser/my-first-template
+      dockerfile: cyan/template.Dockerfile
+```
+
+</Step>
+<Step>
+
+### Create template logic
+
+<Tabs items={['TypeScript', 'Python', 'C#']} persist groupId="runtime">
+<Tab value="TypeScript">
+
+Create `cyan/index.ts`:
+
+```ts cyan/index.ts
+import { startTemplateWithFn, GlobType } from '@atomicloud/cyan-sdk';
+
+startTemplateWithFn(async (i, d) => {
+  const name = await i.text('What is your project name?', 'myuser/my-first-template/name');
+
+  return {
+    processors: [{
+      name: 'cyan/default',
+      files: [{ root: 'templates', glob: '**/*', exclude: [], type: GlobType.Copy }],
+      config: { vars: { name } }
+    }]
+  };
+});
+```
+
+Create `cyan/package.json`:
+
+```json cyan/package.json
+{
+  "name": "my-first-template",
+  "type": "module",
+  "dependencies": {
+    "@atomicloud/cyan-sdk": "latest"
+  }
+}
+```
+
+Create `cyan/Dockerfile` and `cyan/template.Dockerfile`:
+
+```dockerfile cyan/Dockerfile
+FROM oven/bun:1.1.31
+WORKDIR /app
+LABEL cyanprint.dev=true
+COPY package.json bun.lockb* ./
+RUN bun install
+COPY . .
+CMD ["bun", "run", "index.ts"]
+```
+
+Install dependencies:
+
+```bash
+cd cyan && bun install && cd ..
+```
+
+</Tab>
+<Tab value="Python">
+
+Create `cyan/index.py`:
+
+```python cyan/index.py
+from cyanprintsdk import start_template_with_fn, GlobType
+from cyanprintsdk.domain.core.cyan import Cyan, CyanProcessor, CyanGlob
+
+async def my_template(i, d):
+    name = await i.text("What is your project name?", "myuser/my-first-template/name")
+
+    return Cyan(
+        processors=[
+            CyanProcessor(
+                name="cyan/default",
+                files=[
+                    CyanGlob(root="templates", glob="**/*", exclude=[], type=GlobType.Copy)
+                ],
+                config={"vars": {"name": name}}
+            )
+        ]
+    )
+
+start_template_with_fn(my_template)
+```
+
+Create `cyan/requirements.txt`:
+
+```text cyan/requirements.txt
+cyanprintsdk>=1.0.0
+```
+
+Create `cyan/Dockerfile` and `cyan/template.Dockerfile`:
+
+```dockerfile cyan/Dockerfile
+FROM python:3.11-slim
+WORKDIR /app
+LABEL cyanprint.dev=true
+COPY requirements.txt .
+RUN pip install --no-cache-dir -r requirements.txt
+COPY . .
+CMD ["python", "index.py"]
+```
+
+Install dependencies:
+
+```bash
+cd cyan && pip install -r requirements.txt && cd ..
+```
+
+</Tab>
+<Tab value="C#">
+
+Create `cyan/Program.cs`:
+
+```csharp cyan/Program.cs
+using sulfone_helium;
+using sulfone_helium.Domain.Core;
+
+CyanEngine.StartTemplate(args, async (i, d) =>
+{
+    var name = await i.Text("What is your project name?", "myuser/my-first-template/name");
+
+    return new Cyan
+    {
+        Processors =
+        [
+            new CyanProcessor
+            {
+                Name = "cyan/default",
+                Files =
+                [
+                    new CyanGlob
+                    {
+                        Root = "templates",
+                        Glob = "**/*",
+                        Exclude = [],
+                        Type = GlobType.Copy
+                    }
+                ],
+                Config = new { vars = new { name } }
+            }
+        ]
+    };
+});
+```
+
+Create `cyan/my-first-template.csproj`:
+
+```xml cyan/my-first-template.csproj
+<Project Sdk="Microsoft.NET.Sdk">
+  <PropertyGroup>
+    <OutputType>Exe</OutputType>
+    <TargetFramework>net8.0</TargetFramework>
+    <ImplicitUsings>enable</ImplicitUsings>
+    <Nullable>enable</Nullable>
+  </PropertyGroup>
+  <ItemGroup>
+    <PackageReference Include="AtomiCloud.CyanPrint" Version="*" />
+  </ItemGroup>
+</Project>
+```
+
+Create `cyan/Dockerfile` and `cyan/template.Dockerfile`:
+
+```dockerfile cyan/Dockerfile
+FROM mcr.microsoft.com/dotnet/sdk:8.0
+WORKDIR /app
+LABEL cyanprint.dev=true
+COPY *.csproj .
+RUN dotnet restore
+COPY . .
+CMD ["dotnet", "run"]
+```
+
+Install dependencies:
+
+```bash
+cd cyan && dotnet restore && cd ..
+```
+
+</Tab>
+</Tabs>
+
+</Step>
+<Step>
+
+### Test your template
+
+```bash
+cyanprint try template . ./test-output
+```
+
+This builds the Docker image, starts the coordinator, prompts for your questions, and generates the project.
+
+Check the output:
+
+```bash
+cat ./test-output/README.md
+```
+
+</Step>
+</Steps>
+
+## Project Structure
+
+<Files>
+  <File name="cyan.yaml" />
+  <Folder name="cyan" defaultOpen>
+    <File name="index.ts" />
+    <File name="package.json" />
+    <File name="Dockerfile" />
+    <File name="template.Dockerfile" />
+  </Folder>
+  <Folder name="templates" defaultOpen>
+    <File name="README.md" />
+  </Folder>
+</Files>
+
+## Key Concepts
+
+<Tabs items={['TypeScript', 'Python', 'C#']} persist groupId="runtime">
+<Tab value="TypeScript">
+
+| Part | Description |
+|------|-------------|
+| `startTemplateWithFn` | Entry point - starts template server on port 5550 |
+| `i` | Inquirer - ask user questions (`text`, `select`, etc.) |
+| `d` | Determinism - access deterministic values |
+| `processors` | List of file processors to run |
+
+</Tab>
+<Tab value="Python">
+
+| Part | Description |
+|------|-------------|
+| `start_template_with_fn` | Entry point - starts template server on port 5550 |
+| `i` | Inquirer - ask user questions (`text`, `select`, etc.) |
+| `d` | Determinism - access deterministic values |
+| `processors` | List of file processors to run |
+
+</Tab>
+<Tab value="C#">
+
+| Part | Description |
+|------|-------------|
+| `CyanEngine.StartTemplate` | Entry point - starts template server on port 5550 |
+| `i` | Inquirer - ask user questions (`Text`, `Select`, etc.) |
+| `d` | Determinism - access deterministic values |
+| `Processors` | List of file processors to run |
+
+</Tab>
+</Tabs>
+
+`GlobType.Copy` copies files without variable substitution—perfect for static files.
+
+## Next Steps
+
+- [**Tutorial 2: Adding Variables**](/docs/developer/templates/tutorials/02-adding-variables) - Learn variable substitution
+- [**Automated Testing**](/docs/developer/templates/how-to/automated-testing) - Set up snapshot tests

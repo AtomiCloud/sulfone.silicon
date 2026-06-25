@@ -1,0 +1,251 @@
+---
+title: Plugin Dockerfile
+description: Container configuration for CyanPrint plugins
+---
+
+# Plugin Dockerfile
+
+Every plugin runs in a Docker container. The Dockerfile defines the runtime environment.
+
+## Basic Dockerfile
+
+```dockerfile -c
+FROM oven/bun:1.0.11
+
+WORKDIR /app
+
+# Required: Mark as CyanPrint plugin
+LABEL cyanprint.dev=true
+
+# Install dependencies
+COPY package.json .
+COPY bun.lockb .
+RUN bun install
+
+# Copy plugin code
+COPY . .
+
+# Run plugin
+CMD ["bun", "run", "index.ts"]
+```
+
+## Required Elements
+
+### Base Image
+
+Use a Bun or Node.js base image:
+
+```dockerfile -c
+# Bun (recommended)
+FROM oven/bun:1.0.11
+
+# Node.js
+FROM node:20-alpine
+
+# With Alpine variant (smaller image)
+FROM oven/bun:1.0.11-alpine
+```
+
+### CyanPrint Label
+
+The `cyanprint.dev=true` label identifies the image as a CyanPrint component. The executor uses this label to filter and discover CyanPrint plugin images via the Docker API:
+
+```dockerfile -c
+LABEL cyanprint.dev=true
+```
+
+### Working Directory
+
+Set a consistent working directory:
+
+```dockerfile -c
+WORKDIR /app
+```
+
+### Entry Point
+
+Define how the plugin runs:
+
+```dockerfile -c
+# Using Bun
+CMD ["bun", "run", "index.ts"]
+
+# Using Node.js
+CMD ["node", "index.js"]
+
+# Using tsx (TypeScript with Node)
+CMD ["npx", "tsx", "index.ts"]
+```
+
+## Optimized Dockerfile
+
+### Multi-stage Build
+
+Multi-stage builds can reduce final image size by copying only the necessary artifacts:
+
+```dockerfile -c
+# Build stage
+FROM oven/bun:1.0.11 AS builder
+
+WORKDIR /app
+
+COPY package.json .
+COPY bun.lockb .
+RUN bun install
+
+COPY . .
+RUN bun build ./index.ts --outdir ./dist --target bun
+
+# Runtime stage
+FROM oven/bun:1.0.11-alpine
+
+WORKDIR /app
+
+LABEL cyanprint.dev=true
+
+COPY --from=builder /app/dist ./dist
+COPY --from=builder /app/node_modules ./node_modules
+
+CMD ["bun", "run", "dist/index.js"]
+```
+
+<Callout type="info">
+Multi-stage builds add complexity. For most plugins, a simple single-stage build is sufficient and easier to maintain.
+</Callout>
+
+### With Additional Tools
+
+<Callout type="info">
+The `apt-get` command works with Debian-based images. For Alpine images, use `apk add` instead.
+</Callout>
+
+```dockerfile -c
+FROM oven/bun:1.0.11
+
+WORKDIR /app
+
+LABEL cyanprint.dev=true
+
+# Install additional tools if needed (Debian-based)
+RUN apt-get update && apt-get install -y \
+    git \
+    && rm -rf /var/lib/apt/lists/*
+
+COPY package.json .
+COPY bun.lockb .
+RUN bun install
+
+COPY . .
+
+CMD ["bun", "run", "index.ts"]
+```
+
+### Minimal Image
+
+```dockerfile -c
+FROM oven/bun:1.0.11-alpine
+
+WORKDIR /app
+
+LABEL cyanprint.dev=true
+
+COPY package.json .
+COPY bun.lockb .
+RUN bun install
+
+COPY index.ts .
+
+CMD ["bun", "run", "index.ts"]
+```
+
+## Dockerignore
+
+Create a `.dockerignore` file to exclude unnecessary files. Here is a comprehensive template:
+
+```text -c
+# Dependencies (must include to exclude)
+node_modules
+
+# Git
+.git
+.gitignore
+
+# IDE
+.idea
+.vscode
+
+# Documentation
+*.md
+docs/
+
+# OS files
+.DS_Store
+Thumbs.db
+
+# Environment
+.env
+.env.*
+
+# Test files
+*.test.ts
+*.spec.ts
+__tests__/
+```
+
+<Callout type="info">
+A minimal `.dockerignore` with just `node_modules`, `.idea`, and `.vscode` is often sufficient for simple plugins. Exclude `bun.lockb` only if you want fresh dependency resolution.
+</Callout>
+
+## Size Optimization
+
+| Technique | Approximate Savings | Trade-off |
+|-----------|---------------------|-----------|
+| Alpine base | ~100MB (estimated) | May need musl compatibility |
+| Minimal copy | Varies | Manual optimization |
+| Multi-stage | ~30% (estimated) | More complex build |
+
+<Callout type="info">
+Keep images small for faster pulls. Plugins are downloaded on every generation. Savings are approximate and vary based on dependencies.
+</Callout>
+
+## Environment Variables
+
+Pass environment variables to the plugin:
+
+```dockerfile -c
+FROM oven/bun:1.0.11
+
+WORKDIR /app
+
+LABEL cyanprint.dev=true
+
+# Set environment variables
+ENV NODE_ENV=production
+
+COPY package.json .
+COPY bun.lockb .
+RUN bun install
+
+COPY . .
+
+CMD ["bun", "run", "index.ts"]
+```
+
+## Port Configuration
+
+Plugins communicate on port 5552 and serve the `POST /api/plug` endpoint:
+
+```dockerfile -c
+# Expose plugin port (informational)
+EXPOSE 5552
+```
+
+<Callout type="warn">
+Port 5552 is the standard plugin port with the `/api/plug` endpoint. Don't change it unless you have a specific reason.
+</Callout>
+
+## Related
+
+- [Project Structure](/docs/developer/plugins/reference/project-structure) - Directory layout
+- [Push to Registry](/docs/developer/plugins/how-to/push-to-registry) - Publishing
+- [First Plugin](/docs/developer/plugins/tutorials/first-plugin) - Create your first plugin

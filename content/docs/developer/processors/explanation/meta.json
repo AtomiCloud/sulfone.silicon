@@ -1,0 +1,5 @@
+{
+  "title": "Explanation",
+  "icon": "Lightbulb",
+  "pages": ["why-processors", "stateless-nature", "read-write-dirs", "memory-loading", "input-config"]
+}

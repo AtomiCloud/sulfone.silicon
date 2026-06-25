@@ -1,0 +1,29 @@
+---
+title: Zinc
+description: "Sulfone-Zinc: Registry API for CyanPrint"
+---
+
+# sulfone.zinc
+
+Zinc is the registry API that stores template metadata, delegates authentication to Descope, and serves template, plugin, processor, and resolver information to CLI users and the web UI.
+
+## Repository
+
+[github.com/AtomiCloud/sulfone.zinc](https://github.com/AtomiCloud/sulfone.zinc)
+
+## Tech Stack
+
+| Technology | Purpose |
+| ---------- | ------- |
+| C#/.NET 8 | Primary language and runtime |
+| ASP.NET Core with Kestrel | Web framework |
+| Entity Framework Core | Database access (PostgreSQL) |
+| Descope | Authentication service |
+
+## Overview
+
+Zinc provides RESTful APIs for managing templates, plugins, processors, and resolvers. It handles user authentication via Descope and API keys, stores metadata in PostgreSQL via Entity Framework Core, and supports push endpoints for CI/CD workflows (atomic create-or-update operations). Both the Iridium CLI and the Argon web UI communicate with Zinc.
+
+## Getting Started
+
+See the repository README for setup and contributing instructions.

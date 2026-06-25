@@ -1,0 +1,123 @@
+---
+title: SDK Overview
+description: CyanPrint SDK for processor development
+---
+
+import { Tabs, Tab } from 'fumadocs-ui/components/tabs';
+import { Cards, Card } from 'fumadocs-ui/components/card';
+
+# SDK Overview
+
+The CyanPrint SDK (`@atomicloud/cyan-sdk`) provides the APIs for creating processors.
+
+## Installation
+
+<Tabs groupId="package_manager" items={['npm', 'bun']} persist>
+  <Tab value="npm">
+
+  ```bash
+  npm install @atomicloud/cyan-sdk
+  ```
+
+  </Tab>
+  <Tab value="bun">
+
+  ```bash
+  bun add @atomicloud/cyan-sdk
+  ```
+
+  </Tab>
+</Tabs>
+
+## Core Exports
+
+### Entry Points
+
+| Export | Purpose |
+|--------|---------|
+| `StartProcessorWithLambda` | Entry point for processors |
+
+### Interfaces
+
+| Interface | Description |
+|-----------|-------------|
+| `ProcessorInput` | Input passed to processor |
+| `ProcessorOutput` | Return value from processor |
+| `CyanFileHelper` | File operations API |
+| `CyanGlob` | Glob pattern configuration |
+
+### Types
+
+| Type | Description |
+|------|-------------|
+| `VirtualFile` | File with content |
+| `VirtualFileReference` | File reference (lazy loading) |
+| `VirtualFileStream` | Streaming file access |
+
+## Quick Start
+
+```ts
+import { StartProcessorWithLambda } from '@atomicloud/cyan-sdk';
+
+StartProcessorWithLambda(async (input, fileHelper) => {
+  // input: ProcessorInput
+  //   - readDirectory: Source files location
+  //   - writeDirectory: Output location
+  //   - globs: File patterns to process
+  //   - config: Configuration from template
+
+  // fileHelper: CyanFileHelper
+  //   - resolveAll(): Load all files
+  //   - read(glob): Load specific files
+  //   - get(glob): Get file references
+  //   - readAsStream(glob): Stream files
+  //   - copy(glob): Copy files directly
+
+  const files = fileHelper.resolveAll();
+
+  files.forEach(file => {
+    file.content = transform(file.content);
+    file.writeFile();
+  });
+
+  return { directory: input.writeDirectory };
+});
+```
+
+## SDK Reference Sections
+
+<Cards>
+  <Card href="/docs/developer/processors/reference/sdk/start-processor" title="StartProcessorWithLambda">
+    Entry point API for processors
+  </Card>
+  <Card href="/docs/developer/processors/reference/sdk/file-helper" title="CyanFileHelper">
+    File operations API
+  </Card>
+  <Card href="/docs/developer/processors/reference/sdk/input-output" title="Input/Output">
+    Type definitions
+  </Card>
+  <Card href="/docs/developer/processors/reference/sdk/types" title="Types">
+    Full type reference
+  </Card>
+</Cards>
+
+## Version Compatibility
+
+| SDK Version | CyanPrint CLI | Runtime |
+|-------------|---------------|---------|
+| 1.x | 1.x | Node.js 18+ |
+| 2.x | 2.x | Node.js 20+ / Bun |
+
+## Related
+
+<Cards>
+  <Card href="/docs/developer/processors/tutorials/first-processor" title="First Processor">
+    Tutorial walkthrough
+  </Card>
+  <Card href="/docs/developer/processors/how-to" title="How-to Guides">
+    Task guides
+  </Card>
+  <Card href="/docs/developer/processors/explanation" title="Explanation">
+    Core concepts
+  </Card>
+</Cards>

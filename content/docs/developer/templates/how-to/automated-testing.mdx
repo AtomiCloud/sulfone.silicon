@@ -1,0 +1,454 @@
+---
+title: Automated Testing
+description: Set up snapshot-based automated testing for your templates
+---
+
+import { Steps, Step } from 'fumadocs-ui/components/steps';
+import { Callout } from 'fumadocs-ui/components/callout';
+import { Files, File, Folder } from 'fumadocs-ui/components/files';
+import { Tabs, Tab } from 'fumadocs-ui/components/tabs';
+
+# Automated Testing
+
+The `test` command runs automated snapshot-based tests for your templates. Unlike `try` (which runs templates interactively for manual development), `test` executes predefined test cases from `test.cyan.yaml` and compares the output against expected snapshots.
+
+## Quick Start with `test init`
+
+<Steps>
+<Step>
+
+### Generate Test Cases
+
+Run `test init` to automatically generate test cases by walking your template's Q&A tree:
+
+```bash
+cyanprint test init .
+```
+
+This explores all answer combinations (Select options, Confirm true/false, Checkbox subsets) and generates a test case for each, capped at 30 combinations by default.
+
+</Step>
+<Step>
+
+### Review Generated Files
+
+`test init` creates two things:
+
+<Files>
+  <File name="test.cyan.yaml" />
+  <Folder name="fixtures" defaultOpen>
+    <Folder name="expected" defaultOpen>
+      <Folder name="typescript-yes" />
+      <Folder name="typescript-no" />
+      <Folder name="python-yes" />
+    </Folder>
+  </Folder>
+</Files>
+
+- `test.cyan.yaml` — test case definitions with answer states
+- `fixtures/expected/` — snapshot directories with expected output for each test case
+
+</Step>
+<Step>
+
+### Run Tests
+
+```bash
+cyanprint test template .
+```
+
+All tests should pass since the snapshots were just generated from your template.
+
+</Step>
+</Steps>
+
+## How `test init` Works
+
+`test init` walks your template's question tree using depth-first exploration:
+
+| Question Type | Exploration Strategy |
+| ------------- | -------------------- |
+| Select        | One branch per option |
+| Confirm       | Two branches: `true` and `false` |
+| Checkbox      | Subsets: empty, each individual option, and all selected |
+| Text          | Single value using `--text-seed` (default: `"dummy"`) |
+| Password      | Single value using `--password-seed` (default: `"secret"`) |
+| Date          | Single value using `--date-seed` (default: today's date) |
+
+The `--max-combinations` flag (default: 30) caps the total number of test cases. Once the limit is reached, in-progress branches complete but no new branches are started.
+
+<Callout type="info">
+`test init` is only available for templates. Processors, plugins, and resolvers require manually creating `test.cyan.yaml`.
+</Callout>
+
+### Interactive Mode
+
+For large templates, exhaustive exploration may produce too many combinations. Use interactive mode to selectively choose branches:
+
+```bash
+cyanprint test init . -i
+```
+
+This prompts you at each question branch, letting you pick which options to explore.
+
+### Custom Seeds
+
+Override default seed values for deterministic answers:
+
+```bash
+cyanprint test init . --text-seed "my-project" --password-seed "s3cret" --date-seed "2025-06-15"
+```
+
+## Understanding `test.cyan.yaml`
+
+Each test case defines the answers to provide and the expected output:
+
+```yaml test.cyan.yaml
+tests:
+  - name: typescript-project
+    expected:                          // !mark
+      type: snapshot                   // !callout "Snapshot comparison mode"
+      value:
+        path: ./fixtures/expected/typescript-project
+    answer_state:                      // !callout "Maps question IDs to answers"
+      project_name:
+        type: String
+        value: "my-project"
+      use_typescript:
+        type: Bool
+        value: true
+      features:
+        type: StringArray
+        value:
+          - linting
+          - testing
+    deterministic_state:               // !mark
+      seed: "12345"
+    validate:                          // !callout "Commands to verify output"
+      - "bun install --dry-run"
+```
+
+### Answer State Types
+
+The `answer_state` maps question IDs to their answers:
+
+| Type          | Used For                    | Value Format     |
+| ------------- | --------------------------- | ---------------- |
+| `String`      | Text, Password, Date inputs | Single string    |
+| `Bool`        | Confirm prompts             | `true` or `false` |
+| `StringArray` | Checkbox / multi-select     | List of strings  |
+
+### Deterministic State
+
+The `deterministic_state` field pins non-deterministic values (like random seeds) to ensure reproducible output across test runs.
+
+### Validation Commands
+
+The `validate` field lists shell commands that run in the generated output directory after the template executes. If any command exits with a non-zero code, the test fails.
+
+<Tabs items={['TypeScript/Bun', 'Python', 'C#/.NET', 'Nix']} persist>
+<Tab value="TypeScript/Bun">
+
+```yaml
+validate:
+  - "bun install --dry-run"    # Verify package.json is valid
+  - "bun run build"            # Verify project builds successfully
+```
+
+</Tab>
+<Tab value="Python">
+
+```yaml
+validate:
+  - "pip install --dry-run -r requirements.txt"  # Verify requirements.txt is valid
+  - "python -m py_compile src/main.py"           # Verify Python syntax
+```
+
+</Tab>
+<Tab value="C#/.NET">
+
+```yaml
+validate:
+  - "dotnet restore"           # Verify csproj is valid
+  - "dotnet build --no-restore" # Verify project builds successfully
+```
+
+</Tab>
+<Tab value="Nix">
+
+```yaml
+validate:
+  - "nix flake check"          # Verify Nix flake structure
+  - "nix eval .#packages"      # Verify package definitions
+```
+
+</Tab>
+</Tabs>
+
+## Project Structure
+
+A template project with automated tests looks like this:
+
+<Files>
+  <File name="cyan.yaml" />
+  <File name="test.cyan.yaml" />
+  <Folder name="fixtures" defaultOpen>
+    <Folder name="expected" defaultOpen>
+      <Folder name="typescript-project" />
+      <Folder name="python-project" />
+    </Folder>
+  </Folder>
+  <Folder name="cyan" defaultOpen>
+    <File name="index.ts" />
+    <File name="Dockerfile" />
+    <File name="package.json" />
+  </Folder>
+  <Folder name="templates" defaultOpen>
+    <File name="README.md" />
+  </Folder>
+</Files>
+
+## Running Tests
+
+<Steps>
+<Step>
+
+### Run All Tests
+
+```bash
+cyanprint test template .
+```
+
+</Step>
+<Step>
+
+### Run a Specific Test
+
+```bash
+cyanprint test template . --test typescript-project
+```
+
+</Step>
+<Step>
+
+### Parallel Execution
+
+Speed up test runs by executing multiple test cases in parallel:
+
+```bash
+cyanprint test template . --parallel 4
+```
+
+</Step>
+</Steps>
+
+## Updating Snapshots
+
+When you intentionally change your template's output, update the expected snapshots:
+
+```bash
+cyanprint test template . --update-snapshots
+```
+
+This replaces the contents of each `fixtures/expected/` directory with the actual output. Always review the changes before committing.
+
+<Callout type="warn">
+Always review snapshot changes with `git diff` before committing. Incorrect snapshots can mask bugs.
+</Callout>
+
+## Snapshot Comparison Rules
+
+| File Type        | Comparison Method                             |
+| ---------------- | --------------------------------------------- |
+| `.json` files    | Deep comparison (field order ignored)         |
+| Other text files | Exact string match (trailing whitespace trimmed) |
+| Binary files     | Skipped (reported but not compared)           |
+
+Extra files in actual output or missing files from expected output cause test failure.
+
+## CI/CD Integration
+
+<Steps>
+<Step>
+
+### Generate JUnit XML Reports
+
+Generate JUnit XML reports for CI systems:
+
+```bash
+cyanprint test template . --junit test-results.xml --disable-daemon-autostart
+```
+
+</Step>
+<Step>
+
+### GitHub Actions Example
+
+```yaml .github/workflows/test.yml
+name: Template Tests
+
+on: [push, pull_request]
+
+jobs:
+  test:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Setup CyanPrint
+        run: |                            // !mark
+          curl -sSL https://get.cyanprint.dev | bash
+
+      - name: Run Tests
+        run: |                            // !callout "Generate JUnit report for CI"
+          cyanprint test template . \
+            --junit test-results.xml \
+            --disable-daemon-autostart
+
+      - name: Publish Test Results        // !mark
+        uses: dorny/test-reporter@v1
+        if: always()
+        with:
+          name: Template Tests
+          path: test-results.xml
+          reporter: java-junit
+```
+
+</Step>
+<Step>
+
+### GitLab CI Example
+
+```yaml .gitlab-ci.yml
+template-tests:
+  stage: test
+  image: atomicloud/cyanprint:latest
+  script:
+    - cyanprint test template . --junit test-results.xml --disable-daemon-autostart  // !mark
+  artifacts:
+    when: always
+    reports:
+      junit: test-results.xml
+```
+
+</Step>
+</Steps>
+
+<Callout type="info">
+Use `--disable-daemon-autostart` in CI environments where you manage the coordinator separately, or ensure Docker is available for automatic daemon startup.
+</Callout>
+
+The JUnit report follows the standard format supported by most CI platforms (GitHub Actions, GitLab CI, Jenkins).
+
+## Writing Custom Test Cases
+
+<Steps>
+<Step>
+
+### Manual Test Case Creation
+
+For processors, plugins, and resolvers, manually create `test.cyan.yaml`:
+
+<Tabs items={['TypeScript', 'Python', 'C#']} persist>
+<Tab value="TypeScript">
+
+```yaml test.cyan.yaml
+tests:
+  - name: default-config
+    expected:
+      type: snapshot
+      value:
+        path: ./fixtures/expected/default-config
+    answer_state:
+      project_name:
+        type: String
+        value: "test-project"
+      use_typescript:
+        type: Bool
+        value: true
+    deterministic_state:
+      seed: "test-seed-123"
+    validate:
+      - "bun install --dry-run"
+```
+
+</Tab>
+<Tab value="Python">
+
+```yaml test.cyan.yaml
+tests:
+  - name: default-config
+    expected:
+      type: snapshot
+      value:
+        path: ./fixtures/expected/default-config
+    answer_state:
+      project_name:
+        type: String
+        value: "test-project"
+      use_python:
+        type: Bool
+        value: true
+    deterministic_state:
+      seed: "test-seed-123"
+    validate:
+      - "pip install --dry-run -r requirements.txt"
+```
+
+</Tab>
+<Tab value="C#">
+
+```yaml test.cyan.yaml
+tests:
+  - name: default-config
+    expected:
+      type: snapshot
+      value:
+        path: ./fixtures/expected/default-config
+    answer_state:
+      project_name:
+        type: String
+        value: "TestProject"
+      use_csharp:
+        type: Bool
+        value: true
+    deterministic_state:
+      seed: "test-seed-123"
+    validate:
+      - "dotnet restore"
+```
+
+</Tab>
+</Tabs>
+
+</Step>
+<Step>
+
+### Generate Initial Snapshots
+
+After creating your test cases, generate the initial snapshots:
+
+```bash
+cyanprint test template . --update-snapshots
+```
+
+</Step>
+<Step>
+
+### Verify and Commit
+
+Review the generated snapshots and commit them to version control:
+
+```bash
+git add fixtures/expected/ test.cyan.yaml
+git commit -m "test: add automated test cases"
+```
+
+</Step>
+</Steps>
+
+## Next Steps
+
+- [CLI Commands Reference](/docs/user/reference/cli-commands) — Full command options and flags
+- [Test Locally with Try](/docs/developer/templates/how-to/test-locally) — Interactive development testing
+- [Push to Registry](/docs/developer/templates/how-to/push-to-registry) — Publish your template

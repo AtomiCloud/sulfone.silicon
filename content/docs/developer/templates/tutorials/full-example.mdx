@@ -1,0 +1,351 @@
+---
+title: Publish to Registry
+description: Learn how to publish your template to CyanPrint registry
+---
+
+import { Steps, Step } from 'fumadocs-ui/components/steps';
+import { Callout } from 'fumadocs-ui/components/callout';
+import { Tab, Tabs } from 'fumadocs-ui/components/tabs';
+import { Cards, Card } from 'fumadocs-ui/components/card';
+
+# Publish to Registry
+
+Learn how to publish your template to a CyanPrint registry for others to discover and use.
+
+## Overview
+
+Publishing a template involves:
+
+1. Creating an account on a CyanPrint registry
+2. Generating an API token
+3. Building and pushing Docker images
+4. Registering the template with CyanPrint
+
+<Callout type="info">
+You can use the official cyanprint.dev registry or host your own. This guide covers both options.
+</Callout>
+
+## Prerequisites
+
+- A completed template ready to publish
+- Docker with buildx support
+- CyanPrint CLI installed
+
+<Steps>
+<Step>
+
+### Create an Account
+
+<Tabs groupId="registry" items={['cyanprint.dev', 'Self-Hosted']} persist>
+<Tab value="cyanprint.dev">
+
+1. Navigate to [cyanprint.dev](https://cyanprint.dev)
+2. Click **Sign Up** or **Register**
+3. Complete the registration process
+4. Verify your email address
+
+</Tab>
+<Tab value="Self-Hosted">
+
+If your organization hosts a private CyanPrint registry:
+
+1. Contact your administrator for access
+2. Get the registry URL (e.g., `registry.internal.example.com`)
+3. Obtain credentials for authentication
+
+<Callout type="warn">
+Self-hosted registries require additional setup. See your organization's documentation for specific instructions.
+</Callout>
+
+</Tab>
+</Tabs>
+
+</Step>
+<Step>
+
+### Generate an API Token
+
+<Tabs groupId="registry" items={['cyanprint.dev', 'Self-Hosted']} persist>
+<Tab value="cyanprint.dev">
+
+1. Log in to [cyanprint.dev](https://cyanprint.dev)
+2. Navigate to **Settings** > **API Tokens**
+3. Click **Generate New Token**
+4. Give it a descriptive name (e.g., "CI/CD Publishing")
+5. Select appropriate scopes (minimum: `template:push`)
+6. Click **Generate**
+7. **Copy the token immediately** - it won't be shown again
+
+```bash -c
+# Store the token securely
+export CYAN_TOKEN="your-token-here"
+```
+
+</Tab>
+<Tab value="Self-Hosted">
+
+Follow your organization's token generation process. Typically:
+
+1. Log in to your registry's web interface
+2. Navigate to API settings or profile settings
+3. Generate a token with push permissions
+4. Store it securely
+
+```bash -c
+# Store the token securely
+export CYAN_TOKEN="your-token-here"
+
+# If using a custom registry URL
+export CYAN_REGISTRY="https://registry.internal.example.com"
+```
+
+</Tab>
+</Tabs>
+
+<Callout type="warn">
+Never commit API tokens to version control. Use environment variables or secret management tools.
+</Callout>
+
+</Step>
+<Step>
+
+### Authenticate the CLI
+
+Verify your CLI can authenticate with the registry:
+
+```bash -c
+# Test authentication
+cyanprint auth status
+
+# Or manually login
+cyanprint login --token $CYAN_TOKEN
+```
+
+For self-hosted registries:
+
+```bash -c
+# Specify custom registry
+cyanprint login --token $CYAN_TOKEN --registry $CYAN_REGISTRY
+```
+
+</Step>
+<Step>
+
+### Build Docker Images
+
+Build both the template and blob images:
+
+```bash -c
+# Build template image
+docker buildx build --platform linux/amd64,linux/arm64 \
+  -f cyan/template.Dockerfile \
+  -t myorg/my-template:1.0.0 \
+  --push .
+
+# Build blob image
+docker buildx build --platform linux/amd64,linux/arm64 \
+  -f cyan/blob.Dockerfile \
+  -t myorg/my-template-blob:1.0.0 \
+  --push .
+```
+
+<Callout type="info">
+Replace `myorg/my-template` with your actual image name. Use Docker Hub, GHCR, or your private registry.
+</Callout>
+
+For GitHub Container Registry:
+
+```bash -c
+# Login to GHCR first
+echo $GITHUB_TOKEN | docker login ghcr.io -u USERNAME --password-stdin
+
+# Build and push
+docker buildx build --platform linux/amd64,linux/arm64 \
+  -f cyan/template.Dockerfile \
+  -t ghcr.io/myorg/my-template:1.0.0 \
+  --push .
+```
+
+</Step>
+<Step>
+
+### Publish to Registry
+
+Register your template with the CyanPrint registry:
+
+```bash -c
+cyanprint push template --token $CYAN_TOKEN \
+  myorg/my-template-blob 1.0.0 \
+  myorg/my-template 1.0.0
+```
+
+This command:
+- Registers the template metadata
+- Links the blob and template images
+- Makes the template discoverable
+
+### Verify Publication
+
+Confirm your template is available:
+
+```bash -c
+# List your templates
+cyanprint list myorg/
+
+# Get template details
+cyanprint info myorg/my-template:1.0.0
+```
+
+</Step>
+</Steps>
+
+## CI/CD Integration
+
+Automate template publishing with GitHub Actions.
+
+### GitHub Actions Workflow
+
+Create `.github/workflows/publish.yml`:
+
+```yaml .github/workflows/publish.yml -c
+name: Publish Template
+
+on:
+  release:
+    types: [published]
+
+permissions:
+  contents: read
+  packages: write
+
+jobs:
+  publish:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Set up Docker Buildx
+        uses: docker/setup-buildx-action@v3
+
+      - name: Login to GitHub Container Registry
+        uses: docker/login-action@v3
+        with:
+          registry: ghcr.io
+          username: ${{ github.actor }}
+          password: ${{ secrets.GITHUB_TOKEN }}
+
+      - name: Extract version
+        id: version
+        run: echo "VERSION=${GITHUB_REF#refs/tags/}" >> $GITHUB_OUTPUT
+
+      - name: Build and Push Template
+        run: |
+          docker buildx build --platform linux/amd64,linux/arm64 \
+            -f cyan/template.Dockerfile \
+            -t ghcr.io/${{ github.repository_owner }}/my-template:${{ steps.version.outputs.VERSION }} \
+            --push .
+
+      - name: Build and Push Blob
+        run: |
+          docker buildx build --platform linux/amd64,linux/arm64 \
+            -f cyan/blob.Dockerfile \
+            -t ghcr.io/${{ github.repository_owner }}/my-template-blob:${{ steps.version.outputs.VERSION }} \
+            --push .
+
+      - name: Register with CyanPrint
+        run: |
+          cyanprint push template --token ${{ secrets.CYAN_TOKEN }} \
+            ghcr.io/${{ github.repository_owner }}/my-template-blob ${{ steps.version.outputs.VERSION }} \
+            ghcr.io/${{ github.repository_owner }}/my-template ${{ steps.version.outputs.VERSION }}
+```
+
+<Callout type="warn">
+Store your `CYAN_TOKEN` as a GitHub secret. Go to **Settings** > **Secrets and variables** > **Actions** > **New repository secret**.
+</Callout>
+
+### Triggering the Workflow
+
+1. Create a new release in GitHub
+2. Tag it with a semantic version (e.g., `v1.0.0`)
+3. The workflow automatically builds and publishes
+
+## Best Practices
+
+### Versioning
+
+- Use semantic versioning (`MAJOR.MINOR.PATCH`)
+- Tag both specific versions and `latest`
+- Document breaking changes in release notes
+
+```bash -c
+# Build with multiple tags
+docker buildx build \
+  -t myorg/my-template:1.0.0 \
+  -t myorg/my-template:1.0 \
+  -t myorg/my-template:latest \
+  --push .
+```
+
+### Security
+
+- Use scoped tokens with minimum required permissions
+- Rotate tokens regularly
+- Never expose tokens in logs or error messages
+- Use GitHub secrets or similar for CI/CD
+
+### Testing Before Publishing
+
+Always test locally before publishing:
+
+```bash -c
+# Build locally without push
+docker buildx build --platform linux/amd64 \
+  -f cyan/template.Dockerfile \
+  -t myorg/my-template:test \
+  --load .
+
+# Test the template
+cyanprint create myorg/my-template:test ./test-output
+```
+
+## Troubleshooting
+
+### Authentication Failed
+
+```bash -c
+# Verify token is set
+echo $CYAN_TOKEN
+
+# Check token validity
+cyanprint auth status
+```
+
+### Image Not Found
+
+```bash -c
+# Verify images exist
+docker images | grep my-template
+
+# Check registry connectivity
+docker pull myorg/my-template:1.0.0
+```
+
+### Registry Unavailable
+
+- Check registry status at status.cyanprint.dev
+- Try again after a few minutes
+- Contact support if the issue persists
+
+## Next Steps
+
+<Cards>
+  <Card href="/docs/developer/templates/explanation/docker-vs-cyan-registry" title="Registry Architecture">
+    Understand how Docker and CyanPrint registries work together
+  </Card>
+  <Card href="/docs/developer/templates/reference/dockerfiles" title="Dockerfiles Reference">
+    Learn more about template and blob Dockerfiles
+  </Card>
+  <Card href="/docs/developer/templates/how-to/automated-testing" title="Automated Testing">
+    Set up automated testing for your templates
+  </Card>
+</Cards>

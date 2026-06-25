@@ -1,0 +1,149 @@
+---
+title: Pass Images and Binary Files
+description: How to include images and binary files in templates
+---
+
+import { Callout } from 'fumadocs-ui/components/callout';
+
+# How to Pass Images and Binaries
+
+Include images, fonts, and other binary files in your templates without corruption.
+
+## The Problem
+
+Using `GlobType.Template` on binary files corrupts them:
+
+```ts
+// BAD - corrupts images!
+files: [
+  { root: 'templates', glob: '**/*', exclude: [], type: GlobType.Template }
+]
+```
+
+The template processor tries to find `var__` patterns in binary data, corrupting the file.
+
+## Solution: Use GlobType.Copy
+
+Binary files must use `GlobType.Copy`:
+
+```ts
+files: [
+  // Template files - process for variable substitution
+  { root: 'templates', glob: '**/*.md', exclude: [], type: GlobType.Template },
+  { root: 'templates', glob: '**/*.json', exclude: [], type: GlobType.Template },
+  { root: 'templates', glob: '**/*.yaml', exclude: [], type: GlobType.Template },
+
+  // Binary files - copy without processing
+  { root: 'templates', glob: '**/*.png', exclude: [], type: GlobType.Copy },
+  { root: 'templates', glob: '**/*.jpg', exclude: [], type: GlobType.Copy },
+  { root: 'templates', glob: '**/*.ico', exclude: [], type: GlobType.Copy },
+  { root: 'templates', glob: '**/*.woff', exclude: [], type: GlobType.Copy },
+  { root: 'templates', glob: '**/*.woff2', exclude: [], type: GlobType.Copy }
+]
+```
+
+## Common Binary Types
+
+| Type | Extensions |
+|------|------------|
+| Images | `.png`, `.jpg`, `.jpeg`, `.gif`, `.svg`, `.ico`, `.webp` |
+| Fonts | `.woff`, `.woff2`, `.ttf`, `.otf`, `.eot` |
+| Documents | `.pdf`, `.doc`, `.docx` |
+| Archives | `.zip`, `.tar`, `.gz` |
+| Binaries | `.exe`, `.dll`, `.so`, `.dylib` |
+
+## Complete Example
+
+```ts
+import { StartTemplateWithLambda, GlobType } from '@atomicloud/cyan-sdk';
+
+StartTemplateWithLambda(async (i, d) => {
+  return {
+    processors: [{
+      name: 'cyan/default',
+      files: [
+        // Text files with variable substitution
+        { root: 'templates', glob: '**/*.html', exclude: [], type: GlobType.Template },
+        { root: 'templates', glob: '**/*.css', exclude: [], type: GlobType.Template },
+        { root: 'templates', glob: '**/*.js', exclude: [], type: GlobType.Template },
+        { root: 'templates', glob: '**/*.json', exclude: [], type: GlobType.Template },
+        { root: 'templates', glob: '**/*.md', exclude: [], type: GlobType.Template },
+
+        // Images - copy only
+        { root: 'templates', glob: '**/*.png', exclude: [], type: GlobType.Copy },
+        { root: 'templates', glob: '**/*.jpg', exclude: [], type: GlobType.Copy },
+        { root: 'templates', glob: '**/*.svg', exclude: [], type: GlobType.Copy },
+        { root: 'templates', glob: '**/*.ico', exclude: [], type: GlobType.Copy },
+
+        // Fonts - copy only
+        { root: 'templates', glob: '**/*.woff', exclude: [], type: GlobType.Copy },
+        { root: 'templates', glob: '**/*.woff2', exclude: [], type: GlobType.Copy },
+        { root: 'templates', glob: '**/*.ttf', exclude: [], type: GlobType.Copy }
+      ],
+      config: {
+        vars: {
+          projectName: 'my-app'
+        }
+      }
+    }]
+  };
+});
+```
+
+## Directory Organization
+
+Organize files by type for cleaner configuration:
+
+```
+cyan/templates/
+├── src/              # Template files (processed)
+│   ├── index.html
+│   ├── styles.css
+│   └── app.js
+└── assets/           # Binary files (copied)
+    ├── images/
+    │   ├── logo.png
+    │   └── favicon.ico
+    └── fonts/
+        ├── regular.woff2
+        └── bold.woff2
+```
+
+```ts
+files: [
+  // Process all source files
+  { root: 'templates/src', glob: '**/*', exclude: [], type: GlobType.Template },
+
+  // Copy all assets (only binaries here)
+  { root: 'templates/assets', glob: '**/*', exclude: [], type: GlobType.Copy }
+]
+```
+
+## Excluding Files
+
+Use `exclude` patterns to skip files:
+
+```ts
+files: [
+  {
+    root: 'templates',
+    glob: '**/*',
+    exclude: [
+      '**/*.test.js',     // Skip test files
+      '**/node_modules/**', // Skip dependencies
+      '**/.DS_Store'      // Skip macOS files
+    ],
+    type: GlobType.Template
+  }
+]
+```
+
+<Callout type="info">
+Always verify binary files work correctly after generation. Test images open, fonts load, and documents are readable.
+</Callout>
+
+## Related
+
+- [Changing Glob Patterns](/docs/developer/templates/tutorials/03-changing-glob) - Tutorial on glob patterns
+- [Globbing Reference](/docs/developer/templates/reference/sdk/globbing) - Glob syntax reference
+- [Conditional Files](/docs/developer/templates/how-to/conditional-files) - Include files conditionally

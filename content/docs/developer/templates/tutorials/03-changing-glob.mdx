@@ -1,0 +1,346 @@
+---
+title: Tutorial 3 - Changing Glob Patterns
+description: Control which files are processed vs copied
+---
+
+import { Tabs, Tab } from 'fumadocs-ui/components/tabs';
+import { Files, File, Folder } from 'fumadocs-ui/components/files';
+
+# Tutorial 3: Changing Glob Patterns
+
+Control which files are processed vs copied. This is essential for projects with mixed content types.
+
+## Why Different GlobTypes Matter
+
+Not all files should be processed the same way:
+
+- **Text files** (`.md`, `.ts`, `.json`) - Need variable substitution with `GlobType.Template`
+- **Binary files** (`.png`, `.jpg`, `.pdf`) - Must be copied as-is with `GlobType.Copy`
+- **Processor output** - When chaining processors, use `GlobType.Processor` to read from previous processor
+
+Using `GlobType.Template` on binary files corrupts them because the processor attempts variable substitution on binary data.
+
+## GlobType Options
+
+| Type | Behavior | Data Source |
+|------|----------|-------------|
+| `GlobType.Template` | Process with variable substitution | Reads from template's blob |
+| `GlobType.Copy` | Copy without processing | Reads from template's blob |
+| `GlobType.Processor` | Pass through for chaining | Reads from processor's output |
+
+<Callout type="info">
+`GlobType.Template` and `GlobType.Copy` both read from the template's blob (your template files). `GlobType.Processor` is used when chaining multiple processors together, reading from the previous processor's output.
+</Callout>
+
+## Multiple File Groups
+
+Use multiple file entries with different glob patterns:
+
+<Tabs items={['TypeScript', 'Python', 'C#']} persist groupId="runtime">
+<Tab value="TypeScript">
+
+```ts
+files: [
+  // Process text files with variable substitution
+  { root: 'templates', glob: '**/*.md', exclude: [], type: GlobType.Template },
+  { root: 'templates', glob: '**/*.txt', exclude: [], type: GlobType.Template },
+  { root: 'templates', glob: '**/*.json', exclude: [], type: GlobType.Template },
+
+  // Copy binary files without processing
+  { root: 'templates', glob: '**/*.png', exclude: [], type: GlobType.Copy },
+  { root: 'templates', glob: '**/*.jpg', exclude: [], type: GlobType.Copy },
+
+  // Copy static assets
+  { root: 'static', glob: '**/*', exclude: [], type: GlobType.Copy }
+]
+```
+
+</Tab>
+<Tab value="Python">
+
+```python
+files = [
+    # Process text files with variable substitution
+    CyanGlob(root="templates", glob="**/*.md", exclude=[], type=GlobType.TEMPLATE),
+    CyanGlob(root="templates", glob="**/*.txt", exclude=[], type=GlobType.TEMPLATE),
+    CyanGlob(root="templates", glob="**/*.json", exclude=[], type=GlobType.TEMPLATE),
+
+    # Copy binary files without processing
+    CyanGlob(root="templates", glob="**/*.png", exclude=[], type=GlobType.COPY),
+    CyanGlob(root="templates", glob="**/*.jpg", exclude=[], type=GlobType.COPY),
+
+    # Copy static assets
+    CyanGlob(root="static", glob="**/*", exclude=[], type=GlobType.COPY),
+]
+```
+
+</Tab>
+<Tab value="C#">
+
+```csharp
+Files =
+[
+    // Process text files with variable substitution
+    new CyanGlob { Root = "templates", Glob = "**/*.md", Exclude = [], Type = GlobType.Template },
+    new CyanGlob { Root = "templates", Glob = "**/*.txt", Exclude = [], Type = GlobType.Template },
+    new CyanGlob { Root = "templates", Glob = "**/*.json", Exclude = [], Type = GlobType.Template },
+
+    // Copy binary files without processing
+    new CyanGlob { Root = "templates", Glob = "**/*.png", Exclude = [], Type = GlobType.Copy },
+    new CyanGlob { Root = "templates", Glob = "**/*.jpg", Exclude = [], Type = GlobType.Copy },
+
+    // Copy static assets
+    new CyanGlob { Root = "static", Glob = "**/*", Exclude = [], Type = GlobType.Copy },
+]
+```
+
+</Tab>
+</Tabs>
+
+## Complete Example
+
+Building on Tutorial 2, update your template to handle mixed file types:
+
+<Tabs items={['TypeScript', 'Python', 'C#']} persist groupId="runtime">
+<Tab value="TypeScript">
+
+Update `cyan/index.ts`:
+
+```ts cyan/index.ts -c
+import { StartTemplateWithLambda, GlobType } from '@atomicloud/cyan-sdk';
+
+StartTemplateWithLambda(async (i, d) => {
+  return {
+    processors: [{
+      name: 'cyan/default',
+      files: [
+        // !diff +
+        // Template files - variable substitution
+        { root: 'templates', glob: '**/*.md', exclude: [], type: GlobType.Template },
+        // !diff -
+        { root: 'template', glob: '**/*', exclude: [], type: GlobType.Template },
+        // !diff +
+        { root: 'templates', glob: '**/*.yaml', exclude: [], type: GlobType.Template },
+        { root: 'templates', glob: '**/*.json', exclude: [], type: GlobType.Template },
+        { root: 'templates', glob: '**/*.ts', exclude: [], type: GlobType.Template },
+
+        // Binary files - copy only (never process these!)
+        { root: 'templates', glob: '**/*.png', exclude: [], type: GlobType.Copy },
+        { root: 'templates', glob: '**/*.ico', exclude: [], type: GlobType.Copy },
+
+        // Static directory - copy all
+        { root: 'static', glob: '**/*', exclude: [], type: GlobType.Copy }
+      ],
+      config: {
+        vars: {
+          name: 'my-project',
+          author: 'Developer'
+        }
+      }
+    }],
+    plugins: []
+  };
+});
+```
+
+</Tab>
+<Tab value="Python">
+
+Update `cyan/index.py`:
+
+```python cyan/index.py -c
+from cyanprintsdk import start_template_with_fn, GlobType
+from cyanprintsdk.domain.core.cyan import Cyan, CyanProcessor, CyanGlob
+
+async def my_template(i, d):
+    return Cyan(
+        processors=[
+            CyanProcessor(
+                name="cyan/default",
+                files=[
+                    # !diff +
+                    # Template files - variable substitution
+                    CyanGlob(root="templates", glob="**/*.md", exclude=[], type=GlobType.TEMPLATE),
+                    # !diff -
+                    CyanGlob(root="template", glob="**/*", exclude=[], type=GlobType.TEMPLATE),
+                    # !diff +
+                    CyanGlob(root="templates", glob="**/*.yaml", exclude=[], type=GlobType.TEMPLATE),
+                    CyanGlob(root="templates", glob="**/*.json", exclude=[], type=GlobType.TEMPLATE),
+                    CyanGlob(root="templates", glob="**/*.ts", exclude=[], type=GlobType.TEMPLATE),
+
+                    # Binary files - copy only (never process these!)
+                    CyanGlob(root="templates", glob="**/*.png", exclude=[], type=GlobType.COPY),
+                    CyanGlob(root="templates", glob="**/*.ico", exclude=[], type=GlobType.COPY),
+
+                    # Static directory - copy all
+                    CyanGlob(root="static", glob="**/*", exclude=[], type=GlobType.COPY),
+                ],
+                config={
+                    "vars": {
+                        "name": "my-project",
+                        "author": "Developer"
+                    }
+                }
+            )
+        ]
+    )
+
+start_template_with_fn(my_template)
+```
+
+</Tab>
+<Tab value="C#">
+
+Update `cyan/Program.cs`:
+
+```csharp cyan/Program.cs -c
+using sulfone_helium;
+using sulfone_helium.Domain.Core;
+
+CyanEngine.StartTemplate(args, async (i, d) =>
+{
+    return new Cyan
+    {
+        Processors =
+        [
+            new CyanProcessor
+            {
+                Name = "cyan/default",
+                Files =
+                [
+                    // !diff +
+                    // Template files - variable substitution
+                    new CyanGlob { Root = "templates", Glob = "**/*.md", Exclude = [], Type = GlobType.Template },
+                    // !diff -
+                    new CyanGlob { Root = "template", Glob = "**/*", Exclude = [], Type = GlobType.Template },
+                    // !diff +
+                    new CyanGlob { Root = "templates", Glob = "**/*.yaml", Exclude = [], Type = GlobType.Template },
+                    new CyanGlob { Root = "templates", Glob = "**/*.json", Exclude = [], Type = GlobType.Template },
+                    new CyanGlob { Root = "templates", Glob = "**/*.ts", Exclude = [], Type = GlobType.Template },
+
+                    // Binary files - copy only (never process these!)
+                    new CyanGlob { Root = "templates", Glob = "**/*.png", Exclude = [], Type = GlobType.Copy },
+                    new CyanGlob { Root = "templates", Glob = "**/*.ico", Exclude = [], Type = GlobType.Copy },
+
+                    // Static directory - copy all
+                    new CyanGlob { Root = "static", Glob = "**/*", Exclude = [], Type = GlobType.Copy }
+                ],
+                Config = new { vars = new { name = "my-project", author = "Developer" } }
+            }
+        ]
+    };
+});
+```
+
+</Tab>
+</Tabs>
+
+## Exclude Patterns
+
+Exclude files from processing:
+
+<Tabs items={['TypeScript', 'Python', 'C#']} persist groupId="runtime">
+<Tab value="TypeScript">
+
+```ts
+files: [
+  {
+    root: 'templates',
+    glob: '**/*',
+    exclude: [
+      '**/test/**',        // Exclude test directories
+      '**/node_modules/**', // Exclude node_modules
+      '**/*.spec.ts'        // Exclude test files
+    ],
+    type: GlobType.Template
+  }
+]
+```
+
+</Tab>
+<Tab value="Python">
+
+```python
+files = [
+    CyanGlob(
+        root="templates",
+        glob="**/*",
+        exclude=[
+            "**/test/**",        # Exclude test directories
+            "**/node_modules/**", # Exclude node_modules
+            "**/*.spec.ts"        # Exclude test files
+        ],
+        type=GlobType.TEMPLATE
+    )
+]
+```
+
+</Tab>
+<Tab value="C#">
+
+```csharp
+Files =
+[
+    new CyanGlob
+    {
+        Root = "templates",
+        Glob = "**/*",
+        Exclude =
+        [
+            "**/test/**",        // Exclude test directories
+            "**/node_modules/**", // Exclude node_modules
+            "**/*.spec.ts"        // Exclude test files
+        ],
+        Type = GlobType.Template
+    }
+]
+```
+
+</Tab>
+</Tabs>
+
+## Project Structure Example
+
+<Files>
+  <Folder name="cyan" defaultOpen>
+    <File name="index.ts" />
+    <Folder name="templates">
+      <File name="README.md" />
+      <File name="package.json" />
+      <File name="logo.png" />
+    </Folder>
+    <Folder name="static">
+      <File name="favicon.ico" />
+    </Folder>
+  </Folder>
+</Files>
+
+## Test Your Template
+
+```bash -c
+# Build
+docker build -f cyan/Dockerfile -t my-first-template:dev .
+
+# Test
+cyanprint create my-first-template:dev ../test-output
+
+# Check output - verify images work
+file ../test-output/logo.png
+```
+
+<Callout type="info">
+For detailed glob syntax, see the [Globbing Reference](/docs/developer/templates/reference/sdk/globbing).
+</Callout>
+
+## What You Learned
+
+- How to use multiple file groups with different processing types
+- How to exclude files from processing
+- When to use `GlobType.Template` vs `GlobType.Copy` vs `GlobType.Processor`
+- Why binary files must use `GlobType.Copy`
+
+## Next Steps
+
+Learn how to ask users for input to customize the generated project:
+
+[**Next: Asking Questions**](/docs/developer/templates/tutorials/04-asking-questions)

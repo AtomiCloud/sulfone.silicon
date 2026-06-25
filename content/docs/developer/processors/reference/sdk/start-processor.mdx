@@ -1,0 +1,501 @@
+---
+title: StartProcessorWithLambda
+description: Processor entry point API
+---
+
+import { Callout } from 'fumadocs-ui/components/callout';
+import { Tabs, Tab } from 'fumadocs-ui/components/tabs';
+
+# StartProcessorWithLambda
+
+The entry point for processor logic. Wrap your processor function with this to create a valid CyanPrint processor.
+
+## Signature
+
+```ts title="processor.ts"
+function StartProcessorWithLambda(
+  handler: (input: CyanProcessorInput, fileHelper: CyanFileHelper) => Promise<ProcessorOutput>
+): void;
+```
+
+## Parameters
+
+### handler
+
+The async function that implements processor logic.
+
+| Parameter | Type | Description |
+|-----------|------|-------------|
+| `input` | `CyanProcessorInput` | Contains directories, globs, and config |
+| `fileHelper` | `CyanFileHelper` | File operations API |
+
+**Returns:** `Promise<ProcessorOutput>`
+
+## Usage
+
+<Tabs items={['TypeScript', 'Python', 'C#']}>
+  <Tab value="TypeScript">
+
+```ts title="processor.ts"
+import { StartProcessorWithLambda } from '@atomicloud/cyan-sdk';
+
+StartProcessorWithLambda(async (input, fileHelper) => {
+  // 1. Load files
+  const files = fileHelper.resolveAll();
+
+  // 2. Transform content
+  files.forEach(file => {
+    file.content = transform(file.content);
+  });
+
+  // 3. Write output
+  files.forEach(file => {
+    file.writeFile();
+  });
+
+  // 4. Return output directory
+  return { directory: input.writeDir };
+});
+```
+
+  </Tab>
+  <Tab value="Python">
+
+```python title="main.py"
+from atomicloud_cyan_sdk import start_processor_with_lambda
+
+async def handler(input, file_helper):
+    # 1. Load files
+    files = file_helper.resolve_all()
+
+    # 2. Transform content
+    for file in files:
+        file.content = transform(file.content)
+
+    # 3. Write output
+    for file in files:
+        file.write_file()
+
+    # 4. Return output directory
+    return {"directory": input.write_dir}
+
+start_processor_with_lambda(handler)
+```
+
+  </Tab>
+  <Tab value="C#">
+
+```csharp title="Program.cs"
+using AtomiLoud.CyanSdk;
+
+await Processor.StartAsync(async (input, fileHelper) =>
+{
+    // 1. Load files
+    var files = fileHelper.ResolveAll();
+
+    // 2. Transform content
+    foreach (var file in files)
+    {
+        file.Content = Transform(file.Content);
+    }
+
+    // 3. Write output
+    foreach (var file in files)
+    {
+        file.WriteFile();
+    }
+
+    // 4. Return output directory
+    return new ProcessorOutput { Directory = input.WriteDir };
+});
+```
+
+  </Tab>
+</Tabs>
+
+## CyanProcessorInput
+
+| Property | Type | Description |
+|----------|------|-------------|
+| `readDir` | `string` | Path to source files (set by CLI, typically `/workspace/cyanprint/`) |
+| `writeDir` | `string` | Path for output files (set by CLI, typically `/workspace/output/`) |
+| `globs` | `CyanGlob[]` | File patterns from template |
+| `config` | `unknown` | Configuration from template (cast to your config type) |
+
+## ProcessorOutput
+
+| Property | Type | Description |
+|----------|------|-------------|
+| `directory` | `string` | Must be `input.writeDir` |
+
+<Callout type="warn" title="Required">
+  The `directory` property in the return value **must** be `input.writeDir`.
+  Returning any other path will cause the processor to fail.
+</Callout>
+
+## Example: Simple Transform
+
+<Tabs items={['TypeScript', 'Python', 'C#']}>
+  <Tab value="TypeScript">
+
+```ts title="processor.ts"
+import { StartProcessorWithLambda } from '@atomicloud/cyan-sdk';
+
+StartProcessorWithLambda(async (input, fileHelper) => {
+  const files = fileHelper.resolveAll();
+
+  for (const file of files) {
+    // Access file properties
+    console.log(`Processing: ${file.relative}`);
+    console.log(`Size: ${file.content.length} bytes`);
+
+    // Transform content
+    file.content = file.content.toUpperCase();
+
+    // Write to output
+    file.writeFile();
+  }
+
+  return { directory: input.writeDir };
+});
+```
+
+  </Tab>
+  <Tab value="Python">
+
+```python title="main.py"
+from atomicloud_cyan_sdk import start_processor_with_lambda
+
+async def handler(input, file_helper):
+    files = file_helper.resolve_all()
+
+    for file in files:
+        # Access file properties
+        print(f"Processing: {file.relative}")
+        print(f"Size: {len(file.content)} bytes")
+
+        # Transform content
+        file.content = file.content.upper()
+
+        # Write to output
+        file.write_file()
+
+    return {"directory": input.write_dir}
+
+start_processor_with_lambda(handler)
+```
+
+  </Tab>
+  <Tab value="C#">
+
+```csharp title="Program.cs"
+using AtomiLoud.CyanSdk;
+
+await Processor.StartAsync(async (input, fileHelper) =>
+{
+    var files = fileHelper.ResolveAll();
+
+    foreach (var file in files)
+    {
+        // Access file properties
+        Console.WriteLine($"Processing: {file.Relative}");
+        Console.WriteLine($"Size: {file.Content.Length} bytes");
+
+        // Transform content
+        file.Content = file.Content.ToUpper();
+
+        // Write to output
+        file.WriteFile();
+    }
+
+    return new ProcessorOutput { Directory = input.WriteDir };
+});
+```
+
+  </Tab>
+</Tabs>
+
+## Example: Using Config
+
+<Tabs items={['TypeScript', 'Python', 'C#']}>
+  <Tab value="TypeScript">
+
+```ts title="processor.ts"
+import { StartProcessorWithLambda } from '@atomicloud/cyan-sdk';
+
+interface MyConfig {
+  prefix: string;
+  suffix: string;
+}
+
+StartProcessorWithLambda(async (input, fileHelper) => {
+  const config = input.config as MyConfig;
+  const files = fileHelper.resolveAll();
+
+  files.forEach(file => {
+    file.content = `${config.prefix}\n${file.content}\n${config.suffix}`;
+    file.writeFile();
+  });
+
+  return { directory: input.writeDir };
+});
+```
+
+  </Tab>
+  <Tab value="Python">
+
+```python title="main.py"
+from dataclasses import dataclass
+from atomicloud_cyan_sdk import start_processor_with_lambda
+
+@dataclass
+class MyConfig:
+    prefix: str
+    suffix: str
+
+async def handler(input, file_helper):
+    config = MyConfig(**input.config)  # Cast to your config type
+    files = file_helper.resolve_all()
+
+    for file in files:
+        file.content = f"{config.prefix}\n{file.content}\n{config.suffix}"
+        file.write_file()
+
+    return {"directory": input.write_dir}
+
+start_processor_with_lambda(handler)
+```
+
+  </Tab>
+  <Tab value="C#">
+
+```csharp title="Program.cs"
+using AtomiLoud.CyanSdk;
+
+public class MyConfig
+{
+    public string Prefix { get; set; }
+    public string Suffix { get; set; }
+}
+
+await Processor.StartAsync(async (input, fileHelper) =>
+{
+    var config = input.Config as MyConfig; // Cast to your config type
+    var files = fileHelper.ResolveAll();
+
+    foreach (var file in files)
+    {
+        file.Content = $"{config.Prefix}\n{file.Content}\n{config.Suffix}";
+        file.WriteFile();
+    }
+
+    return new ProcessorOutput { Directory = input.WriteDir };
+});
+```
+
+  </Tab>
+</Tabs>
+
+## Example: Selective Processing
+
+<Tabs items={['TypeScript', 'Python', 'C#']}>
+  <Tab value="TypeScript">
+
+```ts title="processor.ts"
+import { StartProcessorWithLambda } from '@atomicloud/cyan-sdk';
+
+StartProcessorWithLambda(async (input, fileHelper) => {
+  // Load only markdown files
+  const mdFiles = fileHelper.read({ root: 'templates', glob: '**/*.md' });
+
+  mdFiles.forEach(file => {
+    file.content = processMarkdown(file.content);
+    file.writeFile();
+  });
+
+  // Copy other files without loading
+  fileHelper.copy({ root: 'templates', glob: '**/*', exclude: ['**/*.md'] });
+
+  return { directory: input.writeDir };
+});
+```
+
+  </Tab>
+  <Tab value="Python">
+
+```python title="main.py"
+from atomicloud_cyan_sdk import start_processor_with_lambda, GlobType
+
+async def handler(input, file_helper):
+    # Load only markdown files
+    md_files = file_helper.read({
+        "root": "templates",
+        "glob": "**/*.md",
+        "exclude": [],
+        "type": GlobType.TEMPLATE
+    })
+
+    for file in md_files:
+        file.content = process_markdown(file.content)
+        file.write_file()
+
+    # Copy other files without loading
+    file_helper.copy({
+        "root": "templates",
+        "glob": "**/*",
+        "exclude": ["**/*.md"],
+        "type": GlobType.COPY
+    })
+
+    return {"directory": input.write_dir}
+
+start_processor_with_lambda(handler)
+```
+
+  </Tab>
+  <Tab value="C#">
+
+```csharp title="Program.cs"
+using AtomiLoud.CyanSdk;
+
+await Processor.StartAsync(async (input, fileHelper) =>
+{
+    // Load only markdown files
+    var mdFiles = fileHelper.Read(new CyanGlob
+    {
+        Root = "templates",
+        GlobPattern = "**/*.md",
+        Exclude = Array.Empty<string>(),
+        Type = GlobType.Template
+    });
+
+    foreach (var file in mdFiles)
+    {
+        file.Content = ProcessMarkdown(file.Content);
+        file.WriteFile();
+    }
+
+    // Copy other files without loading
+    fileHelper.Copy(new CyanGlob
+    {
+        Root = "templates",
+        GlobPattern = "**/*",
+        Exclude = new[] { "**/*.md" },
+        Type = GlobType.Copy
+    });
+
+    return new ProcessorOutput { Directory = input.WriteDir };
+});
+```
+
+  </Tab>
+</Tabs>
+
+## Error Handling
+
+<Tabs items={['TypeScript', 'Python', 'C#']}>
+  <Tab value="TypeScript">
+
+```ts
+StartProcessorWithLambda(async (input, fileHelper) => {
+  try {
+    const files = fileHelper.resolveAll();
+
+    if (files.length === 0) {
+      throw new Error('No files matched the processor globs');
+    }
+
+    for (const file of files) {
+      try {
+        file.content = transform(file.content);
+        file.writeFile();
+      } catch (err) {
+        console.error(`Failed to process ${file.relative}:`, err);
+        // Continue with other files or rethrow
+      }
+    }
+
+    return { directory: input.writeDir };
+  } catch (err) {
+    console.error('Processor failed:', err);
+    throw err;
+  }
+});
+```
+
+  </Tab>
+  <Tab value="Python">
+
+```python
+from atomicloud_cyan_sdk import start_processor_with_lambda
+
+async def handler(input, file_helper):
+    try:
+        files = file_helper.resolve_all()
+
+        if len(files) == 0:
+            raise Exception('No files matched the processor globs')
+
+        for file in files:
+            try:
+                file.content = transform(file.content)
+                file.write_file()
+            except Exception as err:
+                print(f"Failed to process {file.relative}: {err}")
+                # Continue with other files or rethrow
+
+        return {"directory": input.write_dir}
+    except Exception as err:
+        print(f"Processor failed: {err}")
+        raise
+
+start_processor_with_lambda(handler)
+```
+
+  </Tab>
+  <Tab value="C#">
+
+```csharp
+await Processor.StartAsync(async (input, fileHelper) =>
+{
+    try
+    {
+        var files = fileHelper.ResolveAll();
+
+        if (files.Length == 0)
+        {
+            throw new Exception("No files matched the processor globs");
+        }
+
+        foreach (var file in files)
+        {
+            try
+            {
+                file.Content = Transform(file.Content);
+                file.WriteFile();
+            }
+            catch (Exception err)
+            {
+                Console.WriteLine($"Failed to process {file.Relative}: {err}");
+                // Continue with other files or rethrow
+            }
+        }
+
+        return new ProcessorOutput { Directory = input.WriteDir };
+    }
+    catch (Exception err)
+    {
+        Console.WriteLine($"Processor failed: {err}");
+        throw;
+    }
+});
+```
+
+  </Tab>
+</Tabs>
+
+## Related
+
+- [CyanProcessorInput/Output](/docs/developer/processors/reference/sdk/input-output) - Type definitions
+- [CyanFileHelper](/docs/developer/processors/reference/sdk/file-helper) - File operations
+- [First Processor](/docs/developer/processors/tutorials/first-processor) - Tutorial

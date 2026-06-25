@@ -1,0 +1,219 @@
+---
+title: Processors vs Plugins
+description: When to use processors versus plugins
+---
+
+import { Callout } from 'fumadocs-ui/components/callout';
+import { Mermaid } from '@/components/mdx/mermaid';
+
+# Processors vs Plugins
+
+Processors and plugins serve different purposes in CyanPrint. Understanding when to use each is key to effective template design.
+
+## Quick Comparison
+
+| Aspect | Processors | Plugins |
+|--------|------------|---------|
+| **When** | During file generation | After file generation |
+| **What** | Transform file content | Execute actions |
+| **Input** | Template files + variables | Generated project |
+| **Output** | Transformed files | Side effects |
+| **Examples** | Variable substitution, code gen | Git init, npm install |
+
+## Processors
+
+Processors handle **file transformation** during generation.
+
+### When to Use
+
+- Variable substitution in files
+- Template engine processing (Eta, Handlebars)
+- Code generation (GraphQL, Protobuf)
+- File content transformation
+- Custom file processing logic
+
+### How They Work
+
+<Mermaid chart={`graph LR
+    A[Template Files] --> B[Processor]
+    C[Variables] --> B
+    B --> D[Generated Files]
+`} />
+
+### Example
+
+```ts -c
+return {
+  processors: [{
+    name: 'cyan/default',
+    files: [
+      { root: 'templates', glob: '**/*.md', exclude: [], type: GlobType.Template }
+    ],
+    config: {
+      vars: { name: 'my-project' }
+    }
+  }]
+};
+```
+
+Template file:
+
+```markdown
+# var__name__
+
+Welcome to var__name__!
+```
+
+Generated file:
+
+```markdown
+# my-project
+
+Welcome to my-project!
+```
+
+## Plugins
+
+Plugins handle **post-generation actions** after files are created.
+
+### When to Use
+
+- Git repository initialization
+- Dependency installation
+- Running scripts
+- External service integration
+- IDE configuration
+- File permissions
+
+### How They Work
+
+<Mermaid chart={`graph LR
+    A[Generated Files] --> B[Plugin 1]
+    B --> C[Plugin 2]
+    C --> D[Plugin 3]
+    D --> E[Final Project]
+`} />
+
+### Example
+
+```ts -c
+return {
+  processors: [/* ... */],
+  plugins: [
+    {
+      name: 'cyan/init-git',
+      config: { commitMessage: 'Initial commit' }
+    },
+    {
+      name: 'cyan/npm-install',
+      config: { packageManager: 'pnpm' }
+    }
+  ]
+};
+```
+
+## Decision Flow
+
+<Mermaid chart={`graph TD
+    A{Need to transform files?} -->|Yes| B{Standard templating?}
+    A -->|No| C{Need post-gen action?}
+    B -->|Yes| D[Use cyan/default processor]
+    B -->|No| E[Create custom processor]
+    C -->|Yes| F[Use plugin]
+    C -->|No| G[No action needed]
+    D --> H[Done]
+    E --> H
+    F --> H
+    G --> H
+`} />
+
+## Common Patterns
+
+### Template with Variable Substitution
+
+Use **processor**:
+
+```ts -c
+processors: [{
+  name: 'cyan/default',
+  files: [{ root: 'templates', glob: '**/*', exclude: [], type: GlobType.Template }],
+  config: { vars: { name, version } }
+}]
+```
+
+### Code Generation
+
+Use **custom processor**:
+
+```ts -c
+processors: [{
+  name: 'myorg/graphql-codegen',
+  files: [{ root: 'schemas', glob: '**/*.graphql', exclude: [], type: GlobType.Template }],
+  config: { generateTypes: true, outputDir: 'src/generated' }
+}]
+```
+
+### Git Initialization
+
+Use **plugin**:
+
+```ts -c
+plugins: [{
+  name: 'cyan/init-git',
+  config: { commitMessage: 'Initial commit' }
+}]
+```
+
+### Install Dependencies
+
+Use **plugin**:
+
+```ts -c
+plugins: [{
+  name: 'cyan/npm-install',
+  config: { packageManager: 'pnpm' }
+}]
+```
+
+## Creating Custom
+
+### Custom Processor
+
+Create when you need specialized file processing:
+
+1. Define processor package
+2. Implement `IProcessor` interface
+3. Register with registry
+4. Use in templates
+
+See [Processor Development](/docs/developer/processors) for details.
+
+### Custom Plugin
+
+Create when you need post-generation actions:
+
+1. Define plugin package
+2. Implement `IPlugin` interface
+3. Register with registry
+4. Use in templates
+
+See [Plugin Development](/docs/developer/plugins) for details.
+
+## Best Practices
+
+1. **Use default processor** for standard templating
+2. **Create custom processors** for specialized file processing
+3. **Use plugins** for actions that modify project state
+4. **Keep processors focused** on file transformation
+5. **Keep plugins focused** on side effects
+
+<Callout type="info">
+Processors should be pure functions of input files and variables. Plugins handle impure operations like filesystem changes and external services.
+</Callout>
+
+## Related
+
+- [Default Processor](/docs/developer/templates/explanation/default-processor) - How cyan/default works
+- [Processor Development](/docs/developer/processors) - Creating custom processors
+- [Plugin Development](/docs/developer/plugins) - Creating custom plugins
+- [Use Custom Processor](/docs/developer/templates/how-to/use-custom-processor) - How-to guide

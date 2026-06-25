@@ -1,0 +1,213 @@
+---
+title: The Cyan Configuration Object
+description: Understanding the structure returned by templates
+---
+
+import { Callout } from 'fumadocs-ui/components/callout';
+import { Mermaid } from '@/components/mdx/mermaid';
+
+# The Cyan Configuration Object
+
+The configuration object returned by `StartTemplateWithLambda` is the heart of every template. It defines processors, files, and plugins.
+
+## Overview
+
+```ts -c
+import { StartTemplateWithLambda } from '@atomicloud/cyan-sdk';
+
+StartTemplateWithLambda(async (i, d) => {
+  return {
+    processors: [/* ... */],
+    plugins: [/* ... */]
+  };
+});
+```
+
+This object tells CyanPrint:
+1. **Which processors** to use for file transformation
+2. **Which files** to process and how
+3. **Which plugins** to run after generation
+
+## Structure
+
+### Top Level
+
+```ts
+interface Cyan {
+  processors: CyanProcessor[];  // Required
+  plugins: CyanPlugin[];        // Required
+}
+```
+
+### Processor
+
+```ts
+interface CyanProcessor {
+  name: string;              // Processor identifier
+  files: CyanGlob[];         // Files to process
+  config: unknown;           // Processor configuration
+}
+```
+
+### File Group
+
+```ts
+interface CyanGlob {
+  root?: string | null;  // Source directory (optional)
+  glob: string;          // Pattern to match
+  exclude: string[];     // Patterns to exclude
+  type: GlobType;        // How to process
+}
+```
+
+### Plugin
+
+```ts
+interface CyanPlugin {
+  name: string;        // Plugin identifier
+  config: unknown;     // Plugin configuration
+}
+```
+
+## Execution Flow
+
+<Mermaid chart={`graph TD
+    A[Start] --> B[Template Code]
+    B --> C[Return Cyan]
+    C --> D[For each Processor]
+    D --> E[For each CyanGlob]
+    E --> F{GlobType?}
+    F -->|Template| G[Process with vars]
+    F -->|Copy| H[Copy as-is]
+    G --> I[Output Files]
+    H --> I
+    I --> D
+    D --> J[For each Plugin]
+    J --> K[Run Plugin]
+    K --> L[Complete]
+`} />
+
+## Processor Selection
+
+### Default Processor
+
+The `cyan/default` processor uses Eta templating:
+
+```ts -c
+{
+  name: 'cyan/default',
+  files: [/* ... */],
+  config: {
+    vars: { name: 'project' },
+    parser: { varSyntax: [['var__', '__']] }
+  }
+}
+```
+
+### Custom Processor
+
+Use custom processors for specialized needs:
+
+```ts -c
+{
+  name: 'myorg/handlebars-processor',
+  files: [/* ... */],
+  config: {
+    vars: { name: 'project' },
+    delimiters: ['{{', '}}']
+  }
+}
+```
+
+## File Processing
+
+### File Groups
+
+Each file group specifies a set of files and how to process them:
+
+```ts -c
+import { GlobType } from '@atomicloud/cyan-sdk';
+
+files: [
+  // Markdown files - template processing
+  { root: 'templates', glob: '**/*.md', exclude: [], type: GlobType.Template },
+
+  // JSON files - template processing
+  { root: 'templates', glob: '**/*.json', exclude: [], type: GlobType.Template },
+
+  // Images - copy only
+  { root: 'templates', glob: '**/*.png', exclude: [], type: GlobType.Copy },
+
+  // Test files - exclude from processing
+  { root: 'templates', glob: '**/*', exclude: ['**/*.test.*'], type: GlobType.Template }
+]
+```
+
+<Callout type="info">
+To skip files, use the `exclude` array in your file group rather than a separate ignore type. The `GlobType` enum only has `Template` (0) and `Copy` (1) values.
+</Callout>
+
+### Processing Order
+
+Files are processed in the order they appear in the array. Later entries can override earlier ones.
+
+## Variable Passing
+
+Variables flow from questions to processors:
+
+```ts -c
+import { StartTemplateWithLambda, GlobType } from '@atomicloud/cyan-sdk';
+
+const name = await i.text('Name?', 'project.name', '...');
+
+return {
+  processors: [{
+    name: 'cyan/default',
+    files: [/* ... */],
+    config: {
+      vars: {
+        name,  // Passed to template files
+        date: new Date().toISOString()
+      }
+    }
+  }],
+  plugins: []  // Required field, can be empty
+};
+```
+
+In template files:
+
+```markdown
+# var__name__
+
+Generated on: var__date__
+```
+
+## Plugin Execution
+
+Plugins run after all processors complete:
+
+```ts -c
+import { StartTemplateWithLambda } from '@atomicloud/cyan-sdk';
+
+return {
+  processors: [/* ... */],
+  plugins: [
+    { name: 'cyan/init-git', config: { commitMessage: 'Initial commit' } },
+    { name: 'cyan/npm-install', config: { packageManager: 'pnpm' } }
+  ]
+};
+```
+
+## Best Practices
+
+1. **Keep it simple** - Use the default processor unless you need something custom
+2. **Be explicit with files** - Specify each file type separately
+3. **Namespace variables** - Prevent collisions in composed templates
+4. **Document your config** - Comment complex configurations
+
+## Related
+
+- [Default Processor](/docs/developer/templates/explanation/default-processor) - How cyan/default works
+- [Processors vs Plugins](/docs/developer/templates/explanation/processors-vs-plugins) - When to use each
+- [Cyan Config Reference](/docs/developer/templates/reference/sdk/cyan-config) - API documentation

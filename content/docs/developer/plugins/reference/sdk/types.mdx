@@ -1,0 +1,515 @@
+---
+title: Plugin Type Definitions
+description: Complete type reference for CyanPrint plugins
+---
+
+import { TypeTable } from 'fumadocs-ui/components/type-table';
+import { Callout } from 'fumadocs-ui/components/callout';
+import { Tabs, Tab } from 'fumadocs-ui/components/tabs';
+
+# Plugin Type Definitions
+
+Complete type reference for the CyanPrint plugin SDK.
+
+## Core Types
+
+### CyanPluginInput
+
+<TypeTable
+  type={{
+    directory: {
+      type: 'string',
+      description: 'Path to the generated project files. Plugin should operate on files within this directory.',
+      required: true,
+    },
+    config: {
+      type: 'unknown',
+      description: 'Configuration from the template. Type is unknown - cast to your expected type.',
+    },
+  }}
+/>
+
+<Callout type="warn" title="Type Safety">
+  The `config` property is typed as `unknown`. You must cast it to your expected type or use type guards to validate the configuration at runtime.
+</Callout>
+
+### PluginOutput
+
+<TypeTable
+  type={{
+    directory: {
+      type: 'string',
+      description: 'Output directory path. Should be the same as input.directory.',
+      required: true,
+    },
+  }}
+/>
+
+### LambdaPluginFn
+
+<Tabs items={['TypeScript', 'Python', 'C#']}>
+  <Tab value="TypeScript">
+
+  ```ts -c
+  /**
+   * Function signature for plugin handler
+   */
+  type LambdaPluginFn = (input: CyanPluginInput) => Promise<PluginOutput>;
+  ```
+
+  </Tab>
+  <Tab value="Python">
+
+  ```py -c
+  # Function signature for plugin handler
+  # Async function that takes PluginInput and returns PluginOutput
+  async def handler(input: PluginInput) -> PluginOutput:
+      ...
+  ```
+
+  </Tab>
+  <Tab value="C#">
+
+  ```csharp -c
+  // Function signature for plugin handler
+  // Async method that takes PluginInput and returns Task<PluginOutput>
+  public static async Task<PluginOutput> Main(PluginInput input)
+  {
+      // ...
+  }
+  ```
+
+  </Tab>
+</Tabs>
+
+## Entry Point
+
+### StartPluginWithLambda
+
+<Tabs items={['TypeScript', 'Python', 'C#']}>
+  <Tab value="TypeScript">
+
+  ```ts -c
+  /**
+   * Register a plugin handler function.
+   * Starts HTTP server on port 5552.
+   *
+   * @param handler - Async function that processes the directory
+   */
+  function StartPluginWithLambda(handler: LambdaPluginFn): void;
+  ```
+
+  </Tab>
+  <Tab value="Python">
+
+  ```py -c
+  # Register a plugin handler function.
+  # Starts HTTP server on port 5552.
+  #
+  # @handler - Async function that processes the directory
+  from atomicloud_cyan_sdk import start_plugin_with_fn
+
+  @start_plugin_with_fn
+  async def main(input: PluginInput) -> PluginOutput:
+      ...
+  ```
+
+  </Tab>
+  <Tab value="C#">
+
+  ```csharp -c
+  // Register a plugin handler function.
+  // Starts HTTP server on port 5552.
+  //
+  // Apply [PluginMain] attribute to your static async method
+  using Atomicloud.Cyan.Sdk;
+
+  [PluginMain]
+  public static async Task<PluginOutput> Main(PluginInput input)
+  {
+      // ...
+  }
+  ```
+
+  </Tab>
+</Tabs>
+
+## Usage Example
+
+### Complete Plugin with Types
+
+<Tabs items={['TypeScript', 'Python', 'C#']}>
+  <Tab value="TypeScript">
+
+  ```ts plugin.ts -c
+  import { StartPluginWithLambda, type CyanPluginInput, type PluginOutput } from '@atomicloud/cyan-sdk';
+  import { $ } from 'bun';
+
+  // Define your config interface
+  interface GitSetupConfig {
+    init?: boolean;
+    addAll?: boolean;
+    initialCommit?: boolean;
+    commitMessage?: string;
+    branch?: string;
+  }
+
+  // Define your plugin function with proper typing
+  async function setupGit(input: CyanPluginInput): Promise<PluginOutput> {
+    const { directory } = input;
+
+    // Type-safe config with defaults
+    const config: GitSetupConfig = {
+      init: true,
+      addAll: true,
+      initialCommit: true,
+      commitMessage: 'Initial commit',
+      branch: 'main',
+      ...(input.config as Partial<GitSetupConfig>)
+    };
+
+    if (config.init) {
+      await $`git -C ${directory} init`.quiet();
+
+      if (config.branch) {
+        await $`git -C ${directory} checkout -b ${config.branch}`.quiet();
+      }
+    }
+
+    if (config.addAll) {
+      await $`git -C ${directory} add .`.quiet();
+    }
+
+    if (config.initialCommit && config.commitMessage) {
+      await $`git -C ${directory} commit -m ${config.commitMessage}`.quiet();
+    }
+
+    return { directory };
+  }
+
+  // Register plugin
+  StartPluginWithLambda(setupGit);
+  ```
+
+  </Tab>
+  <Tab value="Python">
+
+  ```py plugin.py -c
+  from atomicloud_cyan_sdk import start_plugin_with_fn, PluginInput, PluginOutput
+  from dataclasses import dataclass
+  from typing import Optional
+  import subprocess
+
+  # Define your config class
+  @dataclass
+  class GitSetupConfig:
+      init: bool = True
+      addAll: bool = True
+      initialCommit: bool = True
+      commitMessage: str = 'Initial commit'
+      branch: str = 'main'
+
+  # Define your plugin function with proper typing
+  @start_plugin_with_fn
+  async def setup_git(input: PluginInput) -> PluginOutput:
+      directory = input.directory
+
+      # Type-safe config with defaults
+      defaults = GitSetupConfig()
+      config = GitSetupConfig(
+          init=input.config.get('init', defaults.init),
+          addAll=input.config.get('addAll', defaults.addAll),
+          initialCommit=input.config.get('initialCommit', defaults.initialCommit),
+          commitMessage=input.config.get('commitMessage', defaults.commitMessage),
+          branch=input.config.get('branch', defaults.branch)
+      )
+
+      if config.init:
+          subprocess.run(['git', '-C', directory, 'init'], capture_output=True)
+
+          if config.branch:
+              subprocess.run(['git', '-C', directory, 'checkout', '-b', config.branch], capture_output=True)
+
+      if config.addAll:
+          subprocess.run(['git', '-C', directory, 'add', '.'], capture_output=True)
+
+      if config.initialCommit and config.commitMessage:
+          subprocess.run(['git', '-C', directory, 'commit', '-m', config.commitMessage], capture_output=True)
+
+      return {'directory': directory}
+  ```
+
+  </Tab>
+  <Tab value="C#">
+
+  ```csharp Plugin.cs -c
+  using Atomicloud.Cyan.Sdk;
+  using System.Diagnostics;
+  using System.Text.Json;
+
+  // Define your config class
+  public class GitSetupConfig
+  {
+      public bool Init { get; set; } = true;
+      public bool AddAll { get; set; } = true;
+      public bool InitialCommit { get; set; } = true;
+      public string CommitMessage { get; set; } = "Initial commit";
+      public string Branch { get; set; } = "main";
+  }
+
+  [PluginMain]
+  public static class Plugin
+  {
+      public static async Task<PluginOutput> Main(PluginInput input)
+      {
+          var directory = input.Directory;
+
+          // Type-safe config with defaults
+          var config = new GitSetupConfig();
+          if (input.Config != null)
+          {
+              var json = JsonDocument.Parse(input.Config.ToString());
+              var root = json.RootElement;
+
+              if (root.TryGetProperty("init", out var init))
+                  config.Init = init.GetBoolean();
+              if (root.TryGetProperty("addAll", out var addAll))
+                  config.AddAll = addAll.GetBoolean();
+              if (root.TryGetProperty("initialCommit", out var initialCommit))
+                  config.InitialCommit = initialCommit.GetBoolean();
+              if (root.TryGetProperty("commitMessage", out var commitMessage))
+                  config.CommitMessage = commitMessage.GetString() ?? "Initial commit";
+              if (root.TryGetProperty("branch", out var branch))
+                  config.Branch = branch.GetString() ?? "main";
+          }
+
+          if (config.Init)
+          {
+              Process.Start("git", $"-C {directory} init")?.WaitForExit();
+
+              if (!string.IsNullOrEmpty(config.Branch))
+              {
+                  Process.Start("git", $"-C {directory} checkout -b {config.Branch}")?.WaitForExit();
+              }
+          }
+
+          if (config.AddAll)
+          {
+              Process.Start("git", $"-C {directory} add .")?.WaitForExit();
+          }
+
+          if (config.InitialCommit && !string.IsNullOrEmpty(config.CommitMessage))
+          {
+              Process.Start("git", $"-C {directory} commit -m \"{config.CommitMessage}\"")?.WaitForExit();
+          }
+
+          return new PluginOutput { Directory = directory };
+      }
+  }
+  ```
+
+  </Tab>
+</Tabs>
+
+## Type Guards
+
+### Validating Config
+
+<Tabs items={['TypeScript', 'Python', 'C#']}>
+  <Tab value="TypeScript">
+
+  ```ts type-guards.ts -c
+  import { StartPluginWithLambda } from '@atomicloud/cyan-sdk';
+
+  interface MyConfig {
+    enabled: boolean;
+    items: string[];
+  }
+
+  function isMyConfig(config: unknown): config is MyConfig {
+    const c = config as Record<string, unknown>;
+    return (
+      typeof c?.enabled === 'boolean' &&
+      Array.isArray(c?.items) &&
+      c.items.every((i: unknown) => typeof i === 'string')
+    );
+  }
+
+  StartPluginWithLambda(async (input: CyanPluginInput) => {
+    if (!isMyConfig(input.config)) {
+      throw new Error('Invalid config');
+    }
+
+    // Now TypeScript knows input.config is MyConfig
+    if (input.config.enabled) {
+      for (const item of input.config.items) {
+        console.log(item);
+      }
+    }
+
+    return { directory: input.directory };
+  });
+  ```
+
+  </Tab>
+  <Tab value="Python">
+
+  ```py type_guards.py -c
+  from atomicloud_cyan_sdk import start_plugin_with_fn, PluginInput, PluginOutput
+  from typing import Any, List
+
+  def is_valid_config(config: dict) -> bool:
+      return (
+          isinstance(config.get('enabled'), bool) and
+          isinstance(config.get('items'), list) and
+          all(isinstance(i, str) for i in config.get('items', []))
+      )
+
+  @start_plugin_with_fn
+  async def main(input: PluginInput) -> PluginOutput:
+      if not is_valid_config(input.config):
+          raise ValueError('Invalid config')
+
+      # Now we know config is valid
+      if input.config['enabled']:
+          for item in input.config['items']:
+              print(item)
+
+      return {'directory': input.directory}
+  ```
+
+  </Tab>
+  <Tab value="C#">
+
+  ```csharp TypeGuards.cs -c
+  using Atomicloud.Cyan.Sdk;
+  using System.Text.Json;
+
+  public class MyConfig
+  {
+      public bool Enabled { get; set; }
+      public List<string> Items { get; set; } = new();
+  }
+
+  public static class ConfigValidator
+  {
+      public static bool IsValidConfig(JsonElement config)
+      {
+          if (config.ValueKind != JsonValueKind.Object)
+              return false;
+
+          bool hasEnabled = false;
+          bool hasItems = false;
+
+          if (config.TryGetProperty("enabled", out var enabled))
+          {
+              hasEnabled = enabled.ValueKind == JsonValueKind.True || enabled.ValueKind == JsonValueKind.False;
+          }
+
+          if (config.TryGetProperty("items", out var items))
+          {
+              hasItems = items.ValueKind == JsonValueKind.Array;
+          }
+
+          return hasEnabled && hasItems;
+      }
+  }
+
+  [PluginMain]
+  public static class Plugin
+  {
+      public static async Task<PluginOutput> Main(PluginInput input)
+      {
+          var json = JsonDocument.Parse(input.Config.ToString());
+          if (!ConfigValidator.IsValidConfig(json.RootElement))
+          {
+              throw new ArgumentException("Invalid config");
+          }
+
+          // Now we know config is valid
+          var config = JsonSerializer.Deserialize<MyConfig>(input.Config.ToString());
+
+          if (config?.Enabled == true)
+          {
+              foreach (var item in config.Items)
+              {
+                  Console.WriteLine(item);
+              }
+          }
+
+          return new PluginOutput { Directory = input.Directory };
+      }
+  }
+  ```
+
+  </Tab>
+</Tabs>
+
+### With Defaults
+
+<Tabs items={['TypeScript', 'Python', 'C#']}>
+  <Tab value="TypeScript">
+
+  ```ts parse-config.ts -c
+  interface Config {
+    option1: boolean;
+    option2: string;
+  }
+
+  function parseConfig(config: unknown): Config {
+    const c = config as Record<string, unknown> | undefined;
+    return {
+      option1: typeof c?.option1 === 'boolean' ? c.option1 : true,
+      option2: typeof c?.option2 === 'string' ? c.option2 : 'default'
+    };
+  }
+  ```
+
+  </Tab>
+  <Tab value="Python">
+
+  ```py parse_config.py -c
+  from dataclasses import dataclass
+  from typing import Any, Optional
+
+  @dataclass
+  class Config:
+      option1: bool
+      option2: str
+
+  def parse_config(config: Optional[dict]) -> Config:
+      return Config(
+          option1=config.get('option1') if isinstance(config.get('option1'), bool) else True,
+          option2=config.get('option2') if isinstance(config.get('option2'), str) else 'default'
+      )
+  ```
+
+  </Tab>
+  <Tab value="C#">
+
+  ```csharp ParseConfig.cs -c
+  public class Config
+  {
+      public bool Option1 { get; set; }
+      public string Option2 { get; set; }
+  }
+
+  public static Config ParseConfig(JsonElement config)
+  {
+      return new Config
+      {
+          Option1 = config.TryGetProperty("option1", out var opt1) && opt1.ValueKind == JsonValueKind.True,
+          Option2 = config.TryGetProperty("option2", out var opt2) && opt2.ValueKind == JsonValueKind.String
+              ? opt2.GetString() ?? "default"
+              : "default"
+      };
+  }
+  ```
+
+  </Tab>
+</Tabs>
+
+## Related
+
+- [StartPluginWithLambda](/docs/developer/plugins/reference/sdk/start-plugin) - Entry point
+- [Plugin Input/Output](/docs/developer/plugins/reference/sdk/input-output) - Interface details

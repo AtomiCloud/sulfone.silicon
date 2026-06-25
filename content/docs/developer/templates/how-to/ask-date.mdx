@@ -1,0 +1,172 @@
+---
+title: Ask Date Questions
+description: How to ask for date selection
+---
+
+import { Tabs, Tab } from 'fumadocs-ui/components/tabs';
+
+# How to Ask Date Questions
+
+Use date questions when users need to select a date.
+
+## Shorthand Form
+
+<Tabs items={['TypeScript', 'Python', 'C#']}>
+  <Tab value="TypeScript">
+    ```ts
+    const deadline = await i.dateSelect(
+      'Project deadline?',      // !callout[/Project deadline?/] Message shown to user
+      'project.deadline',       // !callout[/project.deadline/] Unique key for answer storage
+      'Select target date'      // !callout[/Select target date/] Optional description
+    );
+    ```
+  </Tab>
+
+  <Tab value="Python">
+    ```python
+    deadline = await i.date_select(
+      'Project deadline?',      # !callout[/Project deadline?/] Message shown to user
+      'project.deadline',       # !callout[/project.deadline/] Unique key for answer storage
+      'Select target date'      # !callout[/Select target date/] Optional description
+    )
+    ```
+  </Tab>
+
+  <Tab value="C#">
+    ```csharp
+    var deadline = await i.DateSelect(
+      "Project deadline?",      // !callout[/Project deadline?/] Message shown to user
+      "project.deadline",       // !callout[/project.deadline/] Unique key for answer storage
+      "Select target date"      // !callout[/Select target date/] Optional description
+    );
+    ```
+  </Tab>
+</Tabs>
+
+## Object Form
+
+<Tabs items={['TypeScript', 'Python', 'C#']}>
+  <Tab value="TypeScript">
+    ```ts
+    import { QuestionType } from '@atomicloud/cyan-sdk';
+
+    const startDate = await i.dateSelect({
+      type: QuestionType.DateSelect,
+      id: 'project.startDate',
+      message: 'Start date?',
+      desc: 'When does the project start?',
+      default: new Date()  // !mark Default to today
+    });
+    ```
+  </Tab>
+
+  <Tab value="Python">
+    ```python
+    from cyan import QuestionType
+
+    start_date = await i.date_select(
+      type=QuestionType.DateSelect,
+      id='project.startDate',
+      message='Start date?',
+      desc='When does the project start?',
+      default=datetime.now()  # !mark Default to today
+    )
+    ```
+  </Tab>
+
+  <Tab value="C#">
+    ```csharp
+    using Atomiq.Cloud.Cyan;
+
+    var startDate = await i.DateSelect(new {
+        type = QuestionType.DateSelect,
+        id = "project.startDate",
+        message = "Start date?",
+        desc = "When does the project start?",
+        @default = DateTime.Now  // !mark Default to today
+    });
+    ```
+  </Tab>
+</Tabs>
+
+## Using Results
+
+### Formatting Dates
+
+<Tabs items={['TypeScript', 'Python', 'C#']}>
+  <Tab value="TypeScript">
+    ```ts
+    const deadline = await i.dateSelect('Deadline?', 'project.deadline', 'Target date');
+
+    // Format for display
+    const formattedDate = deadline.toISOString().split('T')[0];  // !mark "2024-12-31"
+
+    return {
+      config: {
+        vars: {
+          deadline: formattedDate,
+          deadlineYear: deadline.getFullYear().toString(),
+          deadlineMonth: (deadline.getMonth() + 1).toString().padStart(2, '0')
+        }
+      }
+    };
+    ```
+  </Tab>
+
+  <Tab value="Python">
+    ```python
+    from datetime import datetime
+
+    deadline = await i.date_select('Deadline?', 'project.deadline', 'Target date')
+
+    # Format for display
+    formatted_date = deadline.strftime('%Y-%m-%d')  # !mark "2024-12-31"
+
+    return {
+        'config': {
+            'vars': {
+                'deadline': formatted_date,
+                'deadlineYear': str(deadline.year),
+                'deadlineMonth': deadline.strftime('%m')
+            }
+        }
+    }
+    ```
+  </Tab>
+
+  <Tab value="C#">
+    ```csharp
+    var deadline = await i.DateSelect("Deadline?", "project.deadline", "Target date");
+
+    // Format for display
+    var formattedDate = deadline.ToString("yyyy-MM-dd");  // !mark "2024-12-31"
+
+    return new {
+        config = new {
+            vars = new {
+                deadline = formattedDate,
+                deadlineYear = deadline.Year.ToString(),
+                deadlineMonth = deadline.Month.ToString("D2")
+            }
+        }
+    };
+    ```
+  </Tab>
+</Tabs>
+
+### In Template Files
+
+```markdown template.md
+## Project Timeline
+
+- **Start Date:** var__startDate__
+- **Deadline:** var__deadline__
+
+This project is due in var__deadlineYear__.
+```
+
+## Related
+
+- [IInquirer Reference](/docs/developer/templates/reference/sdk/inquirer) - Complete API documentation
+- [Default Values](/docs/developer/templates/how-to/default-values) - Setting defaults
+- [Validate Input](/docs/developer/templates/how-to/validate-input) - Input validation

@@ -1,0 +1,95 @@
+---
+title: Introduction
+description: Introduction to CyanPrint development and the four artifacts
+---
+
+import { Mermaid } from '@/components/mdx/mermaid';
+import { Cards, Card } from 'fumadocs-ui/components/card';
+
+# Introduction to CyanPrint Development
+
+CyanPrint is a template-based project generator with four extensible components called **artifacts**.
+
+## The Four Artifacts
+
+| Artifact      | Purpose                                               | SDK Port |
+| ------------- | ----------------------------------------------------- | -------- |
+| **Templates** | Define questions and file processing rules            | 5550     |
+| **Processors**| Transform files based on configuration                | 5551     |
+| **Resolvers** | Resolve file conflicts from layered templates         | 5553     |
+| **Plugins**   | Post-processing (run commands, file operations)       | 5552     |
+
+### Templates
+
+Templates are the primary artifact that users interact with. They:
+
+- Define the questions to ask users
+- Specify which processors to use for file transformations
+- Configure plugins for post-processing
+
+### Processors
+
+Processors handle file transformation. They:
+
+- Read files from the template
+- Apply custom file transformations based on configuration
+- Write processed files to the output directory
+
+### Resolvers
+
+Resolvers handle file conflicts when composing multiple templates. They:
+
+- Receive multiple versions of the same file from different template layers
+- Merge or resolve conflicting content
+- Return a single unified output for each file
+
+**Resolver Execution Points:**
+
+Resolvers execute in two places:
+
+1. **After processors** - Server-side resolution during template execution
+2. **On client-side during layering:**
+   - **Vertical layering**: Dependency resolution between templates
+   - **Horizontal layering**: Merging across multiple templates
+
+### Plugins
+
+Plugins run after files are generated. The SDK provides the interface contract - common implementation examples include:
+
+- Executing shell commands
+- Modifying file permissions
+- Initializing git repositories
+- Installing dependencies
+
+## How They Work Together
+
+<Mermaid chart={`graph LR
+    A[User] --> B[Template]
+    B --> C[Processor]
+    C --> D[Resolver]
+    D --> E[Files]
+    E --> F[Plugin]
+    F --> G[Final Project]
+`} />
+
+1. **Template** collects user input and generates a Cyan configuration
+2. **Processor** transforms template files using the configuration
+3. **Resolver** merges conflicting files from layered templates (optional)
+4. **Plugin** applies final touches to the generated project
+
+## Choose Your Path
+
+<Cards>
+  <Card href="/docs/developer/templates" title="Create a Template">
+    Build project scaffolds
+  </Card>
+  <Card href="/docs/developer/processors" title="Create a Processor">
+    Build file transformers
+  </Card>
+  <Card href="/docs/developer/resolvers" title="Create a Resolver">
+    Build conflict resolvers
+  </Card>
+  <Card href="/docs/developer/plugins" title="Create a Plugin">
+    Build post-processors
+  </Card>
+</Cards>

@@ -1,0 +1,14 @@
+{
+  "title": "Explanation",
+  "icon": "Lightbulb",
+  "pages": [
+    "cyan-object",
+    "determinism",
+    "client-state",
+    "docker-vs-cyan-registry",
+    "processors-vs-plugins",
+    "3-way-merge",
+    "container-paths",
+    "default-processor"
+  ]
+}

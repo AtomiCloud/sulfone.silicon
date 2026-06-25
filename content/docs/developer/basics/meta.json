@@ -1,0 +1,5 @@
+{
+  "title": "Basics",
+  "icon": "FileCode",
+  "pages": ["introduction", "architecture"]
+}
